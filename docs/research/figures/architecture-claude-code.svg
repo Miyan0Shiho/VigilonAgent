@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <defs>
+    <style>
+      .title { font: 700 22px "Inter", "Helvetica Neue", Arial, sans-serif; fill: #111; }
+      .sub { font: 400 13px "Inter", "Helvetica Neue", Arial, sans-serif; fill: #555; }
+      .h { font: 700 13px "Inter", "Helvetica Neue", Arial, sans-serif; fill: #111; }
+      .t { font: 400 12px "Inter", "Helvetica Neue", Arial, sans-serif; fill: #222; }
+      .muted { font: 400 11px "Inter", "Helvetica Neue", Arial, sans-serif; fill: #666; }
+      .box { fill: #fff; stroke: #111; stroke-width: 1.1; rx: 12; }
+      .lite { fill: #fff; stroke: #777; stroke-width: 1.0; rx: 12; }
+      .accent { fill: #1565c0; }
+      .arrow { stroke: #111; stroke-width: 1.2; fill: none; }
+      .arrowHead { fill: #111; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" class="arrowHead"/>
+    </marker>
+  </defs>
+
+  <text x="40" y="52" class="title">Claude Code：规划/执行机制模块图（简化）</text>
+  <text x="40" y="78" class="sub">关键证据：ToolUseContext、Enter/Exit Plan Mode、Bash/File 工具安全层、Task/RemoteAgentTask</text>
+
+  <!-- Core UI / Loop -->
+  <rect x="60" y="120" width="420" height="110" class="box"/>
+  <rect x="78" y="138" width="12" height="18" class="accent" rx="3"/>
+  <text x="100" y="154" class="h">交互 UI / 回合推进（Ink + React）</text>
+  <text x="100" y="178" class="t">main.tsx / components/*</text>
+  <text x="100" y="200" class="muted">负责：消息渲染、输入、工具进度可视化、状态更新</text>
+
+  <!-- Plan Mode -->
+  <rect x="60" y="270" width="420" height="140" class="box"/>
+  <rect x="78" y="288" width="12" height="18" class="accent" rx="3"/>
+  <text x="100" y="304" class="h">Plan Mode（强 gate）</text>
+  <text x="100" y="328" class="t">EnterPlanModeTool / ExitPlanModeV2Tool</text>
+  <text x="100" y="350" class="muted">计划文件持久化/恢复：utils/plans.ts（含 transcript/附件恢复）</text>
+  <text x="100" y="372" class="muted">审批 UI：components/permissions/*</text>
+
+  <!-- ToolUseContext -->
+  <rect x="540" y="120" width="600" height="160" class="box"/>
+  <rect x="558" y="138" width="12" height="18" class="accent" rx="3"/>
+  <text x="580" y="154" class="h">ToolUseContext（执行控制枢纽）</text>
+  <text x="580" y="178" class="t">Tool.ts</text>
+  <text x="580" y="202" class="muted">聚合：tools / MCP clients / 权限上下文 / 状态更新 / abort / fileStateCache</text>
+  <text x="580" y="226" class="muted">目的：让工具执行语义在主线程/后台任务/子代理之间一致</text>
+
+  <!-- Tool registry -->
+  <rect x="540" y="320" width="290" height="120" class="lite"/>
+  <text x="560" y="346" class="h">工具组装</text>
+  <text x="560" y="370" class="t">tools.ts / constants/tools.ts</text>
+  <text x="560" y="392" class="muted">挂载：Bash/File/Plan/Agent…</text>
+
+  <rect x="850" y="320" width="290" height="120" class="lite"/>
+  <text x="870" y="346" class="h">MCP 动态工具面</text>
+  <text x="870" y="370" class="t">services/mcp/*</text>
+  <text x="870" y="392" class="muted">运行时注入工具 + 资源</text>
+
+  <!-- Execution tools -->
+  <rect x="540" y="480" width="600" height="120" class="box"/>
+  <rect x="558" y="498" width="12" height="18" class="accent" rx="3"/>
+  <text x="580" y="514" class="h">执行面（高风险工具 + 安全层）</text>
+  <text x="580" y="538" class="t">tools/BashTool/* · tools/File*Tool/*</text>
+  <text x="580" y="560" class="muted">权限/只读/危险命令检测与 UI 审批联动</text>
+
+  <!-- Task system -->
+  <rect x="60" y="460" width="420" height="140" class="box"/>
+  <rect x="78" y="478" width="12" height="18" class="accent" rx="3"/>
+  <text x="100" y="494" class="h">任务系统（后台/远程代理）</text>
+  <text x="100" y="518" class="t">Task.ts · tasks/LocalMainSessionTask.ts</text>
+  <text x="100" y="540" class="muted">RemoteAgentTask：plan 审批等待、轮询、状态徽标</text>
+
+  <!-- Memory -->
+  <rect x="60" y="630" width="1080" height="90" class="lite"/>
+  <text x="80" y="658" class="h">记忆/上下文治理</text>
+  <text x="80" y="682" class="t">memdir/* · utils/fileStateCache.ts · utils/plans.ts（plan snapshot）</text>
+
+  <!-- Arrows -->
+  <path d="M 270 230 L 270 270" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 480 175 L 540 175" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 480 340 L 540 200" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 840 440 L 840 480" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 270 600 L 270 630" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 840 600 L 840 630" class="arrow" marker-end="url(#arrow)"/>
+</svg>
+

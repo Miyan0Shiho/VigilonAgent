@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860">
+  <defs>
+    <style>
+      .title { font: 700 22px "Inter","Helvetica Neue",Arial,sans-serif; fill:#111; }
+      .sub { font: 400 13px "Inter","Helvetica Neue",Arial,sans-serif; fill:#555; }
+      .h { font: 700 13px "Inter","Helvetica Neue",Arial,sans-serif; fill:#111; }
+      .t { font: 400 12px "Inter","Helvetica Neue",Arial,sans-serif; fill:#222; }
+      .muted { font: 400 11px "Inter","Helvetica Neue",Arial,sans-serif; fill:#666; }
+      .cell { fill:#fff; stroke:#111; stroke-width:1.1; rx:10; }
+      .hdr { fill:#fff; stroke:#777; stroke-width:1.0; rx:10; }
+      .accent { fill:#1565c0; }
+      .grid { stroke:#eee; stroke-width:1; }
+    </style>
+  </defs>
+
+  <text x="40" y="52" class="title">新增四维度深挖覆盖矩阵（源码/测试/配置证据）</text>
+  <text x="40" y="78" class="sub">Release（REL）· DX+Docs（DXD）· Privacy+Telemetry（PRI）· Evaluation+Benchmarks（EVA）</text>
+
+  <!-- Column headers -->
+  <rect x="260" y="120" width="360" height="44" class="hdr"/>
+  <rect x="640" y="120" width="360" height="44" class="hdr"/>
+  <rect x="1020" y="120" width="340" height="44" class="hdr"/>
+  <rect x="275" y="133" width="10" height="18" class="accent" rx="3"/>
+  <text x="295" y="149" class="h">Claude Code</text>
+  <rect x="655" y="133" width="10" height="18" class="accent" rx="3"/>
+  <text x="675" y="149" class="h">OpenClaw</text>
+  <rect x="1035" y="133" width="10" height="18" class="accent" rx="3"/>
+  <text x="1055" y="149" class="h">Hermes Agent</text>
+
+  <!-- Row headers -->
+  <rect x="40" y="190" width="200" height="140" class="hdr"/>
+  <rect x="40" y="350" width="200" height="140" class="hdr"/>
+  <rect x="40" y="510" width="200" height="140" class="hdr"/>
+  <rect x="40" y="670" width="200" height="140" class="hdr"/>
+  <text x="60" y="222" class="h">Release</text>
+  <text x="60" y="246" class="muted">REL-*-001~012</text>
+  <text x="60" y="382" class="h">DX + Docs</text>
+  <text x="60" y="406" class="muted">DXD-*-001~012</text>
+  <text x="60" y="542" class="h">Privacy + Telemetry</text>
+  <text x="60" y="566" class="muted">PRI-*-001~012</text>
+  <text x="60" y="702" class="h">Evaluation + Bench</text>
+  <text x="60" y="726" class="muted">EVA-*-001~012</text>
+
+  <!-- Cells: Release -->
+  <rect x="260" y="190" width="360" height="140" class="cell"/>
+  <text x="280" y="216" class="t">REL-CC: update + auto-updater + release notes</text>
+  <text x="280" y="240" class="muted">src/cli/update.ts</text>
+  <text x="280" y="260" class="muted">src/utils/autoUpdater.ts</text>
+  <text x="280" y="280" class="muted">src/utils/releaseNotes.ts</text>
+
+  <rect x="640" y="190" width="360" height="140" class="cell"/>
+  <text x="660" y="216" class="t">REL-OC: infra update pipeline + global integrity</text>
+  <text x="660" y="240" class="muted">src/infra/update-check.ts</text>
+  <text x="660" y="260" class="muted">src/infra/update-package-manager.ts</text>
+  <text x="660" y="280" class="muted">src/infra/update-global.ts</text>
+
+  <rect x="1020" y="190" width="340" height="140" class="cell"/>
+  <text x="1040" y="216" class="t">REL-HA: packaging + installer + updater</text>
+  <text x="1040" y="240" class="muted">pyproject.toml</text>
+  <text x="1040" y="260" class="muted">scripts/install.sh</text>
+  <text x="1040" y="280" class="muted">hermes_cli/main.py</text>
+
+  <!-- Cells: DX+Docs -->
+  <rect x="260" y="350" width="360" height="140" class="cell"/>
+  <text x="280" y="376" class="t">DXD-CC: Help UI + startup gates + guide agent</text>
+  <text x="280" y="400" class="muted">components/HelpV2/HelpV2.tsx</text>
+  <text x="280" y="420" class="muted">setup.ts</text>
+  <text x="280" y="440" class="muted">claudeCodeGuideAgent.ts</text>
+
+  <rect x="640" y="350" width="360" height="140" class="cell"/>
+  <text x="660" y="376" class="t">DXD-OC: schema help as source-of-truth + tests</text>
+  <text x="660" y="400" class="muted">config/schema.help.ts</text>
+  <text x="660" y="420" class="muted">config/schema.help.quality.test.ts</text>
+  <text x="660" y="440" class="muted">utils/usage-format.ts</text>
+
+  <rect x="1020" y="350" width="340" height="140" class="cell"/>
+  <text x="1040" y="376" class="t">DXD-HA: command registry + tips + doc site config</text>
+  <text x="1040" y="400" class="muted">hermes_cli/commands.py</text>
+  <text x="1040" y="420" class="muted">hermes_cli/tips.py</text>
+  <text x="1040" y="440" class="muted">website/docusaurus.config.ts</text>
+
+  <!-- Cells: Privacy -->
+  <rect x="260" y="510" width="360" height="140" class="cell"/>
+  <text x="280" y="536" class="t">PRI-CC: typed metadata gate + _PROTO_ PII routing</text>
+  <text x="280" y="560" class="muted">services/analytics/index.ts</text>
+  <text x="280" y="580" class="muted">utils/sanitization.ts</text>
+  <text x="280" y="600" class="muted">releaseNotes.ts (essential-only)</text>
+
+  <rect x="640" y="510" width="360" height="140" class="cell"/>
+  <text x="660" y="536" class="t">PRI-OC: redaction patterns + secret assignment governance</text>
+  <text x="660" y="560" class="muted">logging/redact.ts</text>
+  <text x="660" y="580" class="muted">secrets/runtime-config-collectors-core.ts</text>
+  <text x="660" y="600" class="muted">plugin-sdk/diagnostics-otel.ts</text>
+
+  <rect x="1020" y="510" width="340" height="140" class="cell"/>
+  <text x="1040" y="536" class="t">PRI-HA: safe env + credential stripping + insights</text>
+  <text x="1040" y="560" class="muted">tools/mcp_tool.py</text>
+  <text x="1040" y="580" class="muted">agent/insights.py</text>
+  <text x="1040" y="600" class="muted">web AnalyticsPage.tsx</text>
+
+  <!-- Cells: Evaluation -->
+  <rect x="260" y="670" width="360" height="140" class="cell"/>
+  <text x="280" y="696" class="t">EVA-CC: verification gate + doctor + insights</text>
+  <text x="280" y="720" class="muted">verificationAgent.ts</text>
+  <text x="280" y="740" class="muted">doctorDiagnostic.ts</text>
+  <text x="280" y="760" class="muted">commands/insights.ts</text>
+
+  <rect x="640" y="670" width="360" height="140" class="cell"/>
+  <text x="660" y="696" class="t">EVA-OC: startup/model bench + parity report gate</text>
+  <text x="660" y="720" class="muted">scripts/bench-cli-startup.ts</text>
+  <text x="660" y="740" class="muted">scripts/bench-model.ts</text>
+  <text x="660" y="760" class="muted">extensions/qa-lab/.../agentic-parity-report.ts</text>
+
+  <rect x="1020" y="670" width="340" height="140" class="cell"/>
+  <text x="1040" y="696" class="t">EVA-HA: TerminalBench eval env + security tests + RL tool</text>
+  <text x="1040" y="720" class="muted">terminalbench2_env.py</text>
+  <text x="1040" y="740" class="muted">test_terminalbench2_env_security.py</text>
+  <text x="1040" y="760" class="muted">tools/rl_training_tool.py</text>
+</svg>
+

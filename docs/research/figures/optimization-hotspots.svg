@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="840" viewBox="0 0 1400 840">
+  <defs>
+    <style>
+      .title { font: 700 22px "Inter","Helvetica Neue",Arial,sans-serif; fill:#111; }
+      .sub { font: 400 13px "Inter","Helvetica Neue",Arial,sans-serif; fill:#555; }
+      .h { font: 700 14px "Inter","Helvetica Neue",Arial,sans-serif; fill:#111; }
+      .t { font: 400 12px "Inter","Helvetica Neue",Arial,sans-serif; fill:#222; }
+      .muted { font: 400 11px "Inter","Helvetica Neue",Arial,sans-serif; fill:#666; }
+      .box { fill:#fff; stroke:#111; stroke-width:1.1; rx:12; }
+      .lite { fill:#fff; stroke:#777; stroke-width:1.0; rx:12; }
+      .accent { fill:#1565c0; }
+      .arrow { stroke:#111; stroke-width:1.2; fill:none; }
+      .arrowHead { fill:#111; }
+      .grid { stroke:#eee; stroke-width:1; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" class="arrowHead"/>
+    </marker>
+  </defs>
+
+  <text x="40" y="52" class="title">优化热点对比：渲染/启动/并行/缓存/压缩</text>
+  <text x="40" y="78" class="sub">示意性汇总（细节以 optimizations.md 的 Evidence 为准）</text>
+
+  <line x1="40" y1="110" x2="1360" y2="110" class="grid"/>
+  <line x1="467" y1="110" x2="467" y2="800" class="grid"/>
+  <line x1="893" y1="110" x2="893" y2="800" class="grid"/>
+
+  <rect x="40" y="120" width="407" height="44" class="lite"/>
+  <rect x="467" y="120" width="426" height="44" class="lite"/>
+  <rect x="893" y="120" width="467" height="44" class="lite"/>
+  <rect x="55" y="133" width="10" height="18" class="accent" rx="3"/>
+  <text x="75" y="149" class="h">Claude Code</text>
+  <rect x="482" y="133" width="10" height="18" class="accent" rx="3"/>
+  <text x="502" y="149" class="h">OpenClaw</text>
+  <rect x="908" y="133" width="10" height="18" class="accent" rx="3"/>
+  <text x="928" y="149" class="h">Hermes Agent</text>
+
+  <!-- Rows -->
+  <text x="40" y="230" class="h">① 渲染/交互性能</text>
+  <text x="40" y="370" class="h">② 启动/冷路径优化</text>
+  <text x="40" y="510" class="h">③ 并行吞吐与稳定性</text>
+  <text x="40" y="650" class="h">④ 资源治理（token/缓存）</text>
+
+  <!-- Claude -->
+  <rect x="70" y="200" width="347" height="110" class="box"/>
+  <text x="90" y="226" class="t">渲染 diff/patch 优化规则链</text>
+  <text x="90" y="248" class="muted">ink/optimizer.ts</text>
+
+  <rect x="70" y="340" width="347" height="110" class="box"/>
+  <text x="90" y="366" class="t">文件状态缓存：LRU + size limit（25MB）</text>
+  <text x="90" y="388" class="muted">utils/fileStateCache.ts</text>
+
+  <rect x="70" y="480" width="347" height="110" class="box"/>
+  <text x="90" y="506" class="t">子代理 fork 共享 prompt 前缀（提升 cache 命中）</text>
+  <text x="90" y="528" class="muted">AgentTool/forkSubagent.ts</text>
+
+  <rect x="70" y="620" width="347" height="110" class="box"/>
+  <text x="90" y="646" class="t">成本/预算：cache read/write tokens + FPS 指标落盘/恢复</text>
+  <text x="90" y="668" class="muted">cost-tracker.ts</text>
+
+  <!-- OpenClaw -->
+  <rect x="500" y="200" width="360" height="110" class="box"/>
+  <text x="520" y="226" class="t">TUI 工具输出 preview + 去噪（减少渲染压力）</text>
+  <text x="520" y="248" class="muted">tui/components/tool-execution.ts</text>
+
+  <rect x="500" y="340" width="360" height="110" class="box"/>
+  <text x="520" y="366" class="t">bench：CLI startup + model latency（可复现闭环）</text>
+  <text x="520" y="388" class="muted">scripts/bench-cli-startup.ts · scripts/bench-model.ts</text>
+
+  <rect x="500" y="480" width="360" height="110" class="box"/>
+  <text x="520" y="506" class="t">runtime seam 懒加载 + audit module promise cache</text>
+  <text x="520" y="528" class="muted">runtime-agent.ts · security/audit.ts</text>
+
+  <rect x="500" y="620" width="360" height="110" class="box"/>
+  <text x="520" y="646" class="t">lazy record（Proxy + cached resolve）延迟展开 provider 映射</text>
+  <text x="520" y="668" class="muted">secrets/provider-env-vars.ts</text>
+
+  <!-- Hermes -->
+  <rect x="930" y="200" width="400" height="110" class="box"/>
+  <text x="950" y="226" class="t">curses UI fallback + 输入清理（稳定交互）</text>
+  <text x="950" y="248" class="muted">hermes_cli/curses_ui.py</text>
+
+  <rect x="930" y="340" width="400" height="110" class="box"/>
+  <text x="950" y="366" class="t">后台 loop/thread：MCP transport 不阻塞主线程</text>
+  <text x="950" y="388" class="muted">tools/mcp_tool.py</text>
+
+  <rect x="930" y="480" width="400" height="110" class="box"/>
+  <text x="950" y="506" class="t">并行 tool_calls + heartbeats + checkpoint（吞吐与稳定性平衡）</text>
+  <text x="950" y="528" class="muted">run_agent.py</text>
+
+  <rect x="930" y="620" width="400" height="110" class="box"/>
+  <text x="950" y="646" class="t">token 预算：上下文压缩 + 工具输出修剪（summarize_tool_result）</text>
+  <text x="950" y="668" class="muted">agent/context_compressor.py</text>
+
+  <!-- Vertical arrows -->
+  <path d="M 244 310 L 244 340" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 244 450 L 244 480" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 244 590 L 244 620" class="arrow" marker-end="url(#arrow)"/>
+
+  <path d="M 680 310 L 680 340" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 680 450 L 680 480" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 680 590 L 680 620" class="arrow" marker-end="url(#arrow)"/>
+
+  <path d="M 1130 310 L 1130 340" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 1130 450 L 1130 480" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 1130 590 L 1130 620" class="arrow" marker-end="url(#arrow)"/>
+</svg>
+
