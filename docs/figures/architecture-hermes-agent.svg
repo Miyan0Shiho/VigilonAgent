@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <defs>
+    <style>
+      .title { font: 700 22px "Inter", "Helvetica Neue", Arial, sans-serif; fill: #111; }
+      .sub { font: 400 13px "Inter", "Helvetica Neue", Arial, sans-serif; fill: #555; }
+      .h { font: 700 13px "Inter", "Helvetica Neue", Arial, sans-serif; fill: #111; }
+      .t { font: 400 12px "Inter", "Helvetica Neue", Arial, sans-serif; fill: #222; }
+      .muted { font: 400 11px "Inter", "Helvetica Neue", Arial, sans-serif; fill: #666; }
+      .box { fill: #fff; stroke: #111; stroke-width: 1.1; rx: 12; }
+      .lite { fill: #fff; stroke: #777; stroke-width: 1.0; rx: 12; }
+      .accent { fill: #1565c0; }
+      .arrow { stroke: #111; stroke-width: 1.2; fill: none; }
+      .arrowHead { fill: #111; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" class="arrowHead"/>
+    </marker>
+  </defs>
+
+  <text x="40" y="52" class="title">Hermes Agent：规划/执行机制模块图（简化）</text>
+  <text x="40" y="78" class="sub">关键证据：AIAgent tool_calls 执行链路、tools/registry 自注册、toolsets 门控、checkpoint/interrupt</text>
+
+  <!-- Frontends -->
+  <rect x="60" y="120" width="520" height="120" class="box"/>
+  <rect x="78" y="138" width="12" height="18" class="accent" rx="3"/>
+  <text x="100" y="154" class="h">前端入口（CLI/TUI + Messaging Gateway）</text>
+  <text x="100" y="178" class="t">pyproject.toml（入口） · hermes_cli/* · gateway/*</text>
+  <text x="100" y="200" class="muted">定位：终端交互 + 多平台网关统一对话入口</text>
+
+  <!-- Agent loop -->
+  <rect x="620" y="120" width="520" height="160" class="box"/>
+  <rect x="638" y="138" width="12" height="18" class="accent" rx="3"/>
+  <text x="660" y="154" class="h">AIAgent 主循环（run_agent.py）</text>
+  <text x="660" y="178" class="t">模型响应 → 解析 tool_calls → 执行工具 → 回填 messages → 下一轮</text>
+  <text x="660" y="202" class="muted">支持：顺序/并行 tool_calls；interrupt；心跳；checkpoint</text>
+
+  <!-- Tool registry -->
+  <rect x="60" y="280" width="520" height="130" class="box"/>
+  <rect x="78" y="298" width="12" height="18" class="accent" rx="3"/>
+  <text x="100" y="314" class="h">工具注册中心（自注册 + 快照一致性）</text>
+  <text x="100" y="338" class="t">tools/registry.py（register、discover、RLock、toolset checks）</text>
+  <text x="100" y="360" class="muted">作用：提供 schema/handler/check_fn/toolset 归属；适配 MCP 动态刷新</text>
+
+  <!-- Toolsets -->
+  <rect x="620" y="320" width="520" height="90" class="lite"/>
+  <text x="640" y="346" class="h">Toolsets（能力门控）</text>
+  <text x="640" y="370" class="t">toolsets.py（safe/debugging/hermes-acp…）</text>
+
+  <!-- Execution safety -->
+  <rect x="60" y="450" width="1080" height="140" class="lite"/>
+  <text x="80" y="476" class="h">执行控制与安全</text>
+  <text x="80" y="500" class="t">run_agent.py：_execute_tool_calls / _execute_tool_calls_concurrent / _invoke_tool</text>
+  <text x="80" y="522" class="muted">- interrupt：用户中断跳过工具并写入 tool message</text>
+  <text x="80" y="544" class="muted">- checkpoint：write_file/patch、破坏性 terminal 命令前保存检查点</text>
+  <text x="80" y="566" class="muted">- hook block：插件可在执行前阻断（pre-tool-call block message）</text>
+
+  <!-- Memory & skills -->
+  <rect x="60" y="620" width="520" height="110" class="box"/>
+  <rect x="78" y="638" width="12" height="18" class="accent" rx="3"/>
+  <text x="100" y="654" class="h">记忆/上下文治理</text>
+  <text x="100" y="678" class="t">agent/context_compressor.py · tools/memory_tool.py · tools/session_search_tool.py</text>
+  <text x="100" y="700" class="muted">压缩 token 压力 + 跨会话检索/持久化</text>
+
+  <rect x="620" y="620" width="520" height="110" class="box"/>
+  <rect x="638" y="638" width="12" height="18" class="accent" rx="3"/>
+  <text x="660" y="654" class="h">Skills / 委派</text>
+  <text x="660" y="678" class="t">tools/skill_manager_tool.py · tools/delegate_tool.py</text>
+  <text x="660" y="700" class="muted">技能管理（自生成/自改进）+ subagent 并行委派</text>
+
+  <!-- Arrows -->
+  <path d="M 580 180 L 620 180" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 880 280 L 880 320" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 320 240 L 320 280" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 320 410 L 320 450" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 880 410 L 880 450" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 320 590 L 320 620" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 880 590 L 880 620" class="arrow" marker-end="url(#arrow)"/>
+</svg>
+

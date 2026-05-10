@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860">
+  <defs>
+    <style>
+      .title { font: 700 22px "Inter","Helvetica Neue",Arial,sans-serif; fill:#111; }
+      .sub { font: 400 13px "Inter","Helvetica Neue",Arial,sans-serif; fill:#555; }
+      .h { font: 700 14px "Inter","Helvetica Neue",Arial,sans-serif; fill:#111; }
+      .t { font: 400 12px "Inter","Helvetica Neue",Arial,sans-serif; fill:#222; }
+      .muted { font: 400 11px "Inter","Helvetica Neue",Arial,sans-serif; fill:#666; }
+      .box { fill:#fff; stroke:#111; stroke-width:1.1; rx:12; }
+      .lite { fill:#fff; stroke:#777; stroke-width:1.0; rx:12; }
+      .accent { fill:#1565c0; }
+      .grid { stroke:#eee; stroke-width:1; }
+      .arrow { stroke:#111; stroke-width:1.2; fill:none; }
+      .arrowHead { fill:#111; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" class="arrowHead"/>
+    </marker>
+  </defs>
+
+  <text x="40" y="52" class="title">安全与权限 Gate 对比：Claude Code / OpenClaw / Hermes Agent</text>
+  <text x="40" y="78" class="sub">对齐：AuthN/AuthZ → 风险工具拦截 → 审批交互 → 审计/修复建议（示意，细节以专题 security.md 的 Evidence 为准）</text>
+
+  <!-- Columns -->
+  <line x1="40" y1="110" x2="1360" y2="110" class="grid"/>
+  <line x1="467" y1="110" x2="467" y2="820" class="grid"/>
+  <line x1="893" y1="110" x2="893" y2="820" class="grid"/>
+
+  <rect x="40" y="120" width="407" height="44" class="lite"/>
+  <rect x="467" y="120" width="426" height="44" class="lite"/>
+  <rect x="893" y="120" width="467" height="44" class="lite"/>
+  <rect x="55" y="133" width="10" height="18" class="accent" rx="3"/>
+  <text x="75" y="149" class="h">Claude Code</text>
+  <rect x="482" y="133" width="10" height="18" class="accent" rx="3"/>
+  <text x="502" y="149" class="h">OpenClaw</text>
+  <rect x="908" y="133" width="10" height="18" class="accent" rx="3"/>
+  <text x="928" y="149" class="h">Hermes Agent</text>
+
+  <!-- Row labels -->
+  <text x="40" y="220" class="h">① AuthN/AuthZ</text>
+  <text x="40" y="360" class="h">② 风险工具拦截</text>
+  <text x="40" y="500" class="h">③ 审批/交互 Gate</text>
+  <text x="40" y="640" class="h">④ 审计/修复建议</text>
+  <text x="40" y="780" class="h">⑤ 扩展面治理</text>
+
+  <!-- Claude -->
+  <rect x="70" y="190" width="347" height="110" class="box"/>
+  <text x="90" y="216" class="t">权限强类型：PermissionMode/RuleSource/Decision</text>
+  <text x="90" y="238" class="muted">入口：types/permissions.ts · utils/permissions/permissions.ts</text>
+  <text x="90" y="260" class="muted">统一注入：ToolPermissionContext（Tool.ts）</text>
+
+  <rect x="70" y="330" width="347" height="110" class="box"/>
+  <text x="90" y="356" class="t">Bash/File：独立安全层 + 路径写入 gate</text>
+  <text x="90" y="378" class="muted">bashSecurity.ts · pathValidation.ts · bashPermissions.ts</text>
+
+  <rect x="70" y="470" width="347" height="110" class="box"/>
+  <text x="90" y="496" class="t">Plan Mode 退出审批 + 权限弹窗组件化</text>
+  <text x="90" y="518" class="muted">ExitPlanModeV2Tool.ts · components/permissions/*</text>
+
+  <rect x="70" y="610" width="347" height="110" class="box"/>
+  <text x="90" y="636" class="t">拒绝追踪/规则遮蔽检测 → 降低误授权/卡死</text>
+  <text x="90" y="658" class="muted">denialTracking.ts · shadowedRuleDetection.ts</text>
+
+  <rect x="70" y="750" width="347" height="70" class="box"/>
+  <text x="90" y="776" class="t">MCP/skills/agents 仍受统一权限上下文约束</text>
+
+  <!-- OpenClaw -->
+  <rect x="500" y="190" width="360" height="110" class="box"/>
+  <text x="520" y="216" class="t">Gateway Auth：none/token/password/trusted-proxy</text>
+  <text x="520" y="238" class="muted">authorizeGatewayConnect*（gateway/auth.ts）</text>
+  <text x="520" y="260" class="muted">SecretRef 语义（types.secrets.ts）</text>
+
+  <rect x="500" y="330" width="360" height="110" class="box"/>
+  <text x="520" y="356" class="t">HTTP surface 默认 deny 高风险工具</text>
+  <text x="520" y="378" class="muted">DEFAULT_GATEWAY_HTTP_TOOL_DENY（dangerous-tools.ts）</text>
+
+  <rect x="500" y="470" width="360" height="110" class="box"/>
+  <text x="520" y="496" class="t">模式互斥校验（trusted-proxy vs token 等）</text>
+  <text x="520" y="518" class="muted">auth.ts 内部显式检查并返回 reason</text>
+
+  <rect x="500" y="610" width="360" height="110" class="box"/>
+  <text x="520" y="636" class="t">安全审计：文件权限检查 + remediation 文案</text>
+  <text x="520" y="658" class="muted">collectFilesystemFindings（security/audit.ts）</text>
+
+  <rect x="500" y="750" width="360" height="70" class="box"/>
+  <text x="520" y="776" class="t">扩展边界：plugin-sdk/contracts（隔离即安全）</text>
+
+  <!-- Hermes -->
+  <rect x="930" y="190" width="400" height="110" class="box"/>
+  <text x="950" y="216" class="t">审批上下文：contextvars 隔离会话</text>
+  <text x="950" y="238" class="muted">approval.py：_approval_session_key、set/reset</text>
+  <text x="950" y="260" class="muted">path_security.py：validate_within_dir</text>
+
+  <rect x="930" y="330" width="400" height="110" class="box"/>
+  <text x="950" y="356" class="t">危险命令识别 + destructive pattern + checkpoint</text>
+  <text x="950" y="378" class="muted">approval.py：DANGEROUS_PATTERNS</text>
+  <text x="950" y="400" class="muted">run_agent.py：_DESTRUCTIVE_PATTERNS/_is_destructive_command</text>
+
+  <rect x="930" y="470" width="400" height="110" class="box"/>
+  <text x="950" y="496" class="t">pre-tool-call block hook（可插拔拦截）</text>
+  <text x="950" y="518" class="muted">run_agent.py：get_pre_tool_call_block_message</text>
+
+  <rect x="930" y="610" width="400" height="110" class="box"/>
+  <text x="950" y="636" class="t">skills 扫描 + trust policy（供应链式治理）</text>
+  <text x="950" y="658" class="muted">skills_guard.py：THREAT_PATTERNS / INSTALL_POLICY</text>
+
+  <rect x="930" y="750" width="400" height="70" class="box"/>
+  <text x="950" y="776" class="t">toolset 门控 + registry shadowing 拒绝（缩小攻击面）</text>
+
+  <!-- Vertical arrows per column -->
+  <path d="M 244 300 L 244 330" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 244 440 L 244 470" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 244 580 L 244 610" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 244 720 L 244 750" class="arrow" marker-end="url(#arrow)"/>
+
+  <path d="M 680 300 L 680 330" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 680 440 L 680 470" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 680 580 L 680 610" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 680 720 L 680 750" class="arrow" marker-end="url(#arrow)"/>
+
+  <path d="M 1130 300 L 1130 330" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 1130 440 L 1130 470" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 1130 580 L 1130 610" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M 1130 720 L 1130 750" class="arrow" marker-end="url(#arrow)"/>
+</svg>
+
