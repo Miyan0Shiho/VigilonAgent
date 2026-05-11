@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "paths": {
+      "@vigilon/shared": [
+        "packages/shared/src/index.ts"
+      ],
+      "@vigilon/shared/*": [
+        "packages/shared/src/*"
+      ]
+    },
+    "lib": [
+      "ES2023"
+    ],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "sourceMap": true,
+    "ignoreDeprecations": "6.0",
+    "jsx": "react-jsx",
+    "types": [
+      "node"
+    ]
+  }
+}
