@@ -7,7 +7,7 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "tui:start": "pnpm --filter @vigilon/claude-code start"
+    "tui:start": "pnpm --filter @vigilon/tui start"
   },
   "devDependencies": {
     "@types/node": "^24.10.0",
