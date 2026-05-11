@@ -1,6 +1,6 @@
 import React from 'react';
-import { Doctor } from '../../screens/Doctor.js';
-import type { LocalJSXCommandCall } from '../../types/command.js';
+import { Doctor } from '../../screens/Doctor';
+import type { LocalJSXCommandCall } from '../../types/command';
 export const call: LocalJSXCommandCall = (onDone, _context, _args) => {
   return Promise.resolve(<Doctor onDone={onDone} />);
 };

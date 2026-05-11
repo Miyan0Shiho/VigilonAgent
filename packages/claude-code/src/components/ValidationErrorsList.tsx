@@ -1,9 +1,9 @@
 import { c as _c } from "react/compiler-runtime";
-import setWith from 'lodash-es/setWith.js';
+import setWith from 'lodash-es/setWith';
 import * as React from 'react';
-import { Box, Text, useTheme } from '../ink.js';
-import type { ValidationError } from '../utils/settings/validation.js';
-import { type TreeNode, treeify } from '../utils/treeify.js';
+import { Box, Text, useTheme } from '../ink';
+import type { ValidationError } from '../utils/settings/validation';
+import { type TreeNode, treeify } from '../utils/treeify';
 
 /**
  * Builds a nested tree structure from dot-notation paths

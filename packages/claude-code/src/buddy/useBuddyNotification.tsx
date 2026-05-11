@@ -1,10 +1,10 @@
 import { c as _c } from "react/compiler-runtime";
-import { feature } from 'bun:bundle';
+import { feature } from 'src/bun-bundle.ts';
 import React, { useEffect } from 'react';
-import { useNotifications } from '../context/notifications.js';
-import { Text } from '../ink.js';
-import { getGlobalConfig } from '../utils/config.js';
-import { getRainbowColor } from '../utils/thinking.js';
+import { useNotifications } from '../context/notifications';
+import { Text } from '../ink';
+import { getGlobalConfig } from '../utils/config';
+import { getRainbowColor } from '../utils/thinking';
 
 // Local date, not UTC — 24h rolling wave across timezones. Sustained Twitter
 // buzz instead of a single UTC-midnight spike, gentler on soul-gen load.

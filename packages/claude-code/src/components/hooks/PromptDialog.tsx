@@ -1,10 +1,10 @@
 import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
-import { Box, Text } from '../../ink.js';
-import { useKeybinding } from '../../keybindings/useKeybinding.js';
-import type { PromptRequest } from '../../types/hooks.js';
-import { Select } from '../CustomSelect/select.js';
-import { PermissionDialog } from '../permissions/PermissionDialog.js';
+import { Box, Text } from '../../ink';
+import { useKeybinding } from '../../keybindings/useKeybinding';
+import type { PromptRequest } from '../../types/hooks';
+import { Select } from '../CustomSelect/select';
+import { PermissionDialog } from '../permissions/PermissionDialog';
 type Props = {
   title: string;
   toolInputSummary?: string | null;

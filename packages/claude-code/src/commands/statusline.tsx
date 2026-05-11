@@ -1,6 +1,6 @@
 import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
-import type { Command } from '../commands.js';
-import { AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js';
+import type { Command } from '../commands';
+import { AGENT_TOOL_NAME } from '../tools/AgentTool/constants';
 const statusline = {
   type: 'prompt',
   description: "Set up Claude Code's status line UI",

@@ -4,8 +4,13 @@
     "rootDir": "src",
     "outDir": "dist",
     "baseUrl": ".",
+    "types": ["node", "bun"],
+    "typeRoots": ["../../node_modules/@types", "node_modules/@types"],
     "paths": {
-      "*": ["src/*"]
+      "zod/v4": ["src/zod-v4.ts"],
+      "bun:bundle": ["src/bun-bundle.ts"],
+      "color-diff-napi": ["src/color-diff-napi.ts"],
+      "src/*": ["src/*"]
     }
   },
   "include": ["src/**/*"]

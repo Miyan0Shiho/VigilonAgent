@@ -1,7 +1,7 @@
 import React from 'react';
-import { stringWidth } from '../ink/stringWidth.js';
-import { Box, Text } from '../ink.js';
-import { truncateToWidth } from '../utils/format.js';
+import { stringWidth } from '../ink/stringWidth';
+import { Box, Text } from '../ink';
+import { truncateToWidth } from '../utils/format';
 
 // Constants for width calculations - derived from actual rendered strings
 const ALL_TAB_LABEL = 'All';

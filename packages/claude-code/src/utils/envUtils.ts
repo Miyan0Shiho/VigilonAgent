@@ -1,4 +1,4 @@
-import memoize from 'lodash-es/memoize.js'
+import memoize from 'lodash-es/memoize'
 import { homedir } from 'os'
 import { join } from 'path'
 
@@ -54,7 +54,7 @@ export function isEnvDefinedFalsy(
  * ~30 gates across the codebase.
  *
  * Checks argv directly (in addition to the env var) because several gates
- * run before main.tsx's action handler sets CLAUDE_CODE_SIMPLE=1 from --bare
+ * run before main's action handler sets CLAUDE_CODE_SIMPLE=1 from --bare
  * — notably startKeychainPrefetch() at main.tsx top-level.
  */
 export function isBareMode(): boolean {
@@ -139,7 +139,7 @@ export function isInProtectedNamespace(): boolean {
   if (process.env.USER_TYPE === 'ant') {
     /* eslint-disable @typescript-eslint/no-require-imports */
     return (
-      require('./protectedNamespace.js') as typeof import('./protectedNamespace.js')
+      require('./protectedNamespace') as typeof import('./protectedNamespace')
     ).checkProtectedNamespace()
     /* eslint-enable @typescript-eslint/no-require-imports */
   }

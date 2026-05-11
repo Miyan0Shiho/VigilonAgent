@@ -1,21 +1,21 @@
 import { c as _c } from "react/compiler-runtime";
-import { feature } from 'bun:bundle';
+import { feature } from 'src/bun-bundle.ts';
 import * as React from 'react';
-import { resetCostState } from '../../bootstrap/state.js';
-import { clearTrustedDeviceToken, enrollTrustedDevice } from '../../bridge/trustedDevice.js';
-import type { LocalJSXCommandContext } from '../../commands.js';
-import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js';
-import { ConsoleOAuthFlow } from '../../components/ConsoleOAuthFlow.js';
-import { Dialog } from '../../components/design-system/Dialog.js';
-import { useMainLoopModel } from '../../hooks/useMainLoopModel.js';
-import { Text } from '../../ink.js';
-import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growthbook.js';
-import { refreshPolicyLimits } from '../../services/policyLimits/index.js';
-import { refreshRemoteManagedSettings } from '../../services/remoteManagedSettings/index.js';
-import type { LocalJSXCommandOnDone } from '../../types/command.js';
-import { stripSignatureBlocks } from '../../utils/messages.js';
-import { checkAndDisableAutoModeIfNeeded, checkAndDisableBypassPermissionsIfNeeded, resetAutoModeGateCheck, resetBypassPermissionsCheck } from '../../utils/permissions/bypassPermissionsKillswitch.js';
-import { resetUserCache } from '../../utils/user.js';
+import { resetCostState } from '../../bootstrap/state';
+import { clearTrustedDeviceToken, enrollTrustedDevice } from '../../bridge/trustedDevice';
+import type { LocalJSXCommandContext } from '../../commands';
+import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint';
+import { ConsoleOAuthFlow } from '../../components/ConsoleOAuthFlow';
+import { Dialog } from '../../components/design-system/Dialog';
+import { useMainLoopModel } from '../../hooks/useMainLoopModel';
+import { Text } from '../../ink';
+import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growthbook';
+import { refreshPolicyLimits } from '../../services/policyLimits/index';
+import { refreshRemoteManagedSettings } from '../../services/remoteManagedSettings/index';
+import type { LocalJSXCommandOnDone } from '../../types/command';
+import { stripSignatureBlocks } from '../../utils/messages';
+import { checkAndDisableAutoModeIfNeeded, checkAndDisableBypassPermissionsIfNeeded, resetAutoModeGateCheck, resetBypassPermissionsCheck } from '../../utils/permissions/bypassPermissionsKillswitch';
+import { resetUserCache } from '../../utils/user';
 export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXCommandContext): Promise<React.ReactNode> {
   return <Login onDone={async success => {
     context.onChangeAPIKey();

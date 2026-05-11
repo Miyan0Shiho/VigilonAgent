@@ -1,16 +1,16 @@
 import { c as _c } from "react/compiler-runtime";
-import capitalize from 'lodash-es/capitalize.js';
+import capitalize from 'lodash-es/capitalize';
 import * as React from 'react';
 import { useMemo } from 'react';
-import { type Command, type CommandBase, type CommandResultDisplay, getCommandName, type PromptCommand } from '../../commands.js';
-import { Box, Text } from '../../ink.js';
-import { estimateSkillFrontmatterTokens, getSkillsPath } from '../../skills/loadSkillsDir.js';
-import { getDisplayPath } from '../../utils/file.js';
-import { formatTokens } from '../../utils/format.js';
-import { getSettingSourceName, type SettingSource } from '../../utils/settings/constants.js';
-import { plural } from '../../utils/stringUtils.js';
-import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
-import { Dialog } from '../design-system/Dialog.js';
+import { type Command, type CommandBase, type CommandResultDisplay, getCommandName, type PromptCommand } from '../../commands';
+import { Box, Text } from '../../ink';
+import { estimateSkillFrontmatterTokens, getSkillsPath } from '../../skills/loadSkillsDir';
+import { getDisplayPath } from '../../utils/file';
+import { formatTokens } from '../../utils/format';
+import { getSettingSourceName, type SettingSource } from '../../utils/settings/constants';
+import { plural } from '../../utils/stringUtils';
+import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint';
+import { Dialog } from '../design-system/Dialog';
 
 // Skills are always PromptCommands with CommandBase properties
 type SkillCommand = CommandBase & PromptCommand;

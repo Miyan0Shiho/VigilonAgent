@@ -1,12 +1,12 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { useEffect, useMemo, useState } from 'react';
-import { extraUsage } from 'src/commands/extra-usage/index.js';
-import { Box, Text } from 'src/ink.js';
-import { useClaudeAiLimits } from 'src/services/claudeAiLimitsHook.js';
-import { shouldProcessMockLimits } from 'src/services/rateLimitMocking.js'; // Used for /mock-limits command
-import { getRateLimitTier, getSubscriptionType, isClaudeAISubscriber } from 'src/utils/auth.js';
-import { hasClaudeAiBillingAccess } from 'src/utils/billing.js';
-import { MessageResponse } from '../MessageResponse.js';
+import { extraUsage } from 'src/commands/extra-usage/index';
+import { Box, Text } from 'src/ink';
+import { useClaudeAiLimits } from 'src/services/claudeAiLimitsHook';
+import { shouldProcessMockLimits } from 'src/services/rateLimitMocking'; // Used for /mock-limits command
+import { getRateLimitTier, getSubscriptionType, isClaudeAISubscriber } from 'src/utils/auth';
+import { hasClaudeAiBillingAccess } from 'src/utils/billing';
+import { MessageResponse } from '../MessageResponse';
 type UpsellParams = {
   shouldShowUpsell: boolean;
   isMax20x: boolean;

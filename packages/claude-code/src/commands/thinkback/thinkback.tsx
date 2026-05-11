@@ -4,25 +4,25 @@ import { readFile } from 'fs/promises';
 import { join } from 'path';
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import type { CommandResultDisplay } from '../../commands.js';
-import { Select } from '../../components/CustomSelect/select.js';
-import { Dialog } from '../../components/design-system/Dialog.js';
-import { Spinner } from '../../components/Spinner.js';
-import instances from '../../ink/instances.js';
-import { Box, Text } from '../../ink.js';
-import { enablePluginOp } from '../../services/plugins/pluginOperations.js';
-import { logForDebugging } from '../../utils/debug.js';
-import { isENOENT, toError } from '../../utils/errors.js';
-import { execFileNoThrow } from '../../utils/execFileNoThrow.js';
-import { pathExists } from '../../utils/file.js';
-import { logError } from '../../utils/log.js';
-import { getPlatform } from '../../utils/platform.js';
-import { clearAllCaches } from '../../utils/plugins/cacheUtils.js';
-import { isPluginInstalled } from '../../utils/plugins/installedPluginsManager.js';
-import { addMarketplaceSource, clearMarketplacesCache, loadKnownMarketplacesConfig, refreshMarketplace } from '../../utils/plugins/marketplaceManager.js';
-import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketplace.js';
-import { loadAllPlugins } from '../../utils/plugins/pluginLoader.js';
-import { installSelectedPlugins } from '../../utils/plugins/pluginStartupCheck.js';
+import type { CommandResultDisplay } from '../../commands';
+import { Select } from '../../components/CustomSelect/select';
+import { Dialog } from '../../components/design-system/Dialog';
+import { Spinner } from '../../components/Spinner';
+import instances from '../../ink/instances';
+import { Box, Text } from '../../ink';
+import { enablePluginOp } from '../../services/plugins/pluginOperations';
+import { logForDebugging } from '../../utils/debug';
+import { isENOENT, toError } from '../../utils/errors';
+import { execFileNoThrow } from '../../utils/execFileNoThrow';
+import { pathExists } from '../../utils/file';
+import { logError } from '../../utils/log';
+import { getPlatform } from '../../utils/platform';
+import { clearAllCaches } from '../../utils/plugins/cacheUtils';
+import { isPluginInstalled } from '../../utils/plugins/installedPluginsManager';
+import { addMarketplaceSource, clearMarketplacesCache, loadKnownMarketplacesConfig, refreshMarketplace } from '../../utils/plugins/marketplaceManager';
+import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketplace';
+import { loadAllPlugins } from '../../utils/plugins/pluginLoader';
+import { installSelectedPlugins } from '../../utils/plugins/pluginStartupCheck';
 
 // Marketplace and plugin identifiers - varies by user type
 const INTERNAL_MARKETPLACE_NAME = 'claude-code-marketplace';
@@ -60,8 +60,8 @@ export async function playAnimation(skillDir: string): Promise<{
   success: boolean;
   message: string;
 }> {
-  const dataPath = join(skillDir, 'year_in_review.js');
-  const playerPath = join(skillDir, 'player.js');
+  const dataPath = join(skillDir, 'year_in_review');
+  const playerPath = join(skillDir, 'player');
 
   // Both files are prerequisites for the node subprocess. Read them here
   // (not at call sites) so all callers get consistent error messaging. The

@@ -1,8 +1,8 @@
 import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
-import { Box, Text } from '../../ink.js';
-import { getAgentModelOptions } from '../../utils/model/agent.js';
-import { Select } from '../CustomSelect/select.js';
+import { Box, Text } from '../../ink';
+import { getAgentModelOptions } from '../../utils/model/agent';
+import { Select } from '../CustomSelect/select';
 interface ModelSelectorProps {
   initialModel?: string;
   onComplete: (model?: string) => void;

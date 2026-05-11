@@ -20,9 +20,9 @@
  *   // sync and grapheme are DECRPM responses or undefined if unsupported
  */
 
-import type { TerminalResponse } from './parse-keypress.js'
-import { csi } from './termio/csi.js'
-import { osc } from './termio/osc.js'
+import type { TerminalResponse } from './parse-keypress'
+import { csi } from './termio/csi'
+import { osc } from './termio/osc'
 
 /** A terminal query: an outbound request sequence paired with a matcher
  *  that recognizes the expected inbound response. Built by `decrqm()`,
@@ -175,7 +175,7 @@ export class TerminalQuerier {
   }
 
   /**
-   * Dispatch a response parsed from stdin. Called by App.tsx's
+   * Dispatch a response parsed from stdin. Called by App's
    * processKeysInBatch for every `kind: 'response'` item.
    *
    * Matching strategy:

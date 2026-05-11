@@ -1,11 +1,11 @@
 import * as React from 'react';
-import type { LocalJSXCommandContext } from '../../commands.js';
-import { getOauthProfileFromOauthToken } from '../../services/oauth/getOauthProfile.js';
-import type { LocalJSXCommandOnDone } from '../../types/command.js';
-import { getClaudeAIOAuthTokens, isClaudeAISubscriber } from '../../utils/auth.js';
-import { openBrowser } from '../../utils/browser.js';
-import { logError } from '../../utils/log.js';
-import { Login } from '../login/login.js';
+import type { LocalJSXCommandContext } from '../../commands';
+import { getOauthProfileFromOauthToken } from '../../services/oauth/getOauthProfile';
+import type { LocalJSXCommandOnDone } from '../../types/command';
+import { getClaudeAIOAuthTokens, isClaudeAISubscriber } from '../../utils/auth';
+import { openBrowser } from '../../utils/browser';
+import { logError } from '../../utils/log';
+import { Login } from '../login/login';
 export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXCommandContext): Promise<React.ReactNode | null> {
   try {
     // Check if user is already on the highest Max plan (20x)

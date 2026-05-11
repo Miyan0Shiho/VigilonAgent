@@ -1,13 +1,13 @@
-import { feature } from 'bun:bundle';
+import { feature } from 'src/bun-bundle.ts';
 import * as React from 'react';
-import type { LocalJSXCommandContext } from '../../commands.js';
-import { ContextVisualization } from '../../components/ContextVisualization.js';
-import { microcompactMessages } from '../../services/compact/microCompact.js';
-import type { LocalJSXCommandOnDone } from '../../types/command.js';
-import type { Message } from '../../types/message.js';
-import { analyzeContextUsage } from '../../utils/analyzeContext.js';
-import { getMessagesAfterCompactBoundary } from '../../utils/messages.js';
-import { renderToAnsiString } from '../../utils/staticRender.js';
+import type { LocalJSXCommandContext } from '../../commands';
+import { ContextVisualization } from '../../components/ContextVisualization';
+import { microcompactMessages } from '../../services/compact/microCompact';
+import type { LocalJSXCommandOnDone } from '../../types/command';
+import type { Message } from '../../types/message';
+import { analyzeContextUsage } from '../../utils/analyzeContext';
+import { getMessagesAfterCompactBoundary } from '../../utils/messages';
+import { renderToAnsiString } from '../../utils/staticRender';
 
 /**
  * Apply the same context transforms query.ts does before the API call, so
@@ -21,7 +21,7 @@ function toApiView(messages: Message[]): Message[] {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const {
       projectView
-    } = require('../../services/contextCollapse/operations.js') as typeof import('../../services/contextCollapse/operations.js');
+    } = require('../../services/contextCollapse/operations') as typeof import('../../services/contextCollapse/operations');
     /* eslint-enable @typescript-eslint/no-require-imports */
     view = projectView(view);
   }

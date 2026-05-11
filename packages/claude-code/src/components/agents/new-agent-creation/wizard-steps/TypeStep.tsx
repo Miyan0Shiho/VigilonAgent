@@ -1,16 +1,16 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { type ReactNode, useState } from 'react';
-import { Box, Text } from '../../../../ink.js';
-import { useKeybinding } from '../../../../keybindings/useKeybinding.js';
-import type { AgentDefinition } from '../../../../tools/AgentTool/loadAgentsDir.js';
-import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
-import { Byline } from '../../../design-system/Byline.js';
-import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js';
-import TextInput from '../../../TextInput.js';
-import { useWizard } from '../../../wizard/index.js';
-import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js';
-import { validateAgentType } from '../../validateAgent.js';
-import type { AgentWizardData } from '../types.js';
+import { Box, Text } from '../../../../ink';
+import { useKeybinding } from '../../../../keybindings/useKeybinding';
+import type { AgentDefinition } from '../../../../tools/AgentTool/loadAgentsDir';
+import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint';
+import { Byline } from '../../../design-system/Byline';
+import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint';
+import TextInput from '../../../TextInput';
+import { useWizard } from '../../../wizard/index';
+import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout';
+import { validateAgentType } from '../../validateAgent';
+import type { AgentWizardData } from '../types';
 type Props = {
   existingAgents: AgentDefinition[];
 };

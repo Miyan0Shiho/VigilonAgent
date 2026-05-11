@@ -1,9 +1,9 @@
 import React from 'react';
-import { Text } from '../../ink.js';
-import type { Tools } from '../../Tool.js';
-import { findToolByName } from '../../Tool.js';
-import type { ToolActivity } from '../../tasks/LocalAgentTask/LocalAgentTask.js';
-import type { ThemeName } from '../../utils/theme.js';
+import { Text } from '../../ink';
+import type { Tools } from '../../Tool';
+import { findToolByName } from '../../Tool';
+import type { ToolActivity } from '../../tasks/LocalAgentTask/LocalAgentTask';
+import type { ThemeName } from '../../utils/theme';
 export function renderToolActivity(activity: ToolActivity, tools: Tools, theme: ThemeName): React.ReactNode {
   const tool = findToolByName(tools, activity.toolName);
   if (!tool) {

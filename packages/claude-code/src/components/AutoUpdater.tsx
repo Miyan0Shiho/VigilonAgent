@@ -1,17 +1,17 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index';
 import { useInterval } from 'usehooks-ts';
-import { useUpdateNotification } from '../hooks/useUpdateNotification.js';
-import { Box, Text } from '../ink.js';
-import { type AutoUpdaterResult, getLatestVersion, getMaxVersion, type InstallStatus, installGlobalPackage, shouldSkipVersion } from '../utils/autoUpdater.js';
-import { getGlobalConfig, isAutoUpdaterDisabled } from '../utils/config.js';
-import { logForDebugging } from '../utils/debug.js';
-import { getCurrentInstallationType } from '../utils/doctorDiagnostic.js';
-import { installOrUpdateClaudePackage, localInstallationExists } from '../utils/localInstaller.js';
-import { removeInstalledSymlink } from '../utils/nativeInstaller/index.js';
-import { gt, gte } from '../utils/semver.js';
-import { getInitialSettings } from '../utils/settings/settings.js';
+import { useUpdateNotification } from '../hooks/useUpdateNotification';
+import { Box, Text } from '../ink';
+import { type AutoUpdaterResult, getLatestVersion, getMaxVersion, type InstallStatus, installGlobalPackage, shouldSkipVersion } from '../utils/autoUpdater';
+import { getGlobalConfig, isAutoUpdaterDisabled } from '../utils/config';
+import { logForDebugging } from '../utils/debug';
+import { getCurrentInstallationType } from '../utils/doctorDiagnostic';
+import { installOrUpdateClaudePackage, localInstallationExists } from '../utils/localInstaller';
+import { removeInstalledSymlink } from '../utils/nativeInstaller/index';
+import { gt, gte } from '../utils/semver';
+import { getInitialSettings } from '../utils/settings/settings';
 type Props = {
   isUpdating: boolean;
   onChangeIsUpdating: (isUpdating: boolean) => void;

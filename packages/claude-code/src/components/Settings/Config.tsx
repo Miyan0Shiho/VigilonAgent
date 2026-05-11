@@ -1,53 +1,53 @@
 import { c as _c } from "react/compiler-runtime";
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import { feature } from 'bun:bundle';
-import { Box, Text, useTheme, useThemeSetting, useTerminalFocus } from '../../ink.js';
-import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
+import { feature } from 'src/bun-bundle.ts';
+import { Box, Text, useTheme, useThemeSetting, useTerminalFocus } from '../../ink';
+import type { KeyboardEvent } from '../../ink/events/keyboard-event';
 import * as React from 'react';
 import { useState, useCallback } from 'react';
-import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js';
+import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding';
 import figures from 'figures';
-import { type GlobalConfig, saveGlobalConfig, getCurrentProjectConfig, type OutputStyle } from '../../utils/config.js';
-import { normalizeApiKeyForConfig } from '../../utils/authPortable.js';
-import { getGlobalConfig, getAutoUpdaterDisabledReason, formatAutoUpdaterDisabledReason, getRemoteControlAtStartup } from '../../utils/config.js';
+import { type GlobalConfig, saveGlobalConfig, getCurrentProjectConfig, type OutputStyle } from '../../utils/config';
+import { normalizeApiKeyForConfig } from '../../utils/authPortable';
+import { getGlobalConfig, getAutoUpdaterDisabledReason, formatAutoUpdaterDisabledReason, getRemoteControlAtStartup } from '../../utils/config';
 import chalk from 'chalk';
-import { permissionModeTitle, permissionModeFromString, toExternalPermissionMode, isExternalPermissionMode, EXTERNAL_PERMISSION_MODES, PERMISSION_MODES, type ExternalPermissionMode, type PermissionMode } from '../../utils/permissions/PermissionMode.js';
-import { getAutoModeEnabledState, hasAutoModeOptInAnySource, transitionPlanAutoMode } from '../../utils/permissions/permissionSetup.js';
-import { logError } from '../../utils/log.js';
-import { logEvent, type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/index.js';
-import { isBridgeEnabled } from '../../bridge/bridgeEnabled.js';
-import { ThemePicker } from '../ThemePicker.js';
-import { useAppState, useSetAppState, useAppStateStore } from '../../state/AppState.js';
-import { ModelPicker } from '../ModelPicker.js';
-import { modelDisplayString, isOpus1mMergeEnabled } from '../../utils/model/model.js';
-import { isBilledAsExtraUsage } from '../../utils/extraUsage.js';
-import { ClaudeMdExternalIncludesDialog } from '../ClaudeMdExternalIncludesDialog.js';
-import { ChannelDowngradeDialog, type ChannelDowngradeChoice } from '../ChannelDowngradeDialog.js';
-import { Dialog } from '../design-system/Dialog.js';
-import { Select } from '../CustomSelect/index.js';
-import { OutputStylePicker } from '../OutputStylePicker.js';
-import { LanguagePicker } from '../LanguagePicker.js';
-import { getExternalClaudeMdIncludes, getMemoryFiles, hasExternalClaudeMdIncludes } from 'src/utils/claudemd.js';
-import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
-import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
-import { Byline } from '../design-system/Byline.js';
-import { useTabHeaderFocus } from '../design-system/Tabs.js';
-import { useIsInsideModal } from '../../context/modalContext.js';
-import { SearchBox } from '../SearchBox.js';
-import { isSupportedTerminal, hasAccessToIDEExtensionDiffFeature } from '../../utils/ide.js';
-import { getInitialSettings, getSettingsForSource, updateSettingsForSource } from '../../utils/settings/settings.js';
-import { getUserMsgOptIn, setUserMsgOptIn } from '../../bootstrap/state.js';
-import { DEFAULT_OUTPUT_STYLE_NAME } from 'src/constants/outputStyles.js';
-import { isEnvTruthy, isRunningOnHomespace } from 'src/utils/envUtils.js';
-import type { LocalJSXCommandContext, CommandResultDisplay } from '../../commands.js';
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js';
-import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js';
-import { getCliTeammateModeOverride, clearCliTeammateModeOverride } from '../../utils/swarm/backends/teammateModeSnapshot.js';
-import { getHardcodedTeammateModelFallback } from '../../utils/swarm/teammateModel.js';
-import { useSearchInput } from '../../hooks/useSearchInput.js';
-import { useTerminalSize } from '../../hooks/useTerminalSize.js';
-import { clearFastModeCooldown, FAST_MODE_MODEL_DISPLAY, isFastModeAvailable, isFastModeEnabled, getFastModeModel, isFastModeSupportedByModel } from '../../utils/fastMode.js';
-import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js';
+import { permissionModeTitle, permissionModeFromString, toExternalPermissionMode, isExternalPermissionMode, EXTERNAL_PERMISSION_MODES, PERMISSION_MODES, type ExternalPermissionMode, type PermissionMode } from '../../utils/permissions/PermissionMode';
+import { getAutoModeEnabledState, hasAutoModeOptInAnySource, transitionPlanAutoMode } from '../../utils/permissions/permissionSetup';
+import { logError } from '../../utils/log';
+import { logEvent, type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/index';
+import { isBridgeEnabled } from '../../bridge/bridgeEnabled';
+import { ThemePicker } from '../ThemePicker';
+import { useAppState, useSetAppState, useAppStateStore } from '../../state/AppState';
+import { ModelPicker } from '../ModelPicker';
+import { modelDisplayString, isOpus1mMergeEnabled } from '../../utils/model/model';
+import { isBilledAsExtraUsage } from '../../utils/extraUsage';
+import { ClaudeMdExternalIncludesDialog } from '../ClaudeMdExternalIncludesDialog';
+import { ChannelDowngradeDialog, type ChannelDowngradeChoice } from '../ChannelDowngradeDialog';
+import { Dialog } from '../design-system/Dialog';
+import { Select } from '../CustomSelect/index';
+import { OutputStylePicker } from '../OutputStylePicker';
+import { LanguagePicker } from '../LanguagePicker';
+import { getExternalClaudeMdIncludes, getMemoryFiles, hasExternalClaudeMdIncludes } from 'src/utils/claudemd';
+import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint';
+import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint';
+import { Byline } from '../design-system/Byline';
+import { useTabHeaderFocus } from '../design-system/Tabs';
+import { useIsInsideModal } from '../../context/modalContext';
+import { SearchBox } from '../SearchBox';
+import { isSupportedTerminal, hasAccessToIDEExtensionDiffFeature } from '../../utils/ide';
+import { getInitialSettings, getSettingsForSource, updateSettingsForSource } from '../../utils/settings/settings';
+import { getUserMsgOptIn, setUserMsgOptIn } from '../../bootstrap/state';
+import { DEFAULT_OUTPUT_STYLE_NAME } from 'src/constants/outputStyles';
+import { isEnvTruthy, isRunningOnHomespace } from 'src/utils/envUtils';
+import type { LocalJSXCommandContext, CommandResultDisplay } from '../../commands';
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook';
+import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled';
+import { getCliTeammateModeOverride, clearCliTeammateModeOverride } from '../../utils/swarm/backends/teammateModeSnapshot';
+import { getHardcodedTeammateModelFallback } from '../../utils/swarm/teammateModel';
+import { useSearchInput } from '../../hooks/useSearchInput';
+import { useTerminalSize } from '../../hooks/useTerminalSize';
+import { clearFastModeCooldown, FAST_MODE_MODEL_DISPLAY, isFastModeAvailable, isFastModeEnabled, getFastModeModel, isFastModeSupportedByModel } from '../../utils/fastMode';
+import { isFullscreenEnvEnabled } from '../../utils/fullscreen';
 type Props = {
   onClose: (result?: string, options?: {
     display?: CommandResultDisplay;
@@ -131,7 +131,7 @@ export function Config({
   // opt-in. 'chat' written here is read at next startup by main.tsx which
   // sets userMsgOptIn if still entitled.
   /* eslint-disable @typescript-eslint/no-require-imports */
-  const showDefaultViewPicker = feature('KAIROS') || feature('KAIROS_BRIEF') ? (require('../../tools/BriefTool/BriefTool.js') as typeof import('../../tools/BriefTool/BriefTool.js')).isBriefEntitled() : false;
+  const showDefaultViewPicker = feature('KAIROS') || feature('KAIROS_BRIEF') ? (require('../../tools/BriefTool/BriefTool') as typeof import('../../tools/BriefTool/BriefTool')).isBriefEntitled() : false;
   /* eslint-enable @typescript-eslint/no-require-imports */
   const setAppState = useSetAppState();
   const [changes, setChanges] = useState<{

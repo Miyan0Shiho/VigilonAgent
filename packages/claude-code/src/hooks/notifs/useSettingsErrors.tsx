@@ -1,10 +1,10 @@
 import { c as _c } from "react/compiler-runtime";
 import { useCallback, useEffect, useState } from 'react';
-import { useNotifications } from 'src/context/notifications.js';
-import { getIsRemoteMode } from '../../bootstrap/state.js';
-import { getSettingsWithAllErrors } from '../../utils/settings/allErrors.js';
-import type { ValidationError } from '../../utils/settings/validation.js';
-import { useSettingsChange } from '../useSettingsChange.js';
+import { useNotifications } from 'src/context/notifications';
+import { getIsRemoteMode } from '../../bootstrap/state';
+import { getSettingsWithAllErrors } from '../../utils/settings/allErrors';
+import type { ValidationError } from '../../utils/settings/validation';
+import { useSettingsChange } from '../useSettingsChange';
 const SETTINGS_ERRORS_NOTIFICATION_KEY = 'settings-errors';
 export function useSettingsErrors() {
   const $ = _c(6);

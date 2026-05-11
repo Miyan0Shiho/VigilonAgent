@@ -2,16 +2,16 @@ import { c as _c } from "react/compiler-runtime";
 import chalk from 'chalk';
 import type { UUID } from 'crypto';
 import * as React from 'react';
-import { getSessionId } from '../../bootstrap/state.js';
-import type { CommandResultDisplay } from '../../commands.js';
-import { Select } from '../../components/CustomSelect/select.js';
-import { Dialog } from '../../components/design-system/Dialog.js';
-import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml.js';
-import { Box, Text } from '../../ink.js';
-import { logEvent } from '../../services/analytics/index.js';
-import type { LocalJSXCommandOnDone } from '../../types/command.js';
-import { recursivelySanitizeUnicode } from '../../utils/sanitization.js';
-import { getCurrentSessionTag, getTranscriptPath, saveTag } from '../../utils/sessionStorage.js';
+import { getSessionId } from '../../bootstrap/state';
+import type { CommandResultDisplay } from '../../commands';
+import { Select } from '../../components/CustomSelect/select';
+import { Dialog } from '../../components/design-system/Dialog';
+import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml';
+import { Box, Text } from '../../ink';
+import { logEvent } from '../../services/analytics/index';
+import type { LocalJSXCommandOnDone } from '../../types/command';
+import { recursivelySanitizeUnicode } from '../../utils/sanitization';
+import { getCurrentSessionTag, getTranscriptPath, saveTag } from '../../utils/sessionStorage';
 function ConfirmRemoveTag(t0) {
   const $ = _c(11);
   const {

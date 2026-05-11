@@ -1,13 +1,13 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { type ReactNode } from 'react';
-import { Box } from '../../../../ink.js';
-import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
-import { Select } from '../../../CustomSelect/select.js';
-import { Byline } from '../../../design-system/Byline.js';
-import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js';
-import { useWizard } from '../../../wizard/index.js';
-import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js';
-import type { AgentWizardData } from '../types.js';
+import { Box } from '../../../../ink';
+import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint';
+import { Select } from '../../../CustomSelect/select';
+import { Byline } from '../../../design-system/Byline';
+import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint';
+import { useWizard } from '../../../wizard/index';
+import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout';
+import type { AgentWizardData } from '../types';
 export function MethodStep() {
   const $ = _c(11);
   const {

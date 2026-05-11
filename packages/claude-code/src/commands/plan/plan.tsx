@@ -1,16 +1,16 @@
 import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
-import { handlePlanModeTransition } from '../../bootstrap/state.js';
-import type { LocalJSXCommandContext } from '../../commands.js';
-import { Box, Text } from '../../ink.js';
-import type { LocalJSXCommandOnDone } from '../../types/command.js';
-import { getExternalEditor } from '../../utils/editor.js';
-import { toIDEDisplayName } from '../../utils/ide.js';
-import { applyPermissionUpdate } from '../../utils/permissions/PermissionUpdate.js';
-import { prepareContextForPlanMode } from '../../utils/permissions/permissionSetup.js';
-import { getPlan, getPlanFilePath } from '../../utils/plans.js';
-import { editFileInEditor } from '../../utils/promptEditor.js';
-import { renderToString } from '../../utils/staticRender.js';
+import { handlePlanModeTransition } from '../../bootstrap/state';
+import type { LocalJSXCommandContext } from '../../commands';
+import { Box, Text } from '../../ink';
+import type { LocalJSXCommandOnDone } from '../../types/command';
+import { getExternalEditor } from '../../utils/editor';
+import { toIDEDisplayName } from '../../utils/ide';
+import { applyPermissionUpdate } from '../../utils/permissions/PermissionUpdate';
+import { prepareContextForPlanMode } from '../../utils/permissions/permissionSetup';
+import { getPlan, getPlanFilePath } from '../../utils/plans';
+import { editFileInEditor } from '../../utils/promptEditor';
+import { renderToString } from '../../utils/staticRender';
 function PlanDisplay(t0) {
   const $ = _c(11);
   const {

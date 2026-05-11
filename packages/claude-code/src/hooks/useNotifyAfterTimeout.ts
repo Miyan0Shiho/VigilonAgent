@@ -2,9 +2,9 @@ import { useEffect } from 'react'
 import {
   getLastInteractionTime,
   updateLastInteractionTime,
-} from '../bootstrap/state.js'
-import { useTerminalNotification } from '../ink/useTerminalNotification.js'
-import { sendNotification } from '../services/notifier.js'
+} from '../bootstrap/state'
+import { useTerminalNotification } from '../ink/useTerminalNotification'
+import { sendNotification } from '../services/notifier'
 // The time threshold in milliseconds for considering an interaction "recent" (6 seconds)
 export const DEFAULT_INTERACTION_THRESHOLD_MS = 6000
 
@@ -20,7 +20,7 @@ function shouldNotify(threshold: number): boolean {
   return process.env.NODE_ENV !== 'test' && !hasRecentInteraction(threshold)
 }
 
-// NOTE: User interaction tracking is now done in App.tsx's processKeysInBatch
+// NOTE: User interaction tracking is now done in App's processKeysInBatch
 // function, which calls updateLastInteractionTime() when any input is received.
 // This avoids having a separate stdin 'data' listener that would compete with
 // the main 'readable' listener and cause dropped input characters.

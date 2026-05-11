@@ -1,16 +1,16 @@
-import { feature } from 'bun:bundle';
+import { feature } from 'src/bun-bundle.ts';
 import * as React from 'react';
 import { useMemo } from 'react';
-import { Box } from 'src/ink.js';
-import { useAppState } from 'src/state/AppState.js';
-import { STATUS_TAG, SUMMARY_TAG, TASK_NOTIFICATION_TAG } from '../../constants/xml.js';
-import { QueuedMessageProvider } from '../../context/QueuedMessageContext.js';
-import { useCommandQueue } from '../../hooks/useCommandQueue.js';
-import type { QueuedCommand } from '../../types/textInputTypes.js';
-import { isQueuedCommandVisible } from '../../utils/messageQueueManager.js';
-import { createUserMessage, EMPTY_LOOKUPS, normalizeMessages } from '../../utils/messages.js';
-import { jsonParse } from '../../utils/slowOperations.js';
-import { Message } from '../Message.js';
+import { Box } from 'src/ink';
+import { useAppState } from 'src/state/AppState';
+import { STATUS_TAG, SUMMARY_TAG, TASK_NOTIFICATION_TAG } from '../../constants/xml';
+import { QueuedMessageProvider } from '../../context/QueuedMessageContext';
+import { useCommandQueue } from '../../hooks/useCommandQueue';
+import type { QueuedCommand } from '../../types/textInputTypes';
+import { isQueuedCommandVisible } from '../../utils/messageQueueManager';
+import { createUserMessage, EMPTY_LOOKUPS, normalizeMessages } from '../../utils/messages';
+import { jsonParse } from '../../utils/slowOperations';
+import { Message } from '../Message';
 const EMPTY_SET = new Set<string>();
 
 /**

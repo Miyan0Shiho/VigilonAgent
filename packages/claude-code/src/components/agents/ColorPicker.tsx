@@ -1,10 +1,10 @@
 import { c as _c } from "react/compiler-runtime";
 import figures from 'figures';
 import React, { useState } from 'react';
-import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
-import { Box, Text } from '../../ink.js';
-import { AGENT_COLOR_TO_THEME_COLOR, AGENT_COLORS, type AgentColorName } from '../../tools/AgentTool/agentColorManager.js';
-import { capitalize } from '../../utils/stringUtils.js';
+import type { KeyboardEvent } from '../../ink/events/keyboard-event';
+import { Box, Text } from '../../ink';
+import { AGENT_COLOR_TO_THEME_COLOR, AGENT_COLORS, type AgentColorName } from '../../tools/AgentTool/agentColorManager';
+import { capitalize } from '../../utils/stringUtils';
 type ColorOption = AgentColorName | 'automatic';
 const COLOR_OPTIONS: ColorOption[] = ['automatic', ...AGENT_COLORS];
 type Props = {

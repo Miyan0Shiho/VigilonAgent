@@ -1,15 +1,15 @@
 import React, { type RefObject, useEffect, useRef } from 'react';
-import { useNotifications } from '../context/notifications.js';
-import { useCopyOnSelect, useSelectionBgColor } from '../hooks/useCopyOnSelect.js';
-import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js';
-import { useSelection } from '../ink/hooks/use-selection.js';
-import type { FocusMove, SelectionState } from '../ink/selection.js';
-import { isXtermJs } from '../ink/terminal.js';
-import { getClipboardPath } from '../ink/termio/osc.js';
+import { useNotifications } from '../context/notifications';
+import { useCopyOnSelect, useSelectionBgColor } from '../hooks/useCopyOnSelect';
+import type { ScrollBoxHandle } from '../ink/components/ScrollBox';
+import { useSelection } from '../ink/hooks/use-selection';
+import type { FocusMove, SelectionState } from '../ink/selection';
+import { isXtermJs } from '../ink/terminal';
+import { getClipboardPath } from '../ink/termio/osc';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- Esc needs conditional propagation based on selection state
-import { type Key, useInput } from '../ink.js';
-import { useKeybindings } from '../keybindings/useKeybinding.js';
-import { logForDebugging } from '../utils/debug.js';
+import { type Key, useInput } from '../ink';
+import { useKeybindings } from '../keybindings/useKeybinding';
+import { logForDebugging } from '../utils/debug';
 type Props = {
   scrollRef: RefObject<ScrollBoxHandle | null>;
   isActive: boolean;
@@ -63,7 +63,7 @@ const WHEEL_ACCEL_MAX = 6;
 // once a bounce confirms it's a mouse, the decay curve applies until an idle
 // gap or trackpad-flick-burst signals a possible device switch.
 const WHEEL_BOUNCE_GAP_MAX_MS = 200; // flip-back must arrive within this
-// Mouse is ~9 events/sec vs VS Code's ~30 — STEP is 3× xterm.js's 5 to
+// Mouse is ~9 events/sec vs VS Code's ~30 — STEP is 3× xterm's 5 to
 // compensate. At gap=100ms (m≈0.63): one click gives 1+15*0.63≈10.5.
 const WHEEL_MODE_STEP = 15;
 const WHEEL_MODE_CAP = 15;
@@ -417,11 +417,11 @@ export function ScrollKeybindingHandler({
     const bottom = top + s.getViewportHeight() - 1;
     // Only translate if the selection is ON scrollbox content. Selections
     // in the footer/prompt/StickyPromptHeader are on static text — the
-    // scroll doesn't move what's under them. Same guard as ink.tsx's
+    // scroll doesn't move what's under them. Same guard as ink's
     // auto-follow translate (commit 36a8d154).
     if (sel.anchor.row < top || sel.anchor.row > bottom) return;
     // Cross-boundary: anchor in scrollbox, focus in footer/header. Mirror
-    // ink.tsx's Flag-3 guard — fall through without shifting OR capturing.
+    // ink's Flag-3 guard — fall through without shifting OR capturing.
     // The static endpoint pins the selection; shifting would teleport it
     // into scrollbox content.
     if (sel.focus.row < top || sel.focus.row > bottom) return;

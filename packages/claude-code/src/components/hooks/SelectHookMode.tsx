@@ -7,12 +7,12 @@ import { c as _c } from "react/compiler-runtime";
  * confirmation.
  */
 import * as React from 'react';
-import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js';
-import type { HookEventMetadata } from 'src/utils/hooks/hooksConfigManager.js';
-import { Box, Text } from '../../ink.js';
-import { getHookDisplayText, hookSourceHeaderDisplayString, type IndividualHookConfig } from '../../utils/hooks/hooksSettings.js';
-import { Select } from '../CustomSelect/select.js';
-import { Dialog } from '../design-system/Dialog.js';
+import type { HookEvent } from 'src/entrypoints/agentSdkTypes';
+import type { HookEventMetadata } from 'src/utils/hooks/hooksConfigManager';
+import { Box, Text } from '../../ink';
+import { getHookDisplayText, hookSourceHeaderDisplayString, type IndividualHookConfig } from '../../utils/hooks/hooksSettings';
+import { Select } from '../CustomSelect/select';
+import { Dialog } from '../design-system/Dialog';
 type Props = {
   selectedEvent: HookEvent;
   selectedMatcher: string | null;

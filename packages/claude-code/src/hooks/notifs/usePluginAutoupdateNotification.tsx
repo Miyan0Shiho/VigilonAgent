@@ -1,11 +1,11 @@
 import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { getIsRemoteMode } from '../../bootstrap/state.js';
-import { useNotifications } from '../../context/notifications.js';
-import { Text } from '../../ink.js';
-import { logForDebugging } from '../../utils/debug.js';
-import { onPluginsAutoUpdated } from '../../utils/plugins/pluginAutoupdate.js';
+import { getIsRemoteMode } from '../../bootstrap/state';
+import { useNotifications } from '../../context/notifications';
+import { Text } from '../../ink';
+import { logForDebugging } from '../../utils/debug';
+import { onPluginsAutoUpdated } from '../../utils/plugins/pluginAutoupdate';
 
 /**
  * Hook that displays a notification when plugins have been auto-updated.

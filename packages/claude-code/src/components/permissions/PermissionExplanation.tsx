@@ -1,12 +1,12 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { Suspense, use, useState } from 'react';
-import { Box, Text } from '../../ink.js';
-import { useKeybinding } from '../../keybindings/useKeybinding.js';
-import { logEvent } from '../../services/analytics/index.js';
-import type { Message } from '../../types/message.js';
-import { generatePermissionExplanation, isPermissionExplainerEnabled, type PermissionExplanation as PermissionExplanationType, type RiskLevel } from '../../utils/permissions/permissionExplainer.js';
-import { ShimmerChar } from '../Spinner/ShimmerChar.js';
-import { useShimmerAnimation } from '../Spinner/useShimmerAnimation.js';
+import { Box, Text } from '../../ink';
+import { useKeybinding } from '../../keybindings/useKeybinding';
+import { logEvent } from '../../services/analytics/index';
+import type { Message } from '../../types/message';
+import { generatePermissionExplanation, isPermissionExplainerEnabled, type PermissionExplanation as PermissionExplanationType, type RiskLevel } from '../../utils/permissions/permissionExplainer';
+import { ShimmerChar } from '../Spinner/ShimmerChar';
+import { useShimmerAnimation } from '../Spinner/useShimmerAnimation';
 const LOADING_MESSAGE = 'Loading explanation…';
 function ShimmerLoadingText() {
   const $ = _c(7);

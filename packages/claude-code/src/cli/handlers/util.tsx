@@ -7,22 +7,22 @@ import { c as _c } from "react/compiler-runtime";
 
 import { cwd } from 'process';
 import React from 'react';
-import { WelcomeV2 } from '../../components/LogoV2/WelcomeV2.js';
-import { useManagePlugins } from '../../hooks/useManagePlugins.js';
-import type { Root } from '../../ink.js';
-import { Box, Text } from '../../ink.js';
-import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js';
-import { logEvent } from '../../services/analytics/index.js';
-import { MCPConnectionManager } from '../../services/mcp/MCPConnectionManager.js';
-import { AppStateProvider } from '../../state/AppState.js';
-import { onChangeAppState } from '../../state/onChangeAppState.js';
-import { isAnthropicAuthEnabled } from '../../utils/auth.js';
+import { WelcomeV2 } from '../../components/LogoV2/WelcomeV2';
+import { useManagePlugins } from '../../hooks/useManagePlugins';
+import type { Root } from '../../ink';
+import { Box, Text } from '../../ink';
+import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup';
+import { logEvent } from '../../services/analytics/index';
+import { MCPConnectionManager } from '../../services/mcp/MCPConnectionManager';
+import { AppStateProvider } from '../../state/AppState';
+import { onChangeAppState } from '../../state/onChangeAppState';
+import { isAnthropicAuthEnabled } from '../../utils/auth';
 export async function setupTokenHandler(root: Root): Promise<void> {
   logEvent('tengu_setup_token_command', {});
   const showAuthWarning = !isAnthropicAuthEnabled();
   const {
     ConsoleOAuthFlow
-  } = await import('../../components/ConsoleOAuthFlow.js');
+  } = await import('../../components/ConsoleOAuthFlow');
   await new Promise<void>(resolve => {
     root.render(<AppStateProvider onChangeAppState={onChangeAppState}>
         <KeybindingSetup>
@@ -50,7 +50,7 @@ export async function setupTokenHandler(root: Root): Promise<void> {
 }
 
 // DoctorWithPlugins wrapper + doctor handler
-const DoctorLazy = React.lazy(() => import('../../screens/Doctor.js').then(m => ({
+const DoctorLazy = React.lazy(() => import('../../screens/Doctor').then(m => ({
   default: m.Doctor
 })));
 function DoctorWithPlugins(t0) {
@@ -92,11 +92,11 @@ export async function installHandler(target: string | undefined, options: {
 }): Promise<void> {
   const {
     setup
-  } = await import('../../setup.js');
+  } = await import('../../setup');
   await setup(cwd(), 'default', false, false, undefined, false);
   const {
     install
-  } = await import('../../commands/install.js');
+  } = await import('../../commands/install');
   await new Promise<void>(resolve => {
     const args: string[] = [];
     if (target) args.push(target);

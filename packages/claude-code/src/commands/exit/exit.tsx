@@ -1,12 +1,12 @@
-import { feature } from 'bun:bundle';
+import { feature } from 'src/bun-bundle.ts';
 import { spawnSync } from 'child_process';
-import sample from 'lodash-es/sample.js';
+import sample from 'lodash-es/sample';
 import * as React from 'react';
-import { ExitFlow } from '../../components/ExitFlow.js';
-import type { LocalJSXCommandOnDone } from '../../types/command.js';
-import { isBgSession } from '../../utils/concurrentSessions.js';
-import { gracefulShutdown } from '../../utils/gracefulShutdown.js';
-import { getCurrentWorktreeSession } from '../../utils/worktree.js';
+import { ExitFlow } from '../../components/ExitFlow';
+import type { LocalJSXCommandOnDone } from '../../types/command';
+import { isBgSession } from '../../utils/concurrentSessions';
+import { gracefulShutdown } from '../../utils/gracefulShutdown';
+import { getCurrentWorktreeSession } from '../../utils/worktree';
 const GOODBYE_MESSAGES = ['Goodbye!', 'See ya!', 'Bye!', 'Catch you later!'];
 function getRandomGoodbyeMessage(): string {
   return sample(GOODBYE_MESSAGES) ?? 'Goodbye!';

@@ -1,10 +1,10 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
-import { FpsMetricsProvider } from '../context/fpsMetrics.js';
-import { StatsProvider, type StatsStore } from '../context/stats.js';
-import { type AppState, AppStateProvider } from '../state/AppState.js';
-import { onChangeAppState } from '../state/onChangeAppState.js';
-import type { FpsMetrics } from '../utils/fpsTracker.js';
+import { FpsMetricsProvider } from '../context/fpsMetrics';
+import { StatsProvider, type StatsStore } from '../context/stats';
+import { type AppState, AppStateProvider } from '../state/AppState';
+import { onChangeAppState } from '../state/onChangeAppState';
+import type { FpsMetrics } from '../utils/fpsTracker';
 type Props = {
   getFpsMetrics: () => FpsMetrics | undefined;
   stats?: StatsStore;

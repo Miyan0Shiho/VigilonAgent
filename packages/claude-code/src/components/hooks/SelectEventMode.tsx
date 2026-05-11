@@ -10,12 +10,12 @@ import { c as _c } from "react/compiler-runtime";
 
 import figures from 'figures';
 import * as React from 'react';
-import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js';
-import type { HookEventMetadata } from 'src/utils/hooks/hooksConfigManager.js';
-import { Box, Link, Text } from '../../ink.js';
-import { plural } from '../../utils/stringUtils.js';
-import { Select } from '../CustomSelect/select.js';
-import { Dialog } from '../design-system/Dialog.js';
+import type { HookEvent } from 'src/entrypoints/agentSdkTypes';
+import type { HookEventMetadata } from 'src/utils/hooks/hooksConfigManager';
+import { Box, Link, Text } from '../../ink';
+import { plural } from '../../utils/stringUtils';
+import { Select } from '../CustomSelect/select';
+import { Dialog } from '../design-system/Dialog';
 type Props = {
   hookEventMetadata: Record<HookEvent, HookEventMetadata>;
   hooksByEvent: Partial<Record<HookEvent, number>>;

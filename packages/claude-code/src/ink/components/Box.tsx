@@ -1,13 +1,12 @@
 import { c as _c } from "react/compiler-runtime";
-import '../global.d.ts';
 import React, { type PropsWithChildren, type Ref } from 'react';
 import type { Except } from 'type-fest';
-import type { DOMElement } from '../dom.js';
-import type { ClickEvent } from '../events/click-event.js';
-import type { FocusEvent } from '../events/focus-event.js';
-import type { KeyboardEvent } from '../events/keyboard-event.js';
-import type { Styles } from '../styles.js';
-import * as warn from '../warn.js';
+import type { DOMElement } from '../dom';
+import type { ClickEvent } from '../events/click-event';
+import type { FocusEvent } from '../events/focus-event';
+import type { KeyboardEvent } from '../events/keyboard-event';
+import type { Styles } from '../styles';
+import * as warn from '../warn';
 export type Props = Except<Styles, 'textWrap'> & {
   ref?: Ref<DOMElement>;
   /**

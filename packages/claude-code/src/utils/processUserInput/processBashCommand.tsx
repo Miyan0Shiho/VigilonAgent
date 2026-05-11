@@ -1,19 +1,19 @@
 import type { ContentBlockParam } from '@anthropic-ai/sdk/resources';
 import { randomUUID } from 'crypto';
 import * as React from 'react';
-import { BashModeProgress } from 'src/components/BashModeProgress.js';
-import type { SetToolJSXFn } from 'src/Tool.js';
-import { BashTool } from 'src/tools/BashTool/BashTool.js';
-import type { AttachmentMessage, SystemMessage, UserMessage } from 'src/types/message.js';
-import type { ShellProgress } from 'src/types/tools.js';
-import { logEvent } from '../../services/analytics/index.js';
-import { errorMessage, ShellError } from '../errors.js';
-import { createSyntheticUserCaveatMessage, createUserInterruptionMessage, createUserMessage, prepareUserContent } from '../messages.js';
-import { resolveDefaultShell } from '../shell/resolveDefaultShell.js';
-import { isPowerShellToolEnabled } from '../shell/shellToolUtils.js';
-import { processToolResultBlock } from '../toolResultStorage.js';
-import { escapeXml } from '../xml.js';
-import type { ProcessUserInputContext } from './processUserInput.js';
+import { BashModeProgress } from 'src/components/BashModeProgress';
+import type { SetToolJSXFn } from 'src/Tool';
+import { BashTool } from 'src/tools/BashTool/BashTool';
+import type { AttachmentMessage, SystemMessage, UserMessage } from 'src/types/message';
+import type { ShellProgress } from 'src/types/tools';
+import { logEvent } from '../../services/analytics/index';
+import { errorMessage, ShellError } from '../errors';
+import { createSyntheticUserCaveatMessage, createUserInterruptionMessage, createUserMessage, prepareUserContent } from '../messages';
+import { resolveDefaultShell } from '../shell/resolveDefaultShell';
+import { isPowerShellToolEnabled } from '../shell/shellToolUtils';
+import { processToolResultBlock } from '../toolResultStorage';
+import { escapeXml } from '../xml';
+import type { ProcessUserInputContext } from './processUserInput';
 export async function processBashCommand(inputString: string, precedingInputBlocks: ContentBlockParam[], attachmentMessages: AttachmentMessage[], context: ProcessUserInputContext, setToolJSX: SetToolJSXFn): Promise<{
   messages: (UserMessage | AttachmentMessage | SystemMessage)[];
   shouldQuery: boolean;
@@ -71,11 +71,11 @@ export async function processBashCommand(inputString: string, precedingInputBloc
     // native, shouldUseSandbox() returns false regardless (unsupported platform).
     // Lazy-require PowerShellTool so its ~300KB chunk only loads when the
     // user has actually selected the powershell default shell.
-    type PSMod = typeof import('src/tools/PowerShellTool/PowerShellTool.js');
+    type PSMod = typeof import('src/tools/PowerShellTool/PowerShellTool');
     let PowerShellTool: PSMod['PowerShellTool'] | null = null;
     if (usePowerShell) {
       /* eslint-disable @typescript-eslint/no-require-imports */
-      PowerShellTool = (require('src/tools/PowerShellTool/PowerShellTool.js') as PSMod).PowerShellTool;
+      PowerShellTool = (require('src/tools/PowerShellTool/PowerShellTool') as PSMod).PowerShellTool;
       /* eslint-enable @typescript-eslint/no-require-imports */
     }
     const shellTool = PowerShellTool ?? BashTool;

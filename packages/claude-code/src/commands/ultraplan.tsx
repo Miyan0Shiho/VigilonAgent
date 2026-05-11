@@ -1,21 +1,21 @@
 import { readFileSync } from 'fs';
-import { REMOTE_CONTROL_DISCONNECTED_MSG } from '../bridge/types.js';
-import type { Command } from '../commands.js';
-import { DIAMOND_OPEN } from '../constants/figures.js';
-import { getRemoteSessionUrl } from '../constants/product.js';
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js';
-import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../services/analytics/index.js';
-import type { AppState } from '../state/AppStateStore.js';
-import { checkRemoteAgentEligibility, formatPreconditionError, RemoteAgentTask, type RemoteAgentTaskState, registerRemoteAgentTask } from '../tasks/RemoteAgentTask/RemoteAgentTask.js';
-import type { LocalJSXCommandCall } from '../types/command.js';
-import { logForDebugging } from '../utils/debug.js';
-import { errorMessage } from '../utils/errors.js';
-import { logError } from '../utils/log.js';
-import { enqueuePendingNotification } from '../utils/messageQueueManager.js';
-import { ALL_MODEL_CONFIGS } from '../utils/model/configs.js';
-import { updateTaskState } from '../utils/task/framework.js';
-import { archiveRemoteSession, teleportToRemote } from '../utils/teleport.js';
-import { pollForApprovedExitPlanMode, UltraplanPollError } from '../utils/ultraplan/ccrSession.js';
+import { REMOTE_CONTROL_DISCONNECTED_MSG } from '../bridge/types';
+import type { Command } from '../commands';
+import { DIAMOND_OPEN } from '../constants/figures';
+import { getRemoteSessionUrl } from '../constants/product';
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook';
+import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../services/analytics/index';
+import type { AppState } from '../state/AppStateStore';
+import { checkRemoteAgentEligibility, formatPreconditionError, RemoteAgentTask, type RemoteAgentTaskState, registerRemoteAgentTask } from '../tasks/RemoteAgentTask/RemoteAgentTask';
+import type { LocalJSXCommandCall } from '../types/command';
+import { logForDebugging } from '../utils/debug';
+import { errorMessage } from '../utils/errors';
+import { logError } from '../utils/log';
+import { enqueuePendingNotification } from '../utils/messageQueueManager';
+import { ALL_MODEL_CONFIGS } from '../utils/model/configs';
+import { updateTaskState } from '../utils/task/framework';
+import { archiveRemoteSession, teleportToRemote } from '../utils/teleport';
+import { pollForApprovedExitPlanMode, UltraplanPollError } from '../utils/ultraplan/ccrSession';
 
 // TODO(prod-hardening): OAuth token may go stale over the 30min poll;
 // consider refresh.

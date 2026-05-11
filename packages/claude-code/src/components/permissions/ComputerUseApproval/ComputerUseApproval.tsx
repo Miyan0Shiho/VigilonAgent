@@ -5,12 +5,12 @@ import { DEFAULT_GRANT_FLAGS } from '@ant/computer-use-mcp/types';
 import figures from 'figures';
 import * as React from 'react';
 import { useMemo, useState } from 'react';
-import { Box, Text } from '../../../ink.js';
-import { execFileNoThrow } from '../../../utils/execFileNoThrow.js';
-import { plural } from '../../../utils/stringUtils.js';
-import type { OptionWithDescription } from '../../CustomSelect/select.js';
-import { Select } from '../../CustomSelect/select.js';
-import { Dialog } from '../../design-system/Dialog.js';
+import { Box, Text } from '../../../ink';
+import { execFileNoThrow } from '../../../utils/execFileNoThrow';
+import { plural } from '../../../utils/stringUtils';
+import type { OptionWithDescription } from '../../CustomSelect/select';
+import { Select } from '../../CustomSelect/select';
+import { Dialog } from '../../design-system/Dialog';
 type ComputerUseApprovalProps = {
   request: CuPermissionRequest;
   onDone: (response: CuPermissionResponse) => void;

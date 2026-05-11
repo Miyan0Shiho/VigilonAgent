@@ -7,22 +7,22 @@ import { stat } from 'fs/promises';
 import pMap from 'p-map';
 import { cwd } from 'process';
 import React from 'react';
-import { MCPServerDesktopImportDialog } from '../../components/MCPServerDesktopImportDialog.js';
-import { render } from '../../ink.js';
-import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js';
-import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
-import { clearMcpClientConfig, clearServerTokensFromLocalStorage, getMcpClientConfig, readClientSecret, saveMcpClientSecret } from '../../services/mcp/auth.js';
-import { connectToServer, getMcpServerConnectionBatchSize } from '../../services/mcp/client.js';
-import { addMcpConfig, getAllMcpConfigs, getMcpConfigByName, getMcpConfigsByScope, removeMcpConfig } from '../../services/mcp/config.js';
-import type { ConfigScope, ScopedMcpServerConfig } from '../../services/mcp/types.js';
-import { describeMcpConfigFilePath, ensureConfigScope, getScopeLabel } from '../../services/mcp/utils.js';
-import { AppStateProvider } from '../../state/AppState.js';
-import { getCurrentProjectConfig, getGlobalConfig, saveCurrentProjectConfig } from '../../utils/config.js';
-import { isFsInaccessible } from '../../utils/errors.js';
-import { gracefulShutdown } from '../../utils/gracefulShutdown.js';
-import { safeParseJSON } from '../../utils/json.js';
-import { getPlatform } from '../../utils/platform.js';
-import { cliError, cliOk } from '../exit.js';
+import { MCPServerDesktopImportDialog } from '../../components/MCPServerDesktopImportDialog';
+import { render } from '../../ink';
+import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup';
+import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index';
+import { clearMcpClientConfig, clearServerTokensFromLocalStorage, getMcpClientConfig, readClientSecret, saveMcpClientSecret } from '../../services/mcp/auth';
+import { connectToServer, getMcpServerConnectionBatchSize } from '../../services/mcp/client';
+import { addMcpConfig, getAllMcpConfigs, getMcpConfigByName, getMcpConfigsByScope, removeMcpConfig } from '../../services/mcp/config';
+import type { ConfigScope, ScopedMcpServerConfig } from '../../services/mcp/types';
+import { describeMcpConfigFilePath, ensureConfigScope, getScopeLabel } from '../../services/mcp/utils';
+import { AppStateProvider } from '../../state/AppState';
+import { getCurrentProjectConfig, getGlobalConfig, saveCurrentProjectConfig } from '../../utils/config';
+import { isFsInaccessible } from '../../utils/errors';
+import { gracefulShutdown } from '../../utils/gracefulShutdown';
+import { safeParseJSON } from '../../utils/json';
+import { getPlatform } from '../../utils/platform';
+import { cliError, cliOk } from '../exit';
 async function checkMcpServerHealth(name: string, server: ScopedMcpServerConfig): Promise<string> {
   try {
     const result = await connectToServer(name, server);
@@ -59,11 +59,11 @@ export async function mcpServeHandler({
   try {
     const {
       setup
-    } = await import('../../setup.js');
+    } = await import('../../setup');
     await setup(providedCwd, 'default', false, false, undefined, false);
     const {
       startMCPServer
-    } = await import('../../entrypoints/mcp.js');
+    } = await import('../../entrypoints/mcp');
     await startMCPServer(providedCwd, debug ?? false, verbose ?? false);
   } catch (error) {
     cliError(`Error: Failed to start MCP server: ${error}`);
@@ -327,7 +327,7 @@ export async function mcpAddFromDesktopHandler(options: {
     });
     const {
       readClaudeDesktopMcpServers
-    } = await import('../../utils/claudeDesktop.js');
+    } = await import('../../utils/claudeDesktop');
     const servers = await readClaudeDesktopMcpServers();
     if (Object.keys(servers).length === 0) {
       cliOk('No MCP servers found in Claude Desktop configuration or configuration file does not exist.');

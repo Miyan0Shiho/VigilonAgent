@@ -1,8 +1,8 @@
 import { c as _c } from "react/compiler-runtime";
 import type { ToolUseBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
 import { useMemo } from 'react';
-import { findToolByName, type Tool, type Tools } from '../../../Tool.js';
-import type { buildMessageLookups } from '../../../utils/messages.js';
+import { findToolByName, type Tool, type Tools } from '../../../Tool';
+import type { buildMessageLookups } from '../../../utils/messages';
 export function useGetToolFromMessages(toolUseID, tools, lookups) {
   const $ = _c(7);
   let t0;

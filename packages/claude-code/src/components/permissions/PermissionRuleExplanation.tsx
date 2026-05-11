@@ -1,13 +1,13 @@
 import { c as _c } from "react/compiler-runtime";
-import { feature } from 'bun:bundle';
+import { feature } from 'src/bun-bundle.ts';
 import chalk from 'chalk';
 import React from 'react';
-import { Ansi, Box, Text } from '../../ink.js';
-import { useAppState } from '../../state/AppState.js';
-import type { PermissionDecision, PermissionDecisionReason } from '../../utils/permissions/PermissionResult.js';
-import { permissionRuleValueToString } from '../../utils/permissions/permissionRuleParser.js';
-import type { Theme } from '../../utils/theme.js';
-import ThemedText from '../design-system/ThemedText.js';
+import { Ansi, Box, Text } from '../../ink';
+import { useAppState } from '../../state/AppState';
+import type { PermissionDecision, PermissionDecisionReason } from '../../utils/permissions/PermissionResult';
+import { permissionRuleValueToString } from '../../utils/permissions/permissionRuleParser';
+import type { Theme } from '../../utils/theme';
+import ThemedText from '../design-system/ThemedText';
 export type PermissionRuleExplanationProps = {
   permissionResult: PermissionDecision;
   toolType: 'tool' | 'command' | 'edit' | 'read';

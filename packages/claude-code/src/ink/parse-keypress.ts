@@ -5,8 +5,8 @@
  * then interprets sequences as keypresses.
  */
 import { Buffer } from 'buffer'
-import { PASTE_END, PASTE_START } from './termio/csi.js'
-import { createTokenizer, type Tokenizer } from './termio/tokenize.js'
+import { PASTE_END, PASTE_START } from './termio/csi'
+import { createTokenizer, type Tokenizer } from './termio/tokenize'
 
 // eslint-disable-next-line no-control-regex
 const META_KEY_CODE_RE = /^(?:\x1b)([a-zA-Z0-9])$/
@@ -268,7 +268,7 @@ export function parseMultipleKeypresses(
         // flush timer, so the buffered ESC was flushed as a lone Escape and
         // the continuation `[<btn;col;rowM` arrived as text. Re-synthesize
         // with the ESC prefix so the scroll event still fires instead of
-        // leaking into the prompt. The spurious Escape is gone; App.tsx's
+        // leaking into the prompt. The spurious Escape is gone; App's
         // readableLength check prevents it. The X10 Cb slot is narrowed to
         // the wheel range [\x60-\x7f] (0x40|modifiers + 32) — a full [\x20-]
         // range would match typed input like `[MAX]` batched into one read

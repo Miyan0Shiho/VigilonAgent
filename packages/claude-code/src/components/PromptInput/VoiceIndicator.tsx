@@ -1,9 +1,9 @@
 import { c as _c } from "react/compiler-runtime";
-import { feature } from 'bun:bundle';
+import { feature } from 'src/bun-bundle.ts';
 import * as React from 'react';
-import { useSettings } from '../../hooks/useSettings.js';
-import { Box, Text, useAnimationFrame } from '../../ink.js';
-import { interpolateColor, toRGBColor } from '../Spinner/utils.js';
+import { useSettings } from '../../hooks/useSettings';
+import { Box, Text, useAnimationFrame } from '../../ink';
+import { interpolateColor, toRGBColor } from '../Spinner/utils';
 type Props = {
   voiceState: 'idle' | 'recording' | 'processing';
 };

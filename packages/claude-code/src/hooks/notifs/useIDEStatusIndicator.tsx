@@ -1,13 +1,13 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { useEffect, useRef } from 'react';
-import { useNotifications } from 'src/context/notifications.js';
-import { Text } from 'src/ink.js';
-import type { MCPServerConnection } from 'src/services/mcp/types.js';
-import { getGlobalConfig, saveGlobalConfig } from 'src/utils/config.js';
-import { detectIDEs, type IDEExtensionInstallationStatus, isJetBrainsIde, isSupportedTerminal } from 'src/utils/ide.js';
-import { getIsRemoteMode } from '../../bootstrap/state.js';
-import { useIdeConnectionStatus } from '../useIdeConnectionStatus.js';
-import type { IDESelection } from '../useIdeSelection.js';
+import { useNotifications } from 'src/context/notifications';
+import { Text } from 'src/ink';
+import type { MCPServerConnection } from 'src/services/mcp/types';
+import { getGlobalConfig, saveGlobalConfig } from 'src/utils/config';
+import { detectIDEs, type IDEExtensionInstallationStatus, isJetBrainsIde, isSupportedTerminal } from 'src/utils/ide';
+import { getIsRemoteMode } from '../../bootstrap/state';
+import { useIdeConnectionStatus } from '../useIdeConnectionStatus';
+import type { IDESelection } from '../useIdeSelection';
 const MAX_IDE_HINT_SHOW_COUNT = 5;
 type Props = {
   ideInstallationStatus: IDEExtensionInstallationStatus | null;

@@ -1,8 +1,8 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
-import { BLACK_CIRCLE } from '../constants/figures.js';
-import { useBlink } from '../hooks/useBlink.js';
-import { Box, Text } from '../ink.js';
+import { BLACK_CIRCLE } from '../constants/figures';
+import { useBlink } from '../hooks/useBlink';
+import { Box, Text } from '../ink';
 type Props = {
   isError: boolean;
   isUnresolved: boolean;

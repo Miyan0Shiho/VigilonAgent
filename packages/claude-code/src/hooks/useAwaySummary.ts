@@ -1,13 +1,13 @@
-import { feature } from 'bun:bundle'
+import { feature } from 'src/bun-bundle.ts'
 import { useEffect, useRef } from 'react'
 import {
   getTerminalFocusState,
   subscribeTerminalFocus,
-} from '../ink/terminal-focus-state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import { generateAwaySummary } from '../services/awaySummary.js'
-import type { Message } from '../types/message.js'
-import { createAwaySummaryMessage } from '../utils/messages.js'
+} from '../ink/terminal-focus-state'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook'
+import { generateAwaySummary } from '../services/awaySummary'
+import type { Message } from '../types/message'
+import { createAwaySummaryMessage } from '../utils/messages'
 
 const BLUR_DELAY_MS = 5 * 60_000
 

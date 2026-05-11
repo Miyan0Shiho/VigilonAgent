@@ -1,13 +1,13 @@
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
 import React from 'react';
-import { MessageResponse } from 'src/components/MessageResponse.js';
-import { extractTag } from 'src/utils/messages.js';
-import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
-import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js';
-import { Text } from '../../ink.js';
-import { FILE_NOT_FOUND_CWD_NOTE, getDisplayPath } from '../../utils/file.js';
-import { truncate } from '../../utils/format.js';
-import { GrepTool } from '../GrepTool/GrepTool.js';
+import { MessageResponse } from 'src/components/MessageResponse';
+import { extractTag } from 'src/utils/messages';
+import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage';
+import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits';
+import { Text } from '../../ink';
+import { FILE_NOT_FOUND_CWD_NOTE, getDisplayPath } from '../../utils/file';
+import { truncate } from '../../utils/format';
+import { GrepTool } from '../GrepTool/GrepTool';
 export function userFacingName(): string {
   return 'Search';
 }

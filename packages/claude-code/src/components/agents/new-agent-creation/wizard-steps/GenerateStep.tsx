@@ -1,18 +1,18 @@
 import { APIUserAbortError } from '@anthropic-ai/sdk';
 import React, { type ReactNode, useCallback, useRef, useState } from 'react';
-import { useMainLoopModel } from '../../../../hooks/useMainLoopModel.js';
-import { Box, Text } from '../../../../ink.js';
-import { useKeybinding } from '../../../../keybindings/useKeybinding.js';
-import { createAbortController } from '../../../../utils/abortController.js';
-import { editPromptInEditor } from '../../../../utils/promptEditor.js';
-import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
-import { Byline } from '../../../design-system/Byline.js';
-import { Spinner } from '../../../Spinner.js';
-import TextInput from '../../../TextInput.js';
-import { useWizard } from '../../../wizard/index.js';
-import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js';
-import { generateAgent } from '../../generateAgent.js';
-import type { AgentWizardData } from '../types.js';
+import { useMainLoopModel } from '../../../../hooks/useMainLoopModel';
+import { Box, Text } from '../../../../ink';
+import { useKeybinding } from '../../../../keybindings/useKeybinding';
+import { createAbortController } from '../../../../utils/abortController';
+import { editPromptInEditor } from '../../../../utils/promptEditor';
+import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint';
+import { Byline } from '../../../design-system/Byline';
+import { Spinner } from '../../../Spinner';
+import TextInput from '../../../TextInput';
+import { useWizard } from '../../../wizard/index';
+import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout';
+import { generateAgent } from '../../generateAgent';
+import type { AgentWizardData } from '../types';
 export function GenerateStep(): ReactNode {
   const {
     updateWizardData,

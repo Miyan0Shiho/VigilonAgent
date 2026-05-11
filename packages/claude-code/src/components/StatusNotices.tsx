@@ -1,11 +1,11 @@
 import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { use } from 'react';
-import { Box } from '../ink.js';
-import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js';
-import { getMemoryFiles } from '../utils/claudemd.js';
-import { getGlobalConfig } from '../utils/config.js';
-import { getActiveNotices, type StatusNoticeContext } from '../utils/statusNoticeDefinitions.js';
+import { Box } from '../ink';
+import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir';
+import { getMemoryFiles } from '../utils/claudemd';
+import { getGlobalConfig } from '../utils/config';
+import { getActiveNotices, type StatusNoticeContext } from '../utils/statusNoticeDefinitions';
 type Props = {
   agentDefinitions?: AgentDefinitionsResult;
 };

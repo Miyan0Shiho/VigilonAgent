@@ -1,13 +1,13 @@
 import { homedir } from 'os';
 import { basename, join, sep } from 'path';
 import React, { type ReactNode } from 'react';
-import { getOriginalCwd } from '../../../bootstrap/state.js';
-import { Text } from '../../../ink.js';
-import { getShortcutDisplay } from '../../../keybindings/shortcutFormat.js';
-import type { ToolPermissionContext } from '../../../Tool.js';
-import { expandPath, getDirectoryForPath } from '../../../utils/path.js';
-import { normalizeCaseForComparison, pathInAllowedWorkingPath } from '../../../utils/permissions/filesystem.js';
-import type { OptionWithDescription } from '../../CustomSelect/select.js';
+import { getOriginalCwd } from '../../../bootstrap/state';
+import { Text } from '../../../ink';
+import { getShortcutDisplay } from '../../../keybindings/shortcutFormat';
+import type { ToolPermissionContext } from '../../../Tool';
+import { expandPath, getDirectoryForPath } from '../../../utils/path';
+import { normalizeCaseForComparison, pathInAllowedWorkingPath } from '../../../utils/permissions/filesystem';
+import type { OptionWithDescription } from '../../CustomSelect/select';
 /**
  * Check if a path is within the project's .claude/ folder.
  * This is used to determine whether to show the special ".claude folder" permission option.

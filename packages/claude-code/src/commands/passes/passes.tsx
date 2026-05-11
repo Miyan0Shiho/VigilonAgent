@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { Passes } from '../../components/Passes/Passes.js';
-import { logEvent } from '../../services/analytics/index.js';
-import { getCachedRemainingPasses } from '../../services/api/referral.js';
-import type { LocalJSXCommandOnDone } from '../../types/command.js';
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
+import { Passes } from '../../components/Passes/Passes';
+import { logEvent } from '../../services/analytics/index';
+import { getCachedRemainingPasses } from '../../services/api/referral';
+import type { LocalJSXCommandOnDone } from '../../types/command';
+import { getGlobalConfig, saveGlobalConfig } from '../../utils/config';
 export async function call(onDone: LocalJSXCommandOnDone): Promise<React.ReactNode> {
   // Mark that user has visited /passes so we stop showing the upsell
   const config = getGlobalConfig();

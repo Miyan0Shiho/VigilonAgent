@@ -1,7 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
-import { Text } from '../../ink.js';
-import { useAppState } from '../../state/AppState.js';
+import { Text } from '../../ink';
+import { useAppState } from '../../state/AppState';
 type Props = {
   teamsSelected: boolean;
   showHint: boolean;

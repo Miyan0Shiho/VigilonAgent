@@ -1,23 +1,23 @@
 import { c as _c } from "react/compiler-runtime";
-import { feature } from 'bun:bundle';
+import { feature } from 'src/bun-bundle.ts';
 import { toString as qrToString } from 'qrcode';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { getBridgeAccessToken } from '../../bridge/bridgeConfig.js';
-import { checkBridgeMinVersion, getBridgeDisabledReason, isEnvLessBridgeEnabled } from '../../bridge/bridgeEnabled.js';
-import { checkEnvLessBridgeMinVersion } from '../../bridge/envLessBridgeConfig.js';
-import { BRIDGE_LOGIN_INSTRUCTION, REMOTE_CONTROL_DISCONNECTED_MSG } from '../../bridge/types.js';
-import { Dialog } from '../../components/design-system/Dialog.js';
-import { ListItem } from '../../components/design-system/ListItem.js';
-import { shouldShowRemoteCallout } from '../../components/RemoteCallout.js';
-import { useRegisterOverlay } from '../../context/overlayContext.js';
-import { Box, Text } from '../../ink.js';
-import { useKeybindings } from '../../keybindings/useKeybinding.js';
-import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
-import { useAppState, useSetAppState } from '../../state/AppState.js';
-import type { ToolUseContext } from '../../Tool.js';
-import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../../types/command.js';
-import { logForDebugging } from '../../utils/debug.js';
+import { getBridgeAccessToken } from '../../bridge/bridgeConfig';
+import { checkBridgeMinVersion, getBridgeDisabledReason, isEnvLessBridgeEnabled } from '../../bridge/bridgeEnabled';
+import { checkEnvLessBridgeMinVersion } from '../../bridge/envLessBridgeConfig';
+import { BRIDGE_LOGIN_INSTRUCTION, REMOTE_CONTROL_DISCONNECTED_MSG } from '../../bridge/types';
+import { Dialog } from '../../components/design-system/Dialog';
+import { ListItem } from '../../components/design-system/ListItem';
+import { shouldShowRemoteCallout } from '../../components/RemoteCallout';
+import { useRegisterOverlay } from '../../context/overlayContext';
+import { Box, Text } from '../../ink';
+import { useKeybindings } from '../../keybindings/useKeybinding';
+import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index';
+import { useAppState, useSetAppState } from '../../state/AppState';
+import type { ToolUseContext } from '../../Tool';
+import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../../types/command';
+import { logForDebugging } from '../../utils/debug';
 type Props = {
   onDone: LocalJSXCommandOnDone;
   name?: string;
@@ -469,7 +469,7 @@ async function checkBridgePrerequisites(): Promise<string | null> {
   const {
     waitForPolicyLimitsToLoad,
     isPolicyAllowed
-  } = await import('../../services/policyLimits/index.js');
+  } = await import('../../services/policyLimits/index');
   await waitForPolicyLimitsToLoad();
   if (!isPolicyAllowed('allow_remote_control')) {
     return "Remote Control is disabled by your organization's policy.";
@@ -487,7 +487,7 @@ async function checkBridgePrerequisites(): Promise<string | null> {
   if (feature('KAIROS') && useV2) {
     const {
       isAssistantMode
-    } = await import('../../assistant/index.js');
+    } = await import('../../assistant/index');
     if (isAssistantMode()) {
       useV2 = false;
     }

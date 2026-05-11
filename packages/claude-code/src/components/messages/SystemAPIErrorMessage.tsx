@@ -1,12 +1,12 @@
 import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { useState } from 'react';
-import { Box, Text } from 'src/ink.js';
-import { formatAPIError } from 'src/services/api/errorUtils.js';
-import type { SystemAPIErrorMessage } from 'src/types/message.js';
+import { Box, Text } from 'src/ink';
+import { formatAPIError } from 'src/services/api/errorUtils';
+import type { SystemAPIErrorMessage } from 'src/types/message';
 import { useInterval } from 'usehooks-ts';
-import { CtrlOToExpand } from '../CtrlOToExpand.js';
-import { MessageResponse } from '../MessageResponse.js';
+import { CtrlOToExpand } from '../CtrlOToExpand';
+import { MessageResponse } from '../MessageResponse';
 const MAX_API_ERROR_CHARS = 1000;
 type Props = {
   message: SystemAPIErrorMessage;

@@ -1,7 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
-import { Box, Text } from '../../ink.js';
-import { Markdown } from '../Markdown.js';
+import { Box, Text } from '../../ink';
+import { Markdown } from '../Markdown';
 type Props = {
   addMargin: boolean;
   planContent: string;

@@ -1,9 +1,9 @@
 import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { useEffect, useRef } from 'react';
-import { KeyboardShortcutHint } from '../components/design-system/KeyboardShortcutHint.js';
-import { Box, Text } from '../ink.js';
-import { useKeybinding } from '../keybindings/useKeybinding.js';
+import { KeyboardShortcutHint } from '../components/design-system/KeyboardShortcutHint';
+import { Box, Text } from '../ink';
+import { useKeybinding } from '../keybindings/useKeybinding';
 type Props = {
   onRun: () => void;
   onCancel: () => void;

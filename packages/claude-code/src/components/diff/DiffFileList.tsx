@@ -1,11 +1,11 @@
 import { c as _c } from "react/compiler-runtime";
 import figures from 'figures';
 import React, { useMemo } from 'react';
-import type { DiffFile } from '../../hooks/useDiffData.js';
-import { useTerminalSize } from '../../hooks/useTerminalSize.js';
-import { Box, Text } from '../../ink.js';
-import { truncateStartToWidth } from '../../utils/format.js';
-import { plural } from '../../utils/stringUtils.js';
+import type { DiffFile } from '../../hooks/useDiffData';
+import { useTerminalSize } from '../../hooks/useTerminalSize';
+import { Box, Text } from '../../ink';
+import { truncateStartToWidth } from '../../utils/format';
+import { plural } from '../../utils/stringUtils';
 const MAX_VISIBLE_FILES = 5;
 type Props = {
   files: DiffFile[];
