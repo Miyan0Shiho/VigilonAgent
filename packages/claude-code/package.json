@@ -1,0 +1,16 @@
+{
+  "name": "@vigilon/claude-code",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "tsx src/entrypoints/cli.tsx"
+  },
+  "dependencies": {
+    "ink": "^7.0.2",
+    "react": "^19.2.6",
+    "tsx": "^4.21.0"
+  }
+}
