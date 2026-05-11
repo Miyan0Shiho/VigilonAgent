@@ -26,11 +26,15 @@
 - `docs/superpowers/specs`:
     - 存放各阶段的设计文档 (Spec)。
 
-## 3. 核心秩序 (Inherited from Claude Code)
+## 3. 核心秩序 (Inherited from Claude Code & AI-Git-Best-Practices)
 
 1.  **Plan-Execute 分离**: Agent 在执行高风险操作前必须生成 Plan 并获得用户授权。
 2.  **状态透明化**: 每一个工具调用的输入、输出以及模型的思考链路必须在 UI 层清晰可见。
 3.  **权限门控**: 敏感操作（如删除文件、执行 shell 命令）需显式审批。
+4.  **Agent-Aware Git 规范**: 
+    - 强制使用 `Agent-Decision` 等 Trailer 记录意图。
+    - 采用 Checkpoint (WIP) 与 Atomic Commit 结合的工作流。
+    - 使用 `ai-git-manager` 技能自动化管理版本历史。
 
 ## 4. 后续规划
 
