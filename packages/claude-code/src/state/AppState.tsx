@@ -1,7 +1,8 @@
 import { c as _c } from "react/compiler-runtime";
 import { feature } from 'src/bun-bundle.ts';
-import React, { useContext, useEffect, useEffectEvent, useState, useSyncExternalStore } from 'react';
+import React, { useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import { MailboxProvider } from '../context/mailbox';
+import { useStableEvent } from '../hooks/useStableEvent';
 import { useSettingsChange } from '../hooks/useSettingsChange';
 import { logForDebugging } from '../utils/debug';
 import { createDisabledBypassPermissionsContext, isBypassPermissionsModeDisabled } from '../utils/permissions/permissionSetup';
@@ -87,7 +88,7 @@ export function AppStateProvider(t0) {
   } else {
     t4 = $[7];
   }
-  const onSettingsChange = useEffectEvent(t4);
+  const onSettingsChange = useStableEvent(t4);
   useSettingsChange(onSettingsChange);
   let t5;
   if ($[8] !== children) {

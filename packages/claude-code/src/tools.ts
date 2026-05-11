@@ -1,5 +1,6 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { toolMatchesName, type Tool, type Tools } from './Tool'
+import { createRequire } from 'module'
 import { AgentTool } from './tools/AgentTool/AgentTool'
 import { SkillTool } from './tools/SkillTool/SkillTool'
 import { BashTool } from './tools/BashTool/BashTool'
@@ -13,6 +14,7 @@ import { TaskStopTool } from './tools/TaskStopTool/TaskStopTool'
 import { BriefTool } from './tools/BriefTool/BriefTool'
 // Dead code elimination: conditional import for ant-only tools
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
+const require = createRequire(import.meta.url)
 const REPLTool =
   process.env.USER_TYPE === 'ant'
     ? require('./tools/REPLTool/REPLTool').REPLTool
@@ -57,20 +59,11 @@ import { TodoWriteTool } from './tools/TodoWriteTool/TodoWriteTool'
 import { ExitPlanModeV2Tool } from './tools/ExitPlanModeTool/ExitPlanModeV2Tool'
 import { TestingPermissionTool } from './tools/testing/TestingPermissionTool'
 import { GrepTool } from './tools/GrepTool/GrepTool'
+import { SendMessageTool } from './tools/SendMessageTool/SendMessageTool'
+import { TeamCreateTool } from './tools/TeamCreateTool/TeamCreateTool'
+import { TeamDeleteTool } from './tools/TeamDeleteTool/TeamDeleteTool'
 // import { TungstenTool } from './tools/TungstenTool/TungstenTool'
 const TungstenTool = null;
-// Lazy require to break circular dependency: tools.ts -> TeamCreateTool/TeamDeleteTool -> ... -> tools.ts
-/* eslint-disable @typescript-eslint/no-require-imports */
-const getTeamCreateTool = () =>
-  require('./tools/TeamCreateTool/TeamCreateTool')
-    .TeamCreateTool as typeof import('./tools/TeamCreateTool/TeamCreateTool').TeamCreateTool
-const getTeamDeleteTool = () =>
-  require('./tools/TeamDeleteTool/TeamDeleteTool')
-    .TeamDeleteTool as typeof import('./tools/TeamDeleteTool/TeamDeleteTool').TeamDeleteTool
-const getSendMessageTool = () =>
-  require('./tools/SendMessageTool/SendMessageTool')
-    .SendMessageTool as typeof import('./tools/SendMessageTool/SendMessageTool').SendMessageTool
-/* eslint-enable @typescript-eslint/no-require-imports */
 import { AskUserQuestionTool } from './tools/AskUserQuestionTool/AskUserQuestionTool'
 import { LSPTool } from './tools/LSPTool/LSPTool'
 import { ListMcpResourcesTool } from './tools/ListMcpResourcesTool/ListMcpResourcesTool'
@@ -224,10 +217,10 @@ export function getAllBaseTools(): Tools {
     ...(TerminalCaptureTool ? [TerminalCaptureTool] : []),
     ...(isEnvTruthy(process.env.ENABLE_LSP_TOOL) ? [LSPTool] : []),
     ...(isWorktreeModeEnabled() ? [EnterWorktreeTool, ExitWorktreeTool] : []),
-    getSendMessageTool(),
+    SendMessageTool,
     ...(ListPeersTool ? [ListPeersTool] : []),
     ...(isAgentSwarmsEnabled()
-      ? [getTeamCreateTool(), getTeamDeleteTool()]
+      ? [TeamCreateTool, TeamDeleteTool]
       : []),
     ...(VerifyPlanExecutionTool ? [VerifyPlanExecutionTool] : []),
     ...(process.env.USER_TYPE === 'ant' && REPLTool ? [REPLTool] : []),
@@ -281,7 +274,7 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
         feature('COORDINATOR_MODE') &&
         coordinatorModeModule?.isCoordinatorMode()
       ) {
-        replSimple.push(TaskStopTool, getSendMessageTool())
+        replSimple.push(TaskStopTool, SendMessageTool)
       }
       return filterToolsByDenyRules(replSimple, permissionContext)
     }
@@ -293,7 +286,7 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
       feature('COORDINATOR_MODE') &&
       coordinatorModeModule?.isCoordinatorMode()
     ) {
-      simpleTools.push(AgentTool, TaskStopTool, getSendMessageTool())
+      simpleTools.push(AgentTool, TaskStopTool, SendMessageTool)
     }
     return filterToolsByDenyRules(simpleTools, permissionContext)
   }

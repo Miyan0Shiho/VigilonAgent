@@ -131,6 +131,9 @@ importers:
       fuse.js:
         specifier: ^7.1.0
         version: 7.3.0
+      highlight.js:
+        specifier: ^11.11.1
+        version: 11.11.1
       https-proxy-agent:
         specifier: ^7.0.6
         version: 7.0.6
@@ -155,6 +158,9 @@ importers:
       marked:
         specifier: ^15.0.7
         version: 15.0.12
+      modifiers-napi:
+        specifier: ^0.0.1
+        version: 0.0.1
       p-map:
         specifier: ^7.0.3
         version: 7.0.4
@@ -1375,6 +1381,10 @@ packages:
     resolution: {integrity: sha512-ej4AhfhfL2Q2zpMmLo7U1Uv9+PyhIZpgQLGT1F9miIGmiCJIoCgSmczFdrc97mWT4kVY72KA+WnnhJ5pghSvSg==}
     engines: {node: '>= 0.4'}
 
+  highlight.js@11.11.1:
+    resolution: {integrity: sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w==}
+    engines: {node: '>=12.0.0'}
+
   hono@4.12.18:
     resolution: {integrity: sha512-RWzP96k/yv0PQfyXnWjs6zot20TqfpfsNXhOnev8d1InAxubW93L11/oNUc3tQqn2G0bSdAOBpX+2uDFHV7kdQ==}
     engines: {node: '>=16.9.0'}
@@ -1620,6 +1630,9 @@ packages:
   mimic-fn@2.1.0:
     resolution: {integrity: sha512-OqbOk5oEQeAZ8WXWydlu9HJjz9WVdEIvamMCcXmuqUYjTknH/sqsWvhQ3vgwKFRR1HpjvNBKQ37nbJgYzGqGcg==}
     engines: {node: '>=6'}
+
+  modifiers-napi@0.0.1:
+    resolution: {integrity: sha512-m9eEEqG/3S9YfVyFnygphpfuhCY4Zw77IEj88bOl7j4GjoQkiz+PWerylclZMmfrOMSzdkU4W7fQta2bWIQcgg==}
 
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
@@ -3327,6 +3340,8 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
+  highlight.js@11.11.1: {}
+
   hono@4.12.18: {}
 
   http-errors@2.0.1:
@@ -3520,6 +3535,8 @@ snapshots:
       mime-db: 1.54.0
 
   mimic-fn@2.1.0: {}
+
+  modifiers-napi@0.0.1: {}
 
   ms@2.1.3: {}
 

@@ -18,7 +18,7 @@
  */
 
 import { diffArrays } from 'diff'
-import type * as hljsNamespace from 'highlight'
+import type * as hljsNamespace from 'highlight.js'
 import { basename, extname } from 'path'
 
 // Lazy: defers loading highlight.js until first render. The full bundle
@@ -35,7 +35,7 @@ let cachedHljs: HLJSApi | null = null
 function hljs(): HLJSApi {
   if (cachedHljs) return cachedHljs
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require('highlight')
+  const mod = require('highlight.js')
   // highlight.js uses `export =` (CJS). Under bun/ESM the interop wraps it
   // in .default; under node CJS the module IS the API. Check at runtime.
   cachedHljs = 'default' in mod && mod.default ? mod.default : mod
@@ -483,11 +483,10 @@ function flattenHljs(
   }
 }
 
-// result.emitter is in the public HighlightResult type, but rootNode is
-// internal to TokenTreeEmitter. Type guard validates the shape once so we
-// fail loudly (via logError) instead of a silent try/catch swallow — the
-// prior `as unknown as` cast hid a version mismatch (_emitter vs emitter,
-// scope vs kind) behind a silent gray fallback.
+// `rootNode` lives on the internal token tree emitter. Depending on the
+// highlight.js version/runtime interop this may surface as `emitter` or
+// `_emitter`. Type guard validates the shape once so we fail loudly (via
+// logError) instead of a silent try/catch swallow.
 function hasRootNode(emitter: unknown): emitter is { rootNode: HljsNode } {
   return (
     typeof emitter === 'object' &&
@@ -500,6 +499,10 @@ function hasRootNode(emitter: unknown): emitter is { rootNode: HljsNode } {
 }
 
 let loggedEmitterShapeError = false
+
+function getHighlightEmitter(result: { emitter?: unknown; _emitter?: unknown }): unknown {
+  return result.emitter ?? result._emitter
+}
 
 function highlightLine(
   state: { lang: string | null; stack: unknown },
@@ -521,19 +524,20 @@ function highlightLine(
     // hljs throws on unknown language despite ignoreIllegals
     return [[defaultStyle(theme), code]]
   }
-  if (!hasRootNode(result.emitter)) {
+  const emitter = getHighlightEmitter(result)
+  if (!hasRootNode(emitter)) {
     if (!loggedEmitterShapeError) {
       loggedEmitterShapeError = true
       logError(
         new Error(
-          `color-diff: hljs emitter shape mismatch (keys: ${Object.keys(result.emitter).join(',')}). Syntax highlighting disabled.`,
+          `color-diff: hljs emitter shape mismatch (keys: ${Object.keys((emitter ?? {}) as Record<string, unknown>).join(',')}). Syntax highlighting disabled.`,
         ),
       )
     }
     return [[defaultStyle(theme), code]]
   }
   const blocks: Block[] = []
-  flattenHljs(result.emitter.rootNode, theme, undefined, blocks)
+  flattenHljs(emitter.rootNode, theme, undefined, blocks)
   return blocks
 }
 

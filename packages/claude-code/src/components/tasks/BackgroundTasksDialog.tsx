@@ -1,8 +1,9 @@
 import { c as _c } from "react/compiler-runtime";
 import { feature } from 'src/bun-bundle.ts';
 import figures from 'figures';
-import React, { type ReactNode, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import React, { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { isCoordinatorMode } from 'src/coordinator/coordinatorMode';
+import { useStableEvent } from 'src/hooks/useStableEvent';
 import { useTerminalSize } from 'src/hooks/useTerminalSize';
 import { useAppState, useSetAppState } from 'src/state/AppState';
 import { enterTeammateView, exitTeammateView } from 'src/state/teammateViewHelpers';
@@ -319,9 +320,10 @@ export function BackgroundTasksDialog({
     await RemoteAgentTask.kill(taskId_3, setAppState);
   }
 
-  // Wrap onDone in useEffectEvent to get a stable reference that always calls
+  // Keep a stable callback without relying on renderer support for React 19's
+  // useEffectEvent dispatcher hook.
   // the current onDone callback without causing the effect to re-fire.
-  const onDoneEvent = useEffectEvent(onDone);
+  const onDoneEvent = useStableEvent(onDone);
   useEffect(() => {
     if (viewState.mode !== 'list') {
       const task = (typedTasks ?? {})[viewState.itemId];

@@ -1,3 +1,5 @@
-export const ColorDiff = class {};
-export const ColorFile = class {};
-export const getSyntaxTheme = () => null;
+export {
+  ColorDiff,
+  ColorFile,
+  getSyntaxTheme,
+} from './native-ts/color-diff/index'

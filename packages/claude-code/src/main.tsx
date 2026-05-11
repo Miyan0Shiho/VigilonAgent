@@ -25,6 +25,7 @@ import { readFileSync } from 'fs';
 import mapValues from 'lodash-es/mapValues';
 import pickBy from 'lodash-es/pickBy';
 import uniqBy from 'lodash-es/uniqBy';
+import { createRequire } from 'module';
 import React from 'react';
 import { getOauthConfig } from './constants/oauth';
 import { getRemoteSessionUrl } from './constants/product';
@@ -67,6 +68,7 @@ import { isWorktreeModeEnabled } from './utils/worktreeModeEnabled';
 
 // Lazy require to avoid circular dependency: teammate.ts -> AppState.tsx -> ... -> main.tsx
 /* eslint-disable @typescript-eslint/no-require-imports */
+const require = createRequire(import.meta.url);
 const getTeammateUtils = () => require('./utils/teammate') as typeof import('./utils/teammate');
 const getTeammatePromptAddendum = () => require('./utils/swarm/teammatePromptAddendum') as typeof import('./utils/swarm/teammatePromptAddendum');
 const getTeammateModeSnapshot = () => require('./utils/swarm/backends/teammateModeSnapshot') as typeof import('./utils/swarm/backends/teammateModeSnapshot');
@@ -160,7 +162,7 @@ import { getFsImplementation, safeResolvePath } from 'src/utils/fsOperations';
 import { gracefulShutdown, gracefulShutdownSync } from 'src/utils/gracefulShutdown';
 import { setAllHookEventsEnabled } from 'src/utils/hooks/hookEvents';
 import { refreshModelCapabilities } from 'src/utils/model/modelCapabilities';
-import { peekForStdinData, writeToStderr } from 'src/utils/process';
+import { collectStdinData, writeToStderr } from 'src/utils/process';
 import { setCwd } from 'src/utils/Shell';
 import { type ProcessedResume, processResumedConversation } from 'src/utils/sessionRestore';
 import { parseSettingSourcesFlag } from 'src/utils/settings/constants';
@@ -854,7 +856,7 @@ export async function main() {
   await run();
   profileCheckpoint('main_after_run');
 }
-async function getInputPrompt(prompt: string, inputFormat: 'text' | 'stream-json'): Promise<string | AsyncIterable<string>> {
+async function getInputPrompt(prompt: string, inputFormat: 'text' | 'stream-json', waitForEndAfterFirstChunk: boolean): Promise<string | AsyncIterable<string>> {
   if (!process.stdin.isTTY &&
   // Input hijacking breaks MCP.
   !process.argv.includes('mcp')) {
@@ -862,20 +864,15 @@ async function getInputPrompt(prompt: string, inputFormat: 'text' | 'stream-json
       return process.stdin;
     }
     process.stdin.setEncoding('utf8');
-    let data = '';
-    const onData = (chunk: string) => {
-      data += chunk;
-    };
-    process.stdin.on('data', onData);
-    // If no data arrives in 3s, stop waiting and warn. Stdin is likely an
-    // inherited pipe from a parent that isn't writing (subprocess spawned
-    // without explicit stdin handling). 3s covers slow producers like curl,
-    // jq on large files, python with import overhead. The warning makes
-    // silent data loss visible for the rare producer that's slower still.
-    const timedOut = await peekForStdinData(process.stdin, 3000);
-    process.stdin.off('data', onData);
-    if (timedOut) {
+    // Interactive startup should not wait forever on inherited pipes that
+    // produce a chunk and never close. Headless mode still waits for EOF so it
+    // can consume the full prompt payload.
+    const { data, sawData, timedOut } = await collectStdinData(process.stdin, 3000, waitForEndAfterFirstChunk);
+    if (timedOut && !sawData) {
       process.stderr.write('Warning: no stdin data received in 3s, proceeding without it. ' + 'If piping from a slow command, redirect stdin explicitly: < /dev/null to skip, or wait longer.\n');
+    }
+    if (timedOut && sawData) {
+      process.stderr.write('Warning: stdin stayed open for more than 3s, proceeding with the partial input received so far.\n');
     }
     return [prompt, data].filter(Boolean).join('\n');
   }
@@ -1858,7 +1855,7 @@ async function run(): Promise<CommanderCommand> {
       process.exit(1);
     }
     const effectivePrompt = prompt || '';
-    let inputPrompt = await getInputPrompt(effectivePrompt, (inputFormat ?? 'text') as 'text' | 'stream-json');
+    let inputPrompt = await getInputPrompt(effectivePrompt, (inputFormat ?? 'text') as 'text' | 'stream-json', isNonInteractiveSession);
     profileCheckpoint('action_after_input_prompt');
 
     // Activate proactive mode BEFORE getTools() so SleepTool.isEnabled()

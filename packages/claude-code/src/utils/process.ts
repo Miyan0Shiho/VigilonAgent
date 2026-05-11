@@ -42,27 +42,52 @@ export function exitWithError(message: string): never {
   process.exit(1)
 }
 
-// Wait for a stdin-like stream to close, but give up after ms if no data ever
-// arrives. First data chunk cancels the timeout — after that, wait for end
-// unconditionally (caller's accumulator needs all chunks, not just the first).
-// Returns true on timeout, false on end. Used by -p mode to distinguish a
-// real pipe producer from an inherited-but-idle parent stdin.
-export function peekForStdinData(
+export type StdinCollectionResult = {
+  data: string
+  sawData: boolean
+  timedOut: boolean
+}
+
+/**
+ * Collect data from a stdin-like stream.
+ *
+ * When `waitForEndAfterFirstChunk` is false, this resolves after `ms` even if
+ * the stream stays open. This keeps interactive startup from hanging forever on
+ * inherited pipes that emit a chunk and never close.
+ */
+export function collectStdinData(
   stream: NodeJS.EventEmitter,
   ms: number,
-): Promise<boolean> {
-  return new Promise<boolean>(resolve => {
+  waitForEndAfterFirstChunk: boolean,
+): Promise<StdinCollectionResult> {
+  return new Promise<StdinCollectionResult>(resolve => {
+    let data = ''
+    let sawData = false
+
     const done = (timedOut: boolean) => {
       clearTimeout(peek)
       stream.off('end', onEnd)
-      stream.off('data', onFirstData)
-      void resolve(timedOut)
+      stream.off('data', onData)
+      resolve({
+        data,
+        sawData,
+        timedOut,
+      })
     }
+
     const onEnd = () => done(false)
-    const onFirstData = () => clearTimeout(peek)
+    const onData = (chunk: string | Buffer) => {
+      sawData = true
+      data += typeof chunk === 'string' ? chunk : chunk.toString('utf8')
+
+      if (waitForEndAfterFirstChunk) {
+        clearTimeout(peek)
+      }
+    }
+
     // eslint-disable-next-line no-restricted-syntax -- not a sleep: races timeout against stream end/data events
     const peek = setTimeout(done, ms, true)
+    stream.on('data', onData)
     stream.once('end', onEnd)
-    stream.once('data', onFirstData)
   })
 }
