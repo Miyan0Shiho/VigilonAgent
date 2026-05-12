@@ -494,7 +494,7 @@ export function Config({
   }, {
     id: 'defaultPermissionMode',
     label: 'Default permission mode',
-    value: settingsData?.permissions?.defaultMode || 'default',
+    value: settingsData?.permissions?.defaultMode || (feature('TRANSCRIPT_CLASSIFIER') ? 'auto' : 'default'),
     options: (() => {
       const priorityOrder: PermissionMode[] = ['default', 'plan'];
       const allModes: readonly PermissionMode[] = feature('TRANSCRIPT_CLASSIFIER') ? PERMISSION_MODES : EXTERNAL_PERMISSION_MODES;

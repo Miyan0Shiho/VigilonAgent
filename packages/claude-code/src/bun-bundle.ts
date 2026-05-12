@@ -18,6 +18,7 @@ export function feature(name: string): boolean {
     'BYOC_ENVIRONMENT_RUNNER': true,
     'SELF_HOSTED_RUNNER': true,
     'ABLATION_BASELINE': false,
+    'TRANSCRIPT_CLASSIFIER': true,
   };
   return features[name] ?? false;
 }

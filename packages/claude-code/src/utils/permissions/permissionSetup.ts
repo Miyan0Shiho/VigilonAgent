@@ -796,11 +796,11 @@ export function initialPermissionModeFromCLI({
   }
 
   if (!result) {
-    result = { mode: 'default', notification }
-  }
-
-  if (!result) {
-    result = { mode: 'default', notification }
+    const defaultMode =
+      feature('TRANSCRIPT_CLASSIFIER') && !autoModeCircuitBrokenSync
+        ? 'auto'
+        : 'default'
+    result = { mode: defaultMode, notification }
   }
 
   if (feature('TRANSCRIPT_CLASSIFIER') && result.mode === 'auto') {
