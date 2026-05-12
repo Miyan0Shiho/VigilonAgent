@@ -1,0 +1,50 @@
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="500" fill="#ffffff"/>
+  <!-- Title -->
+  <text x="400" y="30" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="bold" text-anchor="middle">Figure 02: CLI Entrypoint &amp; Fast-Path Dispatch</text>
+  
+  <!-- Source: cli.tsx:main() -->
+  <rect x="300" y="60" width="200" height="50" rx="5" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <text x="400" y="90" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="middle">main() [cli.tsx]</text>
+  
+  <!-- Fast Paths -->
+  <g transform="translate(50, 150)">
+    <rect x="0" y="0" width="150" height="40" rx="5" fill="none" stroke="#000000" stroke-width="1"/>
+    <text x="75" y="25" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle">--version / -v</text>
+  </g>
+  
+  <g transform="translate(220, 150)">
+    <rect x="0" y="0" width="150" height="40" rx="5" fill="none" stroke="#000000" stroke-width="1"/>
+    <text x="75" y="25" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle">daemonMain()</text>
+  </g>
+  
+  <g transform="translate(390, 150)">
+    <rect x="0" y="0" width="150" height="40" rx="5" fill="none" stroke="#000000" stroke-width="1"/>
+    <text x="75" y="25" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle">bridgeMain()</text>
+  </g>
+  
+  <g transform="translate(560, 150)">
+    <rect x="0" y="0" width="150" height="40" rx="5" fill="none" stroke="#000000" stroke-width="1"/>
+    <text x="75" y="25" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle">bgSessionHandlers</text>
+  </g>
+  
+  <!-- Main Path -->
+  <rect x="300" y="280" width="200" height="50" rx="5" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <text x="400" y="310" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="middle">cliMain() [main.tsx]</text>
+  
+  <line x1="400" y1="110" x2="400" y2="280" stroke="#000000" stroke-width="1" marker-end="url(#arrowhead)"/>
+  <text x="410" y="200" font-family="Arial, Helvetica, sans-serif" font-size="12">Default Path (Interactive)</text>
+  
+  <!-- Dispatch Lines -->
+  <path d="M 400 110 L 400 130 L 125 130 L 125 150" fill="none" stroke="#000000" stroke-width="1" marker-end="url(#arrowhead)"/>
+  <path d="M 400 110 L 400 130 L 295 130 L 295 150" fill="none" stroke="#000000" stroke-width="1" marker-end="url(#arrowhead)"/>
+  <path d="M 400 110 L 400 130 L 465 130 L 465 150" fill="none" stroke="#000000" stroke-width="1" marker-end="url(#arrowhead)"/>
+  <path d="M 400 110 L 400 130 L 635 130 L 635 150" fill="none" stroke="#000000" stroke-width="1" marker-end="url(#arrowhead)"/>
+
+  <!-- Arrowhead definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#000000"/>
+    </marker>
+  </defs>
+</svg>

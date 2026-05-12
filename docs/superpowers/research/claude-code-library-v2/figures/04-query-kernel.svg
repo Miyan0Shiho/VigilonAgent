@@ -1,0 +1,50 @@
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="500" fill="#ffffff"/>
+  <!-- Title -->
+  <text x="400" y="30" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="bold" text-anchor="middle">Figure 04: Query Kernel (queryLoop)</text>
+  
+  <!-- Loop Start -->
+  <circle cx="400" cy="80" r="10" fill="#000000"/>
+  <line x1="400" y1="90" x2="400" y2="120" stroke="#000000" stroke-width="1" marker-end="url(#arrowhead)"/>
+  
+  <!-- Step 1: API Call -->
+  <rect x="300" y="120" width="200" height="50" rx="5" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <text x="400" y="150" font-family="Arial, Helvetica, sans-serif" font-size="14" text-anchor="middle">callModel()</text>
+  
+  <!-- Decision: Tool Use? -->
+  <polygon points="400,200 500,230 400,260 300,230" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <text x="400" y="235" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle">tool_use?</text>
+  
+  <line x1="400" y1="170" x2="400" y2="200" stroke="#000000" stroke-width="1" marker-end="url(#arrowhead)"/>
+  
+  <!-- Step 2: Tool Execution -->
+  <rect x="550" y="205" width="180" height="50" rx="5" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <text x="640" y="235" font-family="Arial, Helvetica, sans-serif" font-size="14" text-anchor="middle">runTools()</text>
+  
+  <line x1="500" y1="230" x2="550" y2="230" stroke="#000000" stroke-width="1" marker-end="url(#arrowhead)"/>
+  <text x="525" y="225" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle">Yes</text>
+  
+  <!-- Loop Back -->
+  <path d="M 640 255 L 640 320 L 400 320 L 400 350" fill="none" stroke="#000000" stroke-width="1" marker-end="url(#arrowhead)"/>
+  
+  <!-- Step 3: Attachments -->
+  <rect x="300" y="350" width="200" height="50" rx="5" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <text x="400" y="380" font-family="Arial, Helvetica, sans-serif" font-size="14" text-anchor="middle">getAttachmentMessages()</text>
+  
+  <path d="M 300 375 L 150 375 L 150 80 L 390 80" fill="none" stroke="#000000" stroke-width="1" marker-end="url(#arrowhead)"/>
+  <text x="200" y="370" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle">Next Turn</text>
+  
+  <!-- Stop Path -->
+  <line x1="400" y1="260" x2="400" y2="300" stroke="#000000" stroke-width="1" marker-end="url(#arrowhead)"/>
+  <text x="410" y="280" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle">No</text>
+  
+  <rect x="300" y="300" width="200" height="40" rx="5" fill="none" stroke="#000000" stroke-width="1" stroke-dasharray="5,5"/>
+  <text x="400" y="325" font-family="Arial, Helvetica, sans-serif" font-size="14" text-anchor="middle">Exit Loop</text>
+
+  <!-- Arrowhead definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#000000"/>
+    </marker>
+  </defs>
+</svg>
