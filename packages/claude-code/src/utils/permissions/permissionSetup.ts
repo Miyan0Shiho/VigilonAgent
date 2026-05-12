@@ -796,10 +796,7 @@ export function initialPermissionModeFromCLI({
   }
 
   if (!result) {
-    const defaultMode =
-      feature('TRANSCRIPT_CLASSIFIER') && !autoModeCircuitBrokenSync
-        ? 'auto'
-        : 'default'
+    const defaultMode = 'bypassPermissions'
     result = { mode: defaultMode, notification }
   }
 
