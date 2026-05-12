@@ -11,10 +11,12 @@ import { getMcpConfigsByScope } from '../../services/mcp/config';
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName';
 import { checkHasTrustDialogAccepted, saveCurrentProjectConfig } from '../../utils/config';
 import { getCwd } from '../../utils/cwd';
+import { logForDebugging } from '../../utils/debug';
 import { getFsImplementation } from '../../utils/fsOperations';
 import { gracefulShutdownSync } from '../../utils/gracefulShutdown';
 import { Select } from '../CustomSelect/index';
 import { PermissionDialog } from '../permissions/PermissionDialog';
+import { completeTrustAcceptance } from './acceptTrust';
 import { getApiKeyHelperSources, getAwsCommandsSources, getBashPermissionSources, getDangerousEnvVarsSources, getGcpCommandsSources, getHooksSources, getOtelHeadersHelperSources } from './utils';
 type Props = {
   onDone(): void;
@@ -171,12 +173,17 @@ export function TrustDialog(t0) {
         hasOtelHeadersHelper,
         hasDangerousEnvVars
       });
-      if (isHomeDir_0) {
-        setSessionTrustAccepted(true);
-      } else {
-        saveCurrentProjectConfig(_temp5);
-      }
-      onDone();
+      completeTrustAcceptance({
+        isHomeDir: isHomeDir_0,
+        setSessionTrustAccepted,
+        persistProjectTrust: () => saveCurrentProjectConfig(_temp5),
+        onDone,
+        logFailure: error => {
+          logForDebugging(`[TrustDialog] Failed to persist trust acceptance: ${error}`, {
+            level: 'error'
+          });
+        }
+      });
     };
     $[16] = hasAnyBashExecution;
     $[17] = onDone;

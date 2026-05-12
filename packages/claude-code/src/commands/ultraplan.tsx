@@ -41,11 +41,7 @@ function getUltraplanModel(): string {
 // any tag stripping, and a bare "ultraplan" in the prompt would self-trigger as
 // /ultraplan, which is filtered out of headless mode as "Unknown skill"
 //
-// Bundler inlines .txt as a string; the test runner wraps it as {default}.
-/* eslint-disable @typescript-eslint/no-require-imports */
-const _rawPrompt = require('../utils/ultraplan/prompt.txt');
-/* eslint-enable @typescript-eslint/no-require-imports */
-const DEFAULT_INSTRUCTIONS: string = (typeof _rawPrompt === 'string' ? _rawPrompt : _rawPrompt.default).trimEnd();
+const DEFAULT_INSTRUCTIONS: string = readFileSync(new URL('../utils/ultraplan/prompt.txt', import.meta.url), 'utf8').trimEnd();
 
 // Dev-only prompt override resolved eagerly at module load.
 // Gated to ant builds (USER_TYPE is a build-time define,

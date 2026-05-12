@@ -83,8 +83,16 @@ export const CLAUDE_SONNET_4_6_CONFIG = {
   foundry: 'claude-sonnet-4-6',
 } as const satisfies ModelConfig
 
+export const DEEPSEEK_V4_FLASH_CONFIG = {
+  firstParty: 'deepseek-v4-flash',
+  bedrock: 'deepseek-v4-flash',
+  vertex: 'deepseek-v4-flash',
+  foundry: 'deepseek-v4-flash',
+} as const satisfies ModelConfig
+
 // @[MODEL LAUNCH]: Register the new config here.
 export const ALL_MODEL_CONFIGS = {
+  deepseek: DEEPSEEK_V4_FLASH_CONFIG,
   haiku35: CLAUDE_3_5_HAIKU_CONFIG,
   haiku45: CLAUDE_HAIKU_4_5_CONFIG,
   sonnet35: CLAUDE_3_5_V2_SONNET_CONFIG,

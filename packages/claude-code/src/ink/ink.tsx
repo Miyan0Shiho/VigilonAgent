@@ -179,10 +179,12 @@ export default class Ink {
   } | null = null;
   constructor(private readonly options: Options) {
     autoBind(this);
+    logForDebugging('[ink] constructor: start')
     if (this.options.patchConsole) {
       this.restoreConsole = this.patchConsole();
       this.restoreStderr = this.patchStderr();
     }
+    logForDebugging('[ink] constructor: console patched')
     this.terminal = {
       stdout: options.stdout,
       stderr: options.stderr
@@ -199,6 +201,7 @@ export default class Ink {
       isTTY: options.stdout.isTTY as boolean | undefined || false,
       stylePool: this.stylePool
     });
+    logForDebugging('[ink] constructor: terminal state initialized')
 
     // scheduleRender is called from the reconciler's resetAfterCommit, which
     // runs BEFORE React's layout phase (ref attach + useLayoutEffect). Any
@@ -230,10 +233,12 @@ export default class Ink {
         process.off('SIGCONT', this.handleResume);
       };
     }
+    logForDebugging('[ink] constructor: tty handlers registered')
     this.rootNode = dom.createNode('ink-root');
     this.focusManager = new FocusManager((target, event) => dispatcher.dispatchDiscrete(target, event));
     this.rootNode.focusManager = this.focusManager;
     this.renderer = createRenderer(this.rootNode, this.stylePool);
+    logForDebugging('[ink] constructor: renderer created')
     this.rootNode.onRender = this.scheduleRender;
     this.rootNode.onImmediateRender = this.onRender;
     this.rootNode.onComputeLayout = () => {
@@ -267,6 +272,7 @@ export default class Ink {
     // onRecoverableError
     noop // onDefaultTransitionIndicator
     );
+    logForDebugging('[ink] constructor: container created')
     if ("production" === 'development') {
       reconciler.injectIntoDevTools({
         bundleType: 0,

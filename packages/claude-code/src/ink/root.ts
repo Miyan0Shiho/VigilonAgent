@@ -136,6 +136,9 @@ export async function createRoot({
 }: RenderOptions = {}): Promise<Root> {
   // See wrappedRender — preserve microtask boundary from the old WASM await.
   await Promise.resolve()
+  logForDebugging(
+    `[ink/root] createRoot start stdout.isTTY=${String(stdout.isTTY)} stdin.isTTY=${String(stdin.isTTY)} stderr.isTTY=${String(stderr.isTTY)}`,
+  )
   const instance = new Ink({
     stdout,
     stdin,
@@ -144,6 +147,7 @@ export async function createRoot({
     patchConsole,
     onFrame,
   })
+  logForDebugging('[ink/root] Ink constructor returned')
 
   // Register in the instances map so that code that looks up the Ink
   // instance by stdout (e.g. external editor pause/resume) can find it.

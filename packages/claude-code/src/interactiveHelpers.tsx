@@ -29,6 +29,7 @@ import type { PermissionMode } from './utils/permissions/PermissionMode';
 import { getBaseRenderOptions } from './utils/renderOptions';
 import { getSettingsWithAllErrors } from './utils/settings/allErrors';
 import { hasAutoModeOptIn, hasSkipDangerousModePermissionPrompt } from './utils/settings/settings';
+import { shouldUseAnthropicStartupFlow } from './utils/startupMode';
 export function completeOnboarding(): void {
   saveGlobalConfig(current => ({
     ...current,
@@ -102,11 +103,8 @@ export async function renderAndRun(root: Root, element: React.ReactNode): Promis
   await gracefulShutdown(0);
 }
 export async function showSetupScreens(root: Root, permissionMode: PermissionMode, allowDangerouslySkipPermissions: boolean, commands?: Command[], claudeInChrome?: boolean, devChannels?: ChannelEntry[]): Promise<boolean> {
-  if ("production" === 'test' || isEnvTruthy(false) || process.env.IS_DEMO // Skip onboarding in demo mode
-  ) {
-    return false;
-  }
   const config = getGlobalConfig();
+  const useAnthropicStartupFlow = shouldUseAnthropicStartupFlow();
   let onboardingShown = false;
   if (!config.theme || !config.hasCompletedOnboarding // always show onboarding at least once
   ) {
@@ -143,11 +141,12 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
     // GrowthBook checks this to decide whether to include auth headers.
     setSessionTrustAccepted(true);
 
-    // Reset and reinitialize GrowthBook after trust is established.
-    // Defense for login/logout: clears any prior client so the next init
-    // picks up fresh auth headers.
-    resetGrowthBook();
-    void initializeGrowthBook();
+    if (useAnthropicStartupFlow) {
+      // Reset and reinitialize GrowthBook after trust is established.
+      // Third-party gateways do not support Anthropic's feature-gate path.
+      resetGrowthBook();
+      void initializeGrowthBook();
+    }
 
     // Now that trust is established, prefetch system context if it wasn't already
     void getSystemContext();
@@ -188,7 +187,7 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
   // Defer to next tick so the OTel dynamic import resolves after first render
   // instead of during the pre-render microtask queue.
   setImmediate(() => initializeTelemetryAfterTrust());
-  if (await isQualifiedForGrove()) {
+  if (useAnthropicStartupFlow && await isQualifiedForGrove()) {
     const {
       GroveDialog
     } = await import('src/components/grove/Grove');
@@ -203,7 +202,7 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
   // Check for custom API key
   // On homespace, ANTHROPIC_API_KEY is preserved in process.env for child
   // processes but ignored by Claude Code itself (see auth.ts).
-  if (process.env.ANTHROPIC_API_KEY && !isRunningOnHomespace()) {
+  if (useAnthropicStartupFlow && process.env.ANTHROPIC_API_KEY && !isRunningOnHomespace()) {
     const customApiKeyTruncated = normalizeApiKeyForConfig(process.env.ANTHROPIC_API_KEY);
     const keyStatus = getCustomApiKeyStatus(customApiKeyTruncated);
     if (keyStatus === 'new') {
@@ -238,7 +237,7 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
   // dev channels to any --channels list already set in main.tsx. Org policy
   // is NOT bypassed — gateChannelServer() still runs; this flag only exists
   // to sidestep the --channels approved-server allowlist.
-  if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
+  if (useAnthropicStartupFlow && (feature('KAIROS') || feature('KAIROS_CHANNELS'))) {
     // gateChannelServer and ChannelsNotice read tengu_harbor after this
     // function returns. A cold disk cache (fresh install, or first run after
     // the flag was added server-side) defaults to false and silently drops

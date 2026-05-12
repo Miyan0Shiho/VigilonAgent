@@ -38,6 +38,7 @@ import { sanitizeToolNameForAnalytics } from '../analytics/metadata'
 import { EMPTY_USAGE } from './emptyUsage'
 import { classifyAPIError } from './errors'
 import { extractConnectionErrorDetails } from './errorUtils'
+import { getHeaderNames } from './headerUtils'
 
 export type { NonNullableUsage }
 export { EMPTY_USAGE }
@@ -108,13 +109,13 @@ function detectGateway({
   headers,
   baseUrl,
 }: {
-  headers?: globalThis.Headers
+  headers?: globalThis.Headers | Record<string, string | null | undefined>
   baseUrl?: string
 }): KnownGateway | undefined {
   if (headers) {
-    // Header names are already lowercase from the Headers API
-    const headerNames: string[] = []
-    headers.forEach((_, key) => headerNames.push(key))
+    const headerNames = getHeaderNames({ headers }).map(name =>
+      name.toLowerCase(),
+    )
     for (const [gw, { prefixes }] of Object.entries(GATEWAY_FINGERPRINTS)) {
       if (prefixes.some(p => headerNames.some(h => h.startsWith(p)))) {
         return gw as KnownGateway

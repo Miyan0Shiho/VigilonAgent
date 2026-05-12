@@ -405,6 +405,9 @@ function OAuthStatusMessage(t0) {
           t6 = [t4, t5, {
             label: <Text>3rd-party platform ·{" "}<Text dimColor={true}>Amazon Bedrock, Microsoft Foundry, or Vertex AI</Text>{"\n"}</Text>,
             value: "platform"
+          }, {
+            label: <Text>Skip / Local Setup ·{" "}<Text dimColor={true}>Unlock restriction and proceed</Text>{"\n"}</Text>,
+            value: "bypass"
           }];
           $[5] = t6;
         } else {
@@ -413,6 +416,10 @@ function OAuthStatusMessage(t0) {
         let t7;
         if ($[6] !== setLoginWithClaudeAi || $[7] !== setOAuthStatus) {
           t7 = <Box><Select options={t6} onChange={value_0 => {
+              if (value_0 === "bypass") {
+                onDone();
+                return;
+              }
               if (value_0 === "platform") {
                 logEvent("tengu_oauth_platform_selected", {});
                 setOAuthStatus({

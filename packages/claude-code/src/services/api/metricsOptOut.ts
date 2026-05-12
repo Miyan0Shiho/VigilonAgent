@@ -7,6 +7,7 @@ import { getAuthHeaders, withOAuth401Retry } from '../../utils/http'
 import { logError } from '../../utils/log'
 import { memoizeWithTTLAsync } from '../../utils/memoize'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel'
+import { shouldCheckAnthropicMetrics } from '../../utils/startupMode'
 import { getClaudeCodeUserAgent } from '../../utils/userAgent'
 
 type MetricsEnabledResponse = {
@@ -51,6 +52,10 @@ async function _fetchMetricsEnabled(): Promise<MetricsEnabledResponse> {
 }
 
 async function _checkMetricsEnabledAPI(): Promise<MetricsStatus> {
+  if (!shouldCheckAnthropicMetrics()) {
+    return { enabled: false, hasError: false }
+  }
+
   // Incident kill switch: skip the network call when nonessential traffic is disabled.
   // Returning enabled:false sheds load at the consumer (bigqueryExporter skips
   // export). Matches the non-subscriber early-return shape below.

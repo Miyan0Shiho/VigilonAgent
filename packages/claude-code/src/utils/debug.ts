@@ -134,6 +134,7 @@ export function getHasFormattedOutput(): boolean {
 
 let debugWriter: BufferedWriter | null = null
 let pendingWrite: Promise<void> = Promise.resolve()
+let hasWarnedAboutDebugWriteFailure = false
 
 // Module-level so .bind captures only its explicit args, not the
 // writeFn closure's parent scope (Jarred, #22257).
@@ -152,6 +153,19 @@ async function appendAsync(
 
 function noop(): void {}
 
+function reportDebugWriteFailure(error: unknown, path: string): void {
+  if (hasWarnedAboutDebugWriteFailure) {
+    return
+  }
+
+  hasWarnedAboutDebugWriteFailure = true
+  const message =
+    error instanceof Error ? error.message : 'Unknown debug log write failure'
+  writeToStderr(
+    `[debug] Failed to write debug log to ${path}: ${message}\n`,
+  )
+}
+
 function getDebugWriter(): BufferedWriter {
   if (!debugWriter) {
     let ensuredDir: string | null = null
@@ -165,15 +179,19 @@ function getDebugWriter(): BufferedWriter {
           // immediateMode: must stay sync. Async writes are lost on direct
           // process.exit() and keep the event loop alive in beforeExit
           // handlers (infinite loop with Perfetto tracing). See #22257.
-          if (needMkdir) {
-            try {
-              getFsImplementation().mkdirSync(dir)
-            } catch {
-              // Directory already exists
+          try {
+            if (needMkdir) {
+              try {
+                getFsImplementation().mkdirSync(dir)
+              } catch {
+                // Directory already exists
+              }
             }
+            getFsImplementation().appendFileSync(path, content)
+            void updateLatestDebugLogSymlink()
+          } catch (error) {
+            reportDebugWriteFailure(error, path)
           }
-          getFsImplementation().appendFileSync(path, content)
-          void updateLatestDebugLogSymlink()
           return
         }
         // Buffered path (ants without --debug): flushes ~1/sec so chain

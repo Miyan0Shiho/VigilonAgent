@@ -11,6 +11,7 @@ import { getCustomApiKeyStatus } from '../utils/config';
 import { env } from '../utils/env';
 import { isRunningOnHomespace } from '../utils/envUtils';
 import { PreflightStep } from '../utils/preflightChecks';
+import { shouldUseAnthropicStartupFlow } from '../utils/startupMode';
 import type { ThemeSetting } from '../utils/theme';
 import { ApproveApiKey } from './ApproveApiKey';
 import { ConsoleOAuthFlow } from './ConsoleOAuthFlow';
@@ -96,6 +97,9 @@ export function Onboarding({
   const preflightStep = <PreflightStep onSuccess={goToNextStep} />;
   // Create the steps array - determine which steps to include based on reAuth and oauthEnabled
   const apiKeyNeedingApproval = useMemo(() => {
+    if (!shouldUseAnthropicStartupFlow()) {
+      return '';
+    }
     // Add API key step if needed
     // On homespace, ANTHROPIC_API_KEY is preserved in process.env for child
     // processes but ignored by Claude Code itself (see auth.ts).

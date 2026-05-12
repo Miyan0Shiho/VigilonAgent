@@ -73,7 +73,13 @@ export async function registerSession(): Promise<boolean> {
 
   try {
     await mkdir(dir, { recursive: true, mode: 0o700 })
-    await chmod(dir, 0o700)
+    try {
+      await chmod(dir, 0o700)
+    } catch (e) {
+      logForDebugging(
+        `[concurrentSessions] chmod skipped: ${errorMessage(e)}`,
+      )
+    }
     await writeFile(
       pidFile,
       jsonStringify({

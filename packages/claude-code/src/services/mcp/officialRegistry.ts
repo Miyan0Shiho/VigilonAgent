@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { logForDebugging } from '../../utils/debug'
 import { errorMessage } from '../../utils/errors'
+import { shouldPrefetchOfficialMcpRegistry } from '../../utils/startupMode'
 
 type RegistryServer = {
   server: {
@@ -32,6 +33,11 @@ function normalizeUrl(url: string): string | undefined {
  */
 export async function prefetchOfficialMcpUrls(): Promise<void> {
   if (process.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC) {
+    return
+  }
+
+  if (!shouldPrefetchOfficialMcpRegistry()) {
+    logForDebugging('[mcp-registry] Disabled for custom API gateway mode')
     return
   }
 

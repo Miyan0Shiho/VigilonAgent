@@ -9,6 +9,7 @@ import { getClaudeAIOAuthTokens } from 'src/utils/auth'
 import { getGlobalConfig, saveGlobalConfig } from 'src/utils/config'
 import { logForDebugging } from 'src/utils/debug'
 import { isEnvDefinedFalsy } from 'src/utils/envUtils'
+import { shouldFetchClaudeAiMcpConfigs } from 'src/utils/startupMode'
 import { clearMcpAuthCache } from './client'
 import { normalizeNameForMCP } from './normalization'
 import type { ScopedMcpServerConfig } from './types'
@@ -39,6 +40,11 @@ const MCP_SERVERS_BETA_HEADER = 'mcp-servers-2025-12-04'
 export const fetchClaudeAIMcpConfigsIfEligible = memoize(
   async (): Promise<Record<string, ScopedMcpServerConfig>> => {
     try {
+      if (!shouldFetchClaudeAiMcpConfigs()) {
+        logForDebugging('[claudeai-mcp] Disabled for custom API gateway mode')
+        return {}
+      }
+
       if (isEnvDefinedFalsy(process.env.ENABLE_CLAUDEAI_MCP_SERVERS)) {
         logForDebugging('[claudeai-mcp] Disabled via env var')
         logEvent('tengu_claudeai_mcp_eligibility', {

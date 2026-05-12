@@ -28,6 +28,7 @@ import {
   getVertexRegionForModel,
   isEnvTruthy,
 } from '../../utils/envUtils'
+import { normalizeAnthropicBaseUrl } from './baseUrl'
 
 /**
  * Environment variables for different client types:
@@ -129,10 +130,12 @@ export async function getAnthropicClient({
   }
 
   logForDebugging('[API:auth] OAuth token check starting')
-  await checkAndRefreshOAuthTokenIfNeeded()
+  if (!process.env.ANTHROPIC_BASE_URL) {
+    await checkAndRefreshOAuthTokenIfNeeded()
+  }
   logForDebugging('[API:auth] OAuth token check complete')
 
-  if (!isClaudeAISubscriber()) {
+  if (!isClaudeAISubscriber() && !process.env.ANTHROPIC_BASE_URL) {
     await configureApiKeyHeaders(defaultHeaders, getIsNonInteractiveSession())
   }
 
@@ -298,15 +301,18 @@ export async function getAnthropicClient({
   }
 
   // Determine authentication method based on available tokens
+  const configuredBaseUrl = process.env.ANTHROPIC_BASE_URL
+    ? normalizeAnthropicBaseUrl(process.env.ANTHROPIC_BASE_URL)
+    : getOauthConfig().BASE_API_URL
   const clientConfig: ConstructorParameters<typeof Anthropic>[0] = {
-    apiKey: isClaudeAISubscriber() ? null : apiKey || getAnthropicApiKey(),
-    authToken: isClaudeAISubscriber()
+    apiKey: (isClaudeAISubscriber() || process.env.ANTHROPIC_BASE_URL) ? (process.env.ANTHROPIC_API_KEY || null) : apiKey || getAnthropicApiKey(),
+    authToken: (isClaudeAISubscriber() && !process.env.ANTHROPIC_BASE_URL)
       ? getClaudeAIOAuthTokens()?.accessToken
       : undefined,
     // Set baseURL from OAuth config when using staging OAuth
-    ...(process.env.USER_TYPE === 'ant' &&
-    isEnvTruthy(process.env.USE_STAGING_OAUTH)
-      ? { baseURL: getOauthConfig().BASE_API_URL }
+    ...((process.env.USER_TYPE === 'ant' &&
+    isEnvTruthy(process.env.USE_STAGING_OAUTH)) || process.env.ANTHROPIC_BASE_URL
+      ? { baseURL: configuredBaseUrl }
       : {}),
     ...ARGS,
     ...(isDebugToStdErr() && { logger: createStderrLogger() }),
@@ -364,7 +370,7 @@ function buildFetch(
   // Only send to the first-party API — Bedrock/Vertex/Foundry don't log it
   // and unknown headers risk rejection by strict proxies (inc-4029 class).
   const injectClientRequestId =
-    getAPIProvider() === 'firstParty' && isFirstPartyAnthropicBaseUrl()
+    getAPIProvider() === 'firstParty' && isFirstPartyAnthropicBaseUrl() && !process.env.ANTHROPIC_BASE_URL
   return (input, init) => {
     // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
     const headers = new Headers(init?.headers)

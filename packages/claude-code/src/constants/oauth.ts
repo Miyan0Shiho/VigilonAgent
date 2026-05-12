@@ -195,6 +195,15 @@ export function getOauthConfig(): OauthConfig {
     }
   })()
 
+  // Allow overriding the API base URL via environment variable
+  const apiBaseUrl = process.env.ANTHROPIC_BASE_URL || process.env.CLAUDE_CODE_API_BASE_URL
+  if (apiBaseUrl) {
+    config = {
+      ...config,
+      BASE_API_URL: apiBaseUrl.replace(/\/$/, ''),
+    }
+  }
+
   // Allow overriding all OAuth URLs to point to an approved FedStart deployment.
   // Only allowlisted base URLs are accepted to prevent credential leakage.
   const oauthBaseUrl = process.env.CLAUDE_CODE_CUSTOM_OAUTH_URL

@@ -1,6 +1,9 @@
+import { createRequire } from 'module'
+
 export type ModifierKey = 'shift' | 'command' | 'control' | 'option'
 
 let prewarmed = false
+const requireFromHere = createRequire(import.meta.url)
 
 /**
  * Pre-warm the native module by loading it in advance.
@@ -14,7 +17,12 @@ export function prewarmModifiers(): void {
   // Load module in background
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { prewarm } = require('modifiers-napi') as { prewarm: () => void }
+    const { prewarm } = requireFromHere('modifiers-napi') as {
+      prewarm?: () => void
+    }
+    if (typeof prewarm !== 'function') {
+      return
+    }
     prewarm()
   } catch {
     // Ignore errors during prewarm
@@ -31,6 +39,11 @@ export function isModifierPressed(modifier: ModifierKey): boolean {
   // Dynamic import to avoid loading native module at top level
   const { isModifierPressed: nativeIsModifierPressed } =
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require('modifiers-napi') as { isModifierPressed: (m: string) => boolean }
+    requireFromHere('modifiers-napi') as {
+      isModifierPressed?: (m: string) => boolean
+    }
+  if (typeof nativeIsModifierPressed !== 'function') {
+    return false
+  }
   return nativeIsModifierPressed(modifier)
 }

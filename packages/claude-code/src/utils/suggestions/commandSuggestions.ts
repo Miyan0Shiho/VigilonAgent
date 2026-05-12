@@ -1,4 +1,4 @@
-import Fuse from 'fuse'
+import Fuse from 'fuse.js'
 import {
   type Command,
   formatDescriptionWithSource,

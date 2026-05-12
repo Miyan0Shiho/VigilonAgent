@@ -132,6 +132,7 @@ import { cacheSessionTitle, getSessionIdFromLog, loadTranscriptFromFile, saveAge
 import { ensureMdmSettingsLoaded } from './utils/settings/mdm/settings';
 import { getInitialSettings, getManagedSettingsKeysForLogging, getSettingsForSource, getSettingsWithErrors } from './utils/settings/settings';
 import { resetSettingsCache } from './utils/settings/settingsCache';
+import { shouldPrefetchOfficialMcpRegistry, shouldRunRipgrepStartupProbe } from './utils/startupMode';
 import type { ValidationError } from './utils/settings/validation';
 import { DEFAULT_TASKS_MODE_TASK_LIST_ID, TASK_STATUSES } from './utils/tasks';
 import { logPluginLoadErrors, logPluginsEnabledForSession } from './utils/telemetry/pluginTelemetry';
@@ -413,11 +414,15 @@ export function startDeferredPrefetches(): void {
   if (isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX) && !isEnvTruthy(process.env.CLAUDE_CODE_SKIP_VERTEX_AUTH)) {
     void prefetchGcpCredentialsIfSafe();
   }
-  void countFilesRoundedRg(getCwd(), AbortSignal.timeout(3000), []);
+  if (shouldRunRipgrepStartupProbe()) {
+    void countFilesRoundedRg(getCwd(), AbortSignal.timeout(3000), []);
+  }
 
   // Analytics and feature flag initialization
   void initializeAnalyticsGates();
-  void prefetchOfficialMcpUrls();
+  if (shouldPrefetchOfficialMcpRegistry()) {
+    void prefetchOfficialMcpUrls();
+  }
   void refreshModelCapabilities();
 
   // File change detectors deferred from init() to unblock first render
@@ -803,6 +808,7 @@ export async function main() {
   const hasInitOnlyFlag = cliArgs.includes('--init-only');
   const hasSdkUrl = cliArgs.some(arg => arg.startsWith('--sdk-url'));
   const isNonInteractive = hasPrintFlag || hasInitOnlyFlag || hasSdkUrl || !process.stdout.isTTY;
+  logForDebugging(`[STARTUP] Session mode resolved: interactive=${String(!isNonInteractive)} stdout.isTTY=${String(process.stdout.isTTY)} stdin.isTTY=${String(process.stdin.isTTY)} stderr.isTTY=${String(process.stderr.isTTY)} print=${String(hasPrintFlag)} initOnly=${String(hasInitOnlyFlag)} sdkUrl=${String(hasSdkUrl)}`);
 
   // Stop capturing early input for non-interactive modes
   if (isNonInteractive) {
@@ -2047,6 +2053,7 @@ async function run(): Promise<CommanderCommand> {
       allAgents,
       activeAgents: getActiveAgentsFromList(allAgents)
     };
+    logForDebugging('[STARTUP] Agent definitions prepared');
 
     // Look up main thread agent from CLI flag or settings
     const agentSetting = agentCli ?? getInitialSettings().agent;
@@ -2106,6 +2113,7 @@ async function run(): Promise<CommanderCommand> {
       effectiveModel = parseUserSpecifiedModel(mainThreadAgentDefinition.model);
     }
     setMainLoopModelOverride(effectiveModel);
+    logForDebugging('[STARTUP] Main loop model prepared');
 
     // Compute resolved model for hooks (use user-specified model at launch)
     setInitialMainLoopModel(getUserSpecifiedModelSetting() || null);
@@ -2204,6 +2212,7 @@ async function run(): Promise<CommanderCommand> {
       const assistantAddendum = assistantModule.getAssistantSystemPromptAddendum();
       appendSystemPrompt = appendSystemPrompt ? `${appendSystemPrompt}\n\n${assistantAddendum}` : assistantAddendum;
     }
+    logForDebugging('[STARTUP] Interactive pre-root setup complete');
 
     // Ink root is only needed for interactive sessions — patchConsole in the
     // Ink constructor would swallow console output in headless mode.
@@ -2213,17 +2222,25 @@ async function run(): Promise<CommanderCommand> {
 
     // Show setup screens after commands are loaded
     if (!isNonInteractiveSession) {
+      logForDebugging('[STARTUP] Building render context...');
       const ctx = getRenderContext(false);
+      logForDebugging('[STARTUP] Render context ready');
       getFpsMetrics = ctx.getFpsMetrics;
       stats = ctx.stats;
       // Install asciicast recorder before Ink mounts (ant-only, opt-in via CLAUDE_CODE_TERMINAL_RECORDING=1)
       if ("external" === 'ant') {
         installAsciicastRecorder();
       }
+      const inkImportStart = Date.now();
+      logForDebugging('[STARTUP] Importing ink module...');
       const {
         createRoot
       } = await import('./ink');
+      logForDebugging(`[STARTUP] Ink module imported in ${Date.now() - inkImportStart}ms`);
+      const createRootStart = Date.now();
+      logForDebugging('[STARTUP] Creating ink root...');
       root = await createRoot(ctx.renderOptions);
+      logForDebugging(`[STARTUP] Ink root created in ${Date.now() - createRootStart}ms`);
 
       // Log startup time now, before any blocking dialog renders. Logging
       // from REPL's first render (the old location) included however long
@@ -2234,7 +2251,14 @@ async function run(): Promise<CommanderCommand> {
         durationMs: Math.round(process.uptime() * 1000)
       });
       logForDebugging('[STARTUP] Running showSetupScreens()...');
-      const setupScreensStart = Date.now();
+      //suppress unhandled promise rejections during init
+    process.on('unhandledRejection', (reason) => {
+       if (process.env.ANTHROPIC_BASE_URL) {
+         logForDebugging(`[INIT] Suppressed unhandled rejection: ${reason}`);
+       }
+    });
+
+    const setupScreensStart = Date.now();
       const onboardingShown = await showSetupScreens(root, permissionMode, allowDangerouslySkipPermissions, commands, enableClaudeInChrome, devChannels);
       logForDebugging(`[STARTUP] showSetupScreens() completed in ${Date.now() - setupScreensStart}ms`);
 
@@ -2273,7 +2297,7 @@ async function run(): Promise<CommanderCommand> {
       if (onboardingShown && prompt?.trim().toLowerCase() === '/login') {
         prompt = '';
       }
-      if (onboardingShown) {
+      if (onboardingShown && !process.env.ANTHROPIC_BASE_URL) {
         // Refresh auth-dependent services now that the user has logged in during onboarding.
         // Keep in sync with the post-login logic in src/commands/login.tsx
         void refreshRemoteManagedSettings();
@@ -2296,9 +2320,11 @@ async function run(): Promise<CommanderCommand> {
       // Validate that the active token's org matches forceLoginOrgUUID (if set
       // in managed settings). Runs after onboarding so managed settings and
       // login state are fully loaded.
-      const orgValidation = await validateForceLoginOrg();
-      if (!orgValidation.valid) {
-        await exitWithError(root, orgValidation.message);
+      if (!process.env.ANTHROPIC_BASE_URL) {
+        const orgValidation = await validateForceLoginOrg();
+        if (!orgValidation.valid) {
+          await exitWithError(root, orgValidation.message);
+        }
       }
     }
 
@@ -2319,7 +2345,7 @@ async function run(): Promise<CommanderCommand> {
 
     // Show settings validation errors after trust is established
     // MCP config errors don't block settings from loading, so exclude them
-    if (!isNonInteractiveSession) {
+    if (!isNonInteractiveSession && !process.env.ANTHROPIC_BASE_URL) {
       const {
         errors
       } = getSettingsWithErrors();
@@ -2341,7 +2367,7 @@ async function run(): Promise<CommanderCommand> {
     const bgRefreshThrottleMs = getFeatureValue_CACHED_MAY_BE_STALE('tengu_cicada_nap_ms', 0);
     const lastPrefetched = getGlobalConfig().startupPrefetchedAt ?? 0;
     const skipStartupPrefetches = isBareMode() || bgRefreshThrottleMs > 0 && Date.now() - lastPrefetched < bgRefreshThrottleMs;
-    if (!skipStartupPrefetches) {
+    if (!skipStartupPrefetches && !process.env.ANTHROPIC_BASE_URL) {
       const lastPrefetchedInfo = lastPrefetched > 0 ? ` last ran ${Math.round((Date.now() - lastPrefetched) / 1000)}s ago` : '';
       logForDebugging(`Starting background startup prefetches${lastPrefetchedInfo}`);
       checkQuotaStatus().catch(error => logError(error));
@@ -2513,19 +2539,23 @@ async function run(): Promise<CommanderCommand> {
       appendSystemPromptFlag: appendSystemPrompt ? options.appendSystemPromptFile ? 'file' : 'flag' : undefined,
       thinkingConfig,
       assistantActivationPath: feature('KAIROS') && kairosEnabled ? assistantModule?.getAssistantActivationPath() : undefined
-    });
+    }).catch(() => {});
 
     // Log context metrics once at initialization
-    void logContextMetrics(regularMcpConfigs, toolPermissionContext);
-    void logPermissionContextForAnts(null, 'initialization');
-    logManagedSettings();
+    if (!process.env.ANTHROPIC_BASE_URL) {
+      void logContextMetrics(regularMcpConfigs, toolPermissionContext).catch(() => {});
+      void logPermissionContextForAnts(null, 'initialization').catch(() => {});
+      try {
+        logManagedSettings();
+      } catch {}
+    }
 
     // Register PID file for concurrent-session detection (~/.claude/sessions/)
     // and fire multi-clauding telemetry. Lives here (not init.ts) so only the
     // REPL path registers — not subcommands like `claude doctor`. Chained:
     // count must run after register's write completes or it misses our own file.
     void registerSession().then(registered => {
-      if (!registered) return;
+      if (!registered || process.env.ANTHROPIC_BASE_URL) return;
       if (sessionNameArg) {
         void updateSessionName(sessionNameArg);
       }
@@ -2549,7 +2579,7 @@ async function run(): Promise<CommanderCommand> {
     // are install/upgrade bookkeeping that scripted calls don't need —
     // the next interactive session will reconcile. The await here was
     // blocking -p on a marketplace round-trip.
-    if (isBareMode()) {
+    if (isBareMode() || process.env.ANTHROPIC_BASE_URL) {
       // skip — no-op
     } else if (isNonInteractiveSession) {
       // In headless mode, await to ensure plugin sync completes before CLI exits
@@ -2559,11 +2589,13 @@ async function run(): Promise<CommanderCommand> {
     } else {
       // In interactive mode, fire-and-forget — this is purely bookkeeping
       // that doesn't affect runtime behavior of the current session
-      void initializeVersionedPlugins().then(async () => {
-        profileCheckpoint('action_after_plugins_init');
-        await cleanupOrphanedPluginVersionsInBackground();
-        void getGlobExclusionsForPluginCache();
-      });
+      if (!process.env.ANTHROPIC_BASE_URL) {
+        void initializeVersionedPlugins().then(async () => {
+          profileCheckpoint('action_after_plugins_init');
+          await cleanupOrphanedPluginVersionsInBackground();
+          void getGlobExclusionsForPluginCache();
+        });
+      }
     }
     const setupTrigger = initOnly || init ? 'init' : maintenance ? 'maintenance' : null;
     if (initOnly) {

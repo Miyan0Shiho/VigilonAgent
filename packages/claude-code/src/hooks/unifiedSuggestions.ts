@@ -1,4 +1,4 @@
-import Fuse from 'fuse'
+import Fuse from 'fuse.js'
 import { basename } from 'path'
 import type { SuggestionItem } from 'src/components/PromptInput/PromptInputFooterSuggestions'
 import { generateFileSuggestions } from 'src/hooks/fileSuggestions'
