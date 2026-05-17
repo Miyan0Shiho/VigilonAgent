@@ -40,5 +40,5 @@
 如果你发现坏链或路径漂移，先运行：
 
 ```bash
-python3 docs/superpowers/research/check_library_links.py
+python3 docs/claudecode-research/check_library_links.py
 ```

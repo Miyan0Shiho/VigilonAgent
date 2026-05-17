@@ -1,6 +1,6 @@
 # Research Figures Index
 
-本页汇总 `docs/superpowers/research/figures/` 下当前已存在的 SVG 图谱资产，并区分“已存在图谱”和“规划中的回链工作”。
+本页汇总 `docs/claudecode-research/figures/` 下当前已存在的 SVG 图谱资产，并区分“已存在图谱”和“规划中的回链工作”。
 
 ## 当前已存在图谱
 
@@ -18,9 +18,9 @@
 
 ## 当前接入点
 
-- Claude Code V2 入口库： [claude-code-library-v2/README.md](../claude-code-library-v2/README.md)
-- 总索引： [claude-code-library-v2/master-index.md](../claude-code-library-v2/master-index.md)
-- 证据台账： [claude-code-library-v2/evidence/evidence-ledger.md](../claude-code-library-v2/evidence/evidence-ledger.md)
+- Claude Code V2 入口库： [library/README.md](../library/README.md)
+- 总索引： [library/master-index.md](../library/master-index.md)
+- 证据台账： [library/evidence/evidence-ledger.md](../library/evidence/evidence-ledger.md)
 
 ## 规划中的补完工作
 

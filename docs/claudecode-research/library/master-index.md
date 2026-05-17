@@ -191,4 +191,4 @@
 
 - 本目录是 Claude Code 的主馆藏。
 - 旧版拆卷材料当前未在工作区挂载；如后续恢复，也只应作为归档而不是主入口。
-- 源码引用默认指向 `docs/superpowers/research/sources/claude-code/` 下的镜像副本，以保证链接可移植。
+- 源码引用默认指向 `docs/claudecode-research/sources/claude-code/` 下的镜像副本，以保证链接可移植。

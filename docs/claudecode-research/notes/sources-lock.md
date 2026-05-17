@@ -13,7 +13,7 @@
 - commit：`cedaefce9ed9a54c29c36df6783f454532358e1a`
 
 ## Claude Code（你提供的私有源码输入）
-- 来源：工作区内现有目录 `claude_code_src-master/`（你声明拥有使用权），已复制到 `research/sources/claude-code/`
+- 来源：工作区内现有目录 `claude_code_src-master/`（你声明拥有使用权），已复制到 `research/`
 - 复制策略：`rsync -a --exclude node_modules --exclude .git`
 - 版本/哈希：本目录包含 `claude-code-2.1.88.tgz`，其 SHA256 为：
   - `d836a86d9150ecc594a7025524c50e24080478904c979f386d447770275ef813`

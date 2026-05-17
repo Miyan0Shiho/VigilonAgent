@@ -1,6 +1,6 @@
 # Claude Code（claude-code）关键文件索引（聚焦：规划/执行机制）
 
-> 代码根目录：`research/sources/claude-code/`
+> 代码根目录：`research/`
 
 ## 1) 入口（CLI / 初始化）
 

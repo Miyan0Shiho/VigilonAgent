@@ -73,7 +73,7 @@
 | 已存在 | [variable-state-index.md](./variable-state-index.md) | `packages/claude-code/src/query.ts`, `packages/claude-code/src/QueryEngine.ts`, `packages/claude-code/src/Tool.ts`, `packages/claude-code/src/utils/sessionStorage.ts` | 已进入状态级 |
 | 已存在 | [source-to-doc-map.md](./source-to-doc-map.md) | `packages/claude-code/src/entrypoints/cli.tsx`, `packages/claude-code/src/main.tsx`, `packages/claude-code/src/query.ts`, `packages/claude-code/src/tools.ts` | 反向索引当前文档和规划落点 |
 | 已存在 | [external-sources.md](./external-sources.md) | 外部资料与旧稿底稿，不直接作为源码事实 | 用于补强公开叙事与核查清单 |
-| 已存在 | [../figures/index.md](../figures/index.md) | `docs/superpowers/research/claude-code-library-v2/figures/*.svg` | 10 张核心 SVG 资产索引 |
+| 已存在 | [../figures/index.md](../figures/index.md) | `docs/claudecode-research/library/figures/*.svg` | 10 张核心 SVG 资产索引 |
 | 已存在 | [users/04-integrators-and-automation.md](../users/04-integrators-and-automation.md) | `packages/claude-code/src/entrypoints/cli.tsx`, `packages/claude-code/src/QueryEngine.ts` | 集成商与自动化画像 |
 | 已存在 | [synthesis/01-04.md](../synthesis/01-04.md) | N/A | 综合提炼 |
 | 已存在 | [product/01-positioning-and-surface.md](../product/01-positioning-and-surface.md) | `packages/claude-code/src/entrypoints/cli.tsx` | 产品定位与表面卷册 |

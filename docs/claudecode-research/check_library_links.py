@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 TARGETS = [
-    ROOT / "research-overview.md",
+    ROOT / "README.md",
     ROOT / "report.md",
     ROOT / "notes" / "catalog.md",
     ROOT / "notes" / "catalog.solo.md",
