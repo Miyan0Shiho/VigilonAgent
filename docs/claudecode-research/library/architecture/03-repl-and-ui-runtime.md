@@ -6,7 +6,7 @@
 
 ## 1. `REPL.tsx` 不是单纯渲染层
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 这个文件非常大，原因不是“UI 写得散”，而是它本身就在承担多种控制面职责：
 

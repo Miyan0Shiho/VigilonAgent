@@ -6,7 +6,7 @@
 
 ## 1. `skillify` 本身不是文件生成器，而是一个 bundled prompt command
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts), [`../../sources/claude-code/src/skills/bundled/index.ts`](../../sources/claude-code/src/skills/bundled/index.ts), [`../../sources/claude-code/src/skills/bundledSkills.ts`](../../sources/claude-code/src/skills/bundledSkills.ts)
+源码镜像：[`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/skillify.ts), [`../../src/skills/bundled/index.ts`](../../src/skills/bundled/index.ts), [`../../src/skills/bundledSkills.ts`](../../src/skills/bundledSkills.ts)
 
 `skillify` 的注册方式和别的 bundled skill 一样：
 
@@ -19,7 +19,7 @@
 
 ## 2. 它的权限设计已经暴露了真实执行面：读会话、问用户、再用普通文件工具写盘
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts)
+源码镜像：[`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/skillify.ts)
 
 注册时它声明的 `allowedTools` 是：
 
@@ -42,7 +42,7 @@
 
 ## 3. `skillify` prompt 明确把“保存到 repo 还是 personal”做成显式 operator 决策
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts)
+源码镜像：[`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/skillify.ts)
 
 它在访谈脚本里要求模型必须询问：
 
@@ -58,7 +58,7 @@
 
 ## 4. “输出 YAML code block 再确认”说明 skillify 把落盘前审阅当成第一类运行时
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts)
+源码镜像：[`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/skillify.ts)
 
 它明确要求：
 
@@ -70,7 +70,7 @@
 
 ## 5. `skillify` 不是自动模型技能，而是强 operator-invoked capture flow
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts)
+源码镜像：[`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/skillify.ts)
 
 它注册时同时声明：
 
@@ -86,7 +86,7 @@
 
 ## 6. `registerBundledSkill()` 只负责把 skillify 变成一条命令，不负责执行落盘语义
 
-源码镜像：[`../../sources/claude-code/src/skills/bundledSkills.ts`](../../sources/claude-code/src/skills/bundledSkills.ts)
+源码镜像：[`../../src/skills/bundledSkills.ts`](../../src/skills/bundledSkills.ts)
 
 bundled skill 注册后生成的其实是普通 `Command`：
 
@@ -100,7 +100,7 @@ bundled skill 注册后生成的其实是普通 `Command`：
 
 ## 7. 真正把 `/skillify` 注入会话的是通用 `processSlashCommand` 路线
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx)
 
 slash skill 的主路线是：
 
@@ -115,7 +115,7 @@ slash skill 的主路线是：
 
 ## 8. `skillify` 的“保存 skill”实际上是被 prompt 驱动的普通工具行为，不是 runtime 内建的 save opcode
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts)
+源码镜像：[`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/skillify.ts)
 
 它 prompt 里写得很死：
 
@@ -132,7 +132,7 @@ slash skill 的主路线是：
 
 ## 9. skill frontmatter 里的 `allowed-tools` 真正生效，要经过 `loadSkillsDir` 的解析层
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 文件型 skill 载入时，frontmatter 会先过：
 
@@ -147,7 +147,7 @@ slash skill 的主路线是：
 
 ## 10. `createSkillCommand()` 说明写好的 `SKILL.md` 会被重新编译回 prompt command
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 一旦 skill 被写到磁盘，再次加载时会被编译成标准 `Command`：
 
@@ -169,7 +169,7 @@ slash skill 的主路线是：
 
 ## 11. `skillRoot` 和 `Base directory for this skill:` 让生成后的 skill 重新获得文件上下文能力
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts), [`../../sources/claude-code/src/skills/bundledSkills.ts`](../../sources/claude-code/src/skills/bundledSkills.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts), [`../../src/skills/bundledSkills.ts`](../../src/skills/bundledSkills.ts)
 
 无论是磁盘 skill 还是 bundled skill 抽取出的 reference files，runtime 最终都会在 prompt 前补：
 
@@ -179,7 +179,7 @@ slash skill 的主路线是：
 
 ## 12. `command_permissions` attachment 是 slash-skill runtime 给模型看的权限 sidecar，不是给用户看的消息
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/components/messages/AttachmentMessage.tsx), [`../../sources/claude-code/src/components/messages/nullRenderingAttachments.ts`](../../sources/claude-code/src/components/messages/nullRenderingAttachments.ts), [`../../sources/claude-code/src/utils/messages.ts`](../../sources/claude-code/src/utils/messages.ts)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/components/messages/AttachmentMessage.tsx), [`../../src/components/messages/nullRenderingAttachments.ts`](../../src/components/messages/nullRenderingAttachments.ts), [`../../src/utils/messages.ts`](../../src/utils/messages.ts)
 
 在 prompt skill 注入末尾，runtime 会额外塞一条 attachment：
 
@@ -197,7 +197,7 @@ slash skill 的主路线是：
 
 ## 13. 协调器模式下还会故意不给整份 SKILL.md，而只给一个 delegation summary
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx)
 
 `getMessagesForPromptSlashCommand(...)` 里有一条重要特判：
 
@@ -215,7 +215,7 @@ slash skill 的主路线是：
 
 ## 14. 这也解释了 skillify 为什么要把 `allowed-tools` 写得尽量最小：它会被直接暴露成 worker 权限宣告
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx), [`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/bundled/skillify.ts`](../../src/utils/processUserInput/processSlashCommand.tsx), [`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 因为 runtime 会：
 

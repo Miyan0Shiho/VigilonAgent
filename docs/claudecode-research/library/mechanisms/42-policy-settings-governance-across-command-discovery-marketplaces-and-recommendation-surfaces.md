@@ -13,7 +13,7 @@
 
 ## 1. managed prompt commands 不是“配置里的一行字符串”，而是 slash catalog 的正式 source 组
 
-源码镜像：[`../../sources/claude-code/src/utils/suggestions/commandSuggestions.ts`](../../sources/claude-code/src/utils/suggestions/commandSuggestions.ts)
+源码镜像：[`../../src/utils/suggestions/commandSuggestions.ts`](../../src/utils/suggestions/commandSuggestions.ts)
 
 `commandSuggestions.ts` 在给可见命令分组时，不只区分：
 
@@ -34,7 +34,7 @@
 
 ## 2. 这条分组链说明 `policySettings` 已经进入“命令发现”而不只是“命令执行”
 
-源码镜像：[`../../sources/claude-code/src/utils/suggestions/commandSuggestions.ts`](../../sources/claude-code/src/utils/suggestions/commandSuggestions.ts)
+源码镜像：[`../../src/utils/suggestions/commandSuggestions.ts`](../../src/utils/suggestions/commandSuggestions.ts)
 
 `policyCommands` 会被：
 
@@ -46,7 +46,7 @@
 
 ## 3. marketplace policy 的真实入口不是某个 UI 组件，而是 `marketplaceHelpers` 里的 source policy contract
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/marketplaceHelpers.ts`](../../sources/claude-code/src/utils/plugins/marketplaceHelpers.ts)
+源码镜像：[`../../src/utils/plugins/marketplaceHelpers.ts`](../../src/utils/plugins/marketplaceHelpers.ts)
 
 这组 helper 明确暴露了三条 managed contract：
 
@@ -58,7 +58,7 @@
 
 ## 4. `loadMarketplacesWithGracefulDegradation()` 会在真正加载前先做 policy 裁剪
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/marketplaceHelpers.ts`](../../sources/claude-code/src/utils/plugins/marketplaceHelpers.ts)
+源码镜像：[`../../src/utils/plugins/marketplaceHelpers.ts`](../../src/utils/plugins/marketplaceHelpers.ts)
 
 `loadMarketplacesWithGracefulDegradation()` 的主循环不是盲目遍历全部 marketplace config。它先做：
 
@@ -75,7 +75,7 @@
 
 ## 5. allowlist / blocklist 是两层约束，不是一组简单字符串
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/marketplaceHelpers.ts`](../../sources/claude-code/src/utils/plugins/marketplaceHelpers.ts)
+源码镜像：[`../../src/utils/plugins/marketplaceHelpers.ts`](../../src/utils/plugins/marketplaceHelpers.ts)
 
 helper 注释已经把优先级写得很清楚：
 
@@ -91,7 +91,7 @@ helper 注释已经把优先级写得很清楚：
 
 ## 6. `PluginErrors` 把 marketplace policy failure 单独编进错误分类，而不是复用 generic load error
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/PluginErrors.tsx`](../../sources/claude-code/src/commands/plugin/PluginErrors.tsx)
+源码镜像：[`../../src/commands/plugin/PluginErrors.tsx`](../../src/commands/plugin/PluginErrors.tsx)
 
 `marketplace-blocked-by-policy` 在错误格式化里有两种专门文案：
 
@@ -107,7 +107,7 @@ helper 注释已经把优先级写得很清楚：
 
 ## 7. `PluginSettings` 会把 policy-owned marketplace 和 user/project/local marketplace 区分成不同可操作性
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/PluginSettings.tsx`](../../sources/claude-code/src/commands/plugin/PluginSettings.tsx)
+源码镜像：[`../../src/commands/plugin/PluginSettings.tsx`](../../src/commands/plugin/PluginSettings.tsx)
 
 `getExtraMarketplaceSourceInfo()` 会返回两类信息：
 
@@ -124,7 +124,7 @@ helper 注释已经把优先级写得很清楚：
 
 ## 8. `ErrorsTabContent` 也把 policy marketplace 当成单独的 operator row 语义
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/PluginSettings.tsx`](../../sources/claude-code/src/commands/plugin/PluginSettings.tsx)
+源码镜像：[`../../src/commands/plugin/PluginSettings.tsx`](../../src/commands/plugin/PluginSettings.tsx)
 
 `ErrorsTabContent` 在拼 errors 时会显式把：
 
@@ -142,7 +142,7 @@ helper 注释已经把优先级写得很清楚：
 
 ## 9. `DiscoverPlugins` 不只受 marketplace policy 影响，还会再经过 plugin-level policy 过滤
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx`](../../sources/claude-code/src/utils/plugins/pluginPolicy.ts)
+源码镜像：[`../../src/commands/plugin/DiscoverPlugins.tsx`](../../src/utils/plugins/pluginPolicy.ts)
 
 `DiscoverPlugins` 在收集完所有 marketplace plugins 之后，不是只过滤：
 
@@ -156,7 +156,7 @@ helper 注释已经把优先级写得很清楚：
 
 ## 10. 这条 plugin-level gate 的真相源是 `policySettings.enabledPlugins[pluginId] === false`
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginPolicy.ts`](../../sources/claude-code/src/utils/plugins/pluginPolicy.ts)
+源码镜像：[`../../src/utils/plugins/pluginPolicy.ts`](../../src/utils/plugins/pluginPolicy.ts)
 
 `isPluginBlockedByPolicy()` 不是看安装 scope，也不是看本地缓存，而是直接查：
 
@@ -172,7 +172,7 @@ helper 注释已经把优先级写得很清楚：
 
 ## 11. `ManagePlugins` 会把这类 force-disabled plugin 从已装插件管理面直接剔除
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx`](../../sources/claude-code/src/utils/plugins/pluginPolicy.ts)
+源码镜像：[`../../src/commands/plugin/ManagePlugins.tsx`](../../src/utils/plugins/pluginPolicy.ts)
 
 `filterManagedDisabledPlugins()` 的注释已经写明：
 
@@ -189,7 +189,7 @@ helper 注释已经把优先级写得很清楚：
 
 ## 12. `DiscoverPlugins` 的 empty state 也会显式暴露 marketplace policy 的存在
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx`](../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx)
+源码镜像：[`../../src/commands/plugin/DiscoverPlugins.tsx`](../../src/commands/plugin/DiscoverPlugins.tsx)
 
 当没有可展示插件时，empty state 不是一律说“没有插件”。其中一条分支会明确提示：
 
@@ -200,7 +200,7 @@ helper 注释已经把优先级写得很清楚：
 
 ## 13. 推荐安装链先走统一 gate，再落到各自的解析器
 
-源码镜像：[`../../sources/claude-code/src/hooks/usePluginRecommendationBase.tsx`](../../sources/claude-code/src/hooks/useLspPluginRecommendation.tsx), [`../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx`](../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx)
+源码镜像：[`../../src/hooks/usePluginRecommendationBase.tsx`](../../src/hooks/useLspPluginRecommendation.tsx), [`../../src/hooks/useClaudeCodeHintRecommendation.tsx`](../../src/hooks/useClaudeCodeHintRecommendation.tsx)
 
 `usePluginRecommendationBase()` 提供统一状态机：
 
@@ -213,7 +213,7 @@ helper 注释已经把优先级写得很清楚：
 
 ## 14. `useLspPluginRecommendation` 把推荐安装固定落到 user scope，并会直接写 user settings
 
-源码镜像：[`../../sources/claude-code/src/hooks/useLspPluginRecommendation.tsx`](../../sources/claude-code/src/utils/settings/settings.ts)
+源码镜像：[`../../src/hooks/useLspPluginRecommendation.tsx`](../../src/utils/settings/settings.ts)
 
 LSP recommendation 在用户同意后会：
 
@@ -226,7 +226,7 @@ LSP recommendation 在用户同意后会：
 
 ## 15. `useClaudeCodeHintRecommendation` 也是 user-scope install，但前置来源是 stderr 协议而不是文件编辑检测
 
-源码镜像：[`../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx`](../../sources/claude-code/src/hooks/usePluginRecommendationBase.tsx)
+源码镜像：[`../../src/hooks/useClaudeCodeHintRecommendation.tsx`](../../src/hooks/usePluginRecommendationBase.tsx)
 
 这条链的来源是：
 
@@ -246,7 +246,7 @@ LSP recommendation 在用户同意后会：
 
 ## 16. 为什么这条推荐链也该被放进 policy 治理卷，而不是只写在“增长 UI”里
 
-源码镜像：[`../../sources/claude-code/src/hooks/usePluginRecommendationBase.tsx`](../../sources/claude-code/src/hooks/useLspPluginRecommendation.tsx), [`../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx`](../../sources/claude-code/src/utils/plugins/pluginPolicy.ts)
+源码镜像：[`../../src/hooks/usePluginRecommendationBase.tsx`](../../src/hooks/useLspPluginRecommendation.tsx), [`../../src/hooks/useClaudeCodeHintRecommendation.tsx`](../../src/utils/plugins/pluginPolicy.ts)
 
 表面上看，LSP / hint recommendation 像是增长功能。但它们真正触碰的是：
 
@@ -260,7 +260,7 @@ LSP recommendation 在用户同意后会：
 
 ## 17. 这组 consumer 共同说明：`policySettings` 正在重写“用户看到什么插件、能从哪装、为什么装不上”
 
-源码镜像：[`../../sources/claude-code/src/utils/suggestions/commandSuggestions.ts`](../../sources/claude-code/src/utils/suggestions/commandSuggestions.ts), [`../../sources/claude-code/src/utils/plugins/marketplaceHelpers.ts`](../../sources/claude-code/src/utils/plugins/pluginPolicy.ts), [`../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx`](../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx), [`../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx`](../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx), [`../../sources/claude-code/src/commands/plugin/PluginSettings.tsx`](../../sources/claude-code/src/commands/plugin/PluginSettings.tsx), [`../../sources/claude-code/src/commands/plugin/PluginErrors.tsx`](../../sources/claude-code/src/commands/plugin/PluginErrors.tsx), [`../../sources/claude-code/src/hooks/usePluginRecommendationBase.tsx`](../../sources/claude-code/src/hooks/usePluginRecommendationBase.tsx), [`../../sources/claude-code/src/hooks/useLspPluginRecommendation.tsx`](../../sources/claude-code/src/hooks/useLspPluginRecommendation.tsx), [`../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx`](../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx)
+源码镜像：[`../../src/utils/suggestions/commandSuggestions.ts`](../../src/utils/suggestions/commandSuggestions.ts), [`../../src/utils/plugins/marketplaceHelpers.ts`](../../src/utils/plugins/pluginPolicy.ts), [`../../src/commands/plugin/DiscoverPlugins.tsx`](../../src/commands/plugin/DiscoverPlugins.tsx), [`../../src/commands/plugin/ManagePlugins.tsx`](../../src/commands/plugin/ManagePlugins.tsx), [`../../src/commands/plugin/PluginSettings.tsx`](../../src/commands/plugin/PluginSettings.tsx), [`../../src/commands/plugin/PluginErrors.tsx`](../../src/commands/plugin/PluginErrors.tsx), [`../../src/hooks/usePluginRecommendationBase.tsx`](../../src/hooks/usePluginRecommendationBase.tsx), [`../../src/hooks/useLspPluginRecommendation.tsx`](../../src/hooks/useLspPluginRecommendation.tsx), [`../../src/hooks/useClaudeCodeHintRecommendation.tsx`](../../src/hooks/useClaudeCodeHintRecommendation.tsx)
 
 和前两卷相比，这一组 consumer 更靠“发现与安装”：
 

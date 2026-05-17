@@ -17,7 +17,7 @@
 
 ## 1. `/agents` 是 local-JSX command，不是只读帮助页
 
-源码镜像：[`../../sources/claude-code/src/commands/agents/agents.tsx`](../../sources/claude-code/src/commands/agents/agents.tsx)
+源码镜像：[`../../src/commands/agents/agents.tsx`](../../src/commands/agents/agents.tsx)
 
 `commands/agents/agents.tsx` 做的事情很短，但很关键：
 
@@ -33,7 +33,7 @@
 
 ## 2. `AgentsMenu` 是一个模式机，而不是单页列表
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentsMenu.tsx`](../../sources/claude-code/src/components/agents/AgentsMenu.tsx)
+源码镜像：[`../../src/components/agents/AgentsMenu.tsx`](../../src/components/agents/AgentsMenu.tsx)
 
 `modeState` 明确分成多种模式：
 
@@ -55,7 +55,7 @@
 
 ## 3. 来源分组不是展示花活，而是和 override 真相绑定的 inventory router
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentsMenu.tsx`](../../sources/claude-code/src/components/agents/AgentsMenu.tsx), [`../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts`](../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts)
+源码镜像：[`../../src/components/agents/AgentsMenu.tsx`](../../src/components/agents/AgentsMenu.tsx), [`../../src/tools/AgentTool/agentDisplay.ts`](../../src/tools/AgentTool/agentDisplay.ts)
 
 `AgentsMenu` 会先按 source 把 `allAgents` 拆成：
 
@@ -81,7 +81,7 @@
 
 ## 4. 删除 agent 时不是只删文件，还会立即重算 `activeAgents`
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentsMenu.tsx`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/AgentsMenu.tsx`](../../src/components/agents/agentFileUtils.ts)
 
 `handleAgentDeleted()` 的顺序是：
 
@@ -99,7 +99,7 @@
 
 ## 5. `AgentsList` 把 built-in 和 non-built-in 故意分开，说明可选中性本身就是产品语义
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentsList.tsx`](../../sources/claude-code/src/components/agents/AgentsList.tsx)
+源码镜像：[`../../src/components/agents/AgentsList.tsx`](../../src/components/agents/AgentsList.tsx)
 
 列表层有两个关键规则：
 
@@ -113,7 +113,7 @@
 
 ## 6. `Create new agent` 是导航状态的一等成员，而不是按钮附属物
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentsList.tsx`](../../sources/claude-code/src/components/agents/AgentsList.tsx)
+源码镜像：[`../../src/components/agents/AgentsList.tsx`](../../src/components/agents/AgentsList.tsx)
 
 键盘导航时：
 
@@ -128,7 +128,7 @@
 
 ## 7. `AgentDetail` 不只展示 metadata，还会真正重算 agent 的 resolved tool face
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentDetail.tsx`](../../sources/claude-code/src/components/agents/AgentDetail.tsx)
+源码镜像：[`../../src/components/agents/AgentDetail.tsx`](../../src/components/agents/AgentDetail.tsx)
 
 详情页不是只打印 frontmatter。它会：
 
@@ -144,7 +144,7 @@
 
 ## 8. 文件路径展示特意区分 built-in / plugin / CLI / disk-backed agents
 
-源码镜像：[`../../sources/claude-code/src/components/agents/agentFileUtils.ts`](../../sources/claude-code/src/components/agents/AgentDetail.tsx)
+源码镜像：[`../../src/components/agents/agentFileUtils.ts`](../../src/components/agents/AgentDetail.tsx)
 
 `getActualRelativeAgentFilePath()` 的返回值不是统一磁盘路径：
 
@@ -157,7 +157,7 @@
 
 ## 9. `AgentDetail` 展示的 color 不是装饰字段，而是连到 `agentColorManager` 的稳定身份色协议
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentDetail.tsx`](../../sources/claude-code/src/components/agents/AgentDetail.tsx), [`../../sources/claude-code/src/tools/AgentTool/agentColorManager.ts`](../../sources/claude-code/src/tools/AgentTool/agentColorManager.ts)
+源码镜像：[`../../src/components/agents/AgentDetail.tsx`](../../src/components/agents/AgentDetail.tsx), [`../../src/tools/AgentTool/agentColorManager.ts`](../../src/tools/AgentTool/agentColorManager.ts)
 
 详情页会调用：
 
@@ -169,7 +169,7 @@
 
 ## 10. `AgentEditor` 是 menu-driven editor shell，不是直接嵌表单
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentEditor.tsx`](../../sources/claude-code/src/components/agents/AgentEditor.tsx)
+源码镜像：[`../../src/components/agents/AgentEditor.tsx`](../../src/components/agents/AgentEditor.tsx)
 
 编辑器先进入一个 menu：
 
@@ -189,7 +189,7 @@
 
 ## 11. `Open in editor` 是真实文件 handoff，不是内嵌 markdown editor
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentEditor.tsx`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/AgentEditor.tsx`](../../src/components/agents/agentFileUtils.ts)
 
 `handleOpenInEditor()` 直接：
 
@@ -207,7 +207,7 @@
 
 ## 12. `AgentEditor.handleSave()` 只允许 custom/plugin agents 落盘，built-in 永远不进入这条路径
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentEditor.tsx`](../../sources/claude-code/src/components/agents/AgentEditor.tsx)
+源码镜像：[`../../src/components/agents/AgentEditor.tsx`](../../src/components/agents/AgentEditor.tsx)
 
 保存前明确检查：
 
@@ -219,7 +219,7 @@
 
 ## 13. 保存不是只写文件，还会同步更新颜色注册和 `activeAgents`
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentEditor.tsx`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/AgentEditor.tsx`](../../src/components/agents/agentFileUtils.ts)
 
 `handleSave()` 的关键顺序是：
 
@@ -238,7 +238,7 @@
 
 ## 14. `ToolSelector` 的目标不是自由选字符串，而是把 agent 的工具权限压进一个有产品语义的 bucket 模型
 
-源码镜像：[`../../sources/claude-code/src/components/agents/ToolSelector.tsx`](../../sources/claude-code/src/components/agents/ToolSelector.tsx)
+源码镜像：[`../../src/components/agents/ToolSelector.tsx`](../../src/components/agents/ToolSelector.tsx)
 
 它把工具切成：
 
@@ -261,7 +261,7 @@
 
 ## 15. `ToolSelector` 的 “all tools” 语义不是显式 `*`，而是 `undefined`
 
-源码镜像：[`../../sources/claude-code/src/components/agents/ToolSelector.tsx`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/ToolSelector.tsx`](../../src/components/agents/agentFileUtils.ts)
 
 初始阶段：
 
@@ -284,7 +284,7 @@
 
 ## 16. `TaskOutputTool` 被纳入 read-only bucket，说明 `/agents` 的工具分类在意的是 agent capability semantics，而不是工具新旧程度
 
-源码镜像：[`../../sources/claude-code/src/components/agents/ToolSelector.tsx`](../../sources/claude-code/src/components/agents/ToolSelector.tsx)
+源码镜像：[`../../src/components/agents/ToolSelector.tsx`](../../src/components/agents/ToolSelector.tsx)
 
 尽管 `TaskOutputTool` 已经 deprecated，它仍被归入：
 
@@ -296,7 +296,7 @@
 
 ## 17. MCP tools 在 `ToolSelector` 里按 serverName 二次分桶，说明 agent 工具前台把 connector surface 当独立生态
 
-源码镜像：[`../../sources/claude-code/src/components/agents/ToolSelector.tsx`](../../sources/claude-code/src/components/agents/ToolSelector.tsx)
+源码镜像：[`../../src/components/agents/ToolSelector.tsx`](../../src/components/agents/ToolSelector.tsx)
 
 MCP 不是混进通用 bucket，而是：
 
@@ -311,7 +311,7 @@ MCP 不是混进通用 bucket，而是：
 
 ## 18. `validateAgent()` 不是 schema 校验器，而是 definition ergonomics + runtime sanity 的混合检查器
 
-源码镜像：[`../../sources/claude-code/src/components/agents/validateAgent.ts`](../../sources/claude-code/src/components/agents/validateAgent.ts)
+源码镜像：[`../../src/components/agents/validateAgent.ts`](../../src/components/agents/validateAgent.ts)
 
 它同时检查：
 
@@ -331,7 +331,7 @@ MCP 不是混进通用 bucket，而是：
 
 ## 19. duplicate 检查故意允许“同 source 自我编辑”，但不允许跨 source 重名无感覆盖
 
-源码镜像：[`../../sources/claude-code/src/components/agents/validateAgent.ts`](../../sources/claude-code/src/components/agents/validateAgent.ts)
+源码镜像：[`../../src/components/agents/validateAgent.ts`](../../src/components/agents/validateAgent.ts)
 
 重名判断条件是：
 

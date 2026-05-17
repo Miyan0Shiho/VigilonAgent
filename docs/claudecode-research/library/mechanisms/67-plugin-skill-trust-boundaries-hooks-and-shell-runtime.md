@@ -12,7 +12,7 @@
 
 ## 1. plugin skill 的命令对象虽然长得像普通 skill，但 source/loadedFrom 明确不同
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/loadPluginCommands.ts`](../../sources/claude-code/src/utils/plugins/loadPluginCommands.ts)
+源码镜像：[`../../src/utils/plugins/loadPluginCommands.ts`](../../src/utils/plugins/loadPluginCommands.ts)
 
 plugin markdown 被编译成 `Command` 时，会明确写成：
 
@@ -28,7 +28,7 @@ plugin markdown 被编译成 `Command` 时，会明确写成：
 
 ## 2. plugin skill 仍复用 `Base directory for this skill`，但它的目录语义是“插件子树中的 skill 子目录”
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/loadPluginCommands.ts`](../../sources/claude-code/src/utils/plugins/loadPluginCommands.ts)
+源码镜像：[`../../src/utils/plugins/loadPluginCommands.ts`](../../src/utils/plugins/loadPluginCommands.ts)
 
 当 `config.isSkillMode` 时，plugin skill 会在 prompt 前补：
 
@@ -44,7 +44,7 @@ plugin markdown 被编译成 `Command` 时，会明确写成：
 
 ## 3. plugin skill 比普通 skill 多了一组插件级变量注入
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/loadPluginCommands.ts`](../../sources/claude-code/src/utils/plugins/loadPluginCommands.ts), [`../../sources/claude-code/src/utils/plugins/pluginOptionsStorage.ts`](../../sources/claude-code/src/utils/plugins/pluginOptionsStorage.ts)
+源码镜像：[`../../src/utils/plugins/loadPluginCommands.ts`](../../src/utils/plugins/loadPluginCommands.ts), [`../../src/utils/plugins/pluginOptionsStorage.ts`](../../src/utils/plugins/pluginOptionsStorage.ts)
 
 在参数替换之后，plugin command loader 还会做：
 
@@ -59,7 +59,7 @@ plugin markdown 被编译成 `Command` 时，会明确写成：
 
 ## 4. `userConfig` 替换说明 plugin skill 还能把已保存配置值注入 prompt，但会主动屏蔽 secret
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/loadPluginCommands.ts`](../../sources/claude-code/src/utils/plugins/pluginOptionsStorage.ts)
+源码镜像：[`../../src/utils/plugins/loadPluginCommands.ts`](../../src/utils/plugins/pluginOptionsStorage.ts)
 
 如果 `pluginManifest.userConfig` 存在，plugin skill 还会走：
 
@@ -75,7 +75,7 @@ plugin markdown 被编译成 `Command` 时，会明确写成：
 
 ## 5. plugin option 存储本身就是双层的，这直接影响 plugin skill 看到什么
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginOptionsStorage.ts`](../../sources/claude-code/src/utils/plugins/pluginOptionsStorage.ts)
+源码镜像：[`../../src/utils/plugins/pluginOptionsStorage.ts`](../../src/utils/plugins/pluginOptionsStorage.ts)
 
 `loadPluginOptions()` 会合并：
 
@@ -91,7 +91,7 @@ plugin markdown 被编译成 `Command` 时，会明确写成：
 
 ## 6. plugin skill 也会执行 inline shell，但它走的是 plugin-scoped 变量和 skill-scoped 允许列表
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/loadPluginCommands.ts`](../../sources/claude-code/src/utils/promptShellExecution.ts)
+源码镜像：[`../../src/utils/plugins/loadPluginCommands.ts`](../../src/utils/promptShellExecution.ts)
 
 plugin skill 在完成：
 
@@ -113,7 +113,7 @@ plugin skill 在完成：
 
 ## 7. 但 plugin skill 的 shell 前置上下文比普通 skill 更强，因为它已经先拿到了 plugin root 和配置视图
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/loadPluginCommands.ts`](../../sources/claude-code/src/utils/promptShellExecution.ts)
+源码镜像：[`../../src/utils/plugins/loadPluginCommands.ts`](../../src/utils/promptShellExecution.ts)
 
 disk skill 进入 shell execution 前，通常只有：
 
@@ -130,7 +130,7 @@ plugin skill 额外还有：
 
 ## 8. `strictPluginOnlyCustomization` 不是在 loader 里把 plugin skill 关掉，而是在别的 surface 上把非 admin-trusted source 挡掉
 
-源码镜像：[`../../sources/claude-code/src/utils/settings/pluginOnlyPolicy.ts`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx), [`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/utils/settings/pluginOnlyPolicy.ts`](../../src/utils/processUserInput/processSlashCommand.tsx), [`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 `isRestrictedToPluginOnly(surface)` 的注释写得很明确：
 
@@ -141,7 +141,7 @@ plugin skill 额外还有：
 
 ## 9. `isSourceAdminTrusted('plugin')` 是 plugin skill hooks 能穿透 `pluginOnly` 锁的核心依据
 
-源码镜像：[`../../sources/claude-code/src/utils/settings/pluginOnlyPolicy.ts`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx)
+源码镜像：[`../../src/utils/settings/pluginOnlyPolicy.ts`](../../src/utils/processUserInput/processSlashCommand.tsx)
 
 `ADMIN_TRUSTED_SOURCES` 明确包含：
 
@@ -159,7 +159,7 @@ plugin skill 额外还有：
 
 ## 10. 这让 plugin skill 比普通 disk skill 多了一层“执行可见、hook 可能被阉割”的 source-sensitive 行为
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/settings/pluginOnlyPolicy.ts)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/settings/pluginOnlyPolicy.ts)
 
 在 `strictPluginOnlyCustomization(['hooks'])` 这种配置下：
 
@@ -175,7 +175,7 @@ plugin skill 则因为 `source === 'plugin'` 会穿过这层 gate。结果就是
 
 ## 11. plugin skill 没有 MCP 那样的 shell 禁令，这说明 Claude Code 把 plugin marketplace 当作“受治理的本地资产”
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/utils/plugins/loadPluginCommands.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/utils/plugins/loadPluginCommands.ts)
 
 disk skill 侧有：
 
@@ -190,7 +190,7 @@ plugin loader 则没有对应的 “if plugin then deny shell” 分支，而是
 
 ## 12. plugin skill 的命名空间也更复杂，这会反过来影响 discoverability 和 skill-dir 语义
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/loadPluginCommands.ts`](../../sources/claude-code/src/utils/suggestions/commandSuggestions.ts)
+源码镜像：[`../../src/utils/plugins/loadPluginCommands.ts`](../../src/utils/suggestions/commandSuggestions.ts)
 
 plugin skill 的名字来自：
 

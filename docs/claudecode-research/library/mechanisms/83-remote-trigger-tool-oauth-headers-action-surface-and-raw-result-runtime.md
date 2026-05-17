@@ -16,11 +16,11 @@
 - raw status/json result contract
 - intentionally minimal UI receipt
 
-也先说明一个边界：当前仓库里没有 `remoteTriggerApi.ts` 之类的独立 helper，逻辑集中写在 [`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts) 里。所以这里讨论的是“当前可见的一体化工具实现”，不是某个被隐藏的 service layer。
+也先说明一个边界：当前仓库里没有 `remoteTriggerApi.ts` 之类的独立 helper，逻辑集中写在 [`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts) 里。所以这里讨论的是“当前可见的一体化工具实现”，不是某个被隐藏的 service layer。
 
 ## 1. 这把工具的暴露 gate 和 `/schedule` skill 完全对齐，说明它不是底层通用 HTTP client
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts), [`../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts`](../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts), [`../../src/skills/bundled/scheduleRemoteAgents.ts`](../../src/skills/bundled/scheduleRemoteAgents.ts)
 
 `RemoteTriggerTool.isEnabled()` 要求同时满足：
 
@@ -33,7 +33,7 @@
 
 ## 2. 它是并发安全的，但只在 `list/get` 上声明 read-only
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 工具声明：
 
@@ -49,7 +49,7 @@
 
 ## 3. 输入 schema 被故意压到三字段，action surface 很小
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 输入只有：
 
@@ -76,7 +76,7 @@
 
 ## 4. `trigger_id` 的正则也很刻意：它允许常见标识符，但先挡掉明显不该入 URL path 的内容
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 `trigger_id` 必须匹配：
 
@@ -93,7 +93,7 @@
 
 ## 5. `body` 被刻意定义成 `record<string, unknown>`，说明这把工具不替用户建高层 domain model
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 `create` 和 `update` 都只要求：
 
@@ -112,7 +112,7 @@
 
 ## 6. 这把工具的第一个真正运行时动作不是发请求，而是强制刷新 subscriber OAuth
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts), [`../../sources/claude-code/src/utils/auth.ts`](../../sources/claude-code/src/utils/auth.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts), [`../../src/utils/auth.ts`](../../src/utils/auth.ts)
 
 调用开头就是：
 
@@ -126,7 +126,7 @@
 
 ## 7. 它明确拒绝 API-key-only 宿主，要求 `claude.ai` subscriber OAuth 身份
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 如果 `accessToken` 为空，直接抛：
 
@@ -140,7 +140,7 @@
 
 ## 8. organization UUID 也是 hard requirement，不是可选增强头
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts), [`../../sources/claude-code/src/services/oauth/client.ts`](../../sources/claude-code/src/services/oauth/client.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts), [`../../src/services/oauth/client.ts`](../../src/services/oauth/client.ts)
 
 工具接着还会：
 
@@ -160,7 +160,7 @@
 
 ## 9. 请求头里有三类信息：auth、version/beta、organization scope
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 headers 固定包含：
 
@@ -180,7 +180,7 @@ headers 固定包含：
 
 ## 10. `TRIGGERS_BETA` 被硬编码在工具里，说明这条面向用户的能力仍和后端 rollout 强绑定
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 常量：
 
@@ -192,7 +192,7 @@ headers 固定包含：
 
 ## 11. action 到 URL/method 的映射是显式 switch，而不是资源表驱动
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 映射规则是：
 
@@ -211,7 +211,7 @@ headers 固定包含：
 
 ## 12. `update` 的语义很重要：它是 partial update，但 transport 仍然是 `POST`
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/prompt.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/prompt.ts), [`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/prompt.ts`](../../src/tools/RemoteTriggerTool/prompt.ts), [`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 tool prompt 已经直接告诉模型：
 
@@ -225,7 +225,7 @@ Claude Code 没有把它包装成更“规范”的 `PATCH` 表象。它选择�
 
 ## 13. `run` 动作用空对象 `{}` 作为 body，而不是省略 body
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 `run` 分支设置的是：
 
@@ -241,7 +241,7 @@ Claude Code 没有把它包装成更“规范”的 `PATCH` 表象。它选择�
 
 ## 14. 工具没有自己定义“成功”的业务标准，而是把所有 HTTP 状态都回传
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 `axios.request(...)` 用了：
 
@@ -282,7 +282,7 @@ Claude Code 没有把它包装成更“规范”的 `PATCH` 表象。它选择�
 
 ## 16. output schema 只保留 `status + json`，没有任何 trigger-specific projection
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 输出是：
 
@@ -309,7 +309,7 @@ Claude Code 没有把它包装成更“规范”的 `PATCH` 表象。它选择�
 
 ## 17. `mapToolResultToToolResultBlockParam()` 也故意不做总结，只是原样拼成 HTTP receipt
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 tool_result 内容只有：
 
@@ -328,7 +328,7 @@ HTTP <status>
 
 ## 18. UI 层也进一步贯彻了这个“薄回执”策略
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/UI.tsx`](../../sources/claude-code/src/tools/RemoteTriggerTool/UI.tsx)
+源码镜像：[`../../src/tools/RemoteTriggerTool/UI.tsx`](../../src/tools/RemoteTriggerTool/UI.tsx)
 
 `renderToolUseMessage(...)` 只显示：
 
@@ -350,7 +350,7 @@ HTTP <status>
 
 ## 19. 它的 `toAutoClassifierInput(...)` 也故意压得极窄，说明安全判断主要看动作类别而不是 body 内容
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 classifier input 只有：
 

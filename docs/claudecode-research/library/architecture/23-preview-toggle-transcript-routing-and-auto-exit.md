@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是“当前正在看的 agent 到底接不接输入、preview 到底显不显示”，不是选择树怎么移动
 
-源码镜像：[`../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx`](../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx), [`../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx), [`../../sources/claude-code/src/state/selectors.ts`](../../sources/claude-code/src/state/selectors.ts), [`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx`](../../sources/claude-code/src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx), [`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx), [`../../sources/claude-code/src/hooks/useTeammateViewAutoExit.ts`](../../sources/claude-code/src/hooks/useTeammateViewAutoExit.ts), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/hooks/useGlobalKeybindings.tsx`](../../src/hooks/useGlobalKeybindings.tsx), [`../../src/components/Spinner/TeammateSpinnerTree.tsx`](../../src/components/Spinner/TeammateSpinnerTree.tsx), [`../../src/state/selectors.ts`](../../src/state/selectors.ts), [`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx`](../../src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx), [`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx), [`../../src/hooks/useTeammateViewAutoExit.ts`](../../src/hooks/useTeammateViewAutoExit.ts), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 前一卷已经把这些讲清了：
 
@@ -24,7 +24,7 @@
 
 ## 2. `showTeammateMessagePreview` 说明 teammate preview 是 REPL 级 capability toggle，不是某棵树自己的局部状态
 
-源码镜像：[`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts), [`../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx`](../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx)
+源码镜像：[`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts), [`../../src/hooks/useGlobalKeybindings.tsx`](../../src/hooks/useGlobalKeybindings.tsx)
 
 `showTeammateMessagePreview` 直接挂在 `AppState`，默认值是 `false`。它的切换也不是组件内按钮，而是全局 keybinding：
 
@@ -38,7 +38,7 @@
 
 ## 3. `TeammateSpinnerTree -> TeammateSpinnerLine` 说明 preview toggle 的消费端只有一层，但影响的是整棵树的阅读密度
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx), [`../../sources/claude-code/src/components/Spinner/TeammateSpinnerLine.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerLine.tsx)
+源码镜像：[`../../src/components/Spinner/TeammateSpinnerTree.tsx`](../../src/components/Spinner/TeammateSpinnerTree.tsx), [`../../src/components/Spinner/TeammateSpinnerLine.tsx`](../../src/components/Spinner/TeammateSpinnerLine.tsx)
 
 消费链很直接：
 
@@ -50,7 +50,7 @@
 
 ## 4. `getViewedTeammateTask()` 说明 `viewingAgentTaskId` 不是“任何被看的 agent”，而是“如果能窄化成 teammate 才算 viewed teammate”
 
-源码镜像：[`../../sources/claude-code/src/state/selectors.ts`](../../sources/claude-code/src/state/selectors.ts)
+源码镜像：[`../../src/state/selectors.ts`](../../src/state/selectors.ts)
 
 这个 selector 的返回条件很严格：
 
@@ -69,7 +69,7 @@
 
 ## 5. `getActiveAgentForInput()` 说明输入路由不是靠 UI 分支猜，而是靠一个纯 selector 判决
 
-源码镜像：[`../../sources/claude-code/src/state/selectors.ts`](../../sources/claude-code/src/state/selectors.ts)
+源码镜像：[`../../src/state/selectors.ts`](../../src/state/selectors.ts)
 
 它返回三态判决：
 
@@ -81,7 +81,7 @@
 
 ## 6. `PromptInput.onSubmit` 说明真正的输入投递分叉发生在提交时，而不是输入时
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/state/selectors.ts`](../../sources/claude-code/src/state/selectors.ts)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/state/selectors.ts`](../../src/state/selectors.ts)
 
 `onSubmit` 的主分叉是：
 
@@ -95,7 +95,7 @@
 
 ## 7. `PromptInput` 还会用 `viewingAgentTaskId` 抑制多种 leader-only 能力，说明 transcript 路由会反向影响前台功能
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 当前源码里至少有三类 leader-only gate：
 
@@ -107,7 +107,7 @@
 
 ## 8. `handleCycleMode` 说明 mode cycle 在 teammate transcript 前台时会改写被看 teammate 的权限模式，而不是 leader 的
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 逻辑是：
 
@@ -120,7 +120,7 @@
 
 ## 9. in-process teammate 的输入语义是“消息注入 + transcript 立即可见”，而不是同步 RPC
 
-源码镜像：[`../../sources/claude-code/src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx`](../../sources/claude-code/src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx`](../../src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 `injectUserMessageToTeammate(...)` 会：
 
@@ -137,7 +137,7 @@ REPL 侧在某些支路直接调用它。这说明 viewed teammate 的 transcrip
 
 ## 10. local agent 的输入语义和 in-process teammate 不同，说明 `named_agent` 只是路由归一，不代表执行语义一致
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 本地 agent 这边拆成两步：
 
@@ -153,7 +153,7 @@ REPL 侧在某些支路直接调用它。这说明 viewed teammate 的 transcrip
 
 ## 11. `useTeammateViewAutoExit()` 说明前台 transcript 不会因为任何终态都被强制踢掉，而是显式保留“可回看 completed”这个窗口
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTeammateViewAutoExit.ts`](../../sources/claude-code/src/hooks/useTeammateViewAutoExit.ts)
+源码镜像：[`../../src/hooks/useTeammateViewAutoExit.ts`](../../src/hooks/useTeammateViewAutoExit.ts)
 
 它的策略是：
 
@@ -167,7 +167,7 @@ REPL 侧在某些支路直接调用它。这说明 viewed teammate 的 transcrip
 
 ## 12. `taskExists` 和 teammate narrowing 分离，说明 auto-exit 逻辑刻意避免误伤 local agent 视图
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTeammateViewAutoExit.ts`](../../sources/claude-code/src/hooks/useTeammateViewAutoExit.ts)
+源码镜像：[`../../src/hooks/useTeammateViewAutoExit.ts`](../../src/hooks/useTeammateViewAutoExit.ts)
 
 这里有个很关键的小心思：
 
@@ -180,7 +180,7 @@ REPL 侧在某些支路直接调用它。这说明 viewed teammate 的 transcrip
 
 ## 13. `REPL` 的 viewed-local-agent bootstrap 说明 local agent transcript foreground 后并不是天然就有完整历史
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 REPL 里有一条专门的 bootstrap effect：
 
@@ -198,7 +198,7 @@ REPL 里有一条专门的 bootstrap effect：
 
 ## 14. 这条链最终说明 Claude Code 的 transcript foreground 不是单一布尔位，而是三条协议叠加
 
-源码镜像：[`../../sources/claude-code/src/state/selectors.ts`](../../sources/claude-code/src/state/selectors.ts), [`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/hooks/useTeammateViewAutoExit.ts`](../../sources/claude-code/src/hooks/useTeammateViewAutoExit.ts)
+源码镜像：[`../../src/state/selectors.ts`](../../src/state/selectors.ts), [`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/hooks/useTeammateViewAutoExit.ts`](../../src/hooks/useTeammateViewAutoExit.ts)
 
 真正叠在一起工作的是：
 

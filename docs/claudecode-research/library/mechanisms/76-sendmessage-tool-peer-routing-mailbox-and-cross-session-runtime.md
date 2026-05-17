@@ -16,7 +16,7 @@
 
 ## 1. `SendMessageTool` 在工具池里不是 swarm 的装饰件，而是多条 agent runtime 都依赖的正式控制面
 
-源码镜像：[`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/tools.ts), [`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts)
+源码镜像：[`../../src/tools.ts`](../../src/tools.ts), [`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/tools/SendMessageTool/SendMessageTool.ts)
 
 它在 `getAllBaseTools()` 里是常驻基础工具：
 
@@ -31,7 +31,7 @@
 
 ## 2. 系统提示词也把它定义成 teammate 可见性的唯一正式通道
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/teammatePromptAddendum.ts`](../../sources/claude-code/src/utils/swarm/teammatePromptAddendum.ts)
+源码镜像：[`../../src/utils/swarm/teammatePromptAddendum.ts`](../../src/utils/swarm/teammatePromptAddendum.ts)
 
 `TEAMMATE_SYSTEM_PROMPT_ADDENDUM` 讲得非常硬：
 
@@ -44,7 +44,7 @@
 
 ## 3. schema 从一开始就把通信拆成两类：plain text peer DM 和 structured protocol response
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts), [`../../sources/claude-code/src/tools/SendMessageTool/prompt.ts`](../../sources/claude-code/src/tools/SendMessageTool/prompt.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/tools/SendMessageTool/SendMessageTool.ts), [`../../src/tools/SendMessageTool/prompt.ts`](../../src/tools/SendMessageTool/prompt.ts)
 
 input schema 只有三个字段：
 
@@ -63,7 +63,7 @@ input schema 只有三个字段：
 
 ## 4. `to` 不是单一 teammate 名字，而是一张多宿主地址表
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/prompt.ts`](../../sources/claude-code/src/tools/SendMessageTool/prompt.ts), [`../../sources/claude-code/src/utils/peerAddress.ts`](../../sources/claude-code/src/utils/peerAddress.ts)
+源码镜像：[`../../src/tools/SendMessageTool/prompt.ts`](../../src/tools/SendMessageTool/prompt.ts), [`../../src/utils/peerAddress.ts`](../../src/utils/peerAddress.ts)
 
 在 `UDS_INBOX` 打开时，`to` 可以是：
 
@@ -86,7 +86,7 @@ input schema 只有三个字段：
 
 ## 5. prompt 明确把 `ListPeers` 放成 cross-session 发现入口，但当前镜像只拿到了调用 contract
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/prompt.ts`](../../sources/claude-code/src/tools/SendMessageTool/prompt.ts), [`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts), [`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/tools.ts), [`../../sources/claude-code/src/utils/concurrentSessions.ts`](../../sources/claude-code/src/utils/concurrentSessions.ts)
+源码镜像：[`../../src/tools/SendMessageTool/prompt.ts`](../../src/tools/SendMessageTool/prompt.ts), [`../../src/commands.ts`](../../src/commands.ts), [`../../src/tools.ts`](../../src/tools.ts), [`../../src/utils/concurrentSessions.ts`](../../src/utils/concurrentSessions.ts)
 
 提示词和命令/工具装配都明确说了：
 
@@ -107,7 +107,7 @@ input schema 只有三个字段：
 
 ## 6. `SendMessageTool` 被声明成 `shouldDefer`，说明它在 query loop 里不是急同步动作，而是可延后副作用
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/tools/SendMessageTool/SendMessageTool.ts)
 
 定义里直接写了：
 
@@ -117,7 +117,7 @@ input schema 只有三个字段：
 
 ## 7. `isReadOnly()` 只对 string message 返回 true，说明 structured protocol 被视作真正状态变更
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/tools/SendMessageTool/SendMessageTool.ts)
 
 这里的判定不是看“有没有写文件”，而是：
 
@@ -133,7 +133,7 @@ input schema 只有三个字段：
 
 ## 8. `backfillObservableInput()` 说明 transcript/observability 面看到的是归一化协议，不是原始 JSON 输入
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/tools/SendMessageTool/SendMessageTool.ts)
 
 它会把输入规范化成：
 
@@ -146,7 +146,7 @@ input schema 只有三个字段：
 
 ## 9. `toAutoClassifierInput()` 故意把结构化协议压成短语义串，说明 classifier 看的是“动作意图”而不是 message body
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/tools/SendMessageTool/SendMessageTool.ts)
 
 几类输出大致是：
 
@@ -159,7 +159,7 @@ input schema 只有三个字段：
 
 ## 10. 权限层只对 `bridge:` 目标强制 ask，而且这条 ask 是 bypass-immune safety check
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/tools/SendMessageTool/SendMessageTool.ts)
 
 `checkPermissions(...)` 只有一条特殊分支：
 
@@ -180,7 +180,7 @@ input schema 只有三个字段：
 
 ## 11. 输入校验层把几种错误语义明确拆开，而不是全部丢进“发送失败”
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/tools/SendMessageTool/SendMessageTool.ts)
 
 `validateInput(...)` 至少拆了这些规则：
 
@@ -197,7 +197,7 @@ input schema 只有三个字段：
 
 ## 12. `summary` 不是 UI 点缀，而是 plain text message 的强制 preview contract
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/tools/SendMessageTool/prompt.ts), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/tools/SendMessageTool/prompt.ts), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts)
 
 当 `message` 是 string 时：
 
@@ -213,7 +213,7 @@ input schema 只有三个字段：
 
 ## 13. string message 的第一条分流不是 mailbox，而是“能不能先命中 local_agent route”
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/state/AppStateStore.ts), [`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/state/AppStateStore.ts), [`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tools/AgentTool/AgentTool.tsx)
 
 在真正写 mailbox 之前，工具会先检查：
 
@@ -231,7 +231,7 @@ input schema 只有三个字段：
 
 ## 14. 命中运行中的 `local_agent` 时，它不会立刻把文本喂给模型，而是只入 `pendingMessages` 队列
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 运行中的 local agent 分支会：
 
@@ -251,7 +251,7 @@ input schema 只有三个字段：
 
 ## 15. 命中已停止的 `local_agent` 时，`SendMessageTool` 会转成一条 resume runtime，而不是报目标离线
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/tools/AgentTool/resumeAgent.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/tools/AgentTool/resumeAgent.ts)
 
 如果命中的是：
 
@@ -271,7 +271,7 @@ input schema 只有三个字段：
 
 ## 16. 只有 local-agent route miss 掉以后，plain text 才会落到 team mailbox：定向或广播
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/utils/teammateMailbox.ts)
 
 如果不是 local agent，string path 才会分成：
 
@@ -286,7 +286,7 @@ input schema 只有三个字段：
 
 ## 17. 广播的真实语义是“遍历 team file，排除自己，再逐个写 inbox”，因此成本线性且不带原子 fan-out
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/utils/swarm/teamHelpers.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/utils/swarm/teamHelpers.ts)
 
 `handleBroadcast(...)` 会：
 
@@ -299,7 +299,7 @@ input schema 只有三个字段：
 
 ## 18. structured protocol 不是走通用 message path，而是分成 shutdown 和 plan 两条显式状态机
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/utils/teammateMailbox.ts)
 
 `call(...)` 对 structured message 的 switch 只有：
 
@@ -317,7 +317,7 @@ input schema 只有三个字段：
 
 ## 19. shutdown approve 是整篇里最强副作用路径：先回执，再触发本地 abort 或进程退出
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts), [`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/tools/SendMessageTool/SendMessageTool.ts), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts), [`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 `handleShutdownApproval(...)` 做了几件事：
 
@@ -334,7 +334,7 @@ input schema 只有三个字段：
 
 ## 20. plan approve/reject 只能由 team lead 发出，而且 approve 会继承 leader 当前 permission mode
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/Tool.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/Tool.ts)
 
 plan 分支最关键的不是 mailbox 写回，而是：
 
@@ -350,7 +350,7 @@ plan 分支最关键的不是 mailbox 写回，而是：
 
 ## 21. `UI.tsx` 故意把大部分 routing/result 面静默掉，说明这工具的可视真相主要在别的表面
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/UI.tsx`](../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts)
+源码镜像：[`../../src/tools/SendMessageTool/UI.tsx`](../../src/tools/SendMessageTool/SendMessageTool.ts)
 
 UI 策略非常克制：
 
@@ -366,7 +366,7 @@ UI 策略非常克制：
 
 ## 22. `directMemberMessage.ts` 和 `SendMessageTool` 不是重复实现，而是 user fast-path 和 model tool-path 的两套入口
 
-源码镜像：[`../../sources/claude-code/src/utils/directMemberMessage.ts`](../../sources/claude-code/src/utils/directMemberMessage.ts), [`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts)
+源码镜像：[`../../src/utils/directMemberMessage.ts`](../../src/utils/directMemberMessage.ts), [`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/tools/SendMessageTool/SendMessageTool.ts)
 
 两者都会写 mailbox，但宿主不同：
 
@@ -382,7 +382,7 @@ UI 策略非常克制：
 
 ## 23. cross-session send 的真正 transport 主体在当前镜像里缺失，所以这里只能确认 call-site contract
 
-源码镜像：[`../../sources/claude-code/src/tools/SendMessageTool/SendMessageTool.ts`](../../sources/claude-code/src/utils/messages/systemInit.ts), [`../../sources/claude-code/src/utils/concurrentSessions.ts`](../../sources/claude-code/src/bridge/replBridge.ts)
+源码镜像：[`../../src/tools/SendMessageTool/SendMessageTool.ts`](../../src/utils/messages/systemInit.ts), [`../../src/utils/concurrentSessions.ts`](../../src/bridge/replBridge.ts)
 
 当前镜像能确认的事实有：
 
@@ -407,7 +407,7 @@ UI 策略非常克制：
 
 ## 24. headless/print 也要专门轮询 teammate 消息，说明 SendMessage 不是 REPL-only 机制
 
-源码镜像：[`../../sources/claude-code/src/cli/print.ts`](../../sources/claude-code/src/cli/print.ts)
+源码镜像：[`../../src/cli/print.ts`](../../src/cli/print.ts)
 
 `print.ts` 在等待队列空闲时会显式做：
 

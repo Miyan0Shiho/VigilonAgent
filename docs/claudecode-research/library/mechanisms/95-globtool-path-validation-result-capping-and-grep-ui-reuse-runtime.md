@@ -18,7 +18,7 @@
 
 ## 1. `GlobTool` 的定位不是内容搜索，而是纯路径空间枚举
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/prompt.ts`](../../sources/claude-code/src/tools/GlobTool/prompt.ts), [`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/tools/GlobTool/GlobTool.ts)
+源码镜像：[`../../src/tools/GlobTool/prompt.ts`](../../src/tools/GlobTool/prompt.ts), [`../../src/tools/GlobTool/GlobTool.ts`](../../src/tools/GlobTool/GlobTool.ts)
 
 `prompt.ts` 给它的定义非常直接：
 
@@ -36,7 +36,7 @@
 
 ## 2. 输入 schema 极小，说明这把工具刻意避免把自己做成 `Grep` 的另一种壳
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/tools/GlobTool/GlobTool.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/tools/GlobTool/GlobTool.ts)
 
 `GlobTool` 只有两个正式输入：
 
@@ -57,7 +57,7 @@
 
 ## 3. `validateInput(...)` 的核心语义是“如果给了 path，它必须存在且必须是目录”
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/tools/GlobTool/GlobTool.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/tools/GlobTool/GlobTool.ts)
 
 `GlobTool` 的 validate 层只有一条主线：
 
@@ -77,7 +77,7 @@
 
 ## 4. UNC 特判和 `GrepTool` / `FileReadTool` 保持同一宿主安全边界
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/tools/GlobTool/GlobTool.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/tools/GlobTool/GlobTool.ts)
 
 validate 里也保留了同类注释：
 
@@ -95,7 +95,7 @@ validate 里也保留了同类注释：
 
 ## 5. 路径不存在时，它同样走 cwd-aware 的友好 miss 协议，但文案明确改成 directory 语义
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/utils/file.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/utils/file.ts)
 
 `ENOENT` 时返回的不是 `Path does not exist`，而是：
 
@@ -110,7 +110,7 @@ validate 里也保留了同类注释：
 
 ## 6. `GlobTool` 的执行核心其实很短：它把复杂性下沉到共享 `glob(...)` helper
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/utils/glob.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/utils/glob.ts)
 
 `call(...)` 里真正的核心调用只有：
 
@@ -126,7 +126,7 @@ validate 里也保留了同类注释：
 
 ## 7. `globLimits.maxResults` 才是这把工具的正式预算入口，不暴露给模型做任意分页控制
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/Tool.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/Tool.ts)
 
 `call(...)` 里先取：
 
@@ -144,7 +144,7 @@ validate 里也保留了同类注释：
 
 ## 8. 它的 `truncated` 不是 UI 推测，而是执行层从 `glob(...)` helper 正式回传的结果位
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/utils/glob.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/utils/glob.ts)
 
 `glob(...)` 回来就是：
 
@@ -159,7 +159,7 @@ validate 里也保留了同类注释：
 
 ## 9. 和 `GrepTool` 一样，它也会把绝对路径立刻转成相对路径来节流 token
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 结果出来后第一步就是：
 
@@ -176,7 +176,7 @@ validate 里也保留了同类注释：
 
 ## 10. `numFiles` 代表的是“实际返回条数”，不是“真实全量命中数”
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/tools/GlobTool/GlobTool.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/tools/GlobTool/GlobTool.ts)
 
 输出里：
 
@@ -197,7 +197,7 @@ validate 里也保留了同类注释：
 
 ## 11. `mapToolResultToToolResultBlockParam(...)` 很薄，强调的是路径列表本身，而不是额外 summary chrome
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/tools/GlobTool/GlobTool.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/tools/GlobTool/GlobTool.ts)
 
 model-facing result 分两种：
 
@@ -217,7 +217,7 @@ model-facing result 分两种：
 
 ## 12. 这也解释了为什么 `extractSearchText(...)` 只返回 `filenames.join('\n')`
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/tools/GlobTool/UI.tsx)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/tools/GlobTool/UI.tsx)
 
 注释里已经写明：
 
@@ -235,7 +235,7 @@ model-facing result 分两种：
 
 ## 13. UI 不是自己再做一套 summary，而是直接复用 `GrepTool.renderToolResultMessage`
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/UI.tsx`](../../sources/claude-code/src/tools/GrepTool/UI.tsx)
+源码镜像：[`../../src/tools/GlobTool/UI.tsx`](../../src/tools/GrepTool/UI.tsx)
 
 `UI.tsx` 里直接写死：
 
@@ -251,7 +251,7 @@ model-facing result 分两种：
 
 ## 14. 但 tool-use message 和 user-facing naming 仍保持了 `Glob` 自己的极简语义
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/UI.tsx`](../../sources/claude-code/src/tools/GlobTool/UI.tsx)
+源码镜像：[`../../src/tools/GlobTool/UI.tsx`](../../src/tools/GlobTool/UI.tsx)
 
 尽管结果面复用 `Grep`，`Glob` 自己仍保留了：
 
@@ -273,7 +273,7 @@ model-facing result 分两种：
 
 ## 15. 错误 UI 也复用同一类 cwd-note 检测，但把普通失败压成更宽泛的 `Error searching files`
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/UI.tsx`](../../sources/claude-code/src/tools/GrepTool/UI.tsx)
+源码镜像：[`../../src/tools/GlobTool/UI.tsx`](../../src/tools/GrepTool/UI.tsx)
 
 逻辑和 `GrepTool` 基本平行：
 
@@ -284,7 +284,7 @@ model-facing result 分两种：
 
 ## 16. 把 `GlobTool` 和 `GrepTool` 并排看，Claude Code 把“搜索”拆成了两把协同工具，而不是一把全能工具
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 两者的边界非常清楚：
 

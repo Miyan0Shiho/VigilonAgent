@@ -12,7 +12,7 @@
 
 ## 1. `ContextVisualization` 不只是 token 图，而是 runtime context policy 的可视化投影
 
-源码镜像：[`../../sources/claude-code/src/components/ContextVisualization.tsx`](../../sources/claude-code/src/components/ContextVisualization.tsx), [`../../sources/claude-code/src/utils/analyzeContext.ts`](../../sources/claude-code/src/utils/analyzeContext.ts)
+源码镜像：[`../../src/components/ContextVisualization.tsx`](../../src/components/ContextVisualization.tsx), [`../../src/utils/analyzeContext.ts`](../../src/utils/analyzeContext.ts)
 
 它展示的不是抽象总量，而是运行时拆解后的 category：
 
@@ -30,7 +30,7 @@ Claude Code 并没有把 context pressure 当成黑盒后端状态，而是主�
 
 ## 2. reserved buffer 的显隐本身就是产品语义，不是纯计算
 
-源码镜像：[`../../sources/claude-code/src/utils/analyzeContext.ts`](../../sources/claude-code/src/utils/analyzeContext.ts)
+源码镜像：[`../../src/utils/analyzeContext.ts`](../../src/utils/analyzeContext.ts)
 
 `analyzeContextUsage(...)` 对 reserved buffer 有三种不同处理：
 
@@ -42,7 +42,7 @@ Claude Code 并没有把 context pressure 当成黑盒后端状态，而是主�
 
 ## 3. `CollapseStatus()` 是 context-collapse 唯一正式的显性观测口
 
-源码镜像：[`../../sources/claude-code/src/components/ContextVisualization.tsx`](../../sources/claude-code/src/components/ContextVisualization.tsx)
+源码镜像：[`../../src/components/ContextVisualization.tsx`](../../src/components/ContextVisualization.tsx)
 
 注释写得很明确：
 
@@ -60,7 +60,7 @@ Claude Code 并没有把 context pressure 当成黑盒后端状态，而是主�
 
 ## 4. `generateContextSuggestions(...)` 把“看图”转成“下一步动作”
 
-源码镜像：[`../../sources/claude-code/src/components/ContextVisualization.tsx`](../../sources/claude-code/src/components/ContextVisualization.tsx), [`../../sources/claude-code/src/utils/contextSuggestions.ts`](../../sources/claude-code/src/utils/contextSuggestions.ts)
+源码镜像：[`../../src/components/ContextVisualization.tsx`](../../src/components/ContextVisualization.tsx), [`../../src/utils/contextSuggestions.ts`](../../src/utils/contextSuggestions.ts)
 
 `ContextVisualization` 不只是展示分布，还会调用：
 
@@ -76,7 +76,7 @@ Claude Code 并没有把 context pressure 当成黑盒后端状态，而是主�
 
 ## 5. `MessageSelector` 在这条链里真正的角色是“手动选择 compact pivot”
 
-源码镜像：[`../../sources/claude-code/src/components/MessageSelector.tsx`](../../sources/claude-code/src/components/MessageSelector.tsx)
+源码镜像：[`../../src/components/MessageSelector.tsx`](../../src/components/MessageSelector.tsx)
 
 它当然也支持：
 
@@ -93,7 +93,7 @@ Claude Code 并没有把 context pressure 当成黑盒后端状态，而是主�
 
 ## 6. `MessageSelector` 同时对接 file-history rewind 和 partial compact，两者不是一类后端
 
-源码镜像：[`../../sources/claude-code/src/components/MessageSelector.tsx`](../../sources/claude-code/src/components/MessageSelector.tsx), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/components/MessageSelector.tsx`](../../src/components/MessageSelector.tsx), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 confirm 阶段的几个分支最终走向不同后端：
 
@@ -109,7 +109,7 @@ confirm 阶段的几个分支最终走向不同后端：
 
 ## 7. `summarize from` 和 `summarize up_to` 的差异是 transcript surgery 级别的，不是文案级别的
 
-源码镜像：[`../../sources/claude-code/src/components/MessageSelector.tsx`](../../sources/claude-code/src/components/MessageSelector.tsx), [`../../sources/claude-code/src/services/compact/compact.ts`](../../sources/claude-code/src/services/compact/compact.ts)
+源码镜像：[`../../src/components/MessageSelector.tsx`](../../src/components/MessageSelector.tsx), [`../../src/services/compact/compact.ts`](../../src/services/compact/compact.ts)
 
 `partialCompactConversation(...)` 对两种方向有不同协议：
 
@@ -124,7 +124,7 @@ confirm 阶段的几个分支最终走向不同后端：
 
 ## 8. `REPL` 会先投影到 `getMessagesAfterCompactBoundary(...)`，不允许 selector 越过当前阶段切口
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/utils/messages.ts`](../../sources/claude-code/src/utils/messages.ts)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/utils/messages.ts`](../../src/utils/messages.ts)
 
 `onSummarize` 先做：
 
@@ -139,7 +139,7 @@ full scrollback 与 active compact stage 是两套视图：前者可读，后者
 
 ## 9. `partialCompactConversation(...)` 是定向 transcript surgery，不是简化版 `/compact`
 
-源码镜像：[`../../sources/claude-code/src/services/compact/compact.ts`](../../sources/claude-code/src/services/compact/compact.ts)
+源码镜像：[`../../src/services/compact/compact.ts`](../../src/services/compact/compact.ts)
 
 这条内核至少会：
 
@@ -155,7 +155,7 @@ full scrollback 与 active compact stage 是两套视图：前者可读，后者
 
 ## 10. partial compact 之后，REPL 对 `from` 和其他方向的数组回写策略也不同
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/hooks/useLogMessages.ts`](../../sources/claude-code/src/hooks/useLogMessages.ts)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/hooks/useLogMessages.ts`](../../src/hooks/useLogMessages.ts)
 
 成功后 REPL 不总是直接 `setMessages(postCompact)`：
 
@@ -172,7 +172,7 @@ full scrollback 与 active compact stage 是两套视图：前者可读，后者
 
 ## 11. `useLogMessages` 的 `same-head shrink` 语义是这条工作面能安全存在的关键后勤
 
-源码镜像：[`../../sources/claude-code/src/hooks/useLogMessages.ts`](../../sources/claude-code/src/hooks/useLogMessages.ts)
+源码镜像：[`../../src/hooks/useLogMessages.ts`](../../src/hooks/useLogMessages.ts)
 
 这个 hook 明确承认：
 
@@ -190,7 +190,7 @@ partial compact / snip / rewind 都可能触发“不是 append”的路径。�
 
 ## 12. compact 成功后的 UX 收尾也被设计成 operator continuation，而不是静默结束
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/utils/messages.ts`](../../sources/claude-code/src/utils/messages.ts)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/utils/messages.ts`](../../src/utils/messages.ts)
 
 partial compact 成功后，REPL 还会：
 

@@ -6,7 +6,7 @@
 
 ## 1. 这层不是核心执行环，但决定了 swarm 能不能成为可用产品
 
-源码镜像：[`../../sources/claude-code/src/utils/teamDiscovery.ts`](../../sources/claude-code/src/utils/teamDiscovery.ts), [`../../sources/claude-code/src/utils/swarm/teammateLayoutManager.ts`](../../sources/claude-code/src/utils/swarm/teammateLayoutManager.ts), [`../../sources/claude-code/src/utils/swarm/spawnUtils.ts`](../../sources/claude-code/src/utils/swarm/spawnUtils.ts), [`../../sources/claude-code/src/utils/swarm/teammateInit.ts`](../../sources/claude-code/src/utils/swarm/teammateInit.ts)
+源码镜像：[`../../src/utils/teamDiscovery.ts`](../../src/utils/teamDiscovery.ts), [`../../src/utils/swarm/teammateLayoutManager.ts`](../../src/utils/swarm/teammateLayoutManager.ts), [`../../src/utils/swarm/spawnUtils.ts`](../../src/utils/swarm/spawnUtils.ts), [`../../src/utils/swarm/teammateInit.ts`](../../src/utils/swarm/teammateInit.ts)
 
 这些文件表面上不像 `runAgent()`、`QueryEngine` 那样显眼，但它们分别解决了四个产品级问题：
 
@@ -19,7 +19,7 @@
 
 ## 2. `teamDiscovery.ts` 说明团队状态展示依赖 team file，而不是实时 RPC
 
-源码镜像：[`../../sources/claude-code/src/utils/teamDiscovery.ts`](../../sources/claude-code/src/utils/teamDiscovery.ts)
+源码镜像：[`../../src/utils/teamDiscovery.ts`](../../src/utils/teamDiscovery.ts)
 
 `getTeammateStatuses(teamName)` 做的事情很朴素，但非常关键：
 
@@ -38,7 +38,7 @@
 
 ## 3. `TeammateStatus` 已经是 Teams UI 的完整产品视图模型
 
-源码镜像：[`../../sources/claude-code/src/utils/teamDiscovery.ts`](../../sources/claude-code/src/utils/teamDiscovery.ts), [`../../sources/claude-code/src/components/teams/TeamsDialog.tsx`](../../sources/claude-code/src/components/teams/TeamsDialog.tsx)
+源码镜像：[`../../src/utils/teamDiscovery.ts`](../../src/utils/teamDiscovery.ts), [`../../src/components/teams/TeamsDialog.tsx`](../../src/components/teams/TeamsDialog.tsx)
 
 `TeammateStatus` 里不只放最小状态，还直接带了：
 
@@ -59,7 +59,7 @@
 
 ## 4. `teammateLayoutManager` 做的不只是颜色分配，而是 session 内的稳定身份视觉协议
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/teammateLayoutManager.ts`](../../sources/claude-code/src/utils/swarm/teammateLayoutManager.ts)
+源码镜像：[`../../src/utils/swarm/teammateLayoutManager.ts`](../../src/utils/swarm/teammateLayoutManager.ts)
 
 这层最显眼的是 `assignTeammateColor()`，但意义不只在颜色本身：
 
@@ -79,7 +79,7 @@
 
 ## 5. `teammateLayoutManager` 还把 pane 操作包成了 backend 无关入口
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/teammateLayoutManager.ts`](../../sources/claude-code/src/utils/swarm/teammateLayoutManager.ts)
+源码镜像：[`../../src/utils/swarm/teammateLayoutManager.ts`](../../src/utils/swarm/teammateLayoutManager.ts)
 
 这层还代理了：
 
@@ -91,7 +91,7 @@
 
 ## 6. `spawnUtils.ts` 是 teammate 启动协议的继承规范
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/spawnUtils.ts`](../../sources/claude-code/src/utils/swarm/spawnUtils.ts)
+源码镜像：[`../../src/utils/swarm/spawnUtils.ts`](../../src/utils/swarm/spawnUtils.ts)
 
 如果 `PaneBackendExecutor` 是“怎么启动一个 teammate 进程”，那 `spawnUtils` 回答的是“启动时要继承 leader 的哪些语义”。
 
@@ -105,7 +105,7 @@
 
 ## 7. `getTeammateCommand()` 明确区分 bundled mode 和脚本入口
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/spawnUtils.ts`](../../sources/claude-code/src/utils/swarm/spawnUtils.ts)
+源码镜像：[`../../src/utils/swarm/spawnUtils.ts`](../../src/utils/swarm/spawnUtils.ts)
 
 这层会先看 `TEAMMATE_COMMAND_ENV_VAR`，否则：
 
@@ -116,7 +116,7 @@
 
 ## 8. `buildInheritedCliFlags()` 体现了“哪些 leader 语义必须跨 agent 继承”
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/spawnUtils.ts`](../../sources/claude-code/src/utils/swarm/spawnUtils.ts)
+源码镜像：[`../../src/utils/swarm/spawnUtils.ts`](../../src/utils/swarm/spawnUtils.ts)
 
 当前会继承的关键 flag 包括：
 
@@ -136,7 +136,7 @@
 
 ## 9. `buildInheritedEnvVars()` 是 tmux spawn 的语义补丁层
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/spawnUtils.ts`](../../sources/claude-code/src/utils/swarm/spawnUtils.ts)
+源码镜像：[`../../src/utils/swarm/spawnUtils.ts`](../../src/utils/swarm/spawnUtils.ts)
 
 它显式转发的 env 包括：
 
@@ -150,7 +150,7 @@
 
 ## 10. `teammateInit.ts` 把“启动后要立刻接入团队治理”做成了正式初始化步骤
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/teammateInit.ts`](../../sources/claude-code/src/utils/swarm/teammateInit.ts)
+源码镜像：[`../../src/utils/swarm/teammateInit.ts`](../../src/utils/swarm/teammateInit.ts)
 
 `initializeTeammateHooks()` 至少做两类事情：
 
@@ -161,7 +161,7 @@
 
 ## 11. team-wide allowed paths 说明 team 权限共享已经超出单 agent session
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/teammateInit.ts`](../../sources/claude-code/src/utils/swarm/teamHelpers.ts)
+源码镜像：[`../../src/utils/swarm/teammateInit.ts`](../../src/utils/swarm/teamHelpers.ts)
 
 `teamAllowedPaths` 会被翻译成：
 
@@ -173,7 +173,7 @@
 
 ## 12. idle notification 不是 UI 文案，而是 hook + mailbox 的正式协议信号
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/teammateInit.ts`](../../sources/claude-code/src/utils/swarm/teammateInit.ts), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/utils/swarm/teammateInit.ts`](../../src/utils/swarm/teammateInit.ts), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts)
 
 Stop hook 触发时，teammate 会：
 
@@ -185,7 +185,7 @@ Stop hook 触发时，teammate 会：
 
 ## 13. `useSwarmInitialization` 是这些协议进入前台会话的真正挂载点
 
-源码镜像：[`../../sources/claude-code/src/hooks/useSwarmInitialization.ts`](../../sources/claude-code/src/hooks/useSwarmInitialization.ts)
+源码镜像：[`../../src/hooks/useSwarmInitialization.ts`](../../src/hooks/useSwarmInitialization.ts)
 
 这个 hook 把前面那几条能力接到了真实会话生命周期里：
 
@@ -197,7 +197,7 @@ Stop hook 触发时，teammate 会：
 
 ## 14. `TeamsDialog` 证明 discovery/status 模型已经进入完整 operator UI
 
-源码镜像：[`../../sources/claude-code/src/components/teams/TeamsDialog.tsx`](../../sources/claude-code/src/components/teams/TeamsDialog.tsx), [`../../sources/claude-code/src/utils/teamDiscovery.ts`](../../sources/claude-code/src/utils/teamDiscovery.ts)
+源码镜像：[`../../src/components/teams/TeamsDialog.tsx`](../../src/components/teams/TeamsDialog.tsx), [`../../src/utils/teamDiscovery.ts`](../../src/utils/teamDiscovery.ts)
 
 `TeamsDialog` 不是静态列表，它直接围绕 `TeammateStatus[]` 提供了：
 
@@ -213,7 +213,7 @@ Stop hook 触发时，teammate 会：
 
 ## 15. `TeamsDialog` 还说明 hidden/show、mode 切换和 pane 控制都以 team file 为控制面
 
-源码镜像：[`../../sources/claude-code/src/components/teams/TeamsDialog.tsx`](../../sources/claude-code/src/utils/swarm/teamHelpers.ts)
+源码镜像：[`../../src/components/teams/TeamsDialog.tsx`](../../src/utils/swarm/teamHelpers.ts)
 
 它大量调用：
 
@@ -227,7 +227,7 @@ Stop hook 触发时，teammate 会：
 
 ## 16. 这条“辅助协议链”为什么不只是杂项
 
-源码镜像：[`../../sources/claude-code/src/utils/teamDiscovery.ts`](../../sources/claude-code/src/utils/teamDiscovery.ts), [`../../sources/claude-code/src/utils/swarm/teammateLayoutManager.ts`](../../sources/claude-code/src/utils/swarm/teammateLayoutManager.ts), [`../../sources/claude-code/src/utils/swarm/spawnUtils.ts`](../../sources/claude-code/src/utils/swarm/spawnUtils.ts), [`../../sources/claude-code/src/utils/swarm/teammateInit.ts`](../../sources/claude-code/src/utils/swarm/teammateInit.ts), [`../../sources/claude-code/src/hooks/useSwarmInitialization.ts`](../../sources/claude-code/src/hooks/useSwarmInitialization.ts), [`../../sources/claude-code/src/components/teams/TeamsDialog.tsx`](../../sources/claude-code/src/components/teams/TeamsDialog.tsx)
+源码镜像：[`../../src/utils/teamDiscovery.ts`](../../src/utils/teamDiscovery.ts), [`../../src/utils/swarm/teammateLayoutManager.ts`](../../src/utils/swarm/teammateLayoutManager.ts), [`../../src/utils/swarm/spawnUtils.ts`](../../src/utils/swarm/spawnUtils.ts), [`../../src/utils/swarm/teammateInit.ts`](../../src/utils/swarm/teammateInit.ts), [`../../src/hooks/useSwarmInitialization.ts`](../../src/hooks/useSwarmInitialization.ts), [`../../src/components/teams/TeamsDialog.tsx`](../../src/components/teams/TeamsDialog.tsx)
 
 可以压成六步：
 

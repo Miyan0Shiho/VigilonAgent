@@ -6,7 +6,7 @@
 
 ## 1. 任务系统不只有 CRUD，还有一条正式的自动调度回路
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTaskListWatcher.ts`](../../sources/claude-code/src/hooks/useTaskListWatcher.ts), [`../../sources/claude-code/src/hooks/useTasksV2.ts`](../../sources/claude-code/src/hooks/useTasksV2.ts), [`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/hooks/useTaskListWatcher.ts`](../../src/hooks/useTaskListWatcher.ts), [`../../src/hooks/useTasksV2.ts`](../../src/hooks/useTasksV2.ts), [`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 从调用关系看，任务系统至少有三层：
 
@@ -18,7 +18,7 @@
 
 ## 2. `useTaskListWatcher` 的目标不是看目录变化，而是“目录变化 -> 自动认领 -> prompt 注入”
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTaskListWatcher.ts`](../../sources/claude-code/src/hooks/useTaskListWatcher.ts)
+源码镜像：[`../../src/hooks/useTaskListWatcher.ts`](../../src/hooks/useTaskListWatcher.ts)
 
 它的主循环很清楚：
 
@@ -34,20 +34,20 @@
 
 ## 3. watcher 刻意把 `isLoading` 和 `onSubmitTask` 收进 ref，说明它首先在规避宿主级 watcher 抖动与死锁
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTaskListWatcher.ts`](../../sources/claude-code/src/hooks/useTaskListWatcher.ts)
+源码镜像：[`../../src/hooks/useTaskListWatcher.ts`](../../src/hooks/useTaskListWatcher.ts)
 
 代码注释已经说明原因：如果 effect 依赖这些不稳定值，就会每回合反复 `watcher.close() + watch()`，而 Bun 的 `PathWatcherManager` 会被这种模式拖进死锁窗口。  
 所以这层不是普通 React hook，而是专门为终端宿主的 fs.watch 不稳定性做过防抖设计。
 
 ## 4. `DEBOUNCE_MS = 1000` 暴露出 tasks mode 的取舍: 宁可慢 1 秒，也不要被频繁文件写抖成风暴
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTaskListWatcher.ts`](../../sources/claude-code/src/hooks/useTaskListWatcher.ts)
+源码镜像：[`../../src/hooks/useTaskListWatcher.ts`](../../src/hooks/useTaskListWatcher.ts)
 
 这说明任务自动拾取的产品优先级不是“毫秒级实时”，而是“避免重复提交、重复认领和 watcher 风暴”。
 
 ## 5. `findAvailableTask()` 不是任意挑 pending，而是硬编码了一个最小可执行判定
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTaskListWatcher.ts`](../../sources/claude-code/src/hooks/useTaskListWatcher.ts)
+源码镜像：[`../../src/hooks/useTaskListWatcher.ts`](../../src/hooks/useTaskListWatcher.ts)
 
 可认领条件是：
 
@@ -59,7 +59,7 @@
 
 ## 6. `formatTaskAsPrompt()` 说明自动调度链最终仍回到自然语言 prompt，而不是直接把 task object 塞给 query loop
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTaskListWatcher.ts`](../../sources/claude-code/src/hooks/useTaskListWatcher.ts)
+源码镜像：[`../../src/hooks/useTaskListWatcher.ts`](../../src/hooks/useTaskListWatcher.ts)
 
 watcher 最后会构造：
 
@@ -69,7 +69,7 @@ watcher 最后会构造：
 
 ## 7. `claimTask()` 才是真正的认领协议中心，watcher 只是它的一个消费者
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 认领返回值不是布尔值，而是结构化：
 
@@ -83,7 +83,7 @@ watcher 最后会构造：
 
 ## 8. 普通 claim 路径走 task-level lock，`checkAgentBusy` 路径升级成 task-list-level lock
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 这里的并发策略很关键：
 
@@ -94,7 +94,7 @@ watcher 最后会构造：
 
 ## 9. `agent_busy` 暴露出任务系统不是只关心任务是否空闲，还关心 agent 负载是否已经占满
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 `claimTaskWithBusyCheck()` 会显式拒绝那些已经持有别的 unresolved tasks 的 agent，并返回：
 
@@ -105,7 +105,7 @@ watcher 最后会构造：
 
 ## 10. `blockedByTasks` 结构化返回说明 dependency failure 被视为一等调度信息，而不是错误文案
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 当任务仍被未完成项阻塞时，claim 结果会带：
 
@@ -116,7 +116,7 @@ watcher 最后会构造：
 
 ## 11. `notifyTasksUpdated()` 和 `onTasksUpdated` 说明同进程 UI 刷新并不依赖文件 watcher
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 每次 `create/update/delete/reset` 后都会发本进程 signal。这样：
 
@@ -130,7 +130,7 @@ watcher 最后会构造：
 
 ## 12. `useTasksV2` 是 persistent task board 的共享 store，不是每个组件各开一个 watcher
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTasksV2.ts`](../../sources/claude-code/src/hooks/useTasksV2.ts)
+源码镜像：[`../../src/hooks/useTasksV2.ts`](../../src/hooks/useTasksV2.ts)
 
 这个文件的核心不是 fetch，而是 singleton `TasksV2Store`：
 
@@ -143,13 +143,13 @@ watcher 最后会构造：
 
 ## 13. `useTasksV2` 的设计目标之一就是避免 Spinner 每回合挂载卸载带来的 watch churn
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTasksV2.ts`](../../sources/claude-code/src/hooks/useTasksV2.ts)
+源码镜像：[`../../src/hooks/useTasksV2.ts`](../../src/hooks/useTasksV2.ts)
 
 注释已经把历史问题写透了：Spinner 会每回合 mount/unmount，如果每个 hook 实例都 watch 同一路径，就会持续抖动。因此任务可视化层不是“谁要看谁去拉”，而是单 store 统一供给。
 
 ## 14. 任务列表“自动消失”不是 UI 幻术，而是 store 真会在 5 秒后 `resetTaskList()`
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTasksV2.ts`](../../sources/claude-code/src/hooks/useTasksV2.ts), [`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/hooks/useTasksV2.ts`](../../src/hooks/useTasksV2.ts), [`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 当所有任务都 completed 且持续 5 秒：
 
@@ -162,7 +162,7 @@ watcher 最后会构造：
 
 ## 15. fallback poll 只在仍有未完成任务时开启，说明 store 在文件事件与轮询之间做了节流分工
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTasksV2.ts`](../../sources/claude-code/src/hooks/useTasksV2.ts)
+源码镜像：[`../../src/hooks/useTasksV2.ts`](../../src/hooks/useTasksV2.ts)
 
 策略是：
 
@@ -173,13 +173,13 @@ watcher 最后会构造：
 
 ## 16. `useTasksV2` 还会根据当前 `taskListId` 动态 `#rewatch()`，说明 team 创建/删除会改变整块任务板命名空间
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTasksV2.ts`](../../sources/claude-code/src/hooks/useTasksV2.ts)
+源码镜像：[`../../src/hooks/useTasksV2.ts`](../../src/hooks/useTasksV2.ts)
 
 这个行为和 `getTaskListId()` 是呼应的：队伍一旦建立，前台 watcher 必须切到新的目录，不然 UI 和底层任务板就会脱节。
 
 ## 17. `getAgentStatuses()` 把 task ownership 直接翻译成 `idle / busy`，说明 teammate status 其实是任务图的投影
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 它会：
 
@@ -192,7 +192,7 @@ watcher 最后会构造：
 
 ## 18. `readTeamMembers()` 和 name/id 双兼容，说明 agent status 计算还承担向后兼容旧 owner 编码
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 `getAgentStatuses()` 会同时按：
 
@@ -203,7 +203,7 @@ watcher 最后会构造：
 
 ## 19. `unassignTeammateTasks()` 说明 teammate 退出不是简单“人没了”，而是伴随任务回收与通知重分配
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 当队友 `terminated/shutdown`：
 
@@ -215,7 +215,7 @@ watcher 最后会构造：
 
 ## 20. `task_assignment` mailbox 说明“显式派活”是任务调度链的第一等消息类型
 
-源码镜像：[`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts), [`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts), [`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 这条消息是结构化的：
 
@@ -230,7 +230,7 @@ watcher 最后会构造：
 
 ## 21. `AttachmentMessage` 会把 `task_assignment` 专门渲染成 transcript 行，说明指派不是隐式 side effect，而是用户可见事件
 
-源码镜像：[`../../sources/claude-code/src/components/messages/AttachmentMessage.tsx`](../../sources/claude-code/src/components/messages/AttachmentMessage.tsx)
+源码镜像：[`../../src/components/messages/AttachmentMessage.tsx`](../../src/components/messages/AttachmentMessage.tsx)
 
 渲染时会特判 JSON 并显示：
 
@@ -241,7 +241,7 @@ watcher 最后会构造：
 
 ## 22. in-process teammate 还有一条独立的自领取路径，不完全依赖 leader mailbox 派活
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/inProcessRunner.ts`](../../sources/claude-code/src/utils/swarm/inProcessRunner.ts)
+源码镜像：[`../../src/utils/swarm/inProcessRunner.ts`](../../src/utils/swarm/inProcessRunner.ts)
 
 `tryClaimNextTask()` 会：
 
@@ -255,7 +255,7 @@ watcher 最后会构造：
 
 ## 23. 这条自领取路径还会立即改成 `in_progress`，说明它更强调 UI 实时反馈而不是等模型自己再更新
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/inProcessRunner.ts`](../../sources/claude-code/src/utils/swarm/inProcessRunner.ts)
+源码镜像：[`../../src/utils/swarm/inProcessRunner.ts`](../../src/utils/swarm/inProcessRunner.ts)
 
 这和普通 watcher 只 claim 不改 status 不同。说明 in-process runner 更希望 front-end 立刻看到“这名 teammate 已经在做事了”。
 

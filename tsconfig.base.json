@@ -5,11 +5,11 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "paths": {
-      "@vigilon/shared": [
-        "packages/shared/src/index.ts"
+      "@vigilon/runtime": [
+        "packages/runtime/src/index.ts"
       ],
-      "@vigilon/shared/*": [
-        "packages/shared/src/*"
+      "@vigilon/runtime/*": [
+        "packages/runtime/src/*"
       ]
     },
     "lib": [

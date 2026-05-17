@@ -6,7 +6,7 @@
 
 ## 1. 底栏不是装饰性状态条，而是一套可操作的工作面
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx), [`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx), [`../../sources/claude-code/src/state/teammateViewHelpers.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/components/tasks/BackgroundTaskStatus.tsx), [`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/CoordinatorAgentStatus.tsx), [`../../src/state/teammateViewHelpers.ts`](../../src/state/teammateViewHelpers.ts)
 
 前一卷已经说明：
 
@@ -24,7 +24,7 @@
 
 ## 2. `footerItems` 是真实的导航目录，不是渲染时顺手拼出来的一排标签
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 `PromptInput.tsx` 里显式构造了：
 
@@ -43,7 +43,7 @@
 
 ## 3. `tasksFooterVisible` 不是“有运行任务就显示”，而是把多个任务数据面合并后的 steering gate
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx), [`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/components/tasks/taskStatusUtils.tsx`](../../src/components/tasks/taskStatusUtils.tsx), [`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/CoordinatorAgentStatus.tsx)
 
 `tasksFooterVisible` 的条件实际是：
 
@@ -61,7 +61,7 @@
 
 ## 4. `hasBgTaskPill` 说明 `tasks` pill 和 coordinator panel 不是一回事
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 `hasBgTaskPill` 的判定只看：
 
@@ -81,7 +81,7 @@
 
 ## 5. `selectFooterItem('tasks')` 会同时重置两条子状态机，说明 tasks pill 是多个 steering surface 的统一入口
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 `selectFooterItem(item)` 并不只是改 `footerSelection`。
 
@@ -101,7 +101,7 @@
 
 ## 6. `navigateFooter()` 把 pill 导航建成了可复用 primitive，而不是把方向键逻辑散在事件处理里
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 `navigateFooter(delta, exitAtStart)` 的协议很简洁：
 
@@ -115,7 +115,7 @@
 
 ## 7. `footer:up/down` 的第一优先级不是切 pill，而是先在 coordinator panel 内部消化移动
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 在 `tasksSelected && ant && coordinatorTaskCount > 0` 时：
 
@@ -130,7 +130,7 @@
 
 ## 8. `footer:down` 里“tasksSelected 且非 teammate mode”直接开 tasks dialog，说明底栏任务入口默认指向的是任务控制台，而不是 summary pill 本身
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 这里有个很强的分叉：
 
@@ -144,7 +144,7 @@
 
 ## 9. `footer:next/previous` 在 teammate mode 下不走 pill 导航，而是切换 `teammateFooterIndex`
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/tasks/BackgroundTaskStatus.tsx)
 
 当 `tasksSelected && isTeammateMode` 时：
 
@@ -159,7 +159,7 @@
 
 ## 10. `BackgroundTaskStatus` 真正把 `teammateFooterIndex` 解释成了“leader + teammates”的 pill 级游标
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/components/tasks/BackgroundTaskStatus.tsx)
 
 在 teammate mode 下，它会先构造：
 
@@ -180,7 +180,7 @@
 
 ## 11. teammate footer strip 还有一层视窗协议，说明这不是纯逻辑状态，而是可横向滚动的真实 surface
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/components/tasks/BackgroundTaskStatus.tsx)
 
 它不会盲目把所有 teammate pill 全塞出来，而是会：
 
@@ -192,7 +192,7 @@
 
 ## 12. `footer:openSelected` 把 tasks item 分成三套不同 steering 语义
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/state/teammateViewHelpers.ts), [`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/state/teammateViewHelpers.ts), [`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/CoordinatorAgentStatus.tsx)
 
 当 `footerItemSelected === 'tasks'` 时，`Enter` 会走三种分支：
 
@@ -213,7 +213,7 @@
 
 ## 13. `footer:close` 说明 `x` 不是固定的“关闭任务”，而是上下文相关的 steering 指令
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/state/teammateViewHelpers.ts)
 
 当 `tasksSelected && coordinatorTaskIndex >= 1` 时：
 
@@ -229,7 +229,7 @@
 
 ## 14. `stopOrDismissAgent()` 把 footer 的 `x` 分成 running 和 terminal 两条任务生命周期路径
 
-源码镜像：[`../../sources/claude-code/src/state/teammateViewHelpers.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/state/teammateViewHelpers.ts`](../../src/state/teammateViewHelpers.ts)
 
 `stopOrDismissAgent(taskId, setAppState)` 的语义是：
 
@@ -247,7 +247,7 @@
 
 ## 15. `PromptInputFooterLeftSide` 证明 summary pill 和 teammate pills 是互斥的两种底栏工作面
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/tasks/BackgroundTaskStatus.tsx)
 
 这层的核心分叉是：
 
@@ -264,7 +264,7 @@
 
 ## 16. `tasksPart` 被刻意做成 Box sibling，而不是内联文本，说明 footer steering 已经影响到渲染树结构
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx)
 
 源码里有一条很实的注释：
 
@@ -277,7 +277,7 @@
 
 ## 17. `getSpinnerHintParts()` 和 manage hint 说明底栏会持续把 steering 协议显式教给用户
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx)
 
 这里有两类 hint：
 
@@ -291,7 +291,7 @@
 
 ## 18. 这条链的真正结构，是“一个 footer 目录 + 三套 tasks 子解释器 + 一个上下文相关的 close/open 协议”
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/state/teammateViewHelpers.ts)
 
 从上到下可以把底栏任务 steering 压成四层：
 

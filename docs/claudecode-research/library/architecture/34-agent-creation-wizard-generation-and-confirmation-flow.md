@@ -19,7 +19,7 @@
 
 ## 1. `CreateAgentWizard` 不是静态多步表单，而是可变 step pipeline
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/CreateAgentWizard.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/CreateAgentWizard.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/CreateAgentWizard.tsx`](../../src/components/agents/new-agent-creation/CreateAgentWizard.tsx)
 
 `CreateAgentWizard` 不是把所有字段都固定摊开，而是显式装了一串 step：
 
@@ -47,7 +47,7 @@
 
 ## 2. 位置选择从第一步开始就把 authoring 绑到 source governance
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/LocationStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/LocationStep.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/LocationStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/LocationStep.tsx)
 
 `LocationStep` 只给出两种创建位置：
 
@@ -63,7 +63,7 @@
 
 ## 3. `MethodStep` 不是视觉分流，而是真的改写后续图
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/MethodStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/MethodStep.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/MethodStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/MethodStep.tsx)
 
 这里有两个选项：
 
@@ -82,7 +82,7 @@
 
 ## 4. `GenerateStep` 把 agent creation 接进主模型，而不是独立小模型
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx)
 
 `GenerateStep` 用的是：
 
@@ -101,7 +101,7 @@
 
 ## 5. 生成流的取消协议是完整的，不是只关一个 spinner
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx)
 
 这里单独维护了：
 
@@ -124,7 +124,7 @@
 
 ## 6. `GenerateStep` 里 `Esc` 的意义会切换，键位上下文是 authoring runtime 的一部分
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx)
 
 同一个 `confirm:no`：
 
@@ -137,7 +137,7 @@
 
 ## 7. 外部编辑器在生成提示阶段就已经接进来了
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx)
 
 在生成说明文本时，用户可以：
 
@@ -153,7 +153,7 @@
 
 ## 8. 生成成功后不是去确认页，而是故意跳到 `ToolsStep`
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx)
 
 成功后调用的是：
 
@@ -170,7 +170,7 @@
 
 ## 9. `TypeStep` 并不信任上一步的文本，而是重新跑专门的 identifier 校验
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/TypeStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/TypeStep.tsx), [`../../sources/claude-code/src/components/agents/validateAgent.ts`](../../sources/claude-code/src/components/agents/validateAgent.ts)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/TypeStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/TypeStep.tsx), [`../../src/components/agents/validateAgent.ts`](../../src/components/agents/validateAgent.ts)
 
 `TypeStep` 不管值来自生成式还是手工输入，提交前都先：
 
@@ -181,7 +181,7 @@
 
 ## 10. `ToolsStep` 复用 `ToolSelector`，但多了一层 wizard 语义
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ToolsStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ToolsStep.tsx), [`../../sources/claude-code/src/components/agents/ToolSelector.tsx`](../../sources/claude-code/src/components/agents/ToolSelector.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ToolsStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ToolsStep.tsx), [`../../src/components/agents/ToolSelector.tsx`](../../src/components/agents/ToolSelector.tsx)
 
 `ToolsStep` 的职责不是自己管选择逻辑，而是把 `ToolSelector` 接进 wizard：
 
@@ -193,7 +193,7 @@
 
 ## 11. `ModelSelector` 的关键不是选模型，而是保护 custom model ID 的 round-trip
 
-源码镜像：[`../../sources/claude-code/src/components/agents/ModelSelector.tsx`](../../sources/claude-code/src/components/agents/ModelSelector.tsx)
+源码镜像：[`../../src/components/agents/ModelSelector.tsx`](../../src/components/agents/ModelSelector.tsx)
 
 `ModelSelector` 先拿：
 
@@ -210,7 +210,7 @@
 
 ## 12. `ColorPicker` 不是抽象 token picker，而是直接预览 agent identity
 
-源码镜像：[`../../sources/claude-code/src/components/agents/ColorPicker.tsx`](../../sources/claude-code/src/components/agents/ColorPicker.tsx)
+源码镜像：[`../../src/components/agents/ColorPicker.tsx`](../../src/components/agents/ColorPicker.tsx)
 
 颜色选择时，底部即时渲染：
 
@@ -227,7 +227,7 @@
 
 ## 13. `ConfirmStep` 是 creation flow 的总审核面，不是保存按钮前的摘要页
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx)
 
 确认页会集中展示：
 
@@ -248,7 +248,7 @@
 
 ## 14. 确认页里 `save` 和 `save + edit` 是两条正式收尾路径
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx)
 
 确认页不是单一提交动作，而是两条键盘协议：
 
@@ -264,7 +264,7 @@
 
 ## 15. `ConfirmStepWrapper` 负责真正的 side effects，不让纯展示页碰状态
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx)
 
 真正的保存副作用都在 wrapper：
 
@@ -281,7 +281,7 @@
 
 ## 16. 新建 agent 的成功并不等于重启后才可见，它会立即进入 active roster
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx), [`../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts`](../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx), [`../../src/tools/AgentTool/loadAgentsDir.ts`](../../src/tools/AgentTool/loadAgentsDir.ts)
 
 保存后 wrapper 立刻：
 
@@ -292,7 +292,7 @@
 
 ## 17. 创建流把“definition authoring”与“operator telemetry”绑在一起
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx)
 
 保存成功后会上报：
 

@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是 ask 怎样被产品化成“一个当前焦点对话框”，而不是如何算出 ask
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/PermissionRequest.tsx), [`../../sources/claude-code/src/components/permissions/PermissionPrompt.tsx`](../../sources/claude-code/src/components/permissions/PermissionPrompt.tsx), [`../../sources/claude-code/src/components/permissions/PermissionDialog.tsx`](../../sources/claude-code/src/components/permissions/PermissionDialog.tsx), [`../../sources/claude-code/src/components/permissions/FilePermissionDialog/FilePermissionDialog.tsx`](../../sources/claude-code/src/components/permissions/FilePermissionDialog/FilePermissionDialog.tsx), [`../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx), [`../../sources/claude-code/src/components/permissions/SandboxPermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/SandboxPermissionRequest.tsx), [`../../sources/claude-code/src/components/Messages.tsx`](../../sources/claude-code/src/components/Messages.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/components/permissions/PermissionRequest.tsx`](../../src/components/permissions/PermissionRequest.tsx), [`../../src/components/permissions/PermissionPrompt.tsx`](../../src/components/permissions/PermissionPrompt.tsx), [`../../src/components/permissions/PermissionDialog.tsx`](../../src/components/permissions/PermissionDialog.tsx), [`../../src/components/permissions/FilePermissionDialog/FilePermissionDialog.tsx`](../../src/components/permissions/FilePermissionDialog/FilePermissionDialog.tsx), [`../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx), [`../../src/components/permissions/SandboxPermissionRequest.tsx`](../../src/components/permissions/SandboxPermissionRequest.tsx), [`../../src/components/Messages.tsx`](../../src/components/Messages.tsx)
 
 前几卷已经把这些讲清了：
 
@@ -24,7 +24,7 @@
 
 ## 2. `REPL` 真正管理的不是一个权限弹窗，而是多条并行等待队列
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 前台至少同时维护这些等待源：
 
@@ -40,7 +40,7 @@
 
 ## 3. `isWaitingForApproval` 和 `waitingFor` 说明 ask 会直接改写整场会话的顶层状态
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 REPL 把下面这些都视为 waiting：
 
@@ -58,7 +58,7 @@ REPL 把下面这些都视为 waiting：
 
 ## 4. `getFocusedInputDialog()` 说明真正的前台协议是“多类对话框优先级排序”，不是谁先入队谁先显示
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 这条优先级链至少显式区分了：
 
@@ -79,7 +79,7 @@ REPL 把下面这些都视为 waiting：
 
 ## 5. `PermissionRequest.tsx` 只是入口路由器，不是审批逻辑本体
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/PermissionRequest.tsx)
+源码镜像：[`../../src/components/permissions/PermissionRequest.tsx`](../../src/components/permissions/PermissionRequest.tsx)
 
 它主要干三件事：
 
@@ -111,7 +111,7 @@ REPL 把下面这些都视为 waiting：
 
 ## 6. `ToolUseConfirm` 才是 tool permission queue 的真正协议对象
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/PermissionRequest.tsx)
+源码镜像：[`../../src/components/permissions/PermissionRequest.tsx`](../../src/components/permissions/PermissionRequest.tsx)
 
 这份对象同时承载：
 
@@ -126,7 +126,7 @@ REPL 把下面这些都视为 waiting：
 
 ## 7. `Messages` 会在 `toolUseConfirmQueue` 非空时停掉动画，说明权限等待会反向约束 transcript 表现
 
-源码镜像：[`../../sources/claude-code/src/components/Messages.tsx`](../../sources/claude-code/src/components/Messages.tsx)
+源码镜像：[`../../src/components/Messages.tsx`](../../src/components/Messages.tsx)
 
 `Messages` 里的 `canAnimate` 条件明确要求：
 
@@ -138,7 +138,7 @@ REPL 把下面这些都视为 waiting：
 
 ## 8. `PermissionDialog`、`PermissionRequestTitle`、`WorkerBadge` 组成了权限 UI 的共用 chrome
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/PermissionDialog.tsx`](../../sources/claude-code/src/components/permissions/PermissionDialog.tsx), [`../../sources/claude-code/src/components/permissions/PermissionRequestTitle.tsx`](../../sources/claude-code/src/components/permissions/PermissionRequestTitle.tsx), [`../../sources/claude-code/src/components/permissions/WorkerBadge.tsx`](../../sources/claude-code/src/components/permissions/WorkerBadge.tsx)
+源码镜像：[`../../src/components/permissions/PermissionDialog.tsx`](../../src/components/permissions/PermissionDialog.tsx), [`../../src/components/permissions/PermissionRequestTitle.tsx`](../../src/components/permissions/PermissionRequestTitle.tsx), [`../../src/components/permissions/WorkerBadge.tsx`](../../src/components/permissions/WorkerBadge.tsx)
 
 它们分工很明确：
 
@@ -155,7 +155,7 @@ REPL 把下面这些都视为 waiting：
 
 ## 9. `PermissionPrompt` 是通用选择器骨架，不只是 Yes/No 列表
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/PermissionPrompt.tsx`](../../sources/claude-code/src/components/permissions/PermissionPrompt.tsx)
+源码镜像：[`../../src/components/permissions/PermissionPrompt.tsx`](../../src/components/permissions/PermissionPrompt.tsx)
 
 它统一处理了：
 
@@ -177,7 +177,7 @@ REPL 把下面这些都视为 waiting：
 
 ## 10. `usePermissionRequestLogging()` 说明每个权限 surface 在挂载时都会统一做 attribution 和 unary logging
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/hooks.ts`](../../sources/claude-code/src/components/permissions/hooks.ts)
+源码镜像：[`../../src/components/permissions/hooks.ts`](../../src/components/permissions/hooks.ts)
 
 这条 hook 至少做三件事：
 
@@ -191,7 +191,7 @@ REPL 把下面这些都视为 waiting：
 
 ## 11. `FallbackPermissionRequest` 说明 generic tool ask 仍然支持反馈、always allow、worker badge 和 rule explanation
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/FallbackPermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/FallbackPermissionRequest.tsx)
+源码镜像：[`../../src/components/permissions/FallbackPermissionRequest.tsx`](../../src/components/permissions/FallbackPermissionRequest.tsx)
 
 它不是一个最简兜底壳，而是完整具备：
 
@@ -212,7 +212,7 @@ REPL 把下面这些都视为 waiting：
 
 ## 12. `FilePermissionDialog` 是文件类权限族的共享宿主，不只是一个样式组件
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/FilePermissionDialog/FilePermissionDialog.tsx`](../../sources/claude-code/src/components/permissions/FilePermissionDialog/FilePermissionDialog.tsx)
+源码镜像：[`../../src/components/permissions/FilePermissionDialog/FilePermissionDialog.tsx`](../../src/components/permissions/FilePermissionDialog/FilePermissionDialog.tsx)
 
 它把多类文件相关工具统一到了同一套宿主协议里：
 
@@ -226,7 +226,7 @@ REPL 把下面这些都视为 waiting：
 
 ## 13. `ExitPlanModePermissionRequest` 说明有些权限 surface 已经超出“确认一次工具调用”，变成完整工作流对话框
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx), [`../../sources/claude-code/src/components/FullscreenLayout.tsx`](../../sources/claude-code/src/components/FullscreenLayout.tsx)
+源码镜像：[`../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx), [`../../src/components/FullscreenLayout.tsx`](../../src/components/FullscreenLayout.tsx)
 
 这块最特别的地方有三层：
 
@@ -244,7 +244,7 @@ REPL 把下面这些都视为 waiting：
 
 ## 14. `SandboxPermissionRequest` 故意不走 `ToolUseConfirm`，说明网络 host 审批在前台也被视为另一种协议
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/SandboxPermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/SandboxPermissionRequest.tsx), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/components/permissions/SandboxPermissionRequest.tsx`](../../src/components/permissions/SandboxPermissionRequest.tsx), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 它直接接收的是：
 
@@ -262,7 +262,7 @@ REPL 里也专门有两类 sandbox dialog：
 
 ## 15. `toolPermissionOverlay` 说明 fullscreen 下 tool permission 是 overlay，而 pending worker/sandbox waiting card 仍在 bottom surface
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 REPL 在 fullscreen 下会把：
 
@@ -285,7 +285,7 @@ REPL 在 fullscreen 下会把：
 
 ## 16. 这条架构最终说明 permission front-end 真正由六段拼起来
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/PermissionRequest.tsx), [`../../sources/claude-code/src/components/permissions/PermissionPrompt.tsx`](../../sources/claude-code/src/components/permissions/PermissionPrompt.tsx), [`../../sources/claude-code/src/components/permissions/PermissionDialog.tsx`](../../sources/claude-code/src/components/permissions/PermissionDialog.tsx), [`../../sources/claude-code/src/components/permissions/FilePermissionDialog/FilePermissionDialog.tsx`](../../sources/claude-code/src/components/permissions/FilePermissionDialog/FilePermissionDialog.tsx), [`../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx), [`../../sources/claude-code/src/components/permissions/SandboxPermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/SandboxPermissionRequest.tsx), [`../../sources/claude-code/src/components/Messages.tsx`](../../sources/claude-code/src/components/Messages.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/components/permissions/PermissionRequest.tsx`](../../src/components/permissions/PermissionRequest.tsx), [`../../src/components/permissions/PermissionPrompt.tsx`](../../src/components/permissions/PermissionPrompt.tsx), [`../../src/components/permissions/PermissionDialog.tsx`](../../src/components/permissions/PermissionDialog.tsx), [`../../src/components/permissions/FilePermissionDialog/FilePermissionDialog.tsx`](../../src/components/permissions/FilePermissionDialog/FilePermissionDialog.tsx), [`../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx), [`../../src/components/permissions/SandboxPermissionRequest.tsx`](../../src/components/permissions/SandboxPermissionRequest.tsx), [`../../src/components/Messages.tsx`](../../src/components/Messages.tsx)
 
 真正叠在一起工作的是：
 

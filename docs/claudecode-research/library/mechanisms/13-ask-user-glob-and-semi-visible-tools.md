@@ -11,7 +11,7 @@
 
 ## 1. `AskUserQuestion` 不是普通文本提问，而是结构化用户分支器
 
-源码镜像：[`../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx), [`../../sources/claude-code/src/tools/AskUserQuestionTool/prompt.ts`](../../sources/claude-code/src/tools/AskUserQuestionTool/prompt.ts)
+源码镜像：[`../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx), [`../../src/tools/AskUserQuestionTool/prompt.ts`](../../src/tools/AskUserQuestionTool/prompt.ts)
 
 这条工具链的核心不是“帮模型问一句话”，而是把用户交互收敛成结构化 schema：
 
@@ -26,7 +26,7 @@
 
 ## 2. 它在 tool 定义层就已经把交互边界写死了
 
-源码镜像：[`../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
+源码镜像：[`../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
 
 `buildTool()` 这一层已经明确了几个行为：
 
@@ -40,7 +40,7 @@
 
 ## 3. AskUserQuestion 的 prompt 本身就是“何时必须停下来问人”的规范
 
-源码镜像：[`../../sources/claude-code/src/tools/AskUserQuestionTool/prompt.ts`](../../sources/claude-code/src/tools/AskUserQuestionTool/prompt.ts)
+源码镜像：[`../../src/tools/AskUserQuestionTool/prompt.ts`](../../src/tools/AskUserQuestionTool/prompt.ts)
 
 提示文本里有两个关键约束：
 
@@ -51,7 +51,7 @@
 
 ## 4. `preview` 说明它不是单纯单选题，而是可视化比较器
 
-源码镜像：[`../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx), [`../../sources/claude-code/src/tools/AskUserQuestionTool/prompt.ts`](../../sources/claude-code/src/tools/AskUserQuestionTool/prompt.ts)
+源码镜像：[`../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx), [`../../src/tools/AskUserQuestionTool/prompt.ts`](../../src/tools/AskUserQuestionTool/prompt.ts)
 
 工具定义和 prompt 一起暴露出一个更强的交互能力：
 
@@ -63,7 +63,7 @@
 
 ## 5. 真正复杂的部分在 permission request UI，不在 tool 本体
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx)
+源码镜像：[`../../src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx`](../../src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx)
 
 工具本体只负责 schema、权限决策和结果映射；真正的交互复杂度在 permission request 层：
 
@@ -77,7 +77,7 @@
 
 ## 6. AskUserQuestion 的结果不是给人读的，而是回写给模型继续推理
 
-源码镜像：[`../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
+源码镜像：[`../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
 
 `mapToolResultToToolResultBlockParam()` 会把结果重写成：
 
@@ -95,7 +95,7 @@
 
 ## 7. `Glob` 不是简化版 `Grep`，而是“路径空间探索器”
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/tools/GlobTool/GlobTool.ts), [`../../sources/claude-code/src/tools/GlobTool/prompt.ts`](../../sources/claude-code/src/tools/GlobTool/prompt.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/tools/GlobTool/GlobTool.ts), [`../../src/tools/GlobTool/prompt.ts`](../../src/tools/GlobTool/prompt.ts)
 
 `Glob` 的职责非常清晰：
 
@@ -113,7 +113,7 @@
 
 ## 8. `Glob` 在权限和路径治理上比表面看起来更严
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/tools/GlobTool/GlobTool.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/tools/GlobTool/GlobTool.ts)
 
 这里至少有三层治理：
 
@@ -125,7 +125,7 @@
 
 ## 9. `Glob` 的 UI 其实复用了搜索权限 UI，而不是自建界面
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/FilesystemPermissionRequest/FilesystemPermissionRequest.tsx), [`../../sources/claude-code/src/tools/GlobTool/UI.tsx`](../../sources/claude-code/src/tools/GlobTool/UI.tsx)
+源码镜像：[`../../src/components/permissions/PermissionRequest.tsx`](../../src/components/permissions/FilesystemPermissionRequest/FilesystemPermissionRequest.tsx), [`../../src/tools/GlobTool/UI.tsx`](../../src/tools/GlobTool/UI.tsx)
 
 在权限分发里，`GlobTool` 和 `GrepTool`、`FileReadTool` 一起走 `FilesystemPermissionRequest`。
 
@@ -139,7 +139,7 @@
 
 ## 10. `Glob` 的结果设计目标是省 token，而不是把所有路径全堆出来
 
-源码镜像：[`../../sources/claude-code/src/tools/GlobTool/GlobTool.ts`](../../sources/claude-code/src/tools/GlobTool/GlobTool.ts)
+源码镜像：[`../../src/tools/GlobTool/GlobTool.ts`](../../src/tools/GlobTool/GlobTool.ts)
 
 实现里有几处很说明问题：
 
@@ -151,7 +151,7 @@
 
 ## 11. `WorkflowTool` 与 `MonitorTool` 在当前镜像里还不是完整可见工具链
 
-源码入口：`packages/claude-code/src/tools/WorkflowTool/constants.ts`, [`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/PermissionRequest.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码入口：`packages/claude-code/src/tools/WorkflowTool/constants.ts`, [`../../src/components/permissions/PermissionRequest.tsx`](../../src/components/permissions/PermissionRequest.tsx), [`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 当前工作区镜像里，我能确认的只有这些事实：
 
@@ -164,7 +164,7 @@
 
 ## 12. 即便工具主体不在当前镜像里，仍能确认它们是“后台可管理任务”而不是普通一次性 tool
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx), [`../../sources/claude-code/src/tasks/pillLabel.ts`](../../sources/claude-code/src/tasks/pillLabel.ts)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx), [`../../src/tasks/pillLabel.ts`](../../src/tasks/pillLabel.ts)
 
 当前能确认的实现特征包括：
 

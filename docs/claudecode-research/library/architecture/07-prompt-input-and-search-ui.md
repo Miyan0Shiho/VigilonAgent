@@ -6,7 +6,7 @@
 
 ## 1. `PromptInput.tsx` 是前台控制塔，不是输入组件
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 从 import 面可以直接看出它在协调的系统远超“编辑文本”：
 
@@ -20,7 +20,7 @@
 
 ## 2. 它维护的是一台模式机
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/inputModes.ts`](../../sources/claude-code/src/components/PromptInput/inputModes.ts), [`../../sources/claude-code/src/utils/processUserInput/processUserInput.ts`](../../sources/claude-code/src/utils/processUserInput/processUserInput.ts)
+源码镜像：[`../../src/components/PromptInput/inputModes.ts`](../../src/components/PromptInput/inputModes.ts), [`../../src/utils/processUserInput/processUserInput.ts`](../../src/utils/processUserInput/processUserInput.ts)
 
 这套输入系统并不把内容当纯字符串，而是持续维护：
 
@@ -36,7 +36,7 @@
 
 ## 3. `useSearchInput` 是整个库的搜索编辑内核
 
-源码镜像：[`../../sources/claude-code/src/hooks/useSearchInput.ts`](../../sources/claude-code/src/hooks/useSearchInput.ts)
+源码镜像：[`../../src/hooks/useSearchInput.ts`](../../src/hooks/useSearchInput.ts)
 
 这个 hook 的价值在于，它不是只服务 PromptInput，而是被多个界面复用的轻量编辑器：
 
@@ -50,7 +50,7 @@
 
 ## 4. `useHistorySearch` 不是 UI 点缀，而是输入回滚系统
 
-源码镜像：[`../../sources/claude-code/src/hooks/useHistorySearch.ts`](../../sources/claude-code/src/hooks/useHistorySearch.ts)
+源码镜像：[`../../src/hooks/useHistorySearch.ts`](../../src/hooks/useHistorySearch.ts)
 
 这条链做了几件非常关键的事：
 
@@ -63,7 +63,7 @@
 
 ## 5. `usePromptSuggestion` 把“空输入建议”做成了状态对象
 
-源码镜像：[`../../sources/claude-code/src/hooks/usePromptSuggestion.ts`](../../sources/claude-code/src/hooks/usePromptSuggestion.ts)
+源码镜像：[`../../src/hooks/usePromptSuggestion.ts`](../../src/hooks/usePromptSuggestion.ts)
 
 这个 hook 暴露了 prompt suggestion 的真实机制：
 
@@ -77,7 +77,7 @@
 
 ## 6. `PromptInputQueuedCommands` 说明底部区域还是命令回流面板
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInputQueuedCommands.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputQueuedCommands.tsx), [`../../sources/claude-code/src/hooks/useCommandQueue.ts`](../../sources/claude-code/src/hooks/useCommandQueue.ts)
+源码镜像：[`../../src/components/PromptInput/PromptInputQueuedCommands.tsx`](../../src/components/PromptInput/PromptInputQueuedCommands.tsx), [`../../src/hooks/useCommandQueue.ts`](../../src/hooks/useCommandQueue.ts)
 
 这里能看到三个重要设计：
 
@@ -89,7 +89,7 @@
 
 ## 7. Footer 左侧其实在展示系统状态，而不是提示文案
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx)
 
 `PromptInputFooterLeftSide` 会在不同条件下切换显示：
 

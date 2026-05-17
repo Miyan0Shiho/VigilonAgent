@@ -6,7 +6,7 @@
 
 ## 1. `/review` 和 `/ultrareview` 不是同一条实现链
 
-源码镜像：[`../../sources/claude-code/src/commands/review.ts`](../../sources/claude-code/src/commands/review.ts), [`../../sources/claude-code/src/commands/review/ultrareviewCommand.tsx`](../../sources/claude-code/src/commands/review/ultrareviewCommand.tsx), [`../../sources/claude-code/src/commands/review/reviewRemote.ts`](../../sources/claude-code/src/commands/review/reviewRemote.ts)
+源码镜像：[`../../src/commands/review.ts`](../../src/commands/review.ts), [`../../src/commands/review/ultrareviewCommand.tsx`](../../src/commands/review/ultrareviewCommand.tsx), [`../../src/commands/review/reviewRemote.ts`](../../src/commands/review/reviewRemote.ts)
 
 `review.ts` 自己已经把边界分开了：
 
@@ -22,7 +22,7 @@
 
 ## 2. `/ultrareview` 才暴露了真正的远端产品语义
 
-源码镜像：[`../../sources/claude-code/src/commands/review/ultrareviewCommand.tsx`](../../sources/claude-code/src/commands/review/ultrareviewCommand.tsx), [`../../sources/claude-code/src/commands/review/reviewRemote.ts`](../../sources/claude-code/src/commands/review/reviewRemote.ts)
+源码镜像：[`../../src/commands/review/ultrareviewCommand.tsx`](../../src/commands/review/ultrareviewCommand.tsx), [`../../src/commands/review/reviewRemote.ts`](../../src/commands/review/reviewRemote.ts)
 
 从 `ultrareviewCommand.tsx` 和 `reviewRemote.ts` 可以直接看到：
 
@@ -38,7 +38,7 @@
 
 ## 3. `/release-notes` 是“缓存优先”的外部信息命令
 
-源码镜像：[`../../sources/claude-code/src/commands/release-notes/release-notes.ts`](../../sources/claude-code/src/commands/release-notes/release-notes.ts)
+源码镜像：[`../../src/commands/release-notes/release-notes.ts`](../../src/commands/release-notes/release-notes.ts)
 
 这个命令的设计目标不是复杂，但很典型：
 
@@ -50,7 +50,7 @@
 
 ## 4. `/upgrade` 是订阅升级 + 登录切换工作流
 
-源码镜像：[`../../sources/claude-code/src/commands/upgrade/upgrade.tsx`](../../sources/claude-code/src/commands/upgrade/upgrade.tsx)
+源码镜像：[`../../src/commands/upgrade/upgrade.tsx`](../../src/commands/upgrade/upgrade.tsx)
 
 它处理的不是简单打开网页：
 

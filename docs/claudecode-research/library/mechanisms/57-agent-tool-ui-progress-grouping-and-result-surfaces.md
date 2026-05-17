@@ -16,7 +16,7 @@
 
 ## 1. `AgentTool/UI.tsx` 不是一个小 render helper，而是 agent tool 的专用 transcript adapter
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 这份文件并不只是把结果文本打印出来。它同时负责：
 
@@ -31,7 +31,7 @@
 
 ## 2. 它先把“哪些 progress 能安全进 transcript”做了一层类型门
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 最前面的 `hasProgressMessage()` 很关键。它明确排除了没有 `message` 字段的 progress 类型，例如：
 
@@ -41,7 +41,7 @@
 
 ## 3. search/read/REPL 折叠不是通用 transcript 功能，而是 agent-progress 专属压缩器
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx), [`../../sources/claude-code/src/utils/collapseReadSearch.ts`](../../sources/claude-code/src/utils/collapseReadSearch.ts)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx), [`../../src/utils/collapseReadSearch.ts`](../../src/utils/collapseReadSearch.ts)
 
 `getSearchOrReadInfo()` 和 `processProgressMessages()` 专门做了一件事：
 
@@ -56,7 +56,7 @@
 
 ## 4. `tool_result` 的 completed/async/remote 三态，在这里被拆成完全不同的前台面
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 `renderToolResultMessage()` 先按 `status` 分流：
 
@@ -74,7 +74,7 @@
 
 ## 5. transcript mode 才会展开完整 subagent transcript；普通模式故意只给折叠版
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 同一个 completed result，在 `isTranscriptMode` 下会额外显示：
 
@@ -96,7 +96,7 @@
 
 ## 6. `VerboseAgentTranscript` 不是简单复用主 transcript，而是单独重建 lookups
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 `VerboseAgentTranscript()` 先对 progressMessages 做：
 
@@ -108,7 +108,7 @@
 
 ## 7. condensed mode 由终端行数预算触发，不是纯粹的“消息多就折叠”
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 `renderToolUseProgressMessage()` 里专门算了：
 
@@ -127,7 +127,7 @@
 
 ## 8. “+N more tool uses” 不是按隐藏消息数算，而是按隐藏 tool-use 语义算
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 `hiddenToolUseCount` 的实现很克制：
 
@@ -138,7 +138,7 @@
 
 ## 9. grouped agent surface 本身就是一套多-agent 聚合协议
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx), [`../../sources/claude-code/src/components/AgentProgressLine.tsx`](../../sources/claude-code/src/components/AgentProgressLine.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx), [`../../src/components/AgentProgressLine.tsx`](../../src/components/AgentProgressLine.tsx)
 
 `renderGroupedAgentToolUse()` 会把多次 agent tool use 聚成一个统一 surface，然后计算每个 agent 的：
 
@@ -159,7 +159,7 @@
 
 ## 10. teammate spawn 会被故意伪装成 `@name` 身份，而不是裸显示 agent type
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 在 grouped surface 里，如果输出状态是：
 
@@ -175,7 +175,7 @@
 
 ## 11. async 判定不是只看启动参数，还会看运行中被 background 的输出状态
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 `renderGroupedAgentToolUse()` 里 `isAsync` 有三种来源：
 
@@ -188,7 +188,7 @@
 
 ## 12. `extractLastToolInfo()` 不是读最后一条消息，而是站在 agent 工具语义上做“最后一步摘要”
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 `extractLastToolInfo()` 的策略是：
 
@@ -201,7 +201,7 @@
 
 ## 13. rejected 和 error surface 都会保留已发生的 progress transcript
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 无论是：
 
@@ -221,7 +221,7 @@
 
 ## 14. `renderToolUseTag()` 有意只在模型偏离主模型时显示 tag
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 tag 渲染时会比较：
 

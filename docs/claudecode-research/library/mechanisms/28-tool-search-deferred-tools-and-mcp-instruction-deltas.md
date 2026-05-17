@@ -6,7 +6,7 @@
 
 ## 1. 这条链的核心目标不是搜索 UX，而是把动态工具池从主 prompt cache key 里拆出去
 
-源码镜像：[`../../sources/claude-code/src/utils/toolSearch.ts`](../../sources/claude-code/src/utils/toolSearch.ts), [`../../sources/claude-code/src/utils/mcpInstructionsDelta.ts`](../../sources/claude-code/src/utils/mcpInstructionsDelta.ts), [`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts)
+源码镜像：[`../../src/utils/toolSearch.ts`](../../src/utils/toolSearch.ts), [`../../src/utils/mcpInstructionsDelta.ts`](../../src/utils/mcpInstructionsDelta.ts), [`../../src/services/api/claude.ts`](../../src/services/api/claude.ts)
 
 从注释和调用链看，Tool Search 子系统最核心的目标其实是两个：
 
@@ -17,7 +17,7 @@
 
 ## 2. `ToolSearchMode` 不是开关，而是三态策略：`tst / tst-auto / standard`
 
-源码镜像：[`../../sources/claude-code/src/utils/toolSearch.ts`](../../sources/claude-code/src/utils/toolSearch.ts)
+源码镜像：[`../../src/utils/toolSearch.ts`](../../src/utils/toolSearch.ts)
 
 `getToolSearchMode()` 暴露出 Claude Code 对 tool search 的真实策略模型：
 
@@ -29,7 +29,7 @@
 
 ## 3. `isToolSearchEnabledOptimistic()` 和 `isToolSearchEnabled()` 的分裂，说明“消息协议保守保留”和“本轮 definitively enable”是两件事
 
-源码镜像：[`../../sources/claude-code/src/utils/toolSearch.ts`](../../sources/claude-code/src/utils/toolSearch.ts), [`../../sources/claude-code/src/utils/messages.ts`](../../sources/claude-code/src/utils/messages.ts)
+源码镜像：[`../../src/utils/toolSearch.ts`](../../src/utils/toolSearch.ts), [`../../src/utils/messages.ts`](../../src/utils/messages.ts)
 
 这里最值得注意的是双层判定：
 
@@ -45,7 +45,7 @@
 
 ## 4. tool search 不是所有模型都能用，`modelSupportsToolReference()` 是协议能力 gate，而不是产品文案 gate
 
-源码镜像：[`../../sources/claude-code/src/utils/toolSearch.ts`](../../sources/claude-code/src/utils/toolSearch.ts)
+源码镜像：[`../../src/utils/toolSearch.ts`](../../src/utils/toolSearch.ts)
 
 `modelSupportsToolReference()` 的真实作用不是隐藏一个菜单，而是确认模型能不能处理：
 
@@ -56,7 +56,7 @@ Haiku 这类模型被明确列在 unsupported patterns 里，而默认策略是�
 
 ## 5. `tst-auto` 的阈值不是猜大小，而是先试 token 级计数，失败后才退回 char heuristic
 
-源码镜像：[`../../sources/claude-code/src/utils/toolSearch.ts`](../../sources/claude-code/src/utils/toolSearch.ts)
+源码镜像：[`../../src/utils/toolSearch.ts`](../../src/utils/toolSearch.ts)
 
 自动模式的阈值判断并不粗糙：
 
@@ -68,7 +68,7 @@ Haiku 这类模型被明确列在 unsupported patterns 里，而默认策略是�
 
 ## 6. `extractDiscoveredToolNames()` 说明 deferred tools 一旦被 ToolSearch 发现，就会成为后续请求里的正式工具
 
-源码镜像：[`../../sources/claude-code/src/utils/toolSearch.ts`](../../sources/claude-code/src/utils/toolSearch.ts), [`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts)
+源码镜像：[`../../src/utils/toolSearch.ts`](../../src/utils/toolSearch.ts), [`../../src/services/api/claude.ts`](../../src/services/api/claude.ts)
 
 动态加载的关键不在于“搜索”，而在于 discovered set 会被重新注入下一轮请求：
 
@@ -80,7 +80,7 @@ Haiku 这类模型被明确列在 unsupported patterns 里，而默认策略是�
 
 ## 7. compaction 不是把 discovered tools 丢掉，而是通过 `compact_boundary` 把它们续命
 
-源码镜像：[`../../sources/claude-code/src/utils/toolSearch.ts`](../../sources/claude-code/src/utils/messages.ts)
+源码镜像：[`../../src/utils/toolSearch.ts`](../../src/utils/messages.ts)
 
 `extractDiscoveredToolNames()` 对 `compact_boundary` 的特殊处理暴露了一个关键设计：
 
@@ -92,7 +92,7 @@ Haiku 这类模型被明确列在 unsupported patterns 里，而默认策略是�
 
 ## 8. `deferred_tools_delta` 不是提示文本，而是 persisted attachment protocol
 
-源码镜像：[`../../sources/claude-code/src/utils/toolSearch.ts`](../../sources/claude-code/src/utils/toolSearch.ts), [`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts), [`../../sources/claude-code/src/utils/messages.ts`](../../sources/claude-code/src/utils/messages.ts)
+源码镜像：[`../../src/utils/toolSearch.ts`](../../src/utils/toolSearch.ts), [`../../src/utils/attachments.ts`](../../src/utils/attachments.ts), [`../../src/utils/messages.ts`](../../src/utils/messages.ts)
 
 `getDeferredToolsDelta()` 和 `getDeferredToolsDeltaAttachment()` 共同说明，deferred tools 的宣布方式不是临时提示，而是持久 attachment：
 
@@ -106,7 +106,7 @@ Haiku 这类模型被明确列在 unsupported patterns 里，而默认策略是�
 
 ## 9. 它对“undeferred but still in pool”的工具做静默处理，说明 delta 协议的目标是真实可用性，而不是历史完美对称
 
-源码镜像：[`../../sources/claude-code/src/utils/toolSearch.ts`](../../sources/claude-code/src/utils/toolSearch.ts)
+源码镜像：[`../../src/utils/toolSearch.ts`](../../src/utils/toolSearch.ts)
 
 `getDeferredToolsDelta()` 里一个很细但很重要的决策是：
 
@@ -117,7 +117,7 @@ Haiku 这类模型被明确列在 unsupported patterns 里，而默认策略是�
 
 ## 10. `mcp_instructions_delta` 和 deferred tools delta 是平行协议：一个同步工具可发现性，一个同步 server instructions
 
-源码镜像：[`../../sources/claude-code/src/utils/mcpInstructionsDelta.ts`](../../sources/claude-code/src/utils/mcpInstructionsDelta.ts), [`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts), [`../../sources/claude-code/src/utils/messages.ts`](../../sources/claude-code/src/utils/messages.ts)
+源码镜像：[`../../src/utils/mcpInstructionsDelta.ts`](../../src/utils/mcpInstructionsDelta.ts), [`../../src/utils/attachments.ts`](../../src/utils/attachments.ts), [`../../src/utils/messages.ts`](../../src/utils/messages.ts)
 
 `mcp_instructions_delta` 基本复用了同样的结构：
 
@@ -135,7 +135,7 @@ Haiku 这类模型被明确列在 unsupported patterns 里，而默认策略是�
 
 ## 11. `attachments.ts` 是这两条协议真正进入主线程和子代理会话的分发器
 
-源码镜像：[`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts)
+源码镜像：[`../../src/utils/attachments.ts`](../../src/utils/attachments.ts)
 
 `getAttachments()` 里这两项很关键：
 
@@ -151,7 +151,7 @@ Haiku 这类模型被明确列在 unsupported patterns 里，而默认策略是�
 
 ## 12. `claude.ts` 保留了旧 prepend 路径，但只在 delta gate 关闭时回退，说明这是一次真正的架构替换而不是并行功能
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts)
 
 在 `claude.ts` 里能清楚看到旧新两条路：
 
@@ -162,7 +162,7 @@ Haiku 这类模型被明确列在 unsupported patterns 里，而默认策略是�
 
 ## 13. `messages.ts` 是这些 attachment 变成模型可读指令的最终翻译层
 
-源码镜像：[`../../sources/claude-code/src/utils/messages.ts`](../../sources/claude-code/src/utils/messages.ts)
+源码镜像：[`../../src/utils/messages.ts`](../../src/utils/messages.ts)
 
 这两类 attachment 最后都会在 `normalizeAttachmentForAPI()` 里变成可读文本：
 

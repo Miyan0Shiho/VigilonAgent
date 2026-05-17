@@ -13,7 +13,7 @@
 
 ## 1. `PluginSettings` 不是一个页面，而是插件命令树的前台路由器
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/PluginSettings.tsx`](../../sources/claude-code/src/commands/plugin/PluginSettings.tsx), [`../../sources/claude-code/src/commands/plugin/parseArgs.ts`](../../sources/claude-code/src/commands/plugin/parseArgs.ts)
+源码镜像：[`../../src/commands/plugin/PluginSettings.tsx`](../../src/commands/plugin/PluginSettings.tsx), [`../../src/commands/plugin/parseArgs.ts`](../../src/commands/plugin/parseArgs.ts)
 
 这层真正做的第一件事不是 render tabs，而是：
 
@@ -39,7 +39,7 @@
 
 ## 2. `PluginSettings` 里的 tab 不是导航装饰，而是和 deep-link action 绑死的恢复点
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/PluginSettings.tsx`](../../sources/claude-code/src/commands/plugin/PluginSettings.tsx)
+源码镜像：[`../../src/commands/plugin/PluginSettings.tsx`](../../src/commands/plugin/PluginSettings.tsx)
 
 `TabId` 只有四个：
 
@@ -58,7 +58,7 @@
 
 ## 3. `ErrorsTabContent` 的职责不是展示日志，而是把错误变成可执行修复动作
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/PluginSettings.tsx`](../../sources/claude-code/src/commands/plugin/PluginSettings.tsx), [`../../sources/claude-code/src/commands/plugin/PluginErrors.tsx`](../../sources/claude-code/src/commands/plugin/PluginErrors.tsx)
+源码镜像：[`../../src/commands/plugin/PluginSettings.tsx`](../../src/commands/plugin/PluginSettings.tsx), [`../../src/commands/plugin/PluginErrors.tsx`](../../src/commands/plugin/PluginErrors.tsx)
 
 这块最关键的是：
 
@@ -85,7 +85,7 @@ error row 不只包含：
 
 ## 4. marketplace 错误会优先回写 settings，而不是直接删磁盘
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/PluginSettings.tsx`](../../sources/claude-code/src/utils/settings/settings.ts)
+源码镜像：[`../../src/commands/plugin/PluginSettings.tsx`](../../src/utils/settings/settings.ts)
 
 `buildMarketplaceAction(name)` 的决策顺序非常明确：
 
@@ -105,7 +105,7 @@ error row 不只包含：
 
 ## 5. `removeExtraMarketplace()` 顺手清同源 enabled plugins，说明 marketplace declaration 和 plugin intent 是耦合治理的
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/PluginSettings.tsx`](../../sources/claude-code/src/utils/settings/settings.ts)
+源码镜像：[`../../src/commands/plugin/PluginSettings.tsx`](../../src/utils/settings/settings.ts)
 
 这个 helper 不是只把：
 
@@ -126,7 +126,7 @@ error row 不只包含：
 
 ## 6. `ManageMarketplaces` 是 marketplace 级状态机，不是 marketplace 列表页
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManageMarketplaces.tsx`](../../sources/claude-code/src/commands/plugin/ManageMarketplaces.tsx)
+源码镜像：[`../../src/commands/plugin/ManageMarketplaces.tsx`](../../src/commands/plugin/ManageMarketplaces.tsx)
 
 它维护的核心状态不是简单 selected row，而是：
 
@@ -147,7 +147,7 @@ error row 不只包含：
 
 ## 7. `ManageMarketplaces` 同时支持 staged apply 和 direct action，两套路径并存
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManageMarketplaces.tsx`](../../sources/claude-code/src/commands/plugin/ManageMarketplaces.tsx)
+源码镜像：[`../../src/commands/plugin/ManageMarketplaces.tsx`](../../src/commands/plugin/ManageMarketplaces.tsx)
 
 list view 里有两条操作风格：
 
@@ -168,7 +168,7 @@ list view 里有两条操作风格：
 
 ## 8. auto-update toggle 不是临时 session bit，而是 marketplace config 的真实持久化字段
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManageMarketplaces.tsx`](../../sources/claude-code/src/utils/plugins/marketplaceManager.ts)
+源码镜像：[`../../src/commands/plugin/ManageMarketplaces.tsx`](../../src/utils/plugins/marketplaceManager.ts)
 
 `handleToggleAutoUpdate()` 调的是：
 
@@ -184,7 +184,7 @@ list view 里有两条操作风格：
 
 ## 9. marketplace update 不是只 refresh clone，还会尝试把已装插件 bump 到新版本指针
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManageMarketplaces.tsx`](../../sources/claude-code/src/utils/plugins/pluginAutoupdate.ts)
+源码镜像：[`../../src/commands/plugin/ManageMarketplaces.tsx`](../../src/utils/plugins/pluginAutoupdate.ts)
 
 `applyChanges()` 在 refresh 完 marketplace 之后，还会：
 
@@ -204,7 +204,7 @@ list view 里有两条操作风格：
 
 ## 10. `marketplaceHelpers` 是 policy/trust/降级语义的集中层，不是杂项 util
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/marketplaceHelpers.ts`](../../sources/claude-code/src/utils/plugins/marketplaceHelpers.ts)
+源码镜像：[`../../src/utils/plugins/marketplaceHelpers.ts`](../../src/utils/plugins/marketplaceHelpers.ts)
 
 这个文件里至少集中了承载三类产品语义：
 
@@ -231,7 +231,7 @@ list view 里有两条操作风格：
 
 ## 11. graceful degradation 的 contract 是“部分 marketplace 坏了也继续出可用 catalog”
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/marketplaceHelpers.ts`](../../sources/claude-code/src/utils/plugins/marketplaceManager.ts)
+源码镜像：[`../../src/utils/plugins/marketplaceHelpers.ts`](../../src/utils/plugins/marketplaceManager.ts)
 
 `loadMarketplacesWithGracefulDegradation()` 的协议是：
 
@@ -248,7 +248,7 @@ list view 里有两条操作风格：
 
 ## 12. `usePluginRecommendationBase()` 不是 recommendation source，而是统一 show-one async gate
 
-源码镜像：[`../../sources/claude-code/src/hooks/usePluginRecommendationBase.tsx`](../../sources/claude-code/src/hooks/usePluginRecommendationBase.tsx)
+源码镜像：[`../../src/hooks/usePluginRecommendationBase.tsx`](../../src/hooks/usePluginRecommendationBase.tsx)
 
 这个 hook 本身不懂 LSP，也不懂 hint。它只统一三件事：
 
@@ -271,7 +271,7 @@ list view 里有两条操作风格：
 
 ## 13. LSP recommendation 的 show-once 语义是 “每 session 一次 + timeout 算 ignored”
 
-源码镜像：[`../../sources/claude-code/src/hooks/useLspPluginRecommendation.tsx`](../../sources/claude-code/src/utils/plugins/lspRecommendation.ts)
+源码镜像：[`../../src/hooks/useLspPluginRecommendation.tsx`](../../src/utils/plugins/lspRecommendation.ts)
 
 这条链的关键 gate 包括：
 
@@ -295,7 +295,7 @@ list view 里有两条操作风格：
 
 ## 14. hint recommendation 的 show-once 语义是 “每 plugin 一生一次”，不是每 session 一次
 
-源码镜像：[`../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx`](../../sources/claude-code/src/utils/claudeCodeHints.ts)
+源码镜像：[`../../src/hooks/useClaudeCodeHintRecommendation.tsx`](../../src/utils/claudeCodeHints.ts)
 
 这条链和 LSP 最大的不同是：
 
@@ -318,7 +318,7 @@ list view 里有两条操作风格：
 
 ## 15. 两条推荐安装链都故意不直接走 `/plugin` UI，而是直接调安装 core
 
-源码镜像：[`../../sources/claude-code/src/hooks/usePluginRecommendationBase.tsx`](../../sources/claude-code/src/hooks/useLspPluginRecommendation.tsx), [`../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx`](../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts)
+源码镜像：[`../../src/hooks/usePluginRecommendationBase.tsx`](../../src/hooks/useLspPluginRecommendation.tsx), [`../../src/hooks/useClaudeCodeHintRecommendation.tsx`](../../src/utils/plugins/pluginInstallationHelpers.ts)
 
 两条推荐源最后都汇到：
 
@@ -341,7 +341,7 @@ hint 分支内部做：
 
 ## 16. 这条链的总装配关系
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManageMarketplaces.tsx`](../../sources/claude-code/src/commands/plugin/ManageMarketplaces.tsx), [`../../sources/claude-code/src/commands/plugin/PluginSettings.tsx`](../../sources/claude-code/src/commands/plugin/PluginSettings.tsx), [`../../sources/claude-code/src/utils/plugins/marketplaceHelpers.ts`](../../sources/claude-code/src/utils/plugins/marketplaceHelpers.ts), [`../../sources/claude-code/src/hooks/usePluginRecommendationBase.tsx`](../../sources/claude-code/src/hooks/usePluginRecommendationBase.tsx), [`../../sources/claude-code/src/hooks/useLspPluginRecommendation.tsx`](../../sources/claude-code/src/hooks/useLspPluginRecommendation.tsx), [`../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx`](../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx)
+源码镜像：[`../../src/commands/plugin/ManageMarketplaces.tsx`](../../src/commands/plugin/ManageMarketplaces.tsx), [`../../src/commands/plugin/PluginSettings.tsx`](../../src/commands/plugin/PluginSettings.tsx), [`../../src/utils/plugins/marketplaceHelpers.ts`](../../src/utils/plugins/marketplaceHelpers.ts), [`../../src/hooks/usePluginRecommendationBase.tsx`](../../src/hooks/usePluginRecommendationBase.tsx), [`../../src/hooks/useLspPluginRecommendation.tsx`](../../src/hooks/useLspPluginRecommendation.tsx), [`../../src/hooks/useClaudeCodeHintRecommendation.tsx`](../../src/hooks/useClaudeCodeHintRecommendation.tsx)
 
 可以把这一圈治理/导流层收成 6 层：
 

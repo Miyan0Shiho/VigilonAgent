@@ -6,7 +6,7 @@
 
 ## 1. Transcript 不是日志附属物，而是运行时底座
 
-源码镜像：[`../../sources/claude-code/src/utils/sessionStorage.ts`](../../sources/claude-code/src/utils/sessionStorage.ts)
+源码镜像：[`../../src/utils/sessionStorage.ts`](../../src/utils/sessionStorage.ts)
 
 从 `getTranscriptPath()`、`getTranscriptPathForSession()`、`getAgentTranscriptPath()` 可以看出，Claude Code 把 session transcript 当成核心数据结构，而不是简单调试日志。
 

@@ -24,11 +24,11 @@
 
 ## 关键源码支撑
 
-- [`../sources/claude-code/src/entrypoints/cli.tsx`](../../sources/claude-code/src/entrypoints/cli.tsx)：处理 `bridge`、`daemon`、`remote-control` 等非交互入口。
-- [`../sources/claude-code/src/QueryEngine.ts`](../../sources/claude-code/src/QueryEngine.ts)：`submitMessage()` 是不依赖 TUI 的会话入口。
-- [`../sources/claude-code/src/utils/processUserInput/processUserInput.ts`](../../sources/claude-code/src/utils/processUserInput/processUserInput.ts)：在模型请求前做命令判定、钩子与输入治理。
-- [`../sources/claude-code/src/utils/sessionStorage.ts`](../../sources/claude-code/src/utils/sessionStorage.ts)：保存 transcript、subagent 记录与恢复元数据。
-- [`../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts)：承接流式 API、预算控制与 tracing。
+- [`../src/entrypoints/cli.tsx`](../../src/entrypoints/cli.tsx)：处理 `bridge`、`daemon`、`remote-control` 等非交互入口。
+- [`../src/QueryEngine.ts`](../../src/QueryEngine.ts)：`submitMessage()` 是不依赖 TUI 的会话入口。
+- [`../src/utils/processUserInput/processUserInput.ts`](../../src/utils/processUserInput/processUserInput.ts)：在模型请求前做命令判定、钩子与输入治理。
+- [`../src/utils/sessionStorage.ts`](../../src/utils/sessionStorage.ts)：保存 transcript、subagent 记录与恢复元数据。
+- [`../src/services/api/claude.ts`](../../src/services/api/claude.ts)：承接流式 API、预算控制与 tracing。
 
 ## 对 Vigilon 的启发
 

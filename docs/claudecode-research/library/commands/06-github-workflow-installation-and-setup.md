@@ -6,7 +6,7 @@
 
 ## 1. 这条链的本质不是“安装 App”，而是把 GitHub Actions 接入做成产品向导
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx), [`../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts`](../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx), [`../../src/commands/install-github-app/setupGitHubActions.ts`](../../src/commands/install-github-app/setupGitHubActions.ts)
 
 从 `INITIAL_STATE` 和 step 组件就能看出，它在管理一条多阶段产品流程，而不是一条命令：
 
@@ -24,7 +24,7 @@
 
 ## 2. `install-github-app.tsx` 是本地状态机，不是壳命令
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx)
 
 这份文件自己就承担了几层关键职责：
 
@@ -38,7 +38,7 @@
 
 ## 3. 第一层 gate 是 `gh` 环境，而不是仓库配置
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx), [`../../sources/claude-code/src/commands/install-github-app/CheckGitHubStep.tsx`](../../sources/claude-code/src/commands/install-github-app/CheckGitHubStep.tsx)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx), [`../../src/commands/install-github-app/CheckGitHubStep.tsx`](../../src/commands/install-github-app/CheckGitHubStep.tsx)
 
 `checkGitHubCLI()` 依次检查：
 
@@ -55,7 +55,7 @@
 
 ## 4. `choose-repo` 阶段不是收字符串，而是在做 repo 归一化和权限预审
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx)
 
 仓库选择阶段至少做了四件事：
 
@@ -68,7 +68,7 @@
 
 ## 5. 已有 workflow 不是简单报错，而是进入分支策略选择
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/ExistingWorkflowStep.tsx`](../../sources/claude-code/src/commands/install-github-app/ExistingWorkflowStep.tsx), [`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx)
+源码镜像：[`../../src/commands/install-github-app/ExistingWorkflowStep.tsx`](../../src/commands/install-github-app/ExistingWorkflowStep.tsx), [`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx)
 
 如果发现 `.github/workflows/claude.yml` 已存在，向导不是直接退出，而是进入 `ExistingWorkflowStep`，给三个动作：
 
@@ -86,7 +86,7 @@
 
 ## 6. workflow 选择层说明它安装的不是单一能力
 
-源码镜像：[`../../sources/claude-code/src/components/WorkflowMultiselectDialog.tsx`](../../sources/claude-code/src/components/WorkflowMultiselectDialog.tsx), [`../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts`](../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts)
+源码镜像：[`../../src/components/WorkflowMultiselectDialog.tsx`](../../src/components/WorkflowMultiselectDialog.tsx), [`../../src/commands/install-github-app/setupGitHubActions.ts`](../../src/commands/install-github-app/setupGitHubActions.ts)
 
 `WorkflowMultiselectDialog` 当前暴露两个能力面：
 
@@ -102,7 +102,7 @@
 
 ## 7. secret 决策层已经是一个小型权限与命名协议
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/CheckExistingSecretStep.tsx`](../../sources/claude-code/src/commands/install-github-app/CheckExistingSecretStep.tsx), [`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx)
+源码镜像：[`../../src/commands/install-github-app/CheckExistingSecretStep.tsx`](../../src/commands/install-github-app/CheckExistingSecretStep.tsx), [`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx)
 
 如果仓库里已有 `ANTHROPIC_API_KEY`，向导不会默认覆盖，而是给两条路：
 
@@ -113,7 +113,7 @@
 
 ## 8. API key 和 OAuth token 在这条链里是两条不同安装语义
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx), [`../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts`](../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx), [`../../src/commands/install-github-app/setupGitHubActions.ts`](../../src/commands/install-github-app/setupGitHubActions.ts)
 
 向导不只支持传统 API key：
 
@@ -133,7 +133,7 @@
 
 ## 9. `setupGitHubActions()` 是真实的 repo mutation pipeline
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts`](../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts)
+源码镜像：[`../../src/commands/install-github-app/setupGitHubActions.ts`](../../src/commands/install-github-app/setupGitHubActions.ts)
 
 它至少串了这些阶段：
 
@@ -149,7 +149,7 @@
 
 ## 10. workflow 文件写入逻辑支持 update，不只支持 create
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts`](../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts)
+源码镜像：[`../../src/commands/install-github-app/setupGitHubActions.ts`](../../src/commands/install-github-app/setupGitHubActions.ts)
 
 `createWorkflowFile()` 先查目标路径的 `.sha`。如果文件已存在：
 
@@ -164,7 +164,7 @@
 
 ## 11. `CreatingStep` 把后端变更流水线回投成可见进度协议
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/CreatingStep.tsx`](../../sources/claude-code/src/commands/install-github-app/CreatingStep.tsx)
+源码镜像：[`../../src/commands/install-github-app/CreatingStep.tsx`](../../src/commands/install-github-app/CreatingStep.tsx)
 
 `CreatingStep` 不是单纯 spinner，而是根据当前策略拼进度列表：
 
@@ -178,7 +178,7 @@
 
 ## 12. PR 创建被故意留给 GitHub 页面，而不是 CLI 直接提交
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts`](../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts)
+源码镜像：[`../../src/commands/install-github-app/setupGitHubActions.ts`](../../src/commands/install-github-app/setupGitHubActions.ts)
 
 这条链最后没有直接 `gh pr create`，而是：
 

@@ -6,7 +6,7 @@
 
 ## 1. skill 先是 `Command`，不是“读到再说”的松散文本
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 `createSkillCommand()` 把 skill 编译成标准 `Command` 对象，直接挂进 slash command 体系。这里已经固化了几件关键事：
 
@@ -20,7 +20,7 @@
 
 ## 2. frontmatter 才是 skill runtime 的控制面
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 `parseSkillFrontmatterFields()` 说明 `SKILL.md` 的 frontmatter 不是装饰信息，而是运行时配置：
 
@@ -36,7 +36,7 @@
 
 ## 3. `/skills/` 和 legacy `/commands/` 是两套来源，但都被收敛进同一条装配链
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 当前加载器同时处理两套来源：
 
@@ -47,7 +47,7 @@
 
 ## 4. skill 发现是多源合并，不是只看当前 repo
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 `getSkillDirCommands()` 同时装配：
 
@@ -67,7 +67,7 @@
 
 ## 5. 去重不是按名字，而是按真实文件身份
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 这里特意用了 `realpath()` 做 `getFileIdentity()`，然后按 canonical path 去重，而不是按 skill name 去重。原因很直接：
 
@@ -79,7 +79,7 @@
 
 ## 6. `paths` frontmatter 把 skill 变成条件激活资产
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 `parseSkillPaths()` 和 `conditionalSkills` 这套逻辑很关键：如果 skill 带 `paths`，它不会在启动时直接进入 unconditional skills，而是先进入待激活池。
 
@@ -92,7 +92,7 @@
 
 ## 7. 动态 skill 发现是沿文件路径向上漫游，而不是全仓暴力扫描
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 `discoverSkillDirsForPaths()` 的策略是：
 
@@ -106,7 +106,7 @@
 
 ## 8. `getPromptForCommand()` 不是简单返回 Markdown
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 真正执行 skill 时，还会做一层 prompt 编译：
 
@@ -122,7 +122,7 @@
 
 ## 9. bundled skill 证明 skill 不是只能来自文件系统
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts), [`../../sources/claude-code/src/skills/bundled/remember.ts`](../../sources/claude-code/src/skills/bundled/remember.ts)
+源码镜像：[`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/skillify.ts), [`../../src/skills/bundled/remember.ts`](../../src/skills/bundled/remember.ts)
 
 bundled skills 直接在代码里 `registerBundledSkill()`，说明 skill 来源至少有三类：
 
@@ -139,7 +139,7 @@ bundled skills 直接在代码里 `registerBundledSkill()`，说明 skill 来源
 
 ## 10. `QueryEngine` 把 skills 和 plugins 作为启动期并行装配物
 
-源码镜像：[`../../sources/claude-code/src/QueryEngine.ts`](../../sources/claude-code/src/QueryEngine.ts)
+源码镜像：[`../../src/QueryEngine.ts`](../../src/QueryEngine.ts)
 
 `before_skills_plugins` / `after_skills_plugins` 这段 profiling 很直白：headless 启动时，skills 和 plugins 是并行加载的。
 

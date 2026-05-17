@@ -14,7 +14,7 @@
 
 ## 1. `remoteManagedSettings` 的目标不是“再来一种配置文件”，而是注入一层远端 policySettings
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/services/remoteManagedSettings/index.ts), [`../../sources/claude-code/src/utils/settings/changeDetector.ts`](../../sources/claude-code/src/utils/settings/changeDetector.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/services/remoteManagedSettings/index.ts), [`../../src/utils/settings/changeDetector.ts`](../../src/utils/settings/changeDetector.ts)
 
 这套服务的真正位置不是独立配置系统，而是 Claude Code settings pipeline 的一层：
 
@@ -26,7 +26,7 @@
 
 ## 2. eligibility gate 的作用不是授权，而是避免无意义地打远端 API
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/syncCache.ts`](../../sources/claude-code/src/services/remoteManagedSettings/syncCache.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/syncCache.ts`](../../src/services/remoteManagedSettings/syncCache.ts)
 
 `isRemoteManagedSettingsEligible()` 先做一轮本地预筛：
 
@@ -41,7 +41,7 @@
 
 ## 3. eligibility 状态被镜像进 leaf cache，是为了解循环依赖和同步读取
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/syncCache.ts`](../../sources/claude-code/src/services/remoteManagedSettings/syncCache.ts), [`../../sources/claude-code/src/services/remoteManagedSettings/syncCacheState.ts`](../../sources/claude-code/src/services/remoteManagedSettings/syncCacheState.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/syncCache.ts`](../../src/services/remoteManagedSettings/syncCache.ts), [`../../src/services/remoteManagedSettings/syncCacheState.ts`](../../src/services/remoteManagedSettings/syncCacheState.ts)
 
 这里有个很不显眼但很重要的设计：
 
@@ -56,7 +56,7 @@
 
 ## 4. `initializeRemoteManagedSettingsLoadingPromise()` 说明这套服务有明确的“其他系统可等待”的启动门
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/services/remoteManagedSettings/index.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/services/remoteManagedSettings/index.ts)
 
 服务在真正 fetch 前就可以先建一个 promise：
 
@@ -71,7 +71,7 @@
 
 ## 5. 这条 loading promise 自带 30s 超时，是为了防止非 CLI 上下文死锁
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/services/remoteManagedSettings/index.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/services/remoteManagedSettings/index.ts)
 
 `initializeRemoteManagedSettingsLoadingPromise()` 不只是 new Promise，还会设置：
 
@@ -86,7 +86,7 @@
 
 ## 6. 启动路径是 cache-first，而不是 fetch-first
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/services/remoteManagedSettings/syncCacheState.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/services/remoteManagedSettings/syncCacheState.ts)
 
 `loadRemoteManagedSettings()` 的启动顺序非常关键：
 
@@ -99,7 +99,7 @@
 
 ## 7. `getRemoteManagedSettingsSyncFromCache()` 自带 merged settings cache 失效副作用
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/syncCacheState.ts`](../../sources/claude-code/src/services/remoteManagedSettings/syncCacheState.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/syncCacheState.ts`](../../src/services/remoteManagedSettings/syncCacheState.ts)
 
 当磁盘缓存首次被读出来时，这个函数不只返回值，还会：
 
@@ -110,7 +110,7 @@
 
 ## 8. `fetchRemoteManagedSettings()` 的 HTTP 协议是 checksum-aware 的，不是盲拉全量 JSON
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/services/remoteManagedSettings/types.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/services/remoteManagedSettings/types.ts)
 
 每次请求时，客户端会：
 
@@ -127,7 +127,7 @@
 
 ## 9. checksum 实现刻意对齐 Python 服务端，而不是只要稳定 hash 就行
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/services/remoteManagedSettings/types.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/services/remoteManagedSettings/types.ts)
 
 `computeChecksumFromSettings()` 做的是：
 
@@ -143,7 +143,7 @@
 
 ## 10. 拉取失败时的主策略是 stale cache fallback，而不是重置成空
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/services/remoteManagedSettings/index.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/services/remoteManagedSettings/index.ts)
 
 `fetchAndLoadRemoteManagedSettings()` 的失败路径优先级是：
 
@@ -155,7 +155,7 @@
 
 ## 11. 但 204/404 会主动删掉磁盘缓存，因为这代表“远端真没有这层设置了”
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/services/remoteManagedSettings/index.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/services/remoteManagedSettings/index.ts)
 
 当服务端明确返回“没有设置”时：
 
@@ -172,7 +172,7 @@
 
 ## 12. 危险设置审批发生在“应用新设置之前”，不是应用后回滚
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/services/remoteManagedSettings/securityCheck.tsx)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/services/remoteManagedSettings/securityCheck.tsx)
 
 当拉到非空新设置时，流程是：
 
@@ -184,7 +184,7 @@
 
 ## 13. `securityCheck.tsx` 的 fail-closed 是进程级的，不是仅禁用某几个字段
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/securityCheck.tsx`](../../sources/claude-code/src/services/remoteManagedSettings/securityCheck.tsx)
+源码镜像：[`../../src/services/remoteManagedSettings/securityCheck.tsx`](../../src/services/remoteManagedSettings/securityCheck.tsx)
 
 若结果是 `rejected`，处理逻辑直接：
 
@@ -194,7 +194,7 @@
 
 ## 14. 背景轮询并不无脑广播，而是比较 JSON 序列化前后是否真的变了
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/services/remoteManagedSettings/index.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/services/remoteManagedSettings/index.ts)
 
 `pollRemoteSettings()` 会：
 
@@ -207,7 +207,7 @@
 
 ## 15. `startBackgroundPolling()` 有 `unref()`，说明它绝不能把进程强留住
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/services/remoteManagedSettings/index.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/services/remoteManagedSettings/index.ts)
 
 轮询是：
 
@@ -219,7 +219,7 @@
 
 ## 16. `settingsChangeDetector.fanOut()` 的 cache reset 集中化，是 remote settings 热更新能成立的前提
 
-源码镜像：[`../../sources/claude-code/src/utils/settings/changeDetector.ts`](../../sources/claude-code/src/utils/settings/changeDetector.ts)
+源码镜像：[`../../src/utils/settings/changeDetector.ts`](../../src/utils/settings/changeDetector.ts)
 
 `fanOut(source)` 现在会先：
 
@@ -233,7 +233,7 @@
 
 ## 17. `notifyChange('policySettings')` 是这套系统接入所有宿主的统一接口
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/utils/settings/changeDetector.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/utils/settings/changeDetector.ts)
 
 无论是：
 
@@ -249,7 +249,7 @@
 
 ## 18. TUI 和 headless 宿主用同一个 notify，但消费方式不同
 
-源码镜像：[`../../sources/claude-code/src/main.tsx`](../../sources/claude-code/src/cli/print.ts)
+源码镜像：[`../../src/main.tsx`](../../src/cli/print.ts)
 
 `main.tsx` 在 preAction 里：
 

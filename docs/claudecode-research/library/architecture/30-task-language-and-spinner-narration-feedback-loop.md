@@ -6,7 +6,7 @@
 
 ## 1. 任务对象不只是状态容器，它还携带一套面向主 UI 的叙事字段
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts), [`../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts`](../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts), [`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts), [`../../src/tools/TaskCreateTool/TaskCreateTool.ts`](../../src/tools/TaskCreateTool/TaskCreateTool.ts), [`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 `TaskSchema` 里和叙事直接相关的字段其实有两层：
 
@@ -21,7 +21,7 @@
 
 ## 2. `TaskCreateTool` 的输入协议已经把“任务语言”建模成 imperative + progressive 双形态
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts`](../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts), [`../../sources/claude-code/src/tools/TaskCreateTool/prompt.ts`](../../sources/claude-code/src/tools/TaskCreateTool/prompt.ts)
+源码镜像：[`../../src/tools/TaskCreateTool/TaskCreateTool.ts`](../../src/tools/TaskCreateTool/TaskCreateTool.ts), [`../../src/tools/TaskCreateTool/prompt.ts`](../../src/tools/TaskCreateTool/prompt.ts)
 
 `TaskCreateTool` 不只是让模型填一条标题，它要求：
 
@@ -41,7 +41,7 @@
 
 ## 3. `TaskCreateTool/prompt.ts` 已经把 spinner fallback 规则前置进工具提示词
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskCreateTool/prompt.ts`](../../sources/claude-code/src/tools/TaskCreateTool/prompt.ts)
+源码镜像：[`../../src/tools/TaskCreateTool/prompt.ts`](../../src/tools/TaskCreateTool/prompt.ts)
 
 `TaskCreateTool` 的 prompt 里明确告诉模型：
 
@@ -63,7 +63,7 @@
 
 ## 4. `TaskUpdateTool` 延续了同样的语言协议，说明任务叙事是可演化状态，不是创建时一次性定死
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts), [`../../sources/claude-code/src/tools/TaskUpdateTool/prompt.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/prompt.ts)
+源码镜像：[`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts), [`../../src/tools/TaskUpdateTool/prompt.ts`](../../src/tools/TaskUpdateTool/prompt.ts)
 
 `TaskUpdateTool` 也允许更新：
 
@@ -86,7 +86,7 @@
 
 ## 5. `TaskUpdateTool` 只有在字段变化时才写回，说明 `activeForm` 被当成真实状态，而不是可随手重刷的 UI 文案
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 `TaskUpdateTool` 更新 `activeForm` 的条件很严格：
 
@@ -104,7 +104,7 @@
 
 ## 6. spinner 主文案优先级明确把 `activeForm` 放在 `subject` 之前
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/Spinner.tsx)
+源码镜像：[`../../src/components/Spinner.tsx`](../../src/components/Spinner.tsx)
 
 leader spinner 的核心选择链是：
 
@@ -124,7 +124,7 @@ leader spinner 的核心选择链是：
 
 ## 7. `subject` 的作用不是被 `activeForm` 取代，而是承担统一 fallback 和列表主语法
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/TaskListV2.tsx)
+源码镜像：[`../../src/components/Spinner.tsx`](../../src/components/TaskListV2.tsx)
 
 上一卷已经说明：
 
@@ -143,7 +143,7 @@ leader spinner 的核心选择链是：
 
 ## 8. `findNextPendingTask()` 不是随便找第一条 pending，而是在做一次 blocker-aware 的“下一步可做项”推断
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/components/Spinner.tsx`](../../src/utils/tasks.ts)
 
 `findNextPendingTask()` 的逻辑是：
 
@@ -164,7 +164,7 @@ leader spinner 的核心选择链是：
 
 ## 9. spinner 的 `Next:` 提示消费的是 `subject`，说明“下一步”是结果式承诺，不是进行式状态
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/tools/TaskCreateTool/prompt.ts)
+源码镜像：[`../../src/components/Spinner.tsx`](../../src/tools/TaskCreateTool/prompt.ts)
 
 spinner 里显示的是：
 
@@ -181,7 +181,7 @@ spinner 里显示的是：
 
 ## 10. `TaskCreateTool` 和 `TaskUpdateTool` 都会自动展开任务面板，说明任务语言回灌主 UI 不是隐性副作用，而是产品故意暴露的工作面
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskCreateTool/TaskCreateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 无论是 create 还是 update，这两个工具都会：
 
@@ -197,7 +197,7 @@ spinner 里显示的是：
 
 ## 11. `TaskUpdateTool` 的“开始工作”范式与 spinner 叙事强绑定
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskUpdateTool/prompt.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskUpdateTool/prompt.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 `TaskUpdateTool` prompt 里有一条很强的工作流约束：
 
@@ -212,7 +212,7 @@ spinner 里显示的是：
 
 ## 12. 随机 spinner verb 只是兜底层，Claude Code 的真实方向是让任务系统逐步替代默认泛化文案
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/tools/TaskCreateTool/prompt.ts), [`../../sources/claude-code/src/tools/TaskUpdateTool/prompt.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/prompt.ts)
+源码镜像：[`../../src/components/Spinner.tsx`](../../src/tools/TaskCreateTool/prompt.ts), [`../../src/tools/TaskUpdateTool/prompt.ts`](../../src/tools/TaskUpdateTool/prompt.ts)
 
 spinner 仍然保留：
 
@@ -228,7 +228,7 @@ spinner 仍然保留：
 
 ## 13. 这条链的本质不是“任务影响 spinner”，而是 Claude Code 把计划语言、执行语言、下一步语言统一进了同一个 task object
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts), [`../../sources/claude-code/src/tools/TaskCreateTool/prompt.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts), [`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/TaskListV2.tsx)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/tools/TaskCreateTool/TaskCreateTool.ts), [`../../src/tools/TaskCreateTool/prompt.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts), [`../../src/components/Spinner.tsx`](../../src/components/TaskListV2.tsx)
 
 这条反馈回路可以压缩成三种语言：
 

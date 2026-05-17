@@ -15,7 +15,7 @@
 
 ## 1. agent 编辑不是改内存对象，而是回写 markdown definition
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentEditor.tsx`](../../sources/claude-code/src/components/agents/AgentEditor.tsx), [`../../sources/claude-code/src/components/agents/agentFileUtils.ts`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/AgentEditor.tsx`](../../src/components/agents/AgentEditor.tsx), [`../../src/components/agents/agentFileUtils.ts`](../../src/components/agents/agentFileUtils.ts)
 
 `AgentEditor.handleSave()` 的核心不是 setState，而是：
 
@@ -34,7 +34,7 @@
 
 ## 2. markdown frontmatter 不是机械序列化，而是携带产品语义
 
-源码镜像：[`../../sources/claude-code/src/components/agents/agentFileUtils.ts`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/agentFileUtils.ts`](../../src/components/agents/agentFileUtils.ts)
 
 `formatAgentAsMarkdown()` 做了几件很重要的事情：
 
@@ -53,7 +53,7 @@
 
 ## 3. source-specific path router 才是 agent persistence 的真实底座
 
-源码镜像：[`../../sources/claude-code/src/components/agents/agentFileUtils.ts`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/agentFileUtils.ts`](../../src/components/agents/agentFileUtils.ts)
 
 `getAgentDirectoryPath()` 并不是简单拼路径。它明确把 source 分成：
 
@@ -72,7 +72,7 @@
 
 ## 4. “新文件路径”和“真实文件路径”是两套协议
 
-源码镜像：[`../../sources/claude-code/src/components/agents/agentFileUtils.ts`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/agentFileUtils.ts`](../../src/components/agents/agentFileUtils.ts)
 
 这里分了四个函数：
 
@@ -95,7 +95,7 @@
 
 ## 5. relative path 文案本身就是 source truth，不只是显示辅助
 
-源码镜像：[`../../sources/claude-code/src/components/agents/agentFileUtils.ts`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/agentFileUtils.ts`](../../src/components/agents/agentFileUtils.ts)
 
 `getActualRelativeAgentFilePath()` 的返回值不是一律相对路径：
 
@@ -115,7 +115,7 @@
 
 ## 6. built-in 和 plugin 不是“都不可直接编辑”，而是不可编辑原因不同
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentEditor.tsx`](../../sources/claude-code/src/components/agents/AgentEditor.tsx), [`../../sources/claude-code/src/components/agents/agentFileUtils.ts`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/AgentEditor.tsx`](../../src/components/agents/AgentEditor.tsx), [`../../src/components/agents/agentFileUtils.ts`](../../src/components/agents/agentFileUtils.ts)
 
 这里存在两层不同限制：
 
@@ -131,7 +131,7 @@
 
 ## 7. 写文件时用 `datasync()`，说明 definition persistence 被当成真实配置写入对待
 
-源码镜像：[`../../sources/claude-code/src/components/agents/agentFileUtils.ts`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/agentFileUtils.ts`](../../src/components/agents/agentFileUtils.ts)
 
 `writeFileAndFlush()` 不是 `writeFile` 完就结束，而是：
 
@@ -150,7 +150,7 @@
 
 ## 8. create 和 update 的失败语义不一样
 
-源码镜像：[`../../sources/claude-code/src/components/agents/agentFileUtils.ts`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/agentFileUtils.ts`](../../src/components/agents/agentFileUtils.ts)
 
 `saveAgentToFile()` 和 `updateAgentFile()` 复用了同一个写入底座，但错误模型不同：
 
@@ -164,7 +164,7 @@
 
 ## 9. validation 真正在检查的是“能否装配进运行时”，不只是表单合法性
 
-源码镜像：[`../../sources/claude-code/src/components/agents/validateAgent.ts`](../../sources/claude-code/src/components/agents/validateAgent.ts)
+源码镜像：[`../../src/components/agents/validateAgent.ts`](../../src/components/agents/validateAgent.ts)
 
 `validateAgent()` 做了四类校验：
 
@@ -181,7 +181,7 @@
 
 ## 10. duplicate 规则按 `(agentType, source)` 看 inventory，但校验按 `agentType` 看冲突
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts`](../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts), [`../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts`](../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts), [`../../sources/claude-code/src/components/agents/validateAgent.ts`](../../sources/claude-code/src/components/agents/validateAgent.ts)
+源码镜像：[`../../src/tools/AgentTool/agentDisplay.ts`](../../src/tools/AgentTool/agentDisplay.ts), [`../../src/tools/AgentTool/loadAgentsDir.ts`](../../src/tools/AgentTool/loadAgentsDir.ts), [`../../src/components/agents/validateAgent.ts`](../../src/components/agents/validateAgent.ts)
 
 这里有一条很容易混淆的双重语义：
 
@@ -197,7 +197,7 @@
 
 ## 11. `getActiveAgentsFromList()` 是编辑保存后的真正收口点
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts`](../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts), [`../../sources/claude-code/src/components/agents/AgentEditor.tsx`](../../sources/claude-code/src/components/agents/AgentEditor.tsx), [`../../sources/claude-code/src/components/agents/AgentsMenu.tsx`](../../sources/claude-code/src/components/agents/AgentsMenu.tsx)
+源码镜像：[`../../src/tools/AgentTool/loadAgentsDir.ts`](../../src/tools/AgentTool/loadAgentsDir.ts), [`../../src/components/agents/AgentEditor.tsx`](../../src/components/agents/AgentEditor.tsx), [`../../src/components/agents/AgentsMenu.tsx`](../../src/components/agents/AgentsMenu.tsx)
 
 active roster 的 precedence 顺序是：
 
@@ -218,7 +218,7 @@ active roster 的 precedence 顺序是：
 
 ## 12. `ToolSelector` 并不是把前台选择直接原样写回
 
-源码镜像：[`../../sources/claude-code/src/components/agents/ToolSelector.tsx`](../../sources/claude-code/src/components/agents/ToolSelector.tsx), [`../../sources/claude-code/src/components/agents/AgentEditor.tsx`](../../sources/claude-code/src/components/agents/AgentEditor.tsx)
+源码镜像：[`../../src/components/agents/ToolSelector.tsx`](../../src/components/agents/ToolSelector.tsx), [`../../src/components/agents/AgentEditor.tsx`](../../src/components/agents/AgentEditor.tsx)
 
 `ToolSelector` 有几层值得单独注意的协议：
 
@@ -238,7 +238,7 @@ active roster 的 precedence 顺序是：
 
 ## 13. MCP tools 在编辑面不是普通工具名，而是 server-aware capability cluster
 
-源码镜像：[`../../sources/claude-code/src/components/agents/ToolSelector.tsx`](../../sources/claude-code/src/components/agents/ToolSelector.tsx)
+源码镜像：[`../../src/components/agents/ToolSelector.tsx`](../../src/components/agents/ToolSelector.tsx)
 
 `ToolSelector` 先按 bucket 分：
 
@@ -262,7 +262,7 @@ active roster 的 precedence 顺序是：
 
 ## 14. agent 编辑运行时和 `/agents` UI 是两层，不能混成一层理解
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentsMenu.tsx`](../../sources/claude-code/src/components/agents/AgentsMenu.tsx), [`../../sources/claude-code/src/components/agents/AgentEditor.tsx`](../../sources/claude-code/src/components/agents/AgentEditor.tsx), [`../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts`](../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts), [`../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts`](../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts)
+源码镜像：[`../../src/components/agents/AgentsMenu.tsx`](../../src/components/agents/AgentsMenu.tsx), [`../../src/components/agents/AgentEditor.tsx`](../../src/components/agents/AgentEditor.tsx), [`../../src/tools/AgentTool/loadAgentsDir.ts`](../../src/tools/AgentTool/loadAgentsDir.ts), [`../../src/tools/AgentTool/agentDisplay.ts`](../../src/tools/AgentTool/agentDisplay.ts)
 
 把这条链收束起来，`/agents` 实际是两层：
 

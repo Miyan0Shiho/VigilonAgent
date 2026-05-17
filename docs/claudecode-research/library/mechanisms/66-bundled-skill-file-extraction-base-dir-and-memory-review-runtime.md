@@ -6,7 +6,7 @@
 
 ## 1. bundled skill 不只是内联 prompt，它还能携带一整包 reference files
 
-源码镜像：[`../../sources/claude-code/src/skills/bundledSkills.ts`](../../sources/claude-code/src/skills/bundledSkills.ts)
+源码镜像：[`../../src/skills/bundledSkills.ts`](../../src/skills/bundledSkills.ts)
 
 `BundledSkillDefinition` 里有一个关键字段：
 
@@ -20,7 +20,7 @@
 
 ## 2. `registerBundledSkill()` 会把“有 files 的 skill”改写成 lazy extraction wrapper
 
-源码镜像：[`../../sources/claude-code/src/skills/bundledSkills.ts`](../../sources/claude-code/src/skills/bundledSkills.ts)
+源码镜像：[`../../src/skills/bundledSkills.ts`](../../src/skills/bundledSkills.ts)
 
 当 `files` 非空时，注册逻辑不会直接保留原始 `getPromptForCommand`，而是包一层：
 
@@ -37,7 +37,7 @@
 
 ## 3. 抽取目录是 deterministic per-skill，而不是每次随机临时目录
 
-源码镜像：[`../../sources/claude-code/src/skills/bundledSkills.ts`](../../sources/claude-code/src/skills/bundledSkills.ts)
+源码镜像：[`../../src/skills/bundledSkills.ts`](../../src/skills/bundledSkills.ts)
 
 目录计算就是：
 
@@ -52,7 +52,7 @@
 
 ## 4. extraction 安全边界不是随手 `writeFile`，而是 owner-only subtree + no-follow 写入
 
-源码镜像：[`../../sources/claude-code/src/skills/bundledSkills.ts`](../../sources/claude-code/src/skills/bundledSkills.ts)
+源码镜像：[`../../src/skills/bundledSkills.ts`](../../src/skills/bundledSkills.ts)
 
 这一层做了几件很工程化的安全约束：
 
@@ -65,7 +65,7 @@
 
 ## 5. `resolveSkillFilePath()` 显式阻断路径穿越，说明 bundled file tree 被当作不可信输入表面处理
 
-源码镜像：[`../../sources/claude-code/src/skills/bundledSkills.ts`](../../sources/claude-code/src/skills/bundledSkills.ts)
+源码镜像：[`../../src/skills/bundledSkills.ts`](../../src/skills/bundledSkills.ts)
 
 它会拒绝：
 
@@ -77,7 +77,7 @@
 
 ## 6. `prependBaseDir()` 才是 bundled skill 文件可用性的真正契约
 
-源码镜像：[`../../sources/claude-code/src/skills/bundledSkills.ts`](../../sources/claude-code/src/skills/bundledSkills.ts)
+源码镜像：[`../../src/skills/bundledSkills.ts`](../../src/skills/bundledSkills.ts)
 
 抽取成功后，runtime 不会自动读这些文件，而只是把第一段 text block 前缀改成：
 
@@ -89,7 +89,7 @@
 
 ## 7. 磁盘 skill 和 bundled skill 在 `Base directory for this skill` 上是刻意同构的
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts), [`../../sources/claude-code/src/skills/bundledSkills.ts`](../../sources/claude-code/src/skills/bundledSkills.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts), [`../../src/skills/bundledSkills.ts`](../../src/skills/bundledSkills.ts)
 
 文件型 skill 直接在 `getPromptForCommand(...)` 里做：
 
@@ -104,7 +104,7 @@ bundled skill 则在抽取完成后用 `prependBaseDir(...)` 做同样的前缀�
 
 ## 8. `${CLAUDE_SKILL_DIR}` 替换说明 skill 不是只能读文件，还可以把自身目录注入 shell snippets
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 文件型 skill 在 prompt materialization 时还会替换：
 
@@ -119,7 +119,7 @@ bundled skill 则在抽取完成后用 `prependBaseDir(...)` 做同样的前缀�
 
 ## 9. shell injection 还会把当前 skill 的 `allowedTools` 临时注入 permission context
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 在 `executeShellCommandsInPrompt(...)` 前，runtime 会构造一个改写版 `getAppState()`，把：
 
@@ -131,7 +131,7 @@ bundled skill 则在抽取完成后用 `prependBaseDir(...)` 做同样的前缀�
 
 ## 10. MCP skills 被明确排除在 inline shell injection 之外
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 代码里有一条非常明确的安全特判：
 
@@ -147,7 +147,7 @@ bundled skill 则在抽取完成后用 `prependBaseDir(...)` 做同样的前缀�
 
 ## 11. plugin commands 也复用了同一套 base-dir / skill-dir 注入协议
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/loadPluginCommands.ts`](../../sources/claude-code/src/utils/plugins/loadPluginCommands.ts)
+源码镜像：[`../../src/utils/plugins/loadPluginCommands.ts`](../../src/utils/plugins/loadPluginCommands.ts)
 
 当前源码镜像里也能看到 plugin command 侧的同构逻辑：
 
@@ -158,7 +158,7 @@ bundled skill 则在抽取完成后用 `prependBaseDir(...)` 做同样的前缀�
 
 ## 12. `remember` 是这条 runtime 上另一类 memory operator：review/promote，但不自动改写
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/remember.ts`](../../sources/claude-code/src/skills/bundled/remember.ts), [`../../sources/claude-code/src/skills/bundled/index.ts`](../../sources/claude-code/src/skills/bundled/index.ts)
+源码镜像：[`../../src/skills/bundled/remember.ts`](../../src/skills/bundled/remember.ts), [`../../src/skills/bundled/index.ts`](../../src/skills/bundled/index.ts)
 
 `remember` 注册方式和 `skillify` 一样，也是 bundled skill，但它的定位完全不同：
 
@@ -170,7 +170,7 @@ bundled skill 则在抽取完成后用 `prependBaseDir(...)` 做同样的前缀�
 
 ## 13. `remember` 的 gate 也说明它属于 auto-memory 生态，而不是普适命令
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/remember.ts`](../../sources/claude-code/src/skills/bundled/remember.ts)
+源码镜像：[`../../src/skills/bundled/remember.ts`](../../src/skills/bundled/remember.ts)
 
 它注册时带有：
 
@@ -189,7 +189,7 @@ bundled skill 则在抽取完成后用 `prependBaseDir(...)` 做同样的前缀�
 
 ## 14. `remember` 也体现了 bundled skill 的一个特性：可以完全不依赖文件抽取，只靠 prompt contract 工作
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/remember.ts`](../../sources/claude-code/src/skills/bundledSkills.ts)
+源码镜像：[`../../src/skills/bundled/remember.ts`](../../src/skills/bundledSkills.ts)
 
 `remember` 没有提供 `files`，因此：
 

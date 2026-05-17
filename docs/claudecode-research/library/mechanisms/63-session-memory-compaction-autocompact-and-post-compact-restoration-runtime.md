@@ -8,7 +8,7 @@
 
 源码镜像：
 
-- [`../../sources/claude-code/src/commands/compact/compact.ts`](../../sources/claude-code/src/commands/compact/compact.ts)
+- [`../../src/commands/compact/compact.ts`](../../src/commands/compact/compact.ts)
 
 `/compact` 的主流程很明确：
 
@@ -21,7 +21,7 @@
 
 ## 2. custom instructions 会直接关闭 session-memory compaction
 
-源码镜像：[`../../sources/claude-code/src/commands/compact/compact.ts`](../../sources/claude-code/src/commands/compact/compact.ts)
+源码镜像：[`../../src/commands/compact/compact.ts`](../../src/commands/compact/compact.ts)
 
 判断条件很硬：
 
@@ -37,8 +37,8 @@
 
 源码镜像：
 
-- [`../../sources/claude-code/src/commands/compact/compact.ts`](../../sources/claude-code/src/commands/compact/compact.ts)
-- [`../../sources/claude-code/src/services/compact/postCompactCleanup.ts`](../../sources/claude-code/src/services/compact/postCompactCleanup.ts)
+- [`../../src/commands/compact/compact.ts`](../../src/commands/compact/compact.ts)
+- [`../../src/services/compact/postCompactCleanup.ts`](../../src/services/compact/postCompactCleanup.ts)
 
 成功路径不是只返回一份 `CompactionResult`。它还会做：
 
@@ -52,7 +52,7 @@
 
 ## 4. reactive compact 不是 session-memory 的上层包装，而是它后面的第二候选分支
 
-源码镜像：[`../../sources/claude-code/src/commands/compact/compact.ts`](../../sources/claude-code/src/commands/compact/compact.ts)
+源码镜像：[`../../src/commands/compact/compact.ts`](../../src/commands/compact/compact.ts)
 
 `compactViaReactive(...)` 只有在两件事同时成立时才会运行：
 
@@ -69,7 +69,7 @@
 
 ## 5. autocompact 也复用同一分流，但它比手动 `/compact` 多一层 circuit breaker
 
-源码镜像：[`../../sources/claude-code/src/services/compact/autoCompact.ts`](../../sources/claude-code/src/services/compact/autoCompact.ts)
+源码镜像：[`../../src/services/compact/autoCompact.ts`](../../src/services/compact/autoCompact.ts)
 
 `autoCompactIfNeeded(...)` 的顺序和手动路径一样，先试：
 
@@ -88,7 +88,7 @@
 
 ## 6. autocompact 并不是“token 高了就压”，它先过一串 recursion 和宿主冲突 gate
 
-源码镜像：[`../../sources/claude-code/src/services/compact/autoCompact.ts`](../../sources/claude-code/src/services/compact/autoCompact.ts)
+源码镜像：[`../../src/services/compact/autoCompact.ts`](../../src/services/compact/autoCompact.ts)
 
 `shouldAutoCompact(...)` 明确跳过：
 
@@ -103,7 +103,7 @@
 
 ## 7. session-memory compaction 自己也有一整套 gate，不是 notes 文件存在就一定会用
 
-源码镜像：[`../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts`](../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts)
+源码镜像：[`../../src/services/compact/sessionMemoryCompact.ts`](../../src/services/compact/sessionMemoryCompact.ts)
 
 `trySessionMemoryCompaction(...)` 会依次检查：
 
@@ -124,7 +124,7 @@
 
 ## 8. 它不是简单“保留最后 N 条消息”，而是按 summary cursor 决定保留段
 
-源码镜像：[`../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts`](../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts)
+源码镜像：[`../../src/services/compact/sessionMemoryCompact.ts`](../../src/services/compact/sessionMemoryCompact.ts)
 
 核心 cursor 是：
 
@@ -139,7 +139,7 @@
 
 ## 9. `calculateMessagesToKeepIndex()` 体现的不是 UX 策略，而是 API invariant 维护
 
-源码镜像：[`../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts`](../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts)
+源码镜像：[`../../src/services/compact/sessionMemoryCompact.ts`](../../src/services/compact/sessionMemoryCompact.ts)
 
 这层同时维护三种约束：
 
@@ -168,8 +168,8 @@
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts`](../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts)
-- [`../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts)
+- [`../../src/services/compact/sessionMemoryCompact.ts`](../../src/services/compact/sessionMemoryCompact.ts)
+- [`../../src/services/SessionMemory/sessionMemoryUtils.ts`](../../src/services/SessionMemory/sessionMemoryUtils.ts)
 
 它会在真正读 notes 前调用：
 
@@ -179,7 +179,7 @@
 
 ## 11. session-memory compaction 的 summary 不是重新调模型生成，而是把 notes 文件转译成 compact summary message
 
-源码镜像：[`../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts`](../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts)
+源码镜像：[`../../src/services/compact/sessionMemoryCompact.ts`](../../src/services/compact/sessionMemoryCompact.ts)
 
 `createCompactionResultFromSessionMemory(...)` 做的事是：
 
@@ -194,8 +194,8 @@
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts`](../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts)
-- [`../../sources/claude-code/src/services/compact/compact.ts`](../../sources/claude-code/src/services/compact/compact.ts)
+- [`../../src/services/compact/sessionMemoryCompact.ts`](../../src/services/compact/sessionMemoryCompact.ts)
+- [`../../src/services/compact/compact.ts`](../../src/services/compact/compact.ts)
 
 session-memory compaction 不是只回：
 
@@ -216,7 +216,7 @@ session-memory compaction 不是只回：
 
 ## 13. 如果 post-compact token 仍然太大，autocompact 会放弃这条路径，改走 legacy compact
 
-源码镜像：[`../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts`](../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts)
+源码镜像：[`../../src/services/compact/sessionMemoryCompact.ts`](../../src/services/compact/sessionMemoryCompact.ts)
 
 当 `autoCompactThreshold` 被传入时，它会比较：
 
@@ -231,7 +231,7 @@ session-memory compaction 不是只回：
 
 ## 14. `buildPostCompactMessages(...)` 定义了 compaction 之后真正保留下来的消息顺序
 
-源码镜像：[`../../sources/claude-code/src/services/compact/compact.ts`](../../sources/claude-code/src/services/compact/compact.ts)
+源码镜像：[`../../src/services/compact/compact.ts`](../../src/services/compact/compact.ts)
 
 这个顺序是：
 
@@ -247,8 +247,8 @@ session-memory compaction 不是只回：
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/compact/compact.ts`](../../sources/claude-code/src/services/compact/compact.ts)
-- [`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts)
+- [`../../src/services/compact/compact.ts`](../../src/services/compact/compact.ts)
+- [`../../src/utils/attachments.ts`](../../src/utils/attachments.ts)
 
 compact 之后会重新注入：
 
@@ -265,7 +265,7 @@ compact 之后会重新注入：
 
 ## 16. `runPostCompactCleanup()` 真正清理的是“会被 compaction 弄脏的进程态”，不是只清 message cache
 
-源码镜像：[`../../sources/claude-code/src/services/compact/postCompactCleanup.ts`](../../sources/claude-code/src/services/compact/postCompactCleanup.ts)
+源码镜像：[`../../src/services/compact/postCompactCleanup.ts`](../../src/services/compact/postCompactCleanup.ts)
 
 它会统一做：
 
@@ -286,7 +286,7 @@ compact 之后会重新注入：
 
 ## 17. subagent compaction 和 main-thread compaction 共用同一个 cleanup API，但不会被允许互相污染
 
-源码镜像：[`../../sources/claude-code/src/services/compact/postCompactCleanup.ts`](../../sources/claude-code/src/services/compact/postCompactCleanup.ts)
+源码镜像：[`../../src/services/compact/postCompactCleanup.ts`](../../src/services/compact/postCompactCleanup.ts)
 
 `runPostCompactCleanup(querySource?)` 里有一个专门的区分：
 
@@ -299,8 +299,8 @@ compact 之后会重新注入：
 
 源码镜像：
 
-- [`../../sources/claude-code/src/commands/summary/index.js`](../../sources/claude-code/src/commands/summary/index.js)
-- [`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
+- [`../../src/commands/summary/index.js`](../../src/commands/summary/index.js)
+- [`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
 
 当前镜像里：
 

@@ -6,7 +6,7 @@
 
 ## 1. FileReadTool 是观察层，不只是读文件
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 它处理的不是单纯 `readFile()`：
 
@@ -20,7 +20,7 @@
 
 ## 2. GrepTool 是结构化搜索，不是 shell 透传
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 它负责：
 
@@ -34,7 +34,7 @@
 
 ## 3. WebSearchTool 是外部实时知识面
 
-源码镜像：[`../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts`](../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts)
+源码镜像：[`../../src/tools/WebSearchTool/WebSearchTool.ts`](../../src/tools/WebSearchTool/WebSearchTool.ts)
 
 它与普通本地工具很不同：
 
@@ -48,7 +48,7 @@
 
 ## 4. TaskCreateTool 说明任务工具族的产品方向
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts`](../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts)
+源码镜像：[`../../src/tools/TaskCreateTool/TaskCreateTool.ts`](../../src/tools/TaskCreateTool/TaskCreateTool.ts)
 
 即使是最简单的 `TaskCreateTool`，也在做：
 

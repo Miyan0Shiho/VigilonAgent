@@ -6,7 +6,7 @@
 
 ## 1. Buddy 不是零散彩蛋，而是被正式接入到主交互面的产品表面
 
-源码镜像：[`../../sources/claude-code/src/buddy/companion.ts`](../../sources/claude-code/src/buddy/companion.ts), [`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/buddy/companion.ts`](../../src/buddy/companion.ts), [`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 从接线位置就能看出 Claude Code 并没有把 Buddy 当作边角挂件：
 
@@ -19,7 +19,7 @@
 
 ## 2. 这套系统先把 companion 拆成“骨架可重建、灵魂可持久化”的两层身份
 
-源码镜像：[`../../sources/claude-code/src/buddy/types.ts`](../../sources/claude-code/src/buddy/types.ts), [`../../sources/claude-code/src/buddy/companion.ts`](../../sources/claude-code/src/buddy/companion.ts)
+源码镜像：[`../../src/buddy/types.ts`](../../src/buddy/types.ts), [`../../src/buddy/companion.ts`](../../src/buddy/companion.ts)
 
 `types.ts` 和 `companion.ts` 最有意思的一点，是它没有把整只 companion 当成一坨任意 JSON 持久化，而是拆成：
 
@@ -42,7 +42,7 @@
 
 ## 3. `getCompanion()` 把确定性生成、异常回退和 soul 兼容收口成一个单入口
 
-源码镜像：[`../../sources/claude-code/src/buddy/companion.ts`](../../sources/claude-code/src/buddy/companion.ts)
+源码镜像：[`../../src/buddy/companion.ts`](../../src/buddy/companion.ts)
 
 `getCompanion({ userId, configCompanion })` 基本上是这套子系统的 identity resolver：
 
@@ -62,7 +62,7 @@
 
 ## 4. Prompt 层没有让 companion 抢戏，而是只在合适时机追加一段 intro attachment
 
-源码镜像：[`../../sources/claude-code/src/buddy/prompt.ts`](../../sources/claude-code/src/buddy/prompt.ts), [`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts), [`../../sources/claude-code/src/utils/messages.ts`](../../sources/claude-code/src/utils/messages.ts)
+源码镜像：[`../../src/buddy/prompt.ts`](../../src/buddy/prompt.ts), [`../../src/utils/attachments.ts`](../../src/utils/attachments.ts), [`../../src/utils/messages.ts`](../../src/utils/messages.ts)
 
 Buddy 对模型的影响不是“每轮都塞一大段 persona prompt”，而是一条控制得很克制的 intro attachment 链：
 
@@ -80,7 +80,7 @@ Buddy 对模型的影响不是“每轮都塞一大段 persona prompt”，而�
 
 ## 5. Footer 集成证明它是一个“可聚焦 surface”，不是被动装饰物
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 PromptInput 里有三处证据特别关键：
 
@@ -98,7 +98,7 @@ PromptInput 里有三处证据特别关键：
 
 ## 6. REPL 不是简单“画一个小宠物”，而是按屏幕模式把 companion 挂到不同布局层
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/buddy/CompanionSprite.tsx`](../../sources/claude-code/src/buddy/CompanionSprite.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/buddy/CompanionSprite.tsx`](../../src/buddy/CompanionSprite.tsx)
 
 REPL 至少做了两层和 companion 相关的运行时决策：
 
@@ -115,7 +115,7 @@ REPL 至少做了两层和 companion 相关的运行时决策：
 
 ## 7. `CompanionSprite` 里真正被建模的是“可感知状态”，不是单向动画
 
-源码镜像：[`../../sources/claude-code/src/buddy/CompanionSprite.tsx`](../../sources/claude-code/src/buddy/CompanionSprite.tsx)
+源码镜像：[`../../src/buddy/CompanionSprite.tsx`](../../src/buddy/CompanionSprite.tsx)
 
 `CompanionSprite` 会基于多种输入决定当前表现：
 
@@ -132,7 +132,7 @@ REPL 至少做了两层和 companion 相关的运行时决策：
 
 ## 8. `companionReaction` / `companionPetAt` 证明 Buddy 深度依赖全局状态架构，而不是独立自转
 
-源码镜像：[`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/buddy/CompanionSprite.tsx`](../../sources/claude-code/src/buddy/CompanionSprite.tsx)
+源码镜像：[`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/buddy/CompanionSprite.tsx`](../../src/buddy/CompanionSprite.tsx)
 
 上一卷刚补完的 State Management 在这里直接派上用场。
 
@@ -151,7 +151,7 @@ REPL 在用户输入和工具执行阶段会更新这些字段，`CompanionSprit
 
 ## 9. Config 层只开放很少的 companion 控制面，说明这套系统强调“存在感稳定”而不是“高度可编排”
 
-源码镜像：[`../../sources/claude-code/src/utils/config.ts`](../../sources/claude-code/src/utils/config.ts), [`../../sources/claude-code/src/buddy/types.ts`](../../sources/claude-code/src/buddy/types.ts)
+源码镜像：[`../../src/utils/config.ts`](../../src/utils/config.ts), [`../../src/buddy/types.ts`](../../src/buddy/types.ts)
 
 当前配置里真正对外暴露的 companion 控制面很有限，核心就是：
 
@@ -168,7 +168,7 @@ REPL 在用户输入和工具执行阶段会更新这些字段，`CompanionSprit
 
 ## 10. 这条子系统说明 Claude Code 对 CLI 体验的理解，不止是效率，还包括陪伴感和状态可视化
 
-源码镜像：[`../../sources/claude-code/src/buddy/companion.ts`](../../sources/claude-code/src/buddy/companion.ts), [`../../sources/claude-code/src/buddy/prompt.ts`](../../sources/claude-code/src/buddy/prompt.ts), [`../../sources/claude-code/src/buddy/CompanionSprite.tsx`](../../sources/claude-code/src/buddy/CompanionSprite.tsx), [`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/buddy/companion.ts`](../../src/buddy/companion.ts), [`../../src/buddy/prompt.ts`](../../src/buddy/prompt.ts), [`../../src/buddy/CompanionSprite.tsx`](../../src/buddy/CompanionSprite.tsx), [`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 Buddy/Companion 之所以值得单独成卷，不是因为它“可爱”，而是因为它非常集中地体现了 Claude Code 的产品判断：
 

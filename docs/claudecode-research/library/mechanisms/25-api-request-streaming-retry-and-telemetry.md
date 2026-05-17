@@ -6,7 +6,7 @@
 
 ## 1. `services/api/claude.ts` 是 Claude Code 的 LLM transport kernel，不只是 SDK adapter
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts), [`../../sources/claude-code/src/services/api/withRetry.ts`](../../sources/claude-code/src/services/api/withRetry.ts), [`../../sources/claude-code/src/services/api/logging.ts`](../../sources/claude-code/src/services/api/logging.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts), [`../../src/services/api/withRetry.ts`](../../src/services/api/withRetry.ts), [`../../src/services/api/logging.ts`](../../src/services/api/logging.ts)
 
 从导入面就能看出它负责的不只是发请求：
 
@@ -22,7 +22,7 @@
 
 ## 2. 请求体不是直接拼 JSON，而是先经过一层“extra body + metadata + cache policy”协商
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts)
 
 `getExtraBodyParams()`、`getAPIMetadata()`、`getPromptCachingEnabled()`、`getCacheControl()` 这几段一起说明，请求体在真正进入 SDK 前先经过一层本地协商：
 
@@ -35,7 +35,7 @@
 
 ## 3. message 送去 API 前，先经历 tool schema 编译、tool search 裁剪与 message 修复
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts), [`../../sources/claude-code/src/utils/api.ts`](../../sources/claude-code/src/utils/api.ts), [`../../sources/claude-code/src/utils/messages.ts`](../../sources/claude-code/src/utils/messages.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts), [`../../src/utils/api.ts`](../../src/utils/api.ts), [`../../src/utils/messages.ts`](../../src/utils/messages.ts)
 
 这条链的真实顺序不是“messages 原样送 API”，而是：
 
@@ -51,7 +51,7 @@
 
 ## 4. system prompt 也不是静态字符串，而是由 attribution、CLI prefix、advisor、chrome tool-search 指令动态装配
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts), [`../../sources/claude-code/src/utils/api.ts`](../../sources/claude-code/src/utils/api.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts), [`../../src/utils/api.ts`](../../src/utils/api.ts)
 
 在 `systemPrompt` 真正变成 API blocks 之前，Claude Code 会依次注入：
 
@@ -64,7 +64,7 @@
 
 ## 5. 真正的请求参数是在 `paramsFromContext()` 里按“重试上下文”二次生成的
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts)
 
 `paramsFromContext()` 是这条链最关键的函数之一，因为它说明 Claude Code 并不是先生成一次 params 然后盲重试，而是每次 attempt 按 `RetryContext` 重新装配：
 
@@ -79,7 +79,7 @@
 
 ## 6. `startLLMRequestSpan()` 和 `logAPIQuery()` 发生在 streaming 之前，说明 tracing/analytics 绑定的是 request chain，不是最终消息
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts), [`../../sources/claude-code/src/utils/telemetry/sessionTracing.ts`](../../sources/claude-code/src/utils/telemetry/sessionTracing.ts), [`../../sources/claude-code/src/services/api/logging.ts`](../../sources/claude-code/src/services/api/logging.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts), [`../../src/utils/telemetry/sessionTracing.ts`](../../src/utils/telemetry/sessionTracing.ts), [`../../src/services/api/logging.ts`](../../src/services/api/logging.ts)
 
 请求发出前，Claude Code 会先做两件事：
 
@@ -96,7 +96,7 @@
 
 ## 7. streaming path 明确绕开了高层 `BetaMessageStream`，因为 Claude Code 自己接管了 block accumulation
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts)
 
 流式主路径里最重要的设计决定是：
 
@@ -114,7 +114,7 @@
 
 ## 8. streaming 不只是 `for await`，还带 watchdog、stall telemetry 和 native resource cleanup
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts)
 
 这条 streaming loop 不是裸循环，而是三层保护：
 
@@ -126,7 +126,7 @@
 
 ## 9. Claude Code 是按 `content_block_stop` 产出 assistant message，而不是等整条 message 结束
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts), [`../../sources/claude-code/src/utils/messages.ts`](../../sources/claude-code/src/utils/messages.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts), [`../../src/utils/messages.ts`](../../src/utils/messages.ts)
 
 在 loop 里，真正 `yield assistant message` 的时机是 `content_block_stop`。这会把当前 block 通过 `normalizeContentFromAPI()` 转成单条 `AssistantMessage` 并立刻发出去。
 
@@ -140,7 +140,7 @@
 
 ## 10. stop reason、拒答、成本与 quota 状态都在 API 层被第一时间解释成产品事件
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts), [`../../sources/claude-code/src/services/api/logging.ts`](../../sources/claude-code/src/services/api/logging.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts), [`../../src/services/api/logging.ts`](../../src/services/api/logging.ts)
 
 `message_delta` 不是只更新 usage，还会立刻触发几类产品语义：
 
@@ -154,7 +154,7 @@
 
 ## 11. non-streaming fallback 不是异常分支拼凑，而是独立 helper + retry generator
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts), [`../../sources/claude-code/src/services/api/withRetry.ts`](../../sources/claude-code/src/services/api/withRetry.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts), [`../../src/services/api/withRetry.ts`](../../src/services/api/withRetry.ts)
 
 `executeNonStreamingRequest()` 证明 fallback 不是“stream 失败后顺手再调一次 create”，而是单独的一条恢复协议：
 
@@ -169,7 +169,7 @@
 
 ## 12. `withRetry()` 本身就是产品策略层：fast mode、529 fallback、persistent retry、context overflow 修正都在这里
 
-源码镜像：[`../../sources/claude-code/src/services/api/withRetry.ts`](../../sources/claude-code/src/services/api/withRetry.ts)
+源码镜像：[`../../src/services/api/withRetry.ts`](../../src/services/api/withRetry.ts)
 
 `withRetry()` 远不只是指数退避。它至少承载了四类产品策略：
 
@@ -182,7 +182,7 @@
 
 ## 13. 成功路径的收尾不只是“打日志”，而是把 usage、文本长度、thinking 长度、tool input 长度都写进 tracing
 
-源码镜像：[`../../sources/claude-code/src/services/api/logging.ts`](../../sources/claude-code/src/services/api/logging.ts), [`../../sources/claude-code/src/utils/telemetry/sessionTracing.ts`](../../sources/claude-code/src/utils/telemetry/sessionTracing.ts)
+源码镜像：[`../../src/services/api/logging.ts`](../../src/services/api/logging.ts), [`../../src/utils/telemetry/sessionTracing.ts`](../../src/utils/telemetry/sessionTracing.ts)
 
 `logAPISuccessAndDuration()` 的收尾比普通 analytics 细很多。它会从 `newMessages` 里抽出：
 

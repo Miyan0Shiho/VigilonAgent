@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是“任务状态的前台语言统一”，不是任务怎么执行
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx), [`../../sources/claude-code/src/components/tasks/ShellProgress.tsx`](../../sources/claude-code/src/components/tasks/ShellProgress.tsx), [`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx)
+源码镜像：[`../../src/components/tasks/RemoteSessionProgress.tsx`](../../src/components/tasks/RemoteSessionProgress.tsx), [`../../src/components/tasks/ShellProgress.tsx`](../../src/components/tasks/ShellProgress.tsx), [`../../src/components/tasks/taskStatusUtils.tsx`](../../src/components/tasks/taskStatusUtils.tsx), [`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/components/tasks/BackgroundTaskStatus.tsx)
 
 任务系统前面已经有：
 
@@ -26,7 +26,7 @@
 
 ## 2. `TaskStatusText` 说明基础状态语法先被压成一个最小原子组件
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/ShellProgress.tsx`](../../sources/claude-code/src/components/tasks/ShellProgress.tsx)
+源码镜像：[`../../src/components/tasks/ShellProgress.tsx`](../../src/components/tasks/ShellProgress.tsx)
 
 `TaskStatusText` 只有三个输入：
 
@@ -50,7 +50,7 @@
 
 ## 3. `ShellProgress` 说明 shell 族的状态词表很克制，避免把终端任务说得过于花哨
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/ShellProgress.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTask.tsx)
+源码镜像：[`../../src/components/tasks/ShellProgress.tsx`](../../src/components/tasks/BackgroundTask.tsx)
 
 `ShellProgress` 对 shell 只保留四种说法：
 
@@ -63,7 +63,7 @@
 
 ## 4. `taskStatusUtils.tsx` 是更上层的“语义解释器”，不是简单 helper 集
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx)
+源码镜像：[`../../src/components/tasks/taskStatusUtils.tsx`](../../src/components/tasks/taskStatusUtils.tsx), [`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/components/tasks/BackgroundTaskStatus.tsx)
 
 这里聚合了四类规则：
 
@@ -77,7 +77,7 @@
 
 ## 5. `getTaskStatusIcon()` 说明 Claude Code 的任务状态 icon 优先级不是按 status 单字段决定的
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx)
+源码镜像：[`../../src/components/tasks/taskStatusUtils.tsx`](../../src/components/tasks/taskStatusUtils.tsx)
 
 它看的是：
 
@@ -100,7 +100,7 @@
 
 ## 6. `getTaskStatusColor()` 和 `getTaskStatusIcon()` 是平行的语义层，而不是互相派生
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/utils/theme.ts)
+源码镜像：[`../../src/components/tasks/taskStatusUtils.tsx`](../../src/utils/theme.ts)
 
 颜色规则独立处理：
 
@@ -118,7 +118,7 @@
 
 ## 7. `describeTeammateActivity()` 说明 teammate 的“状态”并不是 running/idle 二元，而是多层后备的活动摘要
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/utils/collapseReadSearch.ts)
+源码镜像：[`../../src/components/tasks/taskStatusUtils.tsx`](../../src/utils/collapseReadSearch.ts)
 
 teammate 行文案的优先级是：
 
@@ -133,13 +133,13 @@ teammate 行文案的优先级是：
 
 ## 8. `summarizeRecentActivities()` 的接入说明 teammate 前台已经在做活动压缩，不是原样打印 trace
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/utils/collapseReadSearch.ts)
+源码镜像：[`../../src/components/tasks/taskStatusUtils.tsx`](../../src/utils/collapseReadSearch.ts)
 
 这里不会把 `recentActivities` 原样列出来，而是先做摘要压缩。这说明 Claude Code 已经把 agent 进度前台化的难点当成“压缩成一句用户能扫读的话”，而不是“忠实显示内部事件流”。
 
 ## 9. `shouldHideTasksFooter()` 说明 footer 是否出现，本身也是一条状态协商规则
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx)
+源码镜像：[`../../src/components/tasks/taskStatusUtils.tsx`](../../src/components/tasks/BackgroundTaskStatus.tsx)
 
 这个函数回答的问题不是“有没有任务”，而是：
 
@@ -153,7 +153,7 @@ teammate 行文案的优先级是：
 
 ## 10. `BackgroundTaskStatus` 是真正把任务状态语言压进底部一行的 orchestrator
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/tasks/pillLabel.ts), [`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/tasks/pillLabel.ts), [`../../src/components/tasks/taskStatusUtils.tsx`](../../src/components/tasks/taskStatusUtils.tsx)
 
 它负责整合：
 
@@ -168,7 +168,7 @@ teammate 行文案的优先级是：
 
 ## 11. `BackgroundTaskStatus` 先区分“全部是 teammates 的 footer 模式”和“普通 summary pill 模式”
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/components/tasks/BackgroundTaskStatus.tsx)
 
 它的第一层分叉是：
 
@@ -184,7 +184,7 @@ teammate 行文案的优先级是：
 
 ## 12. teammate footer pills 不是普通文本，而是可横向滚动、可点选、可区分 viewed/selected 的导航控件
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/utils/horizontalScroll.ts), [`../../sources/claude-code/src/state/teammateViewHelpers.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/utils/horizontalScroll.ts), [`../../src/state/teammateViewHelpers.ts`](../../src/state/teammateViewHelpers.ts)
 
 这一套 teammate pills 有：
 
@@ -205,7 +205,7 @@ teammate 行文案的优先级是：
 
 ## 13. main pill 的存在说明 footer 里不仅要能看 teammates，还要能回到 leader/main
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/state/teammateViewHelpers.ts)
 
 这里人为构造了：
 
@@ -222,7 +222,7 @@ teammate 行文案的优先级是：
 
 ## 14. `stringWidth` 和 `calculateHorizontalScrollWindow()` 说明 footer pill 的布局不是近似处理，而是按终端真实宽度做窗口裁剪
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/ink/stringWidth.ts), [`../../sources/claude-code/src/utils/horizontalScroll.ts`](../../sources/claude-code/src/utils/horizontalScroll.ts)
+源码镜像：[`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/ink/stringWidth.ts), [`../../src/utils/horizontalScroll.ts`](../../src/utils/horizontalScroll.ts)
 
 teammate pills 会先测：
 
@@ -238,7 +238,7 @@ teammate pills 会先测：
 
 ## 15. `RemoteSessionProgress` 说明 remote session 的状态词表要比 shell 更有结构
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTask.tsx)
+源码镜像：[`../../src/components/tasks/RemoteSessionProgress.tsx`](../../src/components/tasks/BackgroundTask.tsx)
 
 它至少分成三条路径：
 
@@ -254,7 +254,7 @@ teammate pills 会先测：
 
 ## 16. `formatReviewStageCounts()` 说明 ultrareview 已经有独立的“阶段词典”
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx)
+源码镜像：[`../../src/components/tasks/RemoteSessionProgress.tsx`](../../src/components/tasks/RemoteSessionProgress.tsx)
 
 它区分：
 
@@ -272,7 +272,7 @@ teammate pills 会先测：
 
 ## 17. `ReviewRainbowLine` 说明 ultrareview 被前台特判成“品牌化状态条”，而不是普通 progress label
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx), [`../../sources/claude-code/src/utils/thinking.ts`](../../sources/claude-code/src/utils/thinking.ts)
+源码镜像：[`../../src/components/tasks/RemoteSessionProgress.tsx`](../../src/components/tasks/RemoteSessionProgress.tsx), [`../../src/utils/thinking.ts`](../../src/utils/thinking.ts)
 
 这里会：
 
@@ -290,7 +290,7 @@ teammate pills 会先测：
 
 ## 18. `useSmoothCount()` 说明 review 数字前台化时，Claude Code 连“跳数动画”都做了专门控制
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx`](../../sources/claude-code/src/hooks/useSettings.ts)
+源码镜像：[`../../src/components/tasks/RemoteSessionProgress.tsx`](../../src/hooks/useSettings.ts)
 
 `useSmoothCount(target, time, snap)` 的规则是：
 
@@ -302,7 +302,7 @@ teammate pills 会先测：
 
 ## 19. `BackgroundTaskStatus` + `pillNeedsCta()` 说明 footer CTA 也是受任务语义驱动的，不是固定提示
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/tasks/pillLabel.ts)
+源码镜像：[`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/tasks/pillLabel.ts)
 
 summary pill 模式下，它只会在：
 
@@ -316,7 +316,7 @@ summary pill 模式下，它只会在：
 
 ## 20. 这条状态显示链，本质上是 Claude Code 的“任务前台语言引擎”
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx), [`../../sources/claude-code/src/components/tasks/ShellProgress.tsx`](../../sources/claude-code/src/components/tasks/ShellProgress.tsx), [`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx)
+源码镜像：[`../../src/components/tasks/RemoteSessionProgress.tsx`](../../src/components/tasks/RemoteSessionProgress.tsx), [`../../src/components/tasks/ShellProgress.tsx`](../../src/components/tasks/ShellProgress.tsx), [`../../src/components/tasks/taskStatusUtils.tsx`](../../src/components/tasks/taskStatusUtils.tsx), [`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/components/tasks/BackgroundTaskStatus.tsx)
 
 把这几层连起来看：
 

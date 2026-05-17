@@ -6,7 +6,7 @@
 
 ## 1. 主题系统的核心不是 palette，而是“保存态 / 预览态 / 解析态”三层分离
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/ThemeProvider.tsx`](../../sources/claude-code/src/components/design-system/ThemeProvider.tsx), [`../../sources/claude-code/src/utils/systemTheme.ts`](../../sources/claude-code/src/utils/systemTheme.ts)
+源码镜像：[`../../src/components/design-system/ThemeProvider.tsx`](../../src/components/design-system/ThemeProvider.tsx), [`../../src/utils/systemTheme.ts`](../../src/utils/systemTheme.ts)
 
 `ThemeProvider` 一上来就把主题拆成三层：
 
@@ -18,7 +18,7 @@
 
 ## 2. `ThemeProvider` 是一个带提交语义的状态机，不只是 React context
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/ThemeProvider.tsx`](../../sources/claude-code/src/components/design-system/ThemeProvider.tsx)
+源码镜像：[`../../src/components/design-system/ThemeProvider.tsx`](../../src/components/design-system/ThemeProvider.tsx)
 
 它暴露出来的接口不是一个简单 `setTheme`，而是一组显式动作：
 
@@ -33,7 +33,7 @@
 
 ## 3. `ink.ts` 把 ThemeProvider 提升成全局渲染外壳
 
-源码镜像：[`../../sources/claude-code/src/ink.ts`](../../sources/claude-code/src/ink.ts)
+源码镜像：[`../../src/ink.ts`](../../src/ink.ts)
 
 `ink.ts` 里的 `withTheme(node)` 会把所有 `render()` 和 `createRoot().render()` 调用统一包进 `ThemeProvider`。这样做有两个直接后果：
 
@@ -44,7 +44,7 @@
 
 ## 4. `auto` 不是跟随 OS，而是跟随“终端实际背景”
 
-源码镜像：[`../../sources/claude-code/src/utils/systemTheme.ts`](../../sources/claude-code/src/utils/systemTheme.ts), [`../../sources/claude-code/src/components/design-system/ThemeProvider.tsx`](../../sources/claude-code/src/components/design-system/ThemeProvider.tsx)
+源码镜像：[`../../src/utils/systemTheme.ts`](../../src/utils/systemTheme.ts), [`../../src/components/design-system/ThemeProvider.tsx`](../../src/components/design-system/ThemeProvider.tsx)
 
 这条实现链最关键的判断是：`auto` 解析看的是 terminal background，不是操作系统的 light/dark mode。
 
@@ -58,7 +58,7 @@
 
 ## 5. live watcher 只在 `auto` 激活时才挂上
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/ThemeProvider.tsx`](../../sources/claude-code/src/components/design-system/ThemeProvider.tsx)
+源码镜像：[`../../src/components/design-system/ThemeProvider.tsx`](../../src/components/design-system/ThemeProvider.tsx)
 
 `ThemeProvider` 不会一直监听终端背景变化，而是满足以下条件才动态 import watcher：
 
@@ -74,7 +74,7 @@
 
 ## 6. `auto` 的预览和提交都做了“先种缓存再等 watcher”防闪烁
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/ThemeProvider.tsx`](../../sources/claude-code/src/components/design-system/ThemeProvider.tsx), [`../../sources/claude-code/src/utils/systemTheme.ts`](../../sources/claude-code/src/utils/systemTheme.ts)
+源码镜像：[`../../src/components/design-system/ThemeProvider.tsx`](../../src/components/design-system/ThemeProvider.tsx), [`../../src/utils/systemTheme.ts`](../../src/utils/systemTheme.ts)
 
 无论是：
 
@@ -87,7 +87,7 @@
 
 ## 7. `ThemePicker` 不是静态菜单，而是一个作用域化的 preview controller
 
-源码镜像：[`../../sources/claude-code/src/components/ThemePicker.tsx`](../../sources/claude-code/src/components/ThemePicker.tsx)
+源码镜像：[`../../src/components/ThemePicker.tsx`](../../src/components/ThemePicker.tsx)
 
 `ThemePicker` 的核心动作映射是：
 
@@ -99,7 +99,7 @@
 
 ## 8. ThemePicker 还有自己独立的 keybinding context
 
-源码镜像：[`../../sources/claude-code/src/components/ThemePicker.tsx`](../../sources/claude-code/src/components/ThemePicker.tsx), [`../../sources/claude-code/src/keybindings/defaultBindings.ts`](../../sources/claude-code/src/keybindings/defaultBindings.ts)
+源码镜像：[`../../src/components/ThemePicker.tsx`](../../src/components/ThemePicker.tsx), [`../../src/keybindings/defaultBindings.ts`](../../src/keybindings/defaultBindings.ts)
 
 它会：
 
@@ -110,7 +110,7 @@
 
 ## 9. 主题预览里连 syntax highlighting 都是联动的
 
-源码镜像：[`../../sources/claude-code/src/components/ThemePicker.tsx`](../../sources/claude-code/src/components/ThemePicker.tsx), [`../../sources/claude-code/src/components/StructuredDiff/colorDiff.ts`](../../sources/claude-code/src/components/StructuredDiff/colorDiff.ts)
+源码镜像：[`../../src/components/ThemePicker.tsx`](../../src/components/ThemePicker.tsx), [`../../src/components/StructuredDiff/colorDiff.ts`](../../src/components/StructuredDiff/colorDiff.ts)
 
 `ThemePicker` 不是只展示大标题和选项，它还现场渲染一个 `StructuredDiff` demo，并把 syntax highlighting 状态一起卷进来：
 
@@ -124,7 +124,7 @@
 
 ## 10. ThemePicker 的选项集合本身也体现了产品立场
 
-源码镜像：[`../../sources/claude-code/src/components/ThemePicker.tsx`](../../sources/claude-code/src/components/ThemePicker.tsx)
+源码镜像：[`../../src/components/ThemePicker.tsx`](../../src/components/ThemePicker.tsx)
 
 它不是只有 dark / light 两项，而是内建：
 
@@ -146,7 +146,7 @@
 
 ## 11. Settings 对 ThemePicker 的接法，说明它被当成嵌套事务面板
 
-源码镜像：[`../../sources/claude-code/src/components/Settings/Config.tsx`](../../sources/claude-code/src/components/Settings/Config.tsx)
+源码镜像：[`../../src/components/Settings/Config.tsx`](../../src/components/Settings/Config.tsx)
 
 `Config.tsx` 在 `showSubmenu === 'Theme'` 时挂出 `ThemePicker`，并传入：
 
@@ -159,7 +159,7 @@
 
 ## 12. Onboarding 复用同一个 ThemePicker，而不是重写一套新手流程 UI
 
-源码镜像：[`../../sources/claude-code/src/components/Onboarding.tsx`](../../sources/claude-code/src/components/Onboarding.tsx)
+源码镜像：[`../../src/components/Onboarding.tsx`](../../src/components/Onboarding.tsx)
 
 Onboarding 里的 theme step 直接复用了同一个 `ThemePicker`，只是换了参数：
 
@@ -177,7 +177,7 @@ Onboarding 里的 theme step 直接复用了同一个 `ThemePicker`，只是换�
 
 ## 13. 这条链的真实分层应该这样理解
 
-源码镜像：[`../../sources/claude-code/src/ink.ts`](../../sources/claude-code/src/ink.ts), [`../../sources/claude-code/src/components/design-system/ThemeProvider.tsx`](../../sources/claude-code/src/components/design-system/ThemeProvider.tsx), [`../../sources/claude-code/src/components/ThemePicker.tsx`](../../sources/claude-code/src/components/ThemePicker.tsx), [`../../sources/claude-code/src/components/Settings/Config.tsx`](../../sources/claude-code/src/components/Settings/Config.tsx), [`../../sources/claude-code/src/components/Onboarding.tsx`](../../sources/claude-code/src/components/Onboarding.tsx)
+源码镜像：[`../../src/ink.ts`](../../src/ink.ts), [`../../src/components/design-system/ThemeProvider.tsx`](../../src/components/design-system/ThemeProvider.tsx), [`../../src/components/ThemePicker.tsx`](../../src/components/ThemePicker.tsx), [`../../src/components/Settings/Config.tsx`](../../src/components/Settings/Config.tsx), [`../../src/components/Onboarding.tsx`](../../src/components/Onboarding.tsx)
 
 如果把它压成结构图，可以分成四层：
 

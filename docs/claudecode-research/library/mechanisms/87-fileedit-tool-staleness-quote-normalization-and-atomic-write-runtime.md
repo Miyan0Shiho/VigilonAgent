@@ -19,7 +19,7 @@
 
 ## 1. `FileEditTool` 的定位不是“任意改文件”，而是“基于已读内容做原位替换”
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts`](../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts), [`../../sources/claude-code/src/tools/FileEditTool/prompt.ts`](../../sources/claude-code/src/tools/FileEditTool/prompt.ts)
+源码镜像：[`../../src/tools/FileEditTool/FileEditTool.ts`](../../src/tools/FileEditTool/FileEditTool.ts), [`../../src/tools/FileEditTool/prompt.ts`](../../src/tools/FileEditTool/prompt.ts)
 
 这把工具的输入核心是：
 
@@ -38,7 +38,7 @@
 
 ## 2. 它和 `FileWriteTool` 的边界很清楚：`old_string === ''` 才接近创建语义，其余都被当成编辑
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/UI.tsx`](../../sources/claude-code/src/tools/FileEditTool/UI.tsx), [`../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts`](../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts)
+源码镜像：[`../../src/tools/FileEditTool/UI.tsx`](../../src/tools/FileEditTool/UI.tsx), [`../../src/tools/FileWriteTool/FileWriteTool.ts`](../../src/tools/FileWriteTool/FileWriteTool.ts)
 
 `userFacingName(...)` 的规则是：
 
@@ -54,7 +54,7 @@
 
 ## 3. 输入验证先挡最基础的无效调用：相同字符串、deny 规则、UNC 路径、大文件
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts`](../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts)
+源码镜像：[`../../src/tools/FileEditTool/FileEditTool.ts`](../../src/tools/FileEditTool/FileEditTool.ts)
 
 `validateInput(...)` 的前半段先做几层低级防线：
 
@@ -74,7 +74,7 @@
 
 ## 4. `read-before-edit` 是硬约束，不只是建议
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts`](../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts)
+源码镜像：[`../../src/tools/FileEditTool/FileEditTool.ts`](../../src/tools/FileEditTool/FileEditTool.ts)
 
 如果 `toolUseContext.readFileState` 里没有这个文件，或者只读了 partial view，就直接返回：
 
@@ -88,7 +88,7 @@
 
 ## 5. staleness 检查不是简单看 mtime；Windows 上还会在 full read 情况下用内容相等兜底
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts`](../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts)
+源码镜像：[`../../src/tools/FileEditTool/FileEditTool.ts`](../../src/tools/FileEditTool/FileEditTool.ts)
 
 验证阶段会先比较：
 
@@ -111,7 +111,7 @@
 
 ## 6. 它显式禁止拿这把工具去改 `.ipynb`，要求改走 `NotebookEditTool`
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts`](../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts)
+源码镜像：[`../../src/tools/FileEditTool/FileEditTool.ts`](../../src/tools/NotebookEditTool/NotebookEditTool.ts)
 
 如果路径以 `.ipynb` 结尾，就直接返回：
 
@@ -126,7 +126,7 @@
 
 ## 7. `findActualString(...)` 说明“找不到 old_string”之前，系统会先做 quote normalization
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/utils.ts`](../../sources/claude-code/src/tools/FileEditTool/utils.ts)
+源码镜像：[`../../src/tools/FileEditTool/utils.ts`](../../src/tools/FileEditTool/utils.ts)
 
 `findActualString(fileContent, searchString)` 的顺序是：
 
@@ -145,7 +145,7 @@
 
 ## 8. `preserveQuoteStyle(...)` 又把这件事反过来做了一次：匹配时允许直引号，写回时尽量保留原文件的 curly style
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/utils.ts`](../../sources/claude-code/src/tools/FileEditTool/utils.ts)
+源码镜像：[`../../src/tools/FileEditTool/utils.ts`](../../src/tools/FileEditTool/utils.ts)
 
 如果：
 
@@ -169,7 +169,7 @@
 
 ## 9. 多重匹配是显式错误，不会偷偷替你只改第一个
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts`](../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts)
+源码镜像：[`../../src/tools/FileEditTool/FileEditTool.ts`](../../src/tools/FileEditTool/FileEditTool.ts)
 
 如果：
 
@@ -186,7 +186,7 @@
 
 ## 10. 设置文件编辑还有一层专门的 `validateInputForSettingsFileEdit(...)`
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts`](../../sources/claude-code/src/utils/settings/validateEditTool.ts)
+源码镜像：[`../../src/tools/FileEditTool/FileEditTool.ts`](../../src/utils/settings/validateEditTool.ts)
 
 在通过匹配逻辑之后，工具还会专门调用：
 
@@ -206,7 +206,7 @@
 
 ## 11. 真正的写盘段被故意压成一小块“不要插 async”的临界区
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts`](../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts)
+源码镜像：[`../../src/tools/FileEditTool/FileEditTool.ts`](../../src/tools/FileEditTool/FileEditTool.ts)
 
 `call(...)` 里有一条非常明确的注释：
 
@@ -235,7 +235,7 @@
 
 ## 12. `writeTextContent(...)` 写入之前，工具会显式保留 encoding 和 line endings
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts`](../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts)
+源码镜像：[`../../src/tools/FileEditTool/FileEditTool.ts`](../../src/tools/FileEditTool/FileEditTool.ts)
 
 `readFileForEdit(...)` 不只是拿文本内容，还会保留：
 
@@ -255,7 +255,7 @@
 
 ## 13. patch 的职责分成两种：一份给真实更新，一份给展示
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/utils.ts`](../../sources/claude-code/src/tools/FileEditTool/UI.tsx)
+源码镜像：[`../../src/tools/FileEditTool/utils.ts`](../../src/tools/FileEditTool/UI.tsx)
 
 `getPatchForEdit(...)` / `getPatchForEdits(...)` 的注释已经明确区分：
 
@@ -273,7 +273,7 @@
 
 ## 14. 写完以后会主动把变更广播给多套旁路系统：diagnostics、LSP、VSCode、readFileState
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts`](../../sources/claude-code/src/services/lsp/LSPDiagnosticRegistry.ts), [`../../sources/claude-code/src/services/mcp/vscodeSdkMcp.ts`](../../sources/claude-code/src/services/mcp/vscodeSdkMcp.ts)
+源码镜像：[`../../src/tools/FileEditTool/FileEditTool.ts`](../../src/services/lsp/LSPDiagnosticRegistry.ts), [`../../src/services/mcp/vscodeSdkMcp.ts`](../../src/services/mcp/vscodeSdkMcp.ts)
 
 写盘之后，它不会只返回结果，而是立刻做一串 side effects：
 
@@ -291,7 +291,7 @@
 
 ## 15. file history、diff analytics、remote git diff 都是附带层，但都挂在写盘成功之后
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts`](../../sources/claude-code/src/utils/fileHistory.ts), [`../../sources/claude-code/src/utils/gitDiff.ts`](../../sources/claude-code/src/utils/fileOperationAnalytics.ts)
+源码镜像：[`../../src/tools/FileEditTool/FileEditTool.ts`](../../src/utils/fileHistory.ts), [`../../src/utils/gitDiff.ts`](../../src/utils/fileOperationAnalytics.ts)
 
 写成功之后，工具还会：
 
@@ -312,7 +312,7 @@
 
 ## 16. rejection UI 不是简单报错，而是会懒加载上下文生成一份“如果接受会改成什么”的 diff
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/UI.tsx`](../../sources/claude-code/src/tools/FileEditTool/UI.tsx), [`../../sources/claude-code/src/utils/readEditContext.ts`](../../sources/claude-code/src/utils/readEditContext.ts)
+源码镜像：[`../../src/tools/FileEditTool/UI.tsx`](../../src/tools/FileEditTool/UI.tsx), [`../../src/utils/readEditContext.ts`](../../src/utils/readEditContext.ts)
 
 `renderToolUseRejectedMessage(...)` 在 edit 路径下不会只显示：
 
@@ -334,7 +334,7 @@
 
 ## 17. 错误表面也做了有意降噪：常见 intended errors 会被压成短提示而不是惊悚大报错
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/UI.tsx`](../../sources/claude-code/src/tools/FileEditTool/UI.tsx)
+源码镜像：[`../../src/tools/FileEditTool/UI.tsx`](../../src/tools/FileEditTool/UI.tsx)
 
 非 verbose 模式下，如果 tool_use_error 里包含：
 

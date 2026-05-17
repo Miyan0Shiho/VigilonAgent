@@ -6,7 +6,7 @@
 
 ## 1. swarm runtime 不是 AgentTool 的附属，而是一套独立的并发执行层
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/spawnInProcess.ts`](../../sources/claude-code/src/utils/swarm/spawnInProcess.ts), [`../../sources/claude-code/src/utils/swarm/inProcessRunner.ts`](../../sources/claude-code/src/utils/swarm/inProcessRunner.ts), [`../../sources/claude-code/src/utils/teammate.ts`](../../sources/claude-code/src/utils/teammate.ts)
+源码镜像：[`../../src/utils/swarm/spawnInProcess.ts`](../../src/utils/swarm/spawnInProcess.ts), [`../../src/utils/swarm/inProcessRunner.ts`](../../src/utils/swarm/inProcessRunner.ts), [`../../src/utils/teammate.ts`](../../src/utils/teammate.ts)
 
 从这些文件可以看出，Claude Code 把 swarm teammate 运行时拆成了至少三层：
 
@@ -18,7 +18,7 @@
 
 ## 2. teammate 身份解析有明确优先级，而不是散落在 env 里
 
-源码镜像：[`../../sources/claude-code/src/utils/teammate.ts`](../../sources/claude-code/src/utils/teammate.ts), [`../../sources/claude-code/src/utils/teammateContext.ts`](../../sources/claude-code/src/utils/teammateContext.ts)
+源码镜像：[`../../src/utils/teammate.ts`](../../src/utils/teammate.ts), [`../../src/utils/teammateContext.ts`](../../src/utils/teammateContext.ts)
 
 身份解析优先级是：
 
@@ -40,7 +40,7 @@
 
 ## 3. `TeammateContext` 是 in-process teammate 的隔离内核
 
-源码镜像：[`../../sources/claude-code/src/utils/teammateContext.ts`](../../sources/claude-code/src/utils/teammateContext.ts)
+源码镜像：[`../../src/utils/teammateContext.ts`](../../src/utils/teammateContext.ts)
 
 `TeammateContext` 里装的不是 UI 数据，而是运行时最小闭环：
 
@@ -57,7 +57,7 @@
 
 ## 4. in-process teammate 不是 leader query 的子中断，而是独立生命周期任务
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/spawnInProcess.ts`](../../sources/claude-code/src/utils/swarm/spawnInProcess.ts)
+源码镜像：[`../../src/utils/swarm/spawnInProcess.ts`](../../src/utils/swarm/spawnInProcess.ts)
 
 `spawnInProcessTeammate()` 的关键设计是：
 
@@ -71,7 +71,7 @@
 
 ## 5. `InProcessTeammateTaskState` 已经把产品语义编码进任务状态
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/spawnInProcess.ts`](../../sources/claude-code/src/utils/swarm/spawnInProcess.ts)
+源码镜像：[`../../src/utils/swarm/spawnInProcess.ts`](../../src/utils/swarm/spawnInProcess.ts)
 
 注册进去的 task state 不只保存 prompt，还直接带了：
 
@@ -87,7 +87,7 @@
 
 ## 6. `inProcessRunner` 是真正把 teammate 变成可运行 agent 的执行壳
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/inProcessRunner.ts`](../../sources/claude-code/src/utils/swarm/inProcessRunner.ts)
+源码镜像：[`../../src/utils/swarm/inProcessRunner.ts`](../../src/utils/swarm/inProcessRunner.ts)
 
 这层不是简单调用 `runAgent()`，而是额外承担：
 
@@ -103,7 +103,7 @@
 
 ## 7. mailbox 是 swarm 的文件级消息总线，不是 UI 提示层
 
-源码镜像：[`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts)
 
 mailbox 结构是：
 
@@ -120,7 +120,7 @@ mailbox 结构是：
 
 ## 8. mailbox 的 key 不是 agent ID，而是 agent name
 
-源码镜像：[`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts)
 
 文件注释直接说：inboxes are keyed by agent name within a team。
 
@@ -133,7 +133,7 @@ mailbox 结构是：
 
 ## 9. worker 权限请求默认不是本地弹框，而是 leader 协调流
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../sources/claude-code/src/utils/swarm/permissionSync.ts`](../../sources/claude-code/src/utils/swarm/permissionSync.ts)
+源码镜像：[`../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../src/utils/swarm/permissionSync.ts`](../../src/utils/swarm/permissionSync.ts)
 
 `handleSwarmWorkerPermission()` 说明 worker 权限流是：
 
@@ -147,7 +147,7 @@ mailbox 结构是：
 
 ## 10. `SwarmPermissionRequest` 已经是一份稳定协议，而不是临时对象
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/permissionSync.ts`](../../sources/claude-code/src/utils/swarm/permissionSync.ts)
+源码镜像：[`../../src/utils/swarm/permissionSync.ts`](../../src/utils/swarm/permissionSync.ts)
 
 这份 schema 里包含：
 
@@ -169,7 +169,7 @@ mailbox 结构是：
 
 ## 11. in-process teammate 优先走 leader 的标准 ToolUseConfirm UI，而不是 mailbox fallback
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/inProcessRunner.ts`](../../sources/claude-code/src/utils/swarm/inProcessRunner.ts), [`../../sources/claude-code/src/utils/swarm/leaderPermissionBridge.ts`](../../sources/claude-code/src/utils/swarm/leaderPermissionBridge.ts)
+源码镜像：[`../../src/utils/swarm/inProcessRunner.ts`](../../src/utils/swarm/inProcessRunner.ts), [`../../src/utils/swarm/leaderPermissionBridge.ts`](../../src/utils/swarm/leaderPermissionBridge.ts)
 
 `createInProcessCanUseTool()` 的标准路径是：
 
@@ -183,7 +183,7 @@ mailbox 结构是：
 
 ## 12. `leaderPermissionBridge` 是 React UI 与非 React runner 之间的接缝
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/leaderPermissionBridge.ts`](../../sources/claude-code/src/utils/swarm/leaderPermissionBridge.ts)
+源码镜像：[`../../src/utils/swarm/leaderPermissionBridge.ts`](../../src/utils/swarm/leaderPermissionBridge.ts)
 
 这个桥非常小，但很关键。它把两类 setter 暴露成模块级注册表：
 
@@ -194,7 +194,7 @@ mailbox 结构是：
 
 ## 13. stop hooks 之后还有 teammate 专属的 `TaskCompleted` 和 `TeammateIdle` 钩子
 
-源码镜像：[`../../sources/claude-code/src/query/stopHooks.ts`](../../sources/claude-code/src/query/stopHooks.ts)
+源码镜像：[`../../src/query/stopHooks.ts`](../../src/query/stopHooks.ts)
 
 普通 stop hooks 跑完后，如果当前会话是 teammate，还会继续做两件事：
 
@@ -212,7 +212,7 @@ mailbox 结构是：
 
 ## 14. teammate view 不是只看 spinner，而是完整的 transcript retain / evict 机制
 
-源码镜像：[`../../sources/claude-code/src/state/teammateViewHelpers.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/state/teammateViewHelpers.ts`](../../src/state/teammateViewHelpers.ts)
 
 `enterTeammateView()` 和 `exitTeammateView()` 做的不只是切视图：
 
@@ -225,7 +225,7 @@ mailbox 结构是：
 
 ## 15. `stopOrDismissAgent()` 暗示 swarm 视图同时承担“控制面”职责
 
-源码镜像：[`../../sources/claude-code/src/state/teammateViewHelpers.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/state/teammateViewHelpers.ts`](../../src/state/teammateViewHelpers.ts)
 
 这里的 `x` 操作是上下文敏感的：
 
@@ -236,7 +236,7 @@ mailbox 结构是：
 
 ## 16. 这条 swarm runtime 的真实闭环应该这样理解
 
-源码镜像：[`../../sources/claude-code/src/utils/teammate.ts`](../../sources/claude-code/src/utils/teammate.ts), [`../../sources/claude-code/src/utils/swarm/spawnInProcess.ts`](../../sources/claude-code/src/utils/swarm/spawnInProcess.ts), [`../../sources/claude-code/src/utils/swarm/inProcessRunner.ts`](../../sources/claude-code/src/utils/swarm/inProcessRunner.ts), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts), [`../../sources/claude-code/src/utils/swarm/permissionSync.ts`](../../sources/claude-code/src/utils/swarm/permissionSync.ts), [`../../sources/claude-code/src/query/stopHooks.ts`](../../sources/claude-code/src/query/stopHooks.ts), [`../../sources/claude-code/src/state/teammateViewHelpers.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/utils/teammate.ts`](../../src/utils/teammate.ts), [`../../src/utils/swarm/spawnInProcess.ts`](../../src/utils/swarm/spawnInProcess.ts), [`../../src/utils/swarm/inProcessRunner.ts`](../../src/utils/swarm/inProcessRunner.ts), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts), [`../../src/utils/swarm/permissionSync.ts`](../../src/utils/swarm/permissionSync.ts), [`../../src/query/stopHooks.ts`](../../src/query/stopHooks.ts), [`../../src/state/teammateViewHelpers.ts`](../../src/state/teammateViewHelpers.ts)
 
 可以压成七步：
 

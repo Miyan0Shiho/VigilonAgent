@@ -22,7 +22,7 @@
 ## Evidence-backed Findings（按项目）
 
 ### Claude Code（CC）
-> 代码根：`research/sources/claude-code/`
+> 代码根：`research/`
 
 - **OPT-CC-001**：终端渲染存在专门的 diff/patch 优化器，并以规则集合形式减少无效变更与闪烁。  
   - 定义点：`sources/claude-code/src/ink/optimizer.ts` → `optimize(...)`（规则链）  

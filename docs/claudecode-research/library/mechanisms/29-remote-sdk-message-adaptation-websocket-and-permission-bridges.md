@@ -6,7 +6,7 @@
 
 ## 1. 这条链的核心问题不是 transport，而是把“远端 agent 的事实”翻译成本地 REPL 的状态机
 
-源码镜像：[`../../sources/claude-code/src/remote/sdkMessageAdapter.ts`](../../sources/claude-code/src/remote/sdkMessageAdapter.ts), [`../../sources/claude-code/src/remote/RemoteSessionManager.ts`](../../sources/claude-code/src/remote/RemoteSessionManager.ts), [`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/remote/sdkMessageAdapter.ts`](../../src/remote/sdkMessageAdapter.ts), [`../../src/remote/RemoteSessionManager.ts`](../../src/remote/RemoteSessionManager.ts), [`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 remote viewer 跟本地 query loop 最大的不同是：
 
@@ -22,7 +22,7 @@ remote viewer 跟本地 query loop 最大的不同是：
 
 ## 2. `convertSDKMessage()` 不是简单的类型转换器，而是一个“什么该进入 transcript、什么该被吞掉”的边界面
 
-源码镜像：[`../../sources/claude-code/src/remote/sdkMessageAdapter.ts`](../../sources/claude-code/src/remote/sdkMessageAdapter.ts)
+源码镜像：[`../../src/remote/sdkMessageAdapter.ts`](../../src/remote/sdkMessageAdapter.ts)
 
 `convertSDKMessage()` 最值得注意的不是 mapping，而是它显式返回三态：
 
@@ -38,7 +38,7 @@ remote viewer 跟本地 query loop 最大的不同是：
 
 ## 3. assistant / stream / compact boundary 会被保留，但 `auth_status`、`tool_use_summary`、`rate_limit_event` 会被静默吞掉
 
-源码镜像：[`../../sources/claude-code/src/remote/sdkMessageAdapter.ts`](../../sources/claude-code/src/remote/sdkMessageAdapter.ts)
+源码镜像：[`../../src/remote/sdkMessageAdapter.ts`](../../src/remote/sdkMessageAdapter.ts)
 
 `sdkMessageAdapter` 的保留面相对克制：
 
@@ -58,7 +58,7 @@ remote viewer 跟本地 query loop 最大的不同是：
 
 ## 4. user message 默认被忽略，只有两种特例会显式转回 transcript
 
-源码镜像：[`../../sources/claude-code/src/remote/sdkMessageAdapter.ts`](../../sources/claude-code/src/remote/sdkMessageAdapter.ts)
+源码镜像：[`../../src/remote/sdkMessageAdapter.ts`](../../src/remote/sdkMessageAdapter.ts)
 
 `user` 分支是这篇里最容易被误读的一段。默认情况下，remote user messages 不进入 transcript，因为：
 
@@ -74,7 +74,7 @@ remote viewer 跟本地 query loop 最大的不同是：
 
 ## 5. tool result 的判定故意不依赖 `parent_tool_use_id`，说明 agent 侧规范化已经把那个字段做脏了
 
-源码镜像：[`../../sources/claude-code/src/remote/sdkMessageAdapter.ts`](../../sources/claude-code/src/remote/sdkMessageAdapter.ts)
+源码镜像：[`../../src/remote/sdkMessageAdapter.ts`](../../src/remote/sdkMessageAdapter.ts)
 
 `convertSDKMessage()` 明确写了一个很重要的事实：不能靠 `parent_tool_use_id` 判断 tool result，因为 agent 侧 `normalizeMessage()` 会把 top-level tool result 的这个字段硬写成 `null`。
 
@@ -86,7 +86,7 @@ remote viewer 跟本地 query loop 最大的不同是：
 
 ## 6. `isSessionEndMessage()` 很窄，只认 `result`，因为 loading 结束条件必须保守
 
-源码镜像：[`../../sources/claude-code/src/remote/sdkMessageAdapter.ts`](../../sources/claude-code/src/remote/sdkMessageAdapter.ts), [`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/remote/sdkMessageAdapter.ts`](../../src/remote/sdkMessageAdapter.ts), [`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 remote session 的完成判定没有做复杂 heuristics，而是只认：
 
@@ -96,7 +96,7 @@ remote session 的完成判定没有做复杂 heuristics，而是只认：
 
 ## 7. `SessionsWebSocket` 不是薄封装，而是 session subscription 的可靠性层
 
-源码镜像：[`../../sources/claude-code/src/remote/SessionsWebSocket.ts`](../../sources/claude-code/src/remote/SessionsWebSocket.ts)
+源码镜像：[`../../src/remote/SessionsWebSocket.ts`](../../src/remote/SessionsWebSocket.ts)
 
 `SessionsWebSocket` 真正承担的是四件事：
 
@@ -109,7 +109,7 @@ remote session 的完成判定没有做复杂 heuristics，而是只认：
 
 ## 8. 这里故意接受“任何带 string type 的消息”，因为 allowlist 会让新协议静默丢失
 
-源码镜像：[`../../sources/claude-code/src/remote/SessionsWebSocket.ts`](../../sources/claude-code/src/remote/SessionsWebSocket.ts)
+源码镜像：[`../../src/remote/SessionsWebSocket.ts`](../../src/remote/SessionsWebSocket.ts)
 
 `isSessionsMessage()` 的实现很保守：
 
@@ -121,7 +121,7 @@ remote session 的完成判定没有做复杂 heuristics，而是只认：
 
 ## 9. 4001 被当成短暂可恢复，而 4003 被当成永久拒绝，说明它已经吸收了 compaction 期间的真实抖动模型
 
-源码镜像：[`../../sources/claude-code/src/remote/SessionsWebSocket.ts`](../../sources/claude-code/src/remote/SessionsWebSocket.ts)
+源码镜像：[`../../src/remote/SessionsWebSocket.ts`](../../src/remote/SessionsWebSocket.ts)
 
 close code 策略不是统一重连：
 
@@ -138,7 +138,7 @@ close code 策略不是统一重连：
 
 ## 10. ping/reconnect 之外，它还提供了 control response 和 interrupt 这两条反向控制通道
 
-源码镜像：[`../../sources/claude-code/src/remote/SessionsWebSocket.ts`](../../sources/claude-code/src/remote/SessionsWebSocket.ts)
+源码镜像：[`../../src/remote/SessionsWebSocket.ts`](../../src/remote/SessionsWebSocket.ts)
 
 `SessionsWebSocket` 对外暴露的不只是订阅：
 
@@ -150,7 +150,7 @@ close code 策略不是统一重连：
 
 ## 11. `RemoteSessionManager` 不是 view model，而是 SDK messages 与 control messages 的协议分拣器
 
-源码镜像：[`../../sources/claude-code/src/remote/RemoteSessionManager.ts`](../../sources/claude-code/src/remote/RemoteSessionManager.ts)
+源码镜像：[`../../src/remote/RemoteSessionManager.ts`](../../src/remote/RemoteSessionManager.ts)
 
 `RemoteSessionManager` 的职责很窄但很关键：
 
@@ -165,7 +165,7 @@ close code 策略不是统一重连：
 
 ## 12. 它只正式支持 `can_use_tool`，对未知 control subtype 会主动回 error，避免远端永远挂住
 
-源码镜像：[`../../sources/claude-code/src/remote/RemoteSessionManager.ts`](../../sources/claude-code/src/remote/RemoteSessionManager.ts)
+源码镜像：[`../../src/remote/RemoteSessionManager.ts`](../../src/remote/RemoteSessionManager.ts)
 
 `handleControlRequest()` 这里有个非常好的工程判断：
 
@@ -176,7 +176,7 @@ close code 策略不是统一重连：
 
 ## 13. pending permission requests 存在 manager 层，而不是 hook 层，因为 request/response 必须按 request_id 配对
 
-源码镜像：[`../../sources/claude-code/src/remote/RemoteSessionManager.ts`](../../sources/claude-code/src/remote/RemoteSessionManager.ts)
+源码镜像：[`../../src/remote/RemoteSessionManager.ts`](../../src/remote/RemoteSessionManager.ts)
 
 `pendingPermissionRequests` 放在 manager 里有两个原因：
 
@@ -191,7 +191,7 @@ close code 策略不是统一重连：
 
 ## 14. 远端 permission ask 之所以能复用本地 `ToolUseConfirm`，靠的是 synthetic assistant message 和 tool stub
 
-源码镜像：[`../../sources/claude-code/src/remote/remotePermissionBridge.ts`](../../sources/claude-code/src/remote/remotePermissionBridge.ts)
+源码镜像：[`../../src/remote/remotePermissionBridge.ts`](../../src/remote/remotePermissionBridge.ts)
 
 本地 permission UI 需要两样东西：
 
@@ -212,7 +212,7 @@ remote mode 天然没有这两样，因为：
 
 ## 15. `createToolStub()` 的目标不是执行工具，而是让 fallback permission UI 至少有名字、输入摘要和权限语义
 
-源码镜像：[`../../sources/claude-code/src/remote/remotePermissionBridge.ts`](../../sources/claude-code/src/remote/remotePermissionBridge.ts)
+源码镜像：[`../../src/remote/remotePermissionBridge.ts`](../../src/remote/remotePermissionBridge.ts)
 
 stub tool 的实现非常克制：
 
@@ -225,7 +225,7 @@ stub tool 的实现非常克制：
 
 ## 16. `useRemoteSession()` 不是单纯的 WS hook，而是 remote viewer 的本地状态编排器
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 `useRemoteSession()` 真正编排的状态很多：
 
@@ -243,7 +243,7 @@ stub tool 的实现非常克制：
 
 ## 17. echo filter 用 `BoundedUUIDSet` 而不是 delete-on-match Set，是因为同一条本地 POST 可能被远端 echo 多次
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts), [`../../sources/claude-code/src/bridge/bridgeMessaging.ts`](../../sources/claude-code/src/bridge/bridgeMessaging.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts), [`../../src/bridge/bridgeMessaging.ts`](../../src/bridge/bridgeMessaging.ts)
 
 `sentUUIDsRef` 这一段很关键。注释已经说明，同一个本地输入可能被 echo 两次：
 
@@ -259,7 +259,7 @@ stub tool 的实现非常克制：
 
 ## 18. timeout 不是统一 60s，而是 compaction 时抬到 180s，并且任何 WS heartbeat 都会提前清掉计时器
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 `useRemoteSession()` 的 timeout 策略相当细：
 
@@ -271,7 +271,7 @@ stub tool 的实现非常克制：
 
 ## 19. `task_started / task_notification / task_progress` 不进入 transcript，而是被抽成 remote background task counter
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 对 remote subagent/workflow/bash 来说，本地 viewer 的 `AppState.tasks` 是空的，因为任务活在另一个进程。于是 `useRemoteSession()` 只做一件更轻的事：
 
@@ -281,7 +281,7 @@ stub tool 的实现非常克制：
 
 ## 20. remote tool use spinner 状态需要本地补写，因为远端发来的是“已经拼好的 assistant message”
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 本地 session 里，tool use 的 spinner 状态通常由 tool orchestration 路径维护。remote mode 没有那条本地执行路径，于是 `useRemoteSession()` 要手动：
 
@@ -292,7 +292,7 @@ stub tool 的实现非常克制：
 
 ## 21. permission 请求一旦到本地，会被完整包进 `ToolUseConfirm`，但 `onUserInteraction` 和 `recheckPermission` 都故意变成 no-op
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 remote permission bridge 的关键不只是 push queue，而是 push 一个合法的 `ToolUseConfirm`：
 
@@ -306,7 +306,7 @@ remote permission bridge 的关键不只是 push queue，而是 push 一个合�
 
 ## 22. viewer-only 模式不是简单 readonly，而是一组行为降级开关
 
-源码镜像：[`../../sources/claude-code/src/remote/RemoteSessionManager.ts`](../../sources/claude-code/src/remote/RemoteSessionManager.ts), [`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/remote/RemoteSessionManager.ts`](../../src/remote/RemoteSessionManager.ts), [`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 `viewerOnly` 至少改了四件事：
 
@@ -319,7 +319,7 @@ remote permission bridge 的关键不只是 push queue，而是 push 一个合�
 
 ## 23. session title 更新被放在本地首条消息后异步触发，说明 claude.ai 上的 session identity 是 viewer 侧补写的
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 对于没有 initial prompt 的 remote session，本地在第一次 `sendMessage()` 成功后会：
 

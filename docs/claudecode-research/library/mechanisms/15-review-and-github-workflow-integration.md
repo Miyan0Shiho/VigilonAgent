@@ -6,7 +6,7 @@
 
 ## 1. 这组能力的共同点不是“都跟 GitHub 有关”，而是“把审查工作流产品化”
 
-源码镜像：[`../../sources/claude-code/src/commands/security-review.ts`](../../sources/claude-code/src/commands/security-review.ts), [`../../sources/claude-code/src/commands/pr_comments/index.ts`](../../sources/claude-code/src/commands/pr_comments/index.ts), [`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx), [`../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts`](../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts)
+源码镜像：[`../../src/commands/security-review.ts`](../../src/commands/security-review.ts), [`../../src/commands/pr_comments/index.ts`](../../src/commands/pr_comments/index.ts), [`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx), [`../../src/commands/install-github-app/setupGitHubActions.ts`](../../src/commands/install-github-app/setupGitHubActions.ts)
 
 这几条链分别解决不同问题：
 
@@ -18,7 +18,7 @@
 
 ## 2. `security-review` 不是原生工具，而是 Markdown 命令模板 + shell 扩展执行器
 
-源码镜像：[`../../sources/claude-code/src/commands/security-review.ts`](../../sources/claude-code/src/commands/security-review.ts)
+源码镜像：[`../../src/commands/security-review.ts`](../../src/commands/security-review.ts)
 
 这份命令实现最重要的事实是：它不是手写一个 command handler 去拼上下文，而是内置了一整段 `SECURITY_REVIEW_MARKDOWN`。
 
@@ -38,7 +38,7 @@
 
 ## 3. `security-review` 的关键不是 prompt 长，而是误报过滤被硬编码成协议
 
-源码镜像：[`../../sources/claude-code/src/commands/security-review.ts`](../../sources/claude-code/src/commands/security-review.ts)
+源码镜像：[`../../src/commands/security-review.ts`](../../src/commands/security-review.ts)
 
 这条命令比普通审查 prompt 更像一个受约束审计框架，因为它把下面几层都直接写死在命令模板里：
 
@@ -53,7 +53,7 @@
 
 ## 4. `allowed-tools` 会在运行时反写进 permission context
 
-源码镜像：[`../../sources/claude-code/src/commands/security-review.ts`](../../sources/claude-code/src/commands/security-review.ts)
+源码镜像：[`../../src/commands/security-review.ts`](../../src/commands/security-review.ts)
 
 `executeShellCommandsInPrompt()` 调用时，并不是简单给 context 原样透传，而是覆盖了：
 
@@ -65,7 +65,7 @@
 
 ## 5. `pr-comments` 代表另一种命令风格：prompt 极薄，工作流极明确
 
-源码镜像：[`../../sources/claude-code/src/commands/pr_comments/index.ts`](../../sources/claude-code/src/commands/pr_comments/index.ts)
+源码镜像：[`../../src/commands/pr_comments/index.ts`](../../src/commands/pr_comments/index.ts)
 
 和 `security-review` 相比，`pr-comments` 的实现非常薄：
 
@@ -86,7 +86,7 @@
 
 ## 6. `pr-comments` 证明 Claude Code 对 GitHub 的一部分集成仍然走 CLI 编排，而不是专有 API client
 
-源码镜像：[`../../sources/claude-code/src/commands/pr_comments/index.ts`](../../sources/claude-code/src/commands/pr_comments/index.ts)
+源码镜像：[`../../src/commands/pr_comments/index.ts`](../../src/commands/pr_comments/index.ts)
 
 这里不是内置一个 GitHub SDK，而是直接把 `gh` CLI 当成数据面：
 
@@ -103,7 +103,7 @@
 
 ## 7. `install-github-app` 不是单次命令，而是一个多步骤向导状态机
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx)
 
 这份文件的状态机很明确。`INITIAL_STATE` 就已经暴露了整个流程图：
 
@@ -131,7 +131,7 @@
 
 ## 8. 这个向导首先检查的是 `gh` 环境和 scope，而不是直接问用户仓库名
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx)
 
 `checkGitHubCLI()` 会依次检查：
 
@@ -148,7 +148,7 @@
 
 ## 9. `setupGitHubActions()` 不是“创建一个 workflow file”，而是一整条 repo mutation pipeline
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts`](../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts)
+源码镜像：[`../../src/commands/install-github-app/setupGitHubActions.ts`](../../src/commands/install-github-app/setupGitHubActions.ts)
 
 它至少包含这些阶段：
 
@@ -166,7 +166,7 @@
 
 ## 10. workflow file 创建逻辑已经考虑了 update 与 custom secret 名称
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts`](../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts)
+源码镜像：[`../../src/commands/install-github-app/setupGitHubActions.ts`](../../src/commands/install-github-app/setupGitHubActions.ts)
 
 `createWorkflowFile()` 并不是永远新建：
 
@@ -179,7 +179,7 @@
 
 ## 11. `selectedWorkflows` 说明它支持的不只是一个 Claude workflow
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx), [`../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts`](../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx), [`../../src/commands/install-github-app/setupGitHubActions.ts`](../../src/commands/install-github-app/setupGitHubActions.ts)
 
 当前默认就带两个 workflow 选项：
 
@@ -195,7 +195,7 @@
 
 ## 12. PR 创建本身被故意设计成“打开 compare 页面”，而不是直接写 PR
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts`](../../sources/claude-code/src/commands/install-github-app/setupGitHubActions.ts)
+源码镜像：[`../../src/commands/install-github-app/setupGitHubActions.ts`](../../src/commands/install-github-app/setupGitHubActions.ts)
 
 这一点很关键。workflow 和 secret 都配好之后，它并没有直接 `gh pr create`，而是：
 

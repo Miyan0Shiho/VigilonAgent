@@ -13,7 +13,7 @@
 
 ## 1. 插件依赖语义不是 JS module graph，而是“能力存在保证”
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/dependencyResolver.ts`](../../sources/claude-code/src/utils/plugins/dependencyResolver.ts)
+源码镜像：[`../../src/utils/plugins/dependencyResolver.ts`](../../src/utils/plugins/dependencyResolver.ts)
 
 文件开头已经把语义写死了：
 
@@ -28,7 +28,7 @@
 
 ## 2. 安装期和加载期是两套不同的依赖算法
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/dependencyResolver.ts`](../../sources/claude-code/src/utils/plugins/dependencyResolver.ts)
+源码镜像：[`../../src/utils/plugins/dependencyResolver.ts`](../../src/utils/plugins/dependencyResolver.ts)
 
 这里有两个入口：
 
@@ -51,7 +51,7 @@
 
 ## 3. bare dependency 不是全局裸名，而是默认继承声明插件的 marketplace
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/dependencyResolver.ts`](../../sources/claude-code/src/utils/plugins/dependencyResolver.ts)
+源码镜像：[`../../src/utils/plugins/dependencyResolver.ts`](../../src/utils/plugins/dependencyResolver.ts)
 
 `qualifyDependency(dep, declaringPluginId)` 的规则是：
 
@@ -66,7 +66,7 @@
 
 ## 4. cross-marketplace dependency 默认是安全边界，不是便利特性
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/dependencyResolver.ts`](../../sources/claude-code/src/utils/plugins/dependencyResolver.ts)
+源码镜像：[`../../src/utils/plugins/dependencyResolver.ts`](../../src/utils/plugins/dependencyResolver.ts)
 
 `resolveDependencyClosure()` 默认阻止：
 
@@ -85,7 +85,7 @@
 
 ## 5. `verifyAndDemote()` 是加载期的会话内保险丝，不是持久化修复器
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/dependencyResolver.ts`](../../sources/claude-code/src/utils/plugins/dependencyResolver.ts), [`../../sources/claude-code/src/utils/plugins/pluginLoader.ts`](../../sources/claude-code/src/utils/plugins/pluginLoader.ts)
+源码镜像：[`../../src/utils/plugins/dependencyResolver.ts`](../../src/utils/plugins/dependencyResolver.ts), [`../../src/utils/plugins/pluginLoader.ts`](../../src/utils/plugins/pluginLoader.ts)
 
 `verifyAndDemote()` 的输入是：
 
@@ -112,7 +112,7 @@
 
 ## 6. 插件加载器故意分成 full-load 和 cache-only 两条路径
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginLoader.ts`](../../sources/claude-code/src/utils/plugins/pluginLoader.ts)
+源码镜像：[`../../src/utils/plugins/pluginLoader.ts`](../../src/utils/plugins/pluginLoader.ts)
 
 这里最关键的是：
 
@@ -140,7 +140,7 @@
 
 ## 7. `assemblePluginLoadResult()` 说明真正的插件装配顺序是“并行发现，串行验依赖，最后缓存设置”
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginLoader.ts`](../../sources/claude-code/src/utils/plugins/pluginLoader.ts)
+源码镜像：[`../../src/utils/plugins/pluginLoader.ts`](../../src/utils/plugins/pluginLoader.ts)
 
 共享装配体做的是：
 
@@ -160,7 +160,7 @@
 
 ## 8. marketplace refresh 更新的是“marketplace clone/cache”，不是“已安装插件指针”
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/marketplaceManager.ts`](../../sources/claude-code/src/utils/plugins/marketplaceManager.ts), [`../../sources/claude-code/src/utils/plugins/pluginAutoupdate.ts`](../../sources/claude-code/src/utils/plugins/pluginAutoupdate.ts)
+源码镜像：[`../../src/utils/plugins/marketplaceManager.ts`](../../src/utils/plugins/marketplaceManager.ts), [`../../src/utils/plugins/pluginAutoupdate.ts`](../../src/utils/plugins/pluginAutoupdate.ts)
 
 `refreshMarketplace(name)` 做的是：
 
@@ -184,7 +184,7 @@
 
 ## 9. official marketplace 是一条特判链，不是普通 github marketplace
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/marketplaceManager.ts`](../../sources/claude-code/src/utils/plugins/officialMarketplaceGcs.ts)
+源码镜像：[`../../src/utils/plugins/marketplaceManager.ts`](../../src/utils/plugins/officialMarketplaceGcs.ts)
 
 对 `OFFICIAL_MARKETPLACE_NAME`，refresh 逻辑会先走：
 
@@ -206,7 +206,7 @@
 
 ## 10. settings-sourced 和 seed-managed marketplace 根本不是 refresh 的目标
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/marketplaceManager.ts`](../../sources/claude-code/src/utils/plugins/marketplaceManager.ts)
+源码镜像：[`../../src/utils/plugins/marketplaceManager.ts`](../../src/utils/plugins/marketplaceManager.ts)
 
 `refreshAllMarketplaces()` 和 `refreshMarketplace()` 都明确跳过两类对象：
 
@@ -222,7 +222,7 @@
 
 ## 11. `refreshActivePlugins()` 是 Layer-3 runtime swap，不是重新安装插件
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/refresh.ts`](../../sources/claude-code/src/utils/plugins/refresh.ts), [`../../sources/claude-code/src/utils/plugins/pluginLoader.ts`](../../sources/claude-code/src/utils/plugins/pluginLoader.ts)
+源码镜像：[`../../src/utils/plugins/refresh.ts`](../../src/utils/plugins/refresh.ts), [`../../src/utils/plugins/pluginLoader.ts`](../../src/utils/plugins/pluginLoader.ts)
 
 文件开头已经把层级写得很清楚：
 
@@ -249,7 +249,7 @@
 
 ## 12. `refreshActivePlugins()` 必须先 full-load，再让下游 cache-only consumer 读结果
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/refresh.ts`](../../sources/claude-code/src/utils/plugins/refresh.ts), [`../../sources/claude-code/src/utils/plugins/pluginLoader.ts`](../../sources/claude-code/src/utils/plugins/pluginLoader.ts)
+源码镜像：[`../../src/utils/plugins/refresh.ts`](../../src/utils/plugins/refresh.ts), [`../../src/utils/plugins/pluginLoader.ts`](../../src/utils/plugins/pluginLoader.ts)
 
 这段实现非常关键：
 
@@ -267,7 +267,7 @@
 
 ## 13. 新 marketplace 安装和已有 marketplace 更新，active refresh 策略并不相同
 
-源码镜像：[`../../sources/claude-code/src/services/plugins/PluginInstallationManager.ts`](../../sources/claude-code/src/services/plugins/PluginInstallationManager.ts), [`../../sources/claude-code/src/utils/plugins/refresh.ts`](../../sources/claude-code/src/utils/plugins/refresh.ts)
+源码镜像：[`../../src/services/plugins/PluginInstallationManager.ts`](../../src/services/plugins/PluginInstallationManager.ts), [`../../src/utils/plugins/refresh.ts`](../../src/utils/plugins/refresh.ts)
 
 `PluginInstallationManager` 的后台安装逻辑分两类：
 
@@ -290,7 +290,7 @@
 
 ## 14. 用户手工 `/plugin marketplace update` 其实是“refresh clone + bump installed plugin pointers + clear caches”
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManageMarketplaces.tsx`](../../sources/claude-code/src/commands/plugin/ManageMarketplaces.tsx), [`../../sources/claude-code/src/utils/plugins/pluginAutoupdate.ts`](../../sources/claude-code/src/utils/plugins/pluginAutoupdate.ts)
+源码镜像：[`../../src/commands/plugin/ManageMarketplaces.tsx`](../../src/commands/plugin/ManageMarketplaces.tsx), [`../../src/utils/plugins/pluginAutoupdate.ts`](../../src/utils/plugins/pluginAutoupdate.ts)
 
 `ManageMarketplaces.tsx` 的 applyChanges 路径里，更新一个 marketplace 之后会：
 
@@ -314,7 +314,7 @@
 
 ## 15. 错误表面也区分了“依赖没找到”和“依赖存在但没启用”
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/dependencyResolver.ts`](../../sources/claude-code/src/utils/plugins/dependencyResolver.ts), [`../../sources/claude-code/src/commands/plugin/PluginErrors.tsx`](../../sources/claude-code/src/commands/plugin/PluginErrors.tsx)
+源码镜像：[`../../src/utils/plugins/dependencyResolver.ts`](../../src/utils/plugins/dependencyResolver.ts), [`../../src/commands/plugin/PluginErrors.tsx`](../../src/commands/plugin/PluginErrors.tsx)
 
 `verifyAndDemote()` 产出的 `dependency-unsatisfied` 会附带：
 
@@ -329,7 +329,7 @@
 
 ## 16. 这一整条链共同说明：插件系统的“刷新”其实分成三层，而不是一个按钮
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/dependencyResolver.ts`](../../sources/claude-code/src/utils/plugins/dependencyResolver.ts), [`../../sources/claude-code/src/utils/plugins/marketplaceManager.ts`](../../sources/claude-code/src/utils/plugins/marketplaceManager.ts), [`../../sources/claude-code/src/utils/plugins/pluginLoader.ts`](../../sources/claude-code/src/utils/plugins/pluginLoader.ts), [`../../sources/claude-code/src/utils/plugins/refresh.ts`](../../sources/claude-code/src/utils/plugins/refresh.ts), [`../../sources/claude-code/src/utils/plugins/pluginAutoupdate.ts`](../../sources/claude-code/src/utils/plugins/pluginAutoupdate.ts), [`../../sources/claude-code/src/services/plugins/PluginInstallationManager.ts`](../../sources/claude-code/src/services/plugins/PluginInstallationManager.ts), [`../../sources/claude-code/src/commands/plugin/ManageMarketplaces.tsx`](../../sources/claude-code/src/commands/plugin/ManageMarketplaces.tsx)
+源码镜像：[`../../src/utils/plugins/dependencyResolver.ts`](../../src/utils/plugins/dependencyResolver.ts), [`../../src/utils/plugins/marketplaceManager.ts`](../../src/utils/plugins/marketplaceManager.ts), [`../../src/utils/plugins/pluginLoader.ts`](../../src/utils/plugins/pluginLoader.ts), [`../../src/utils/plugins/refresh.ts`](../../src/utils/plugins/refresh.ts), [`../../src/utils/plugins/pluginAutoupdate.ts`](../../src/utils/plugins/pluginAutoupdate.ts), [`../../src/services/plugins/PluginInstallationManager.ts`](../../src/services/plugins/PluginInstallationManager.ts), [`../../src/commands/plugin/ManageMarketplaces.tsx`](../../src/commands/plugin/ManageMarketplaces.tsx)
 
 真实链路分三层：
 

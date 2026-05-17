@@ -6,7 +6,7 @@
 
 ## 1. `QueryEngine.submitMessage()` 是外层会话中枢
 
-源码镜像：[`../../sources/claude-code/src/QueryEngine.ts`](../../sources/claude-code/src/QueryEngine.ts)
+源码镜像：[`../../src/QueryEngine.ts`](../../src/QueryEngine.ts)
 
 `QueryEngine` 不是模型循环本身，而是会话级外壳。它负责：
 
@@ -19,7 +19,7 @@
 
 ## 2. `query.ts` 是单轮复杂度中心
 
-源码镜像：[`../../sources/claude-code/src/query.ts`](../../sources/claude-code/src/query.ts)
+源码镜像：[`../../src/query.ts`](../../src/query.ts)
 
 `queryLoop()` 通过一个显式 `State` 对象维护循环中的可变状态：
 

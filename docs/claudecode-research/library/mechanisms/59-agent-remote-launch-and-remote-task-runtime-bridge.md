@@ -17,7 +17,7 @@
 
 ## 1. `AgentTool` 的 remote isolation 不是 background 变体，而是直接切到另一条宿主分支
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx)
 
 `AgentTool.tsx` 在决定 effective isolation 后，遇到 `effectiveIsolation === 'remote'` 会直接走独立分支：
 
@@ -35,7 +35,7 @@
 
 ## 2. `remote_launched` 本身就是一条宿主切换完成信号
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx), [`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx), [`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 `AgentTool` 返回的 remote result 只带几件东西：
 
@@ -55,7 +55,7 @@
 
 ## 3. remote 分支的本地锚点不是 transcript，而是 `taskId + outputFile + sidecar`
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx), [`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx), [`../../sources/claude-code/src/utils/task/diskOutput.ts`](../../sources/claude-code/src/utils/task/diskOutput.ts), [`../../sources/claude-code/src/utils/sessionStorage.ts`](../../sources/claude-code/src/utils/sessionStorage.ts)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx), [`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx), [`../../src/utils/task/diskOutput.ts`](../../src/utils/task/diskOutput.ts), [`../../src/utils/sessionStorage.ts`](../../src/utils/sessionStorage.ts)
 
 `registerRemoteAgentTask()` 被调用后，本地立刻物化三样东西：
 
@@ -73,7 +73,7 @@
 
 ## 4. `registerRemoteAgentTask()` 不是 UI 辅助函数，而是 remote host 的正式出生点
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx), [`../../sources/claude-code/src/utils/task/framework.ts`](../../sources/claude-code/src/utils/task/framework.ts)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx), [`../../src/utils/task/framework.ts`](../../src/utils/task/framework.ts)
 
 这个注册函数一次完成了四件正式动作：
 
@@ -93,7 +93,7 @@
 
 ## 5. remote agent 和 `ultrareview/ultraplan` 共用同一个 task family，只是 `remoteTaskType` 不同
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
 
 `RemoteAgentTaskState` 的正式类型是：
 
@@ -109,7 +109,7 @@
 
 ## 6. `toolUseId` 会被一路带进 remote task state，保证之后还能回挂到原始 tool call
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx), [`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx), [`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
 
 `AgentTool` 在注册时把 `toolUseContext.toolUseId` 传给了 `registerRemoteAgentTask(...)`。后者会把它写进：
 
@@ -121,7 +121,7 @@
 
 ## 7. `outputFile` 被提前放进 `remote_launched` result，是为了让本地调用面立刻有稳定读口
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx), [`../../sources/claude-code/src/utils/task/diskOutput.ts`](../../sources/claude-code/src/utils/task/diskOutput.ts)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx), [`../../src/utils/task/diskOutput.ts`](../../src/utils/task/diskOutput.ts)
 
 `AgentTool` 在 remote result 里直接返回：
 
@@ -139,7 +139,7 @@
 
 ## 8. 本地把 remote agent 交出去之后，`UI.tsx` 故意不显示远端 transcript，避免宿主语义混乱
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 和 `completed` 或 `async_launched` 不同，`remote_launched` 结果面不会展开：
 
@@ -157,7 +157,7 @@
 
 ## 9. `cleanup` 返回值说明 remote host 从一开始就被视为可独立停机的后台单元
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
 
 `registerRemoteAgentTask()` 返回：
 

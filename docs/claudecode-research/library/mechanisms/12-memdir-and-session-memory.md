@@ -6,7 +6,7 @@
 
 ## 1. `MEMORY.md` 不是记忆内容本体，而是索引入口
 
-源码镜像：[`../../sources/claude-code/src/memdir/memdir.ts`](../../sources/claude-code/src/memdir/memdir.ts)
+源码镜像：[`../../src/memdir/memdir.ts`](../../src/memdir/memdir.ts)
 
 `ENTRYPOINT_NAME = 'MEMORY.md'` 配合 `buildMemoryLines()` 已经把语义写死了：
 
@@ -18,7 +18,7 @@
 
 ## 2. memdir 先定义“什么能记”，再定义“怎么记”
 
-源码镜像：[`../../sources/claude-code/src/memdir/memoryTypes.ts`](../../sources/claude-code/src/memdir/memoryTypes.ts), [`../../sources/claude-code/src/memdir/memdir.ts`](../../sources/claude-code/src/memdir/memdir.ts)
+源码镜像：[`../../src/memdir/memoryTypes.ts`](../../src/memdir/memoryTypes.ts), [`../../src/memdir/memdir.ts`](../../src/memdir/memdir.ts)
 
 `buildMemoryLines()` 拼出来的不是简单操作说明，而是 typed-memory 行为规约：
 
@@ -31,7 +31,7 @@
 
 ## 3. auto-memory 是否启用，是一条明确的优先级链
 
-源码镜像：[`../../sources/claude-code/src/memdir/paths.ts`](../../sources/claude-code/src/memdir/paths.ts)
+源码镜像：[`../../src/memdir/paths.ts`](../../src/memdir/paths.ts)
 
 `isAutoMemoryEnabled()` 的优先级很清楚：
 
@@ -45,7 +45,7 @@
 
 ## 4. auto-memory path 不是拍脑袋拼接，而是防御性路径治理
 
-源码镜像：[`../../sources/claude-code/src/memdir/paths.ts`](../../sources/claude-code/src/memdir/paths.ts)
+源码镜像：[`../../src/memdir/paths.ts`](../../src/memdir/paths.ts)
 
 `validateMemoryPath()` 与 `getAutoMemPath()` 暴露了很强的安全与稳定性意识：
 
@@ -58,7 +58,7 @@
 
 ## 5. 长期 memory 的 prompt 注入本质上是“把写库规则放进 system prompt”
 
-源码镜像：[`../../sources/claude-code/src/memdir/memdir.ts`](../../sources/claude-code/src/memdir/memdir.ts), [`../../sources/claude-code/src/QueryEngine.ts`](../../sources/claude-code/src/QueryEngine.ts)
+源码镜像：[`../../src/memdir/memdir.ts`](../../src/memdir/memdir.ts), [`../../src/QueryEngine.ts`](../../src/QueryEngine.ts)
 
 `loadMemoryPrompt()` 负责把 memory policy 和入口描述注入系统上下文。它会：
 
@@ -71,7 +71,7 @@
 
 ## 6. `MEMORY.md` 有硬截断规则，说明它默认会失控增长
 
-源码镜像：[`../../sources/claude-code/src/memdir/memdir.ts`](../../sources/claude-code/src/memdir/memdir.ts)
+源码镜像：[`../../src/memdir/memdir.ts`](../../src/memdir/memdir.ts)
 
 `truncateEntrypointContent()` 同时按两种上限截断：
 
@@ -84,7 +84,7 @@
 
 ## 7. KAIROS 模式把长期 memory 改造成“先日志，后蒸馏”
 
-源码镜像：[`../../sources/claude-code/src/memdir/memdir.ts`](../../sources/claude-code/src/memdir/paths.ts)
+源码镜像：[`../../src/memdir/memdir.ts`](../../src/memdir/paths.ts)
 
 当 `feature('KAIROS')` 且处于 assistant 式长会话时，不再直接把新信息写入 `MEMORY.md` 索引流，而是：
 
@@ -99,7 +99,7 @@
 
 ## 8. session memory 不是长期 memory，它是为“当前会话连续性”服务的本地摘要文件
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/prompts.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/prompts.ts)
 
 `DEFAULT_SESSION_MEMORY_TEMPLATE` 已经把用途说得很清楚：它保存的是当前会话的 `Current State`、`Files and Functions`、`Errors & Corrections`、`Worklog` 等。
 
@@ -112,7 +112,7 @@
 
 ## 9. session memory 不是每轮都跑，而是阈值驱动的后台提取器
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemoryUtils.ts)
 
 `shouldExtractMemory()` 同时检查：
 
@@ -131,7 +131,7 @@
 
 ## 10. 提取不是在主线程里做，而是 forked agent 专职写 notes
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/utils/forkedAgent.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemory.ts`](../../src/utils/forkedAgent.ts)
 
 `extractSessionMemory()` 的链路是：
 
@@ -146,7 +146,7 @@
 
 ## 11. 这个子代理几乎没有自由度，只允许改一份文件
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/prompts.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/prompts.ts)
 
 `createMemoryFileCanUseTool()` 只放行：
 
@@ -164,7 +164,7 @@
 
 ## 12. 自定义入口说明 session memory 已经被当成可运营组件
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/prompts.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
+源码镜像：[`../../src/services/SessionMemory/prompts.ts`](../../src/services/SessionMemory/sessionMemory.ts)
 
 这里至少支持三种可调节点：
 
@@ -176,7 +176,7 @@
 
 ## 13. skill 与 session memory 已经形成反身回路
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/remember.ts)
+源码镜像：[`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/remember.ts)
 
 这一层特别关键：
 

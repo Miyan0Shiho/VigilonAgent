@@ -6,7 +6,7 @@
 
 ## 1. `commands/init.ts` 说明命令不是固定字符串映射
 
-源码镜像：[`../../sources/claude-code/src/commands/init.ts`](../../sources/claude-code/src/commands/init.ts)
+源码镜像：[`../../src/commands/init.ts`](../../src/commands/init.ts)
 
 `/init` 这个例子已经足够说明命令系统的复杂度：
 

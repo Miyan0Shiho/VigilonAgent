@@ -15,7 +15,7 @@
 
 ## 1. `AgentTool` 不是单一工具，而是 “definition loader + prompt router + spawn host + result protocol” 四层叠起来的系统
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx), [`../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts`](../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts), [`../../sources/claude-code/src/tools/AgentTool/prompt.ts`](../../sources/claude-code/src/tools/AgentTool/prompt.ts), [`../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts`](../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx), [`../../src/tools/AgentTool/loadAgentsDir.ts`](../../src/tools/AgentTool/loadAgentsDir.ts), [`../../src/tools/AgentTool/prompt.ts`](../../src/tools/AgentTool/prompt.ts), [`../../src/tools/AgentTool/agentToolUtils.ts`](../../src/tools/AgentTool/agentToolUtils.ts)
 
 这条链至少有四层职责：
 
@@ -28,7 +28,7 @@
 
 ## 2. agent definitions 从一开始就不是单来源，而是有明确 source precedence
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts`](../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts), [`../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts`](../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts)
+源码镜像：[`../../src/tools/AgentTool/loadAgentsDir.ts`](../../src/tools/AgentTool/loadAgentsDir.ts), [`../../src/tools/AgentTool/agentDisplay.ts`](../../src/tools/AgentTool/agentDisplay.ts)
 
 `loadAgentsDir.ts` 里统一的 `AgentDefinition` 覆盖三大类：
 
@@ -54,7 +54,7 @@
 
 ## 3. `agentDisplay.ts` 说明 `/agents` 不是只看 active list，而是同时维护 “全量来源视图 + 覆盖关系”
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts`](../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts)
+源码镜像：[`../../src/tools/AgentTool/agentDisplay.ts`](../../src/tools/AgentTool/agentDisplay.ts)
 
 `agentDisplay.ts` 独立做了三件事：
 
@@ -72,7 +72,7 @@
 
 ## 4. `loadAgentsDir.ts` 的 frontmatter 面远比普通 skill 更厚，说明 agent 本身就是复合 runtime 对象
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts`](../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts)
+源码镜像：[`../../src/tools/AgentTool/loadAgentsDir.ts`](../../src/tools/AgentTool/loadAgentsDir.ts)
 
 当前 agent frontmatter 已经支持：
 
@@ -100,7 +100,7 @@
 
 ## 5. builtin agents 不是固定表，而是按 entrypoint / feature / subscription gating 动态装配
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/builtInAgents.ts`](../../sources/claude-code/src/tools/AgentTool/builtInAgents.ts)
+源码镜像：[`../../src/tools/AgentTool/builtInAgents.ts`](../../src/tools/AgentTool/builtInAgents.ts)
 
 `getBuiltInAgents()` 并不是把几个常量直接返回。它还会看：
 
@@ -120,7 +120,7 @@
 
 ## 6. `prompt.ts` 不是只列 agent 名单，而是在定义一种 delegation policy language
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/prompt.ts`](../../sources/claude-code/src/tools/AgentTool/prompt.ts)
+源码镜像：[`../../src/tools/AgentTool/prompt.ts`](../../src/tools/AgentTool/prompt.ts)
 
 这份 prompt 真正做的不是简单列出 “有哪些 agent”：
 
@@ -133,7 +133,7 @@
 
 ## 7. `shouldInjectAgentListInMessages()` 暗示 agent catalog 也是 prompt-cache 稳定性对象
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/prompt.ts`](../../sources/claude-code/src/tools/AgentTool/prompt.ts)
+源码镜像：[`../../src/tools/AgentTool/prompt.ts`](../../src/tools/AgentTool/prompt.ts)
 
 当 gate 打开时，agent list 不再塞进 tool description，而是走 attachment。原因写得非常直白：
 
@@ -145,7 +145,7 @@
 
 ## 8. `AgentTool.call()` 的第一层分流不是执行模型，而是“谁有资格生成谁”
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx)
 
 进入 `call()` 之后，最先判的不是 sync/async，而是身份与 plan 约束：
 
@@ -158,7 +158,7 @@
 
 ## 9. `name + team_name` 这条路并不是普通 subagent，而是立刻切到 teammate spawn 协议
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx)
 
 当满足：
 
@@ -175,7 +175,7 @@
 
 ## 10. `subagent_type` 为空时不一定是 general-purpose，有 fork gate 时会进入完全不同的路径
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/forkSubagent.ts`](../../sources/claude-code/src/tools/AgentTool/forkSubagent.ts), [`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx)
+源码镜像：[`../../src/tools/AgentTool/forkSubagent.ts`](../../src/tools/AgentTool/forkSubagent.ts), [`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx)
 
 这里的规则是：
 
@@ -194,7 +194,7 @@ fork path 最关键的区别是：
 
 ## 11. `buildForkedMessages()` 说明 fork 的核心目标之一是 prompt cache byte identity，不是方便复用上下文而已
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/forkSubagent.ts`](../../sources/claude-code/src/tools/AgentTool/forkSubagent.ts)
+源码镜像：[`../../src/tools/AgentTool/forkSubagent.ts`](../../src/tools/AgentTool/forkSubagent.ts)
 
 fork child 的消息前缀会被构造成：
 
@@ -211,7 +211,7 @@ fork child 的消息前缀会被构造成：
 
 ## 12. 远端、worktree、background 不是后处理选项，而是 `call()` 顶层 host routing 的正式分支
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx)
 
 `call()` 里真正会把一个 subagent 路由到至少五种宿主：
 
@@ -230,7 +230,7 @@ fork child 的消息前缀会被构造成：
 
 ## 13. remote isolation 不是“后台 agent + teleport”，而是直接换成 `remote_launched` 协议
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
 
 当 `effectiveIsolation === 'remote'` 时，AgentTool 不走本地 `runAgent()`：
 
@@ -248,7 +248,7 @@ fork child 的消息前缀会被构造成：
 
 ## 14. background/sync 分流不是只看 `run_in_background`，而是六路条件合并后的宿主决策
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx)
 
 `shouldRunAsync` 当前由这些条件并出来：
 
@@ -271,7 +271,7 @@ fork child 的消息前缀会被构造成：
 
 ## 15. worktree isolation 不是单纯 chdir，而是完整的 worktree lifecycle
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/utils/worktree.ts)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/utils/worktree.ts)
 
 当进入 worktree path 时，AgentTool 会：
 
@@ -286,7 +286,7 @@ fork child 的消息前缀会被构造成：
 
 ## 16. `runAgent()` 不是 AgentTool 的实现细节，而是一个可被 spawn 与 resume 共同复用的 agent stream engine
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/runAgent.ts`](../../sources/claude-code/src/tools/AgentTool/runAgent.ts), [`../../sources/claude-code/src/tools/AgentTool/resumeAgent.ts`](../../sources/claude-code/src/tools/AgentTool/resumeAgent.ts)
+源码镜像：[`../../src/tools/AgentTool/runAgent.ts`](../../src/tools/AgentTool/runAgent.ts), [`../../src/tools/AgentTool/resumeAgent.ts`](../../src/tools/AgentTool/resumeAgent.ts)
 
 两条路径都会把真正执行交给 `runAgent(...)`：
 
@@ -304,7 +304,7 @@ fork child 的消息前缀会被构造成：
 
 ## 17. agent-specific MCP 不是 loader 就决定完了，真正装配发生在 `runAgent()`
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/runAgent.ts`](../../sources/claude-code/src/tools/AgentTool/runAgent.ts)
+源码镜像：[`../../src/tools/AgentTool/runAgent.ts`](../../src/tools/AgentTool/runAgent.ts)
 
 `initializeAgentMcpServers()` 说明 agent frontmatter 的 `mcpServers` 直到 runtime 才真正被装配：
 
@@ -317,7 +317,7 @@ fork child 的消息前缀会被构造成：
 
 ## 18. `resolveAgentTools()` 说明 agent 的工具边界不是“定义里写了啥就有啥”，还要经过宿主过滤和 deny 规则重算
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts`](../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts)
+源码镜像：[`../../src/tools/AgentTool/agentToolUtils.ts`](../../src/tools/AgentTool/agentToolUtils.ts)
 
 真正的工具解算要经历：
 
@@ -334,7 +334,7 @@ fork child 的消息前缀会被构造成：
 
 ## 19. `AgentTool` 的输出协议不是单一 result，而是四态 discriminated union
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 当前可见的主要状态有：
 
@@ -347,7 +347,7 @@ fork child 的消息前缀会被构造成：
 
 ## 20. `runAsyncAgentLifecycle()` 说明 background agent 的真正语义不是 fire-and-forget，而是 “持续记账 + 收尾分类 + 通知回流”
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts`](../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts)
+源码镜像：[`../../src/tools/AgentTool/agentToolUtils.ts`](../../src/tools/AgentTool/agentToolUtils.ts)
 
 后台生命周期共享壳会负责：
 
@@ -362,7 +362,7 @@ fork child 的消息前缀会被构造成：
 
 ## 21. `finalizeAgentTool()` 和 `classifyHandoffIfNeeded()` 把 “子代理完成” 拆成结果收束和安全交接两段
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts`](../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts)
+源码镜像：[`../../src/tools/AgentTool/agentToolUtils.ts`](../../src/tools/AgentTool/agentToolUtils.ts)
 
 完成态至少分两段：
 
@@ -380,7 +380,7 @@ fork child 的消息前缀会被构造成：
 
 ## 22. `resumeAgentBackground()` 说明 resume 不是重新发 prompt，而是尽量恢复同一条 sidechain 的物理连续性
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/resumeAgent.ts`](../../sources/claude-code/src/tools/AgentTool/resumeAgent.ts)
+源码镜像：[`../../src/tools/AgentTool/resumeAgent.ts`](../../src/tools/AgentTool/resumeAgent.ts)
 
 resume 路径会做几件非常物理层的恢复：
 
@@ -394,7 +394,7 @@ resume 路径会做几件非常物理层的恢复：
 
 ## 23. `UI.tsx` 证明 AgentTool 的前台不是一个结果框，而是 progress transcript / collapsed read-search summary / host-specific status 面
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/UI.tsx`](../../sources/claude-code/src/tools/AgentTool/UI.tsx)
+源码镜像：[`../../src/tools/AgentTool/UI.tsx`](../../src/tools/AgentTool/UI.tsx)
 
 UI 层至少做了这些事情：
 

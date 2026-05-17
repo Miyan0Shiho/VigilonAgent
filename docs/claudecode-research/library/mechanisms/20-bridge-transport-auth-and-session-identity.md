@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是 bridge runtime 能不能稳定跨协议、跨 tag、跨认证域工作
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridgeTransport.ts`](../../sources/claude-code/src/bridge/replBridgeTransport.ts), [`../../sources/claude-code/src/bridge/workSecret.ts`](../../sources/claude-code/src/bridge/workSecret.ts), [`../../sources/claude-code/src/bridge/trustedDevice.ts`](../../sources/claude-code/src/bridge/trustedDevice.ts), [`../../sources/claude-code/src/bridge/sessionIdCompat.ts`](../../sources/claude-code/src/bridge/sessionIdCompat.ts)
+源码镜像：[`../../src/bridge/replBridgeTransport.ts`](../../src/bridge/replBridgeTransport.ts), [`../../src/bridge/workSecret.ts`](../../src/bridge/workSecret.ts), [`../../src/bridge/trustedDevice.ts`](../../src/bridge/trustedDevice.ts), [`../../src/bridge/sessionIdCompat.ts`](../../src/bridge/sessionIdCompat.ts)
 
 前一篇 `mechanisms/19` 关注的是主循环和消息路由；这一层关注的是更底下的协议粘合：
 
@@ -19,7 +19,7 @@
 
 ## 2. `ReplBridgeTransport` 不是简单接口，而是 bridge 对两套底层传输协议的统一契约
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridgeTransport.ts`](../../sources/claude-code/src/bridge/replBridgeTransport.ts)
+源码镜像：[`../../src/bridge/replBridgeTransport.ts`](../../src/bridge/replBridgeTransport.ts)
 
 `ReplBridgeTransport` 暴露的最小面包括：
 
@@ -45,7 +45,7 @@
 
 ## 3. `createV1ReplTransport()` 说明 v1 适配目标是“让 HybridTransport 看起来像统一桥接接口”
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridgeTransport.ts`](../../sources/claude-code/src/cli/transports/HybridTransport.ts)
+源码镜像：[`../../src/bridge/replBridgeTransport.ts`](../../src/cli/transports/HybridTransport.ts)
 
 v1 适配层几乎是直通：
 
@@ -62,7 +62,7 @@ v1 适配层几乎是直通：
 
 ## 4. v1 的 `getLastSequenceNum() = 0` 明确承认 Session-Ingress WS 的 replay 语义和 SSE 不同
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridgeTransport.ts`](../../sources/claude-code/src/bridge/replBridge.ts)
+源码镜像：[`../../src/bridge/replBridgeTransport.ts`](../../src/bridge/replBridge.ts)
 
 注释已经写明：
 
@@ -78,7 +78,7 @@ v1 适配层几乎是直通：
 
 ## 5. `createV2ReplTransport()` 说明 v2 真正是“读写分离”的 transport 组合，而不是单个连接对象
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridgeTransport.ts`](../../sources/claude-code/src/cli/transports/SSETransport.ts), [`../../sources/claude-code/src/cli/transports/ccrClient.ts`](../../sources/claude-code/src/cli/transports/ccrClient.ts)
+源码镜像：[`../../src/bridge/replBridgeTransport.ts`](../../src/cli/transports/SSETransport.ts), [`../../src/cli/transports/ccrClient.ts`](../../src/cli/transports/ccrClient.ts)
 
 v2 transport 不是一个类，而是：
 
@@ -95,7 +95,7 @@ v2 transport 不是一个类，而是：
 
 ## 6. `createV2ReplTransport()` 的 auth 处理说明 v2 认证域和 v1 正好相反
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridgeTransport.ts`](../../sources/claude-code/src/bridge/workSecret.ts)
+源码镜像：[`../../src/bridge/replBridgeTransport.ts`](../../src/bridge/workSecret.ts)
 
 v2 的注释明确指出：
 
@@ -107,7 +107,7 @@ v2 的注释明确指出：
 
 ## 7. `getAuthToken` 与 `updateSessionIngressAuthToken()` 说明多 session 支持要求 transport 摆脱进程级 env 共享
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridgeTransport.ts`](../../sources/claude-code/src/utils/sessionIngressAuth.ts)
+源码镜像：[`../../src/bridge/replBridgeTransport.ts`](../../src/utils/sessionIngressAuth.ts)
 
 v2 transport 支持两条 auth 注入路径：
 
@@ -122,7 +122,7 @@ v2 transport 支持两条 auth 注入路径：
 
 ## 8. `registerWorker()` 既是 CCR v2 注册动作，也是 worker epoch 的来源
 
-源码镜像：[`../../sources/claude-code/src/bridge/workSecret.ts`](../../sources/claude-code/src/bridge/replBridgeTransport.ts)
+源码镜像：[`../../src/bridge/workSecret.ts`](../../src/bridge/replBridgeTransport.ts)
 
 `registerWorker(sessionUrl, accessToken)` 做的不只是“告诉 server 我在线了”，它返回：
 
@@ -137,7 +137,7 @@ v2 transport 支持两条 auth 注入路径：
 
 ## 9. epoch mismatch 不是普通错误，而是“当前 worker 身份已经被新实例取代”
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridgeTransport.ts`](../../sources/claude-code/src/cli/transports/ccrClient.ts)
+源码镜像：[`../../src/bridge/replBridgeTransport.ts`](../../src/cli/transports/ccrClient.ts)
 
 `createV2ReplTransport()` 给 `CCRClient` 传入的 `onEpochMismatch` 逻辑不是简单重试，而是：
 
@@ -157,7 +157,7 @@ v2 transport 支持两条 auth 注入路径：
 
 ## 10. `setOnEvent(received + processed)` 的覆写说明 bridge transport 专门修过“daemon 重启后事件反复回灌”的问题
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridgeTransport.ts`](../../sources/claude-code/src/cli/transports/SSETransport.ts)
+源码镜像：[`../../src/bridge/replBridgeTransport.ts`](../../src/cli/transports/SSETransport.ts)
 
 代码里有一段很关键的注释：默认情况下事件可能长期停留在 `received`，导致 daemon 重启后 `reconnectSession` 把它们一再重派，形成 phantom prompts。
 
@@ -170,7 +170,7 @@ v2 transport 支持两条 auth 注入路径：
 
 ## 11. `outboundOnly` 说明 v2 transport 可以被裁成只写不读的镜像型附件
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridgeTransport.ts`](../../sources/claude-code/src/bridge/bridgeMessaging.ts)
+源码镜像：[`../../src/bridge/replBridgeTransport.ts`](../../src/bridge/bridgeMessaging.ts)
 
 `createV2ReplTransport()` 支持：
 
@@ -186,7 +186,7 @@ v2 transport 支持两条 auth 注入路径：
 
 ## 12. `decodeWorkSecret()` 说明 server 派发给 worker 的不是零散字段，而是一个版本化能力包
 
-源码镜像：[`../../sources/claude-code/src/bridge/workSecret.ts`](../../sources/claude-code/src/bridge/types.ts)
+源码镜像：[`../../src/bridge/workSecret.ts`](../../src/bridge/types.ts)
 
 `decodeWorkSecret()` 会：
 
@@ -205,7 +205,7 @@ v2 transport 支持两条 auth 注入路径：
 
 ## 13. `buildSdkUrl()` 和 `buildCCRv2SdkUrl()` 说明 bridge 并存两套 session URL 形状
 
-源码镜像：[`../../sources/claude-code/src/bridge/workSecret.ts`](../../sources/claude-code/src/bridge/replBridgeTransport.ts)
+源码镜像：[`../../src/bridge/workSecret.ts`](../../src/bridge/replBridgeTransport.ts)
 
 `workSecret.ts` 里有两种 URL builder：
 
@@ -226,7 +226,7 @@ transport 适配层的复杂度，很大一部分就来自这两套 URL 宇宙�
 
 ## 14. `sameSessionId()` 说明 session identity 的难点不在 UUID，而在“同一个 UUID 穿了不同 tag 制服”
 
-源码镜像：[`../../sources/claude-code/src/bridge/workSecret.ts`](../../sources/claude-code/src/bridge/sessionIdCompat.ts)
+源码镜像：[`../../src/bridge/workSecret.ts`](../../src/bridge/sessionIdCompat.ts)
 
 `sameSessionId(a, b)` 的实现非常有代表性：
 
@@ -244,7 +244,7 @@ transport 适配层的复杂度，很大一部分就来自这两套 URL 宇宙�
 
 ## 15. `toCompatSessionId()` / `toInfraSessionId()` 把 session 换装做成了显式边界，而不是到处手写字符串替换
 
-源码镜像：[`../../sources/claude-code/src/bridge/sessionIdCompat.ts`](../../sources/claude-code/src/bridge/workSecret.ts)
+源码镜像：[`../../src/bridge/sessionIdCompat.ts`](../../src/bridge/workSecret.ts)
 
 这里显式定义了两条方向：
 
@@ -259,7 +259,7 @@ transport 适配层的复杂度，很大一部分就来自这两套 URL 宇宙�
 
 ## 16. `setCseShimGate()` 说明 session ID 兼容逻辑还受 bundle 约束和 gate 注入约束
 
-源码镜像：[`../../sources/claude-code/src/bridge/sessionIdCompat.ts`](../../sources/claude-code/src/bridge/bridgeEnabled.ts)
+源码镜像：[`../../src/bridge/sessionIdCompat.ts`](../../src/bridge/bridgeEnabled.ts)
 
 `sessionIdCompat.ts` 故意不静态导入 GrowthBook gate，而是通过：
 
@@ -274,7 +274,7 @@ transport 适配层的复杂度，很大一部分就来自这两套 URL 宇宙�
 
 ## 17. `trustedDevice.ts` 不是 bridge 的可选装饰，而是 elevated bridge session 的认证 sidecar
 
-源码镜像：[`../../sources/claude-code/src/bridge/trustedDevice.ts`](../../sources/claude-code/src/bridge/bridgeApi.ts)
+源码镜像：[`../../src/bridge/trustedDevice.ts`](../../src/bridge/bridgeApi.ts)
 
 文件头注释已经定性了这件事：
 
@@ -286,7 +286,7 @@ transport 适配层的复杂度，很大一部分就来自这两套 URL 宇宙�
 
 ## 18. `getTrustedDeviceToken()` 的设计说明它追求的是“热路径便宜、gate 可热切换、存储读可缓存”
 
-源码镜像：[`../../sources/claude-code/src/bridge/trustedDevice.ts`](../../sources/claude-code/src/utils/secureStorage/index.ts)
+源码镜像：[`../../src/bridge/trustedDevice.ts`](../../src/utils/secureStorage/index.ts)
 
 这里的关键设计是：
 
@@ -304,7 +304,7 @@ transport 适配层的复杂度，很大一部分就来自这两套 URL 宇宙�
 
 ## 19. `clearTrustedDeviceToken()` 说明登录切账号时最危险的不是“没有 token”，而是“继续沿用旧账号 token”
 
-源码镜像：[`../../sources/claude-code/src/bridge/trustedDevice.ts`](../../sources/claude-code/src/bridge/trustedDevice.ts), [`../architecture/17-login-oauth-and-trusted-device-ui.md`](../architecture/17-login-oauth-and-trusted-device-ui.md)
+源码镜像：[`../../src/bridge/trustedDevice.ts`](../../src/bridge/trustedDevice.ts), [`../architecture/17-login-oauth-and-trusted-device-ui.md`](../architecture/17-login-oauth-and-trusted-device-ui.md)
 
 这段逻辑在 `/login` 前会：
 
@@ -320,7 +320,7 @@ transport 适配层的复杂度，很大一部分就来自这两套 URL 宇宙�
 
 ## 20. `enrollTrustedDevice()` 说明 enrollment 是“登录后短窗口内的最佳努力动作”，不是懒触发补丁
 
-源码镜像：[`../../sources/claude-code/src/bridge/trustedDevice.ts`](../../sources/claude-code/src/utils/auth.ts)
+源码镜像：[`../../src/bridge/trustedDevice.ts`](../../src/utils/auth.ts)
 
 `enrollTrustedDevice()` 的约束非常明确：
 
@@ -334,7 +334,7 @@ transport 适配层的复杂度，很大一部分就来自这两套 URL 宇宙�
 
 ## 21. bridge transport / work secret / session tag / trusted-device 四者加在一起，构成了 bridge runtime 的协议底盘
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridgeTransport.ts`](../../sources/claude-code/src/bridge/replBridgeTransport.ts), [`../../sources/claude-code/src/bridge/workSecret.ts`](../../sources/claude-code/src/bridge/workSecret.ts), [`../../sources/claude-code/src/bridge/trustedDevice.ts`](../../sources/claude-code/src/bridge/trustedDevice.ts), [`../../sources/claude-code/src/bridge/sessionIdCompat.ts`](../../sources/claude-code/src/bridge/sessionIdCompat.ts)
+源码镜像：[`../../src/bridge/replBridgeTransport.ts`](../../src/bridge/replBridgeTransport.ts), [`../../src/bridge/workSecret.ts`](../../src/bridge/workSecret.ts), [`../../src/bridge/trustedDevice.ts`](../../src/bridge/trustedDevice.ts), [`../../src/bridge/sessionIdCompat.ts`](../../src/bridge/sessionIdCompat.ts)
 
 把这几层放在一起看，bridge 的底盘就很清楚了：
 

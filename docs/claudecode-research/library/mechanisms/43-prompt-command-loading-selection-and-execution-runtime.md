@@ -14,7 +14,7 @@
 
 ## 1. `PromptCommand` 不是“命令名字加一段 prompt”，而是一套可执行协议
 
-源码镜像：[`../../sources/claude-code/src/types/command.ts`](../../sources/claude-code/src/types/command.ts)
+源码镜像：[`../../src/types/command.ts`](../../src/types/command.ts)
 
 `PromptCommand` 真正定义的字段包括：
 
@@ -43,7 +43,7 @@
 
 ## 2. `CommandBase` 里那组字段决定的是“命令怎样被系统装配”，不是单纯 UI metadata
 
-源码镜像：[`../../sources/claude-code/src/types/command.ts`](../../sources/claude-code/src/types/command.ts)
+源码镜像：[`../../src/types/command.ts`](../../src/types/command.ts)
 
 `CommandBase` 里的关键字段有：
 
@@ -68,7 +68,7 @@
 
 ## 3. `commands.ts` 的主装配逻辑不是“读一个 commands 目录”，而是并行汇总多来源命令面
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts)
 
 `loadAllCommands(cwd)` 会并行拉三大块：
 
@@ -92,7 +92,7 @@
 
 ## 4. `getSkills(cwd)` 已经把 “skill” 细分成 4 个来源层
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts)
 
 `getSkills()` 返回的不是一个数组，而是四段：
 
@@ -105,7 +105,7 @@
 
 ## 5. `getCommands()` 在装配完成后还要再跑一层动态 gate，而不是直接返回 memoized 结果
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts)
 
 `loadAllCommands(cwd)` 是 memoized 的，但 `getCommands(cwd)` 仍然每次都会重新跑：
 
@@ -121,7 +121,7 @@
 
 ## 6. `availability` 这层不是 feature flag，而是 auth/provider contract
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts)
 
 `meetsAvailabilityRequirement()` 只看：
 
@@ -139,7 +139,7 @@
 
 ## 7. dynamic skills 不会重建整张命令表，而是以插片方式插进已装配好的 base commands
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts)
 
 `getCommands()` 在拿到 `allCommands` 之后，还会读：
 
@@ -155,7 +155,7 @@
 
 ## 8. `getSkillToolCommands()` 和 `getSlashCommandToolSkills()` 是两种不同投影，不要混成一回事
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts)
 
 `getSkillToolCommands()` 取的是：
 
@@ -178,7 +178,7 @@
 
 ## 9. `parseSlashCommand()` 的协议很窄，只负责把输入切成 `commandName/args/isMcp`
 
-源码镜像：[`../../sources/claude-code/src/utils/slashCommandParsing.ts`](../../sources/claude-code/src/utils/slashCommandParsing.ts)
+源码镜像：[`../../src/utils/slashCommandParsing.ts`](../../src/utils/slashCommandParsing.ts)
 
 这层只做三件事：
 
@@ -190,7 +190,7 @@
 
 ## 10. `handlePromptSubmit()` 先抢走的是 `immediate local-jsx`，不是所有 slash commands
 
-源码镜像：[`../../sources/claude-code/src/utils/handlePromptSubmit.ts`](../../sources/claude-code/src/utils/handlePromptSubmit.ts)
+源码镜像：[`../../src/utils/handlePromptSubmit.ts`](../../src/utils/handlePromptSubmit.ts)
 
 输入提交流程里，系统会先看：
 
@@ -208,7 +208,7 @@
 
 ## 11. `processSlashCommand()` 是 slash runtime 的主分流器，真正决定 local / local-jsx / prompt 三路
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx)
 
 核心流程是：
 
@@ -223,7 +223,7 @@
 
 ## 12. `local-jsx` 命令本质上是“返回一个 Ink subtree + onDone 协议”的交互式命令
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx), [`../../sources/claude-code/src/utils/handlePromptSubmit.ts`](../../sources/claude-code/src/utils/handlePromptSubmit.ts)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx), [`../../src/utils/handlePromptSubmit.ts`](../../src/utils/handlePromptSubmit.ts)
 
 `local-jsx` 路径里，系统会：
 
@@ -236,7 +236,7 @@
 
 ## 13. `local` 命令的 transcript 契约也不是普通 assistant text，而是 `local-command-stdout/stderr`
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx), [`../../sources/claude-code/src/entrypoints/sdk/coreSchemas.ts`](../../sources/claude-code/src/entrypoints/sdk/coreSchemas.ts)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx), [`../../src/entrypoints/sdk/coreSchemas.ts`](../../src/entrypoints/sdk/coreSchemas.ts)
 
 `local` 命令执行后会被包装成：
 
@@ -247,7 +247,7 @@
 
 ## 14. `prompt` 命令的真正执行核心是 `getMessagesForPromptSlashCommand()`
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx)
 
 这条链不是直接把 `getPromptForCommand()` 的返回值扔给模型，而是进一步做：
 
@@ -261,7 +261,7 @@
 
 ## 15. coordinator mode 下，prompt command 不会加载完整 skill 内容，而会降级成“给主协调器看的 delegation summary”
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx), [`../../sources/claude-code/src/tools/AgentTool/runAgent.ts`](../../sources/claude-code/src/tools/AgentTool/runAgent.ts)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx), [`../../src/tools/AgentTool/runAgent.ts`](../../src/tools/AgentTool/runAgent.ts)
 
 在：
 
@@ -279,7 +279,7 @@
 
 ## 16. 普通 prompt command 执行后，真实落进消息流的是 `metadata + meta content + attachments + command_permissions`
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx), [`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx), [`../../src/utils/attachments.ts`](../../src/utils/attachments.ts)
 
 标准路径会构造：
 
@@ -292,7 +292,7 @@
 
 ## 17. `allowedTools` 不是只存在于 frontmatter；它会被 parse 成真正的 attachment 权限载荷
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx), [`../../sources/claude-code/src/utils/permissions/permissionSetup.ts`](../../sources/claude-code/src/utils/permissions/permissionSetup.ts)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx), [`../../src/utils/permissions/permissionSetup.ts`](../../src/utils/permissions/permissionSetup.ts)
 
 执行时会把：
 
@@ -310,7 +310,7 @@
 
 ## 18. skill hooks 的注册位置不在 loader，而在真正执行 prompt command 的时刻
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx), [`../../sources/claude-code/src/utils/hooks/registerSkillHooks.ts`](../../sources/claude-code/src/utils/hooks/registerSkillHooks.ts)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx), [`../../src/utils/hooks/registerSkillHooks.ts`](../../src/utils/hooks/registerSkillHooks.ts)
 
 `command.hooks` 存在时，系统不是在命令加载时注册，而是在真正执行时才：
 
@@ -325,7 +325,7 @@
 
 ## 19. `fork` 对 prompt command 来说不是附加选项，而是执行路径级别的分叉
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx), [`../../sources/claude-code/src/utils/forkedAgent.ts`](../../sources/claude-code/src/utils/forkedAgent.ts)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx), [`../../src/utils/forkedAgent.ts`](../../src/utils/forkedAgent.ts)
 
 当 `command.context === 'fork'` 时，系统不会走 inline expansion，而是直接跳：
 
@@ -342,7 +342,7 @@
 
 ## 20. `SkillTool` 并不是独立于 slash runtime 的第二套世界，而是复用 prompt command 主链
 
-源码镜像：[`../../sources/claude-code/src/tools/SkillTool/SkillTool.ts`](../../sources/claude-code/src/tools/SkillTool/SkillTool.ts)
+源码镜像：[`../../src/tools/SkillTool/SkillTool.ts`](../../src/tools/SkillTool/SkillTool.ts)
 
 `SkillTool.call()` 在拿到 skill 名后会：
 
@@ -355,7 +355,7 @@
 
 ## 21. `SkillTool` 和用户 slash command 的差异主要在“谁能调用、怎么列出、怎样做权限建议”
 
-源码镜像：[`../../sources/claude-code/src/tools/SkillTool/prompt.ts`](../../sources/claude-code/src/tools/SkillTool/prompt.ts)
+源码镜像：[`../../src/tools/SkillTool/prompt.ts`](../../src/tools/SkillTool/prompt.ts)
 
 两条链的主要差异是：
 
@@ -368,7 +368,7 @@
 
 ## 22. `formatCommandLoadingMetadata()` 解释了为什么 transcript 里 slash 与 skill 看起来不一样
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx), [`../../sources/claude-code/src/constants/xml.ts`](../../sources/claude-code/src/constants/xml.ts)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx), [`../../src/constants/xml.ts`](../../src/constants/xml.ts)
 
 这层会按两类格式生成 loading metadata：
 
@@ -379,7 +379,7 @@
 
 ## 23. remote / bridge 安全语义在命令层也有专门裁剪，不是所有 slash command 都能跨宿主执行
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts), [`../../sources/claude-code/src/utils/processUserInput/processUserInput.ts`](../../sources/claude-code/src/utils/processUserInput/processUserInput.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts), [`../../src/utils/processUserInput/processUserInput.ts`](../../src/utils/processUserInput/processUserInput.ts)
 
 `commands.ts` 明确区分：
 
@@ -397,7 +397,7 @@
 
 ## 24. 这组 consumer 共同说明：Claude Code 的 prompt command 其实是统一 capability runtime 的中心协议
 
-源码镜像：[`../../sources/claude-code/src/types/command.ts`](../../sources/claude-code/src/types/command.ts), [`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts), [`../../sources/claude-code/src/utils/slashCommandParsing.ts`](../../sources/claude-code/src/utils/slashCommandParsing.ts), [`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx), [`../../sources/claude-code/src/utils/handlePromptSubmit.ts`](../../sources/claude-code/src/utils/handlePromptSubmit.ts), [`../../sources/claude-code/src/tools/SkillTool/prompt.ts`](../../sources/claude-code/src/tools/SkillTool/prompt.ts), [`../../sources/claude-code/src/tools/SkillTool/SkillTool.ts`](../../sources/claude-code/src/tools/SkillTool/SkillTool.ts), [`../../sources/claude-code/src/utils/forkedAgent.ts`](../../sources/claude-code/src/utils/forkedAgent.ts)
+源码镜像：[`../../src/types/command.ts`](../../src/types/command.ts), [`../../src/commands.ts`](../../src/commands.ts), [`../../src/utils/slashCommandParsing.ts`](../../src/utils/slashCommandParsing.ts), [`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx), [`../../src/utils/handlePromptSubmit.ts`](../../src/utils/handlePromptSubmit.ts), [`../../src/tools/SkillTool/prompt.ts`](../../src/tools/SkillTool/prompt.ts), [`../../src/tools/SkillTool/SkillTool.ts`](../../src/tools/SkillTool/SkillTool.ts), [`../../src/utils/forkedAgent.ts`](../../src/utils/forkedAgent.ts)
 
 这条链把几件看似分散的事情统一起来了：
 

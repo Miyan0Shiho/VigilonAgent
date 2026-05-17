@@ -6,7 +6,7 @@
 
 ## 1. `ToolUseContext` 不是普通依赖注入
 
-源码镜像：[`../../sources/claude-code/src/Tool.ts`](../../sources/claude-code/src/Tool.ts)
+源码镜像：[`../../src/Tool.ts`](../../src/Tool.ts)
 
 `ToolUseContext` 同时携带：
 
@@ -33,7 +33,7 @@
 
 ## 3. 工具池是如何组装的
 
-源码镜像：[`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/tools.ts)
+源码镜像：[`../../src/tools.ts`](../../src/tools.ts)
 
 工具池至少有三层：
 

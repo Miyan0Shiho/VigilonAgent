@@ -6,7 +6,7 @@
 
 ## 1. 这组命令覆盖的是两类产品面：仓库初始化和远端协作接入
 
-源码镜像：[`../../sources/claude-code/src/commands/init.ts`](../../sources/claude-code/src/commands/init.ts), [`../../sources/claude-code/src/commands/init-verifiers.ts`](../../sources/claude-code/src/commands/init-verifiers.ts), [`../../sources/claude-code/src/commands/remote-setup/remote-setup.tsx`](../../sources/claude-code/src/commands/remote-setup/remote-setup.tsx), [`../../sources/claude-code/src/commands/ultraplan.tsx`](../../sources/claude-code/src/commands/ultraplan.tsx), [`../../sources/claude-code/src/commands/bridge/bridge.tsx`](../../sources/claude-code/src/commands/bridge/bridge.tsx)
+源码镜像：[`../../src/commands/init.ts`](../../src/commands/init.ts), [`../../src/commands/init-verifiers.ts`](../../src/commands/init-verifiers.ts), [`../../src/commands/remote-setup/remote-setup.tsx`](../../src/commands/remote-setup/remote-setup.tsx), [`../../src/commands/ultraplan.tsx`](../../src/commands/ultraplan.tsx), [`../../src/commands/bridge/bridge.tsx`](../../src/commands/bridge/bridge.tsx)
 
 它们大致分成两类：
 
@@ -17,7 +17,7 @@
 
 ## 2. `/init` 在当前版本里不是固定模板，而是 feature-gated prompt spec
 
-源码镜像：[`../../sources/claude-code/src/commands/init.ts`](../../sources/claude-code/src/commands/init.ts)
+源码镜像：[`../../src/commands/init.ts`](../../src/commands/init.ts)
 
 `/init` 不是手写 `call()`，而是一个 `type: 'prompt'` 的 builtin command。最关键的是它内置了两套 prompt：
 
@@ -36,7 +36,7 @@
 
 ## 3. 新版 `/init` 已经不是“写 CLAUDE.md”，而是一个多阶段仓库上手流程
 
-源码镜像：[`../../sources/claude-code/src/commands/init.ts`](../../sources/claude-code/src/commands/init.ts)
+源码镜像：[`../../src/commands/init.ts`](../../src/commands/init.ts)
 
 `NEW_INIT_PROMPT` 已经把流程写成多阶段规范：
 
@@ -52,7 +52,7 @@
 
 ## 4. `/init` 的关键变化是：把 hook、skill、note 三种 artifact 合并进一条决策队列
 
-源码镜像：[`../../sources/claude-code/src/commands/init.ts`](../../sources/claude-code/src/commands/init.ts)
+源码镜像：[`../../src/commands/init.ts`](../../src/commands/init.ts)
 
 新版 prompt 明确要求先建立 preference queue，再根据 Phase 1 选择过滤：
 
@@ -66,7 +66,7 @@
 
 ## 5. `/init` 还把 worktree、personal local file 和 imports 规则纳入了 repo bootstrap
 
-源码镜像：[`../../sources/claude-code/src/commands/init.ts`](../../sources/claude-code/src/commands/init.ts)
+源码镜像：[`../../src/commands/init.ts`](../../src/commands/init.ts)
 
 新版 prompt 还显式处理：
 
@@ -78,7 +78,7 @@
 
 ## 6. `init-verifiers` 不是泛化 skill 生成器，而是专门给 Verify agent 建 verifier skills
 
-源码镜像：[`../../sources/claude-code/src/commands/init-verifiers.ts`](../../sources/claude-code/src/commands/init-verifiers.ts)
+源码镜像：[`../../src/commands/init-verifiers.ts`](../../src/commands/init-verifiers.ts)
 
 这条命令同样是 `type: 'prompt'`，但目标更窄：
 
@@ -91,7 +91,7 @@
 
 ## 7. `init-verifiers` 其实在做多项目区域探测，而不是单应用假设
 
-源码镜像：[`../../sources/claude-code/src/commands/init-verifiers.ts`](../../sources/claude-code/src/commands/init-verifiers.ts)
+源码镜像：[`../../src/commands/init-verifiers.ts`](../../src/commands/init-verifiers.ts)
 
 它的 prompt 先要求：
 
@@ -104,7 +104,7 @@
 
 ## 8. `init-verifiers` 把 verification tool setup 也纳入 prompt，而不是只写 skill 文件
 
-源码镜像：[`../../sources/claude-code/src/commands/init-verifiers.ts`](../../sources/claude-code/src/commands/init-verifiers.ts)
+源码镜像：[`../../src/commands/init-verifiers.ts`](../../src/commands/init-verifiers.ts)
 
 它不仅要写 `.claude/skills/<verifier>/SKILL.md`，还会先处理：
 
@@ -118,7 +118,7 @@
 
 ## 9. `/web-setup` 是 GitHub token import 向导，不是单纯打开浏览器
 
-源码镜像：[`../../sources/claude-code/src/commands/remote-setup/index.ts`](../../sources/claude-code/src/commands/remote-setup/index.ts), [`../../sources/claude-code/src/commands/remote-setup/remote-setup.tsx`](../../sources/claude-code/src/commands/remote-setup/remote-setup.tsx), [`../../sources/claude-code/src/commands/remote-setup/api.ts`](../../sources/claude-code/src/commands/remote-setup/api.ts)
+源码镜像：[`../../src/commands/remote-setup/index.ts`](../../src/commands/remote-setup/index.ts), [`../../src/commands/remote-setup/remote-setup.tsx`](../../src/commands/remote-setup/remote-setup.tsx), [`../../src/commands/remote-setup/api.ts`](../../src/commands/remote-setup/api.ts)
 
 `/web-setup` 的产品语义是：
 
@@ -132,7 +132,7 @@
 
 ## 10. `remote-setup.tsx` 明确区分了四种前置状态
 
-源码镜像：[`../../sources/claude-code/src/commands/remote-setup/remote-setup.tsx`](../../sources/claude-code/src/commands/remote-setup/remote-setup.tsx)
+源码镜像：[`../../src/commands/remote-setup/remote-setup.tsx`](../../src/commands/remote-setup/remote-setup.tsx)
 
 `checkLoginState()` 会先把当前状态分类成：
 
@@ -151,7 +151,7 @@
 
 ## 11. `RedactedGithubToken` 说明 web setup 在实现层就处理了 token 泄露风险
 
-源码镜像：[`../../sources/claude-code/src/commands/remote-setup/api.ts`](../../sources/claude-code/src/commands/remote-setup/api.ts)
+源码镜像：[`../../src/commands/remote-setup/api.ts`](../../src/commands/remote-setup/api.ts)
 
 这里没有直接把 token 当字符串传来传去，而是用 `RedactedGithubToken` 包装：
 
@@ -163,7 +163,7 @@
 
 ## 12. `/ultraplan` 的本质不是 plan mode 本地扩展，而是一个远端 planning session launcher
 
-源码镜像：[`../../sources/claude-code/src/commands/ultraplan.tsx`](../../sources/claude-code/src/commands/ultraplan.tsx)
+源码镜像：[`../../src/commands/ultraplan.tsx`](../../src/commands/ultraplan.tsx)
 
 `/ultraplan` 并不是本地生成更长的计划。它会：
 
@@ -176,7 +176,7 @@
 
 ## 13. `/ultraplan` 同时管理了 launch、poll、approval、execution-target 分叉
 
-源码镜像：[`../../sources/claude-code/src/commands/ultraplan.tsx`](../../sources/claude-code/src/commands/ultraplan.tsx)
+源码镜像：[`../../src/commands/ultraplan.tsx`](../../src/commands/ultraplan.tsx)
 
 启动后它不是只等结果，而是显式处理：
 
@@ -190,7 +190,7 @@
 
 ## 14. `/ultraplan` 的 prompt 还专门规避了自触发问题
 
-源码镜像：[`../../sources/claude-code/src/commands/ultraplan.tsx`](../../sources/claude-code/src/commands/ultraplan.tsx)
+源码镜像：[`../../src/commands/ultraplan.tsx`](../../src/commands/ultraplan.tsx)
 
 源码里明确写了：
 
@@ -203,7 +203,7 @@
 
 ## 15. `/remote-control` 不是状态查看，而是本地终端桥接开关
 
-源码镜像：[`../../sources/claude-code/src/commands/bridge/index.ts`](../../sources/claude-code/src/commands/bridge/index.ts), [`../../sources/claude-code/src/commands/bridge/bridge.tsx`](../../sources/claude-code/src/commands/bridge/bridge.tsx)
+源码镜像：[`../../src/commands/bridge/index.ts`](../../src/commands/bridge/index.ts), [`../../src/commands/bridge/bridge.tsx`](../../src/commands/bridge/bridge.tsx)
 
 `/remote-control` 的命令定义非常明确：
 
@@ -222,7 +222,7 @@
 
 ## 16. `/remote-control` 已连接时会切到断开对话框，而不是盲目重连
 
-源码镜像：[`../../sources/claude-code/src/commands/bridge/bridge.tsx`](../../sources/claude-code/src/commands/bridge/bridge.tsx)
+源码镜像：[`../../src/commands/bridge/bridge.tsx`](../../src/commands/bridge/bridge.tsx)
 
 如果 bridge 已连接，它不会再执行 connect，而是弹出 `BridgeDisconnectDialog`：
 
@@ -235,7 +235,7 @@
 
 ## 17. `/bridge-kick` 是 ant-only 的故障注入器，不应被当成普通用户命令
 
-源码镜像：[`../../sources/claude-code/src/commands/bridge-kick.ts`](../../sources/claude-code/src/commands/bridge-kick.ts)
+源码镜像：[`../../src/commands/bridge-kick.ts`](../../src/commands/bridge-kick.ts)
 
 这条命令只在：
 

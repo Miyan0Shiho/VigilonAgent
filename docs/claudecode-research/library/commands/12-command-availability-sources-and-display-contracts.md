@@ -6,7 +6,7 @@
 
 ## 1. Claude Code 的命令目录不是静态表，而是“静态内建命令 + 动态来源 + 可用性裁剪”三段装配
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts), [`../../sources/claude-code/src/types/command.ts`](../../sources/claude-code/src/types/command.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts), [`../../src/types/command.ts`](../../src/types/command.ts)
 
 `commands.ts` 里至少有三层来源：
 
@@ -18,7 +18,7 @@
 
 ## 2. `Command` 协议的核心分裂不是业务语义，而是执行宿主：`prompt` / `local` / `local-jsx`
 
-源码镜像：[`../../sources/claude-code/src/types/command.ts`](../../sources/claude-code/src/types/command.ts)
+源码镜像：[`../../src/types/command.ts`](../../src/types/command.ts)
 
 命令协议分成三类：
 
@@ -36,7 +36,7 @@
 
 ## 3. `CommandBase` 里的元字段说明命令目录本身就带着治理语义，而不只是 name/description
 
-源码镜像：[`../../sources/claude-code/src/types/command.ts`](../../sources/claude-code/src/types/command.ts)
+源码镜像：[`../../src/types/command.ts`](../../src/types/command.ts)
 
 `CommandBase` 里几组特别关键的字段是：
 
@@ -58,7 +58,7 @@
 
 ## 4. `availability` 与 `isEnabled()` 是两套不同的 gate，前者回答“你有没有资格看见”，后者回答“当前 build 是否打开”
 
-源码镜像：[`../../sources/claude-code/src/types/command.ts`](../../sources/claude-code/src/types/command.ts), [`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/types/command.ts`](../../src/types/command.ts), [`../../src/commands.ts`](../../src/commands.ts)
 
 注释已经写得很清楚：
 
@@ -74,7 +74,7 @@
 
 ## 5. `meetsAvailabilityRequirement()` 说明 provider/auth gating 是每次 `getCommands()` 时重新计算的，不吃 memoized catalog 的旧结果
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/utils/auth.ts)
+源码镜像：[`../../src/commands.ts`](../../src/utils/auth.ts)
 
 `loadAllCommands(cwd)` 会 memoize，但 `meetsAvailabilityRequirement(cmd)` 不会。
 
@@ -94,7 +94,7 @@
 
 ## 6. `console` 资格不是“有 API key 就算”，而是严格指向 direct 1P API 用户
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/utils/auth.ts)
+源码镜像：[`../../src/commands.ts`](../../src/utils/auth.ts)
 
 `meetsAvailabilityRequirement()` 对 `console` 的判断非常明确：
 
@@ -111,7 +111,7 @@
 
 ## 7. `COMMANDS()` 里 `...(!isUsing3PServices() ? [logout, login()] : [])` 说明最直观的 provider gate 就发生在 slash 目录本身
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/utils/auth.ts)
+源码镜像：[`../../src/commands.ts`](../../src/utils/auth.ts)
 
 `login/logout` 并不是总被注册。只有：
 
@@ -126,7 +126,7 @@
 
 ## 8. `INTERNAL_ONLY_COMMANDS` 说明还有第三类 gate：构建/用户类型级的“根本不该出现在外部产品里”的命令簇
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/types/command.ts)
+源码镜像：[`../../src/commands.ts`](../../src/types/command.ts)
 
 `INTERNAL_ONLY_COMMANDS` 里包括：
 
@@ -154,7 +154,7 @@
 
 ## 9. `builtInCommandNames` 把 alias 一起进 Set，说明 builtin identity 是“名字空间占用”而不是仅主名占用
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/types/command.ts)
+源码镜像：[`../../src/commands.ts`](../../src/types/command.ts)
 
 `builtInCommandNames` 不是只收 `_.name`，而是：
 
@@ -166,7 +166,7 @@
 
 ## 10. `loadedFrom` 与 `source` 分属两层：一个回答“命令从哪类目录发现”，一个回答“prompt command 的配置来源”
 
-源码镜像：[`../../sources/claude-code/src/types/command.ts`](../../sources/claude-code/src/utils/settings/constants.ts)
+源码镜像：[`../../src/types/command.ts`](../../src/utils/settings/constants.ts)
 
 这里很容易混：
 
@@ -182,7 +182,7 @@
 
 ## 11. `getSettingSourceName()` 决定了很多命令描述里为什么会出现 `user / project / managed / cli flag`
 
-源码镜像：[`../../sources/claude-code/src/utils/settings/constants.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/utils/settings/constants.ts`](../../src/commands.ts)
 
 `getSettingSourceName()` 把 setting source 翻译成用户可读文本：
 
@@ -198,7 +198,7 @@
 
 ## 12. `formatDescriptionWithSource()` 说明命令目录的描述不是纯原文复用，而是会按来源类型做统一重写
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/types/command.ts)
+源码镜像：[`../../src/commands.ts`](../../src/types/command.ts)
 
 它的策略很明确：
 
@@ -213,7 +213,7 @@
 
 ## 13. `userFacingName()` 说明命令显示名和实际内部 name 可以分离，目录系统默认允许重命名壳层
 
-源码镜像：[`../../sources/claude-code/src/types/command.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/types/command.ts`](../../src/commands.ts)
 
 `getCommandName(cmd)` 的实现是：
 
@@ -231,7 +231,7 @@
 
 ## 14. `dynamicSkills` 的二次注入说明命令目录在 build 完基础 catalog 后，还会被运行时文件操作反向污染
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/commands.ts`](../../src/skills/loadSkillsDir.ts)
 
 `getCommands(cwd)` 在拿到 `allCommands` 后，还会：
 

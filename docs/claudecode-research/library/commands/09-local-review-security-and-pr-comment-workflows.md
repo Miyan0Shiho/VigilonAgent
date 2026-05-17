@@ -13,7 +13,7 @@
 
 ## 1. 这四条链不能再被写成“一个 review 命令族”
 
-源码镜像：[`../../sources/claude-code/src/commands/review.ts`](../../sources/claude-code/src/commands/review.ts), [`../../sources/claude-code/src/commands/review/ultrareviewCommand.tsx`](../../sources/claude-code/src/commands/review/ultrareviewCommand.tsx), [`../../sources/claude-code/src/commands/security-review.ts`](../../sources/claude-code/src/commands/security-review.ts), [`../../sources/claude-code/src/commands/pr_comments/index.ts`](../../sources/claude-code/src/commands/pr_comments/index.ts)
+源码镜像：[`../../src/commands/review.ts`](../../src/commands/review.ts), [`../../src/commands/review/ultrareviewCommand.tsx`](../../src/commands/review/ultrareviewCommand.tsx), [`../../src/commands/security-review.ts`](../../src/commands/security-review.ts), [`../../src/commands/pr_comments/index.ts`](../../src/commands/pr_comments/index.ts)
 
 这四条命令分别代表四种不同实现风格：
 
@@ -26,7 +26,7 @@
 
 ## 2. `/review` 仍然是本地 prompt 命令，不是 CCR 远端路径
 
-源码镜像：[`../../sources/claude-code/src/commands/review.ts`](../../sources/claude-code/src/commands/review.ts)
+源码镜像：[`../../src/commands/review.ts`](../../src/commands/review.ts)
 
 `review.ts` 自己已经把边界写死了：
 
@@ -49,7 +49,7 @@
 
 ## 3. `/ultrareview` 不是 prompt 别名，而是一个受 feature gate 控制的 JSX 启动器
 
-源码镜像：[`../../sources/claude-code/src/commands/review.ts`](../../sources/claude-code/src/commands/review.ts), [`../../sources/claude-code/src/commands/review/ultrareviewEnabled.ts`](../../sources/claude-code/src/commands/review/ultrareviewEnabled.ts)
+源码镜像：[`../../src/commands/review.ts`](../../src/commands/review.ts), [`../../src/commands/review/ultrareviewEnabled.ts`](../../src/commands/review/ultrareviewEnabled.ts)
 
 `ultrareview` 的可见性不是静态的，而是：
 
@@ -60,7 +60,7 @@
 
 ## 4. `/ultrareview` 命令壳真正做的是 billing gate dispatch
 
-源码镜像：[`../../sources/claude-code/src/commands/review/ultrareviewCommand.tsx`](../../sources/claude-code/src/commands/review/ultrareviewCommand.tsx)
+源码镜像：[`../../src/commands/review/ultrareviewCommand.tsx`](../../src/commands/review/ultrareviewCommand.tsx)
 
 `ultrareviewCommand.tsx` 本身不做审查分析，它做三件事：
 
@@ -77,7 +77,7 @@
 
 ## 5. `checkOverageGate()` 把 ultrareview 的免费额度和 Extra Usage 政策编码成显式状态机
 
-源码镜像：[`../../sources/claude-code/src/commands/review/reviewRemote.ts`](../../sources/claude-code/src/commands/review/reviewRemote.ts), [`../../sources/claude-code/src/services/api/ultrareviewQuota.ts`](../../sources/claude-code/src/services/api/ultrareviewQuota.ts)
+源码镜像：[`../../src/commands/review/reviewRemote.ts`](../../src/commands/review/reviewRemote.ts), [`../../src/services/api/ultrareviewQuota.ts`](../../src/services/api/ultrareviewQuota.ts)
 
 这条 gate 至少区分四种状态：
 
@@ -97,7 +97,7 @@
 
 ## 6. `launchRemoteReview()` 不是 review 本体，而是 teleported review session 的装配器
 
-源码镜像：[`../../sources/claude-code/src/commands/review/reviewRemote.ts`](../../sources/claude-code/src/commands/review/reviewRemote.ts)
+源码镜像：[`../../src/commands/review/reviewRemote.ts`](../../src/commands/review/reviewRemote.ts)
 
 这条链已经在远端机制卷里展开过，但从命令角度看，关键是它如何把 `/ultrareview` 编造成一个可启动产品面：
 
@@ -112,7 +112,7 @@
 
 ## 7. `security-review` 属于完全不同的一类：可执行 Markdown command spec
 
-源码镜像：[`../../sources/claude-code/src/commands/security-review.ts`](../../sources/claude-code/src/commands/security-review.ts)
+源码镜像：[`../../src/commands/security-review.ts`](../../src/commands/security-review.ts)
 
 这份命令最关键的结构不是函数，而是内嵌的 `SECURITY_REVIEW_MARKDOWN`：
 
@@ -130,7 +130,7 @@
 
 ## 8. `security-review` 的 frontmatter 不只是注释，它会真的改写工具权限
 
-源码镜像：[`../../sources/claude-code/src/commands/security-review.ts`](../../sources/claude-code/src/commands/security-review.ts)
+源码镜像：[`../../src/commands/security-review.ts`](../../src/commands/security-review.ts)
 
 执行 `executeShellCommandsInPrompt()` 时，代码会覆盖：
 
@@ -148,7 +148,7 @@
 
 ## 9. `security-review` 还把 false-positive filtering 直接写成了多子任务协议
 
-源码镜像：[`../../sources/claude-code/src/commands/security-review.ts`](../../sources/claude-code/src/commands/security-review.ts)
+源码镜像：[`../../src/commands/security-review.ts`](../../src/commands/security-review.ts)
 
 这条命令不是只说“做安全审查”，而是把过程写成了三步：
 
@@ -160,7 +160,7 @@
 
 ## 10. `pr-comments` 走的是第四种路线：极薄 prompt + 显式 GitHub CLI 编排
 
-源码镜像：[`../../sources/claude-code/src/commands/pr_comments/index.ts`](../../sources/claude-code/src/commands/pr_comments/index.ts)
+源码镜像：[`../../src/commands/pr_comments/index.ts`](../../src/commands/pr_comments/index.ts)
 
 `pr-comments` 的 prompt 非常薄，但工作流非常清楚：
 
@@ -174,7 +174,7 @@
 
 ## 11. `pr-comments` 最重要的产品约束是“只输出 comments，不要二次解释”
 
-源码镜像：[`../../sources/claude-code/src/commands/pr_comments/index.ts`](../../sources/claude-code/src/commands/pr_comments/index.ts)
+源码镜像：[`../../src/commands/pr_comments/index.ts`](../../src/commands/pr_comments/index.ts)
 
 这条命令在 prompt 里硬编码了几个结果约束：
 

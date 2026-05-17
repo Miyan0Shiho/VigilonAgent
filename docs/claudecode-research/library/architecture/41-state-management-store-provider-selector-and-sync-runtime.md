@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是“全局真相源如何维持一致”，不是普通组件状态复用
 
-源码镜像：[`../../sources/claude-code/src/state/store.ts`](../../sources/claude-code/src/state/store.ts), [`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts), [`../../sources/claude-code/src/state/AppState.tsx`](../../sources/claude-code/src/state/AppState.tsx), [`../../sources/claude-code/src/state/onChangeAppState.ts`](../../sources/claude-code/src/state/onChangeAppState.ts)
+源码镜像：[`../../src/state/store.ts`](../../src/state/store.ts), [`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts), [`../../src/state/AppState.tsx`](../../src/state/AppState.tsx), [`../../src/state/onChangeAppState.ts`](../../src/state/onChangeAppState.ts)
 
 Claude Code 的状态层同时要回答几类问题：
 
@@ -20,7 +20,7 @@ Claude Code 的状态层同时要回答几类问题：
 
 ## 2. `createStore()` 故意保持极薄，把状态引擎和 React 宿主拆开
 
-源码镜像：[`../../sources/claude-code/src/state/store.ts`](../../sources/claude-code/src/state/store.ts)
+源码镜像：[`../../src/state/store.ts`](../../src/state/store.ts)
 
 最底层的 `createStore()` 只有三件事：
 
@@ -40,7 +40,7 @@ Claude Code 的状态层同时要回答几类问题：
 
 ## 3. `AppState` 不是“小而美”的 UI state，而是把 CLI/TUI 会话事实全部提升成一个统一对象
 
-源码镜像：[`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts)
+源码镜像：[`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts)
 
 `AppState` 里同时存在几层完全不同的状态：
 
@@ -56,7 +56,7 @@ Claude Code 的状态层同时要回答几类问题：
 
 ## 4. `getDefaultAppState()` 把默认值、feature gate 和 teammate 启动语义一起固化成会话初始协议
 
-源码镜像：[`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts)
+源码镜像：[`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts)
 
 `getDefaultAppState()` 不只是给字段填空值，它还在启动时做了几件很像 runtime policy 的事：
 
@@ -69,7 +69,7 @@ Claude Code 的状态层同时要回答几类问题：
 
 ## 5. `AppStateProvider` 不是普通 context wrapper，而是 store 宿主、settings bridge 和 side-provider 装配点
 
-源码镜像：[`../../sources/claude-code/src/state/AppState.tsx`](../../sources/claude-code/src/state/AppState.tsx)
+源码镜像：[`../../src/state/AppState.tsx`](../../src/state/AppState.tsx)
 
 `AppStateProvider` 有几个很明确的架构信号：
 
@@ -83,7 +83,7 @@ Claude Code 的状态层同时要回答几类问题：
 
 ## 6. `useAppState()` / `useSetAppState()` 把“读取”和“写入”故意拆开，避免整树被全局状态拖着重渲染
 
-源码镜像：[`../../sources/claude-code/src/state/AppState.tsx`](../../sources/claude-code/src/state/AppState.tsx)
+源码镜像：[`../../src/state/AppState.tsx`](../../src/state/AppState.tsx)
 
 这层对性能和约束都做得很明确：
 
@@ -103,7 +103,7 @@ Claude Code 的状态层同时要回答几类问题：
 
 ## 7. `selectors.ts` 说明这层不只存原始字段，还负责把原始字段提升成输入路由语义
 
-源码镜像：[`../../sources/claude-code/src/state/selectors.ts`](../../sources/claude-code/src/state/selectors.ts)
+源码镜像：[`../../src/state/selectors.ts`](../../src/state/selectors.ts)
 
 `selectors.ts` 很短，但架构意义很重。
 
@@ -122,7 +122,7 @@ Claude Code 的状态层同时要回答几类问题：
 
 ## 8. `onChangeAppState()` 是写侧同步 choke point，把本地状态差分投射到外部系统与持久层
 
-源码镜像：[`../../sources/claude-code/src/state/onChangeAppState.ts`](../../sources/claude-code/src/state/onChangeAppState.ts)
+源码镜像：[`../../src/state/onChangeAppState.ts`](../../src/state/onChangeAppState.ts)
 
 这份文件是整套架构最关键的写侧入口之一，因为它集中处理了几类同步：
 
@@ -136,7 +136,7 @@ Claude Code 的状态层同时要回答几类问题：
 
 ## 9. `applySettingsChange()` 和 `useSettingsChange()` 把外部配置变化闭合回 store，形成真正的双向环
 
-源码镜像：[`../../sources/claude-code/src/state/AppState.tsx`](../../sources/claude-code/src/state/onChangeAppState.ts), [`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts)
+源码镜像：[`../../src/state/AppState.tsx`](../../src/state/onChangeAppState.ts), [`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts)
 
 这一层最容易被忽视的点是：状态系统不是单向的。
 
@@ -156,7 +156,7 @@ Claude Code 的状态层同时要回答几类问题：
 
 ## 10. 这套架构真正建立的是“四层分工”：引擎、宿主、派生、同步
 
-源码镜像：[`../../sources/claude-code/src/state/store.ts`](../../sources/claude-code/src/state/store.ts), [`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts), [`../../sources/claude-code/src/state/AppState.tsx`](../../sources/claude-code/src/state/AppState.tsx), [`../../sources/claude-code/src/state/selectors.ts`](../../sources/claude-code/src/state/selectors.ts), [`../../sources/claude-code/src/state/onChangeAppState.ts`](../../sources/claude-code/src/state/onChangeAppState.ts)
+源码镜像：[`../../src/state/store.ts`](../../src/state/store.ts), [`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts), [`../../src/state/AppState.tsx`](../../src/state/AppState.tsx), [`../../src/state/selectors.ts`](../../src/state/selectors.ts), [`../../src/state/onChangeAppState.ts`](../../src/state/onChangeAppState.ts)
 
 如果把这一层压缩成结构图，可以分成四层：
 

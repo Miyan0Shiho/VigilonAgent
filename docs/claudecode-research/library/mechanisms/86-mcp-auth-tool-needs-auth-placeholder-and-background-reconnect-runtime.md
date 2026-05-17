@@ -20,7 +20,7 @@
 
 ## 1. `McpAuthTool` 不是 executable MCP tool，而是“needs-auth server 的占位代理”
 
-源码镜像：[`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts), [`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/tools/McpAuthTool/McpAuthTool.ts), [`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 `createMcpAuthTool(serverName, config)` 的注释直接说了它的定位：
 
@@ -35,7 +35,7 @@
 
 ## 2. 这把伪工具是按 `mcp__<server>__authenticate` 命名的，所以它能被 prefix-based replacement 自动清掉
 
-源码镜像：[`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts), [`../../sources/claude-code/src/services/mcp/mcpStringUtils.ts`](../../sources/claude-code/src/services/mcp/mcpStringUtils.ts)
+源码镜像：[`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/tools/McpAuthTool/McpAuthTool.ts), [`../../src/services/mcp/mcpStringUtils.ts`](../../src/services/mcp/mcpStringUtils.ts)
 
 工具名不是通用 `mcp_authenticate`，而是：
 
@@ -53,7 +53,7 @@
 
 ## 3. 它显式标自己是 `isMcp`，但又不是普通 MCP dynamic tool
 
-源码镜像：[`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts)
+源码镜像：[`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/tools/McpAuthTool/McpAuthTool.ts)
 
 `McpAuthTool` 会声明：
 
@@ -78,7 +78,7 @@
 
 ## 4. 它故意不是只读，也不是并发安全，说明系统把认证视为独占式状态迁移
 
-源码镜像：[`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts)
+源码镜像：[`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/tools/McpAuthTool/McpAuthTool.ts)
 
 工具声明是：
 
@@ -99,7 +99,7 @@
 
 ## 5. 输入 schema 被压成空对象，说明这把工具的全部参数空间都来自闭包里的 server config
 
-源码镜像：[`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts)
+源码镜像：[`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/tools/McpAuthTool/McpAuthTool.ts)
 
 输入是：
 
@@ -120,7 +120,7 @@
 
 ## 6. 权限层直接 `allow`，因为它的本质不是执行危险动作，而是把用户带到认证流程
 
-源码镜像：[`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts)
+源码镜像：[`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/tools/McpAuthTool/McpAuthTool.ts)
 
 `checkPermissions()` 直接返回：
 
@@ -141,7 +141,7 @@
 
 ## 7. `claudeai-proxy` 明确不走这条工具流，而是把用户打回 `/mcp`
 
-源码镜像：[`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts), [`../../sources/claude-code/src/components/mcp/MCPRemoteServerMenu.tsx`](../../sources/claude-code/src/components/mcp/MCPRemoteServerMenu.tsx)
+源码镜像：[`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/tools/McpAuthTool/McpAuthTool.ts), [`../../src/components/mcp/MCPRemoteServerMenu.tsx`](../../src/components/mcp/MCPRemoteServerMenu.tsx)
 
 一上来就有一条 hard fork：
 
@@ -166,7 +166,7 @@
 
 ## 8. 非 HTTP/SSE transport 也会被防御性拒绝，因为 `needs-auth` 理论上只该出现在这些远端 transport 上
 
-源码镜像：[`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts)
+源码镜像：[`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/tools/McpAuthTool/McpAuthTool.ts)
 
 第二条 fork 是：
 
@@ -186,7 +186,7 @@
 
 ## 9. 工具真正做的第一件事不是发 OAuth 请求，而是创建“一条等 URL 的 Promise”和“一条完整 flow 的 Promise”
 
-源码镜像：[`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts)
+源码镜像：[`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/tools/McpAuthTool/McpAuthTool.ts)
 
 `call(...)` 里先造了两条并行语义：
 
@@ -209,7 +209,7 @@
 
 ## 10. `performMCPOAuthFlow(...)` 本身就是一条复杂宿主流程，`McpAuthTool` 只是它的启动器
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/auth.ts`](../../sources/claude-code/src/services/mcp/auth.ts)
+源码镜像：[`../../src/services/mcp/auth.ts`](../../src/services/mcp/auth.ts)
 
 `performMCPOAuthFlow(...)` 不是简单打开浏览器，它内部还负责：
 
@@ -229,7 +229,7 @@
 
 ## 11. 它支持 silent success，这也是为什么 race 里要允许 `oauthPromise` 先完成
 
-源码镜像：[`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/services/mcp/auth.ts), [`../../sources/claude-code/src/commands/mcp/xaaIdpCommand.ts`](../../sources/claude-code/src/commands/mcp/xaaIdpCommand.ts)
+源码镜像：[`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/services/mcp/auth.ts), [`../../src/commands/mcp/xaaIdpCommand.ts`](../../src/commands/mcp/xaaIdpCommand.ts)
 
 `Promise.race(...)` 的另一支是：
 
@@ -256,7 +256,7 @@
 
 ## 12. 真正重要的不是即时返回，而是后面的 fire-and-forget continuation
 
-源码镜像：[`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/services/mcp/client.ts)
 
 `oauthPromise` 会被单独接一条：
 
@@ -276,7 +276,7 @@
 
 ## 13. `clearMcpAuthCache()` 很关键：不先清 15 分钟 needs-auth cache，后续 reconnect 还会被自己挡回去
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts), [`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts), [`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/tools/McpAuthTool/McpAuthTool.ts)
 
 连接层有一条明确逻辑：
 
@@ -296,7 +296,7 @@
 
 ## 14. `reconnectMcpServerImpl(...)` 才是把占位工具“物化”为真实 server surface 的主入口
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 `reconnectMcpServerImpl(...)` 自己会：
 
@@ -320,7 +320,7 @@
 
 ## 15. prefix-based replacement 说明工具层没有额外写“删除 auth tool”的专门逻辑
 
-源码镜像：[`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts), [`../../sources/claude-code/src/services/mcp/useManageMCPConnections.ts`](../../sources/claude-code/src/services/mcp/useManageMCPConnections.ts)
+源码镜像：[`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/tools/McpAuthTool/McpAuthTool.ts), [`../../src/services/mcp/useManageMCPConnections.ts`](../../src/services/mcp/useManageMCPConnections.ts)
 
 后台 continuation 在更新 `appState` 时会：
 
@@ -341,7 +341,7 @@
 
 ## 16. `needs-auth` 状态本身就是在连接层构造的，并且会触发这个伪工具的注入
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 连接层有两条关键信号：
 
@@ -360,7 +360,7 @@
 
 ## 17. `/mcp` 手动路径和 `McpAuthTool` 自动路径是并列关系，不是重复实现
 
-源码镜像：[`../../sources/claude-code/src/commands/mcp/mcp.tsx`](../../sources/claude-code/src/commands/mcp/mcp.tsx), [`../../sources/claude-code/src/services/mcp/useManageMCPConnections.ts`](../../sources/claude-code/src/services/mcp/useManageMCPConnections.ts)
+源码镜像：[`../../src/commands/mcp/mcp.tsx`](../../src/commands/mcp/mcp.tsx), [`../../src/services/mcp/useManageMCPConnections.ts`](../../src/services/mcp/useManageMCPConnections.ts)
 
 手动路径主要是：
 
@@ -386,7 +386,7 @@
 
 ## 18. 从结果协议看，这把工具真正返回的是“如何继续”的 operator message，而不是结构化 credential artifact
 
-源码镜像：[`../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts`](../../sources/claude-code/src/tools/McpAuthTool/McpAuthTool.ts)
+源码镜像：[`../../src/tools/McpAuthTool/McpAuthTool.ts`](../../src/tools/McpAuthTool/McpAuthTool.ts)
 
 输出 schema 只有：
 

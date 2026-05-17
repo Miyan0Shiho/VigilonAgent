@@ -22,7 +22,7 @@
 ## Evidence-backed Findings（按项目）
 
 ### Claude Code（CC）
-> 代码根：`research/sources/claude-code/`
+> 代码根：`research/`
 
 - **ECO-CC-001**：MCP 作为一等扩展面，动态连接后可注入工具与资源。  
   - 定义点：`sources/claude-code/src/Tool.ts` → `ToolUseContext.options.mcpClients/mcpResources`  

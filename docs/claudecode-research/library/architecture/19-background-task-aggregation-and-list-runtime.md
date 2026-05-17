@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是“后台任务很多，但用户前台只看到一个统一工作面”
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTask.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTask.tsx), [`../../sources/claude-code/src/tasks/types.ts`](../../sources/claude-code/src/tasks/types.ts), [`../../sources/claude-code/src/tasks/pillLabel.ts`](../../sources/claude-code/src/tasks/pillLabel.ts)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx), [`../../src/components/tasks/BackgroundTask.tsx`](../../src/components/tasks/BackgroundTask.tsx), [`../../src/tasks/types.ts`](../../src/tasks/types.ts), [`../../src/tasks/pillLabel.ts`](../../src/tasks/pillLabel.ts)
 
 Claude Code 的后台任务早就不只是 shell：
 
@@ -22,7 +22,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 2. `BackgroundTaskState` 不是“所有 task”的宇宙全集，而是“可以进入后台工作面”的显示联合类型
 
-源码镜像：[`../../sources/claude-code/src/tasks/types.ts`](../../sources/claude-code/src/tasks/types.ts)
+源码镜像：[`../../src/tasks/types.ts`](../../src/tasks/types.ts)
 
 `TaskState` 和 `BackgroundTaskState` 看起来一样，实际上语义不同：
 
@@ -35,7 +35,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 3. `isBackgroundTask()` 说明“后台任务”首先是一个可见性判定，而不是一个任务种类
 
-源码镜像：[`../../sources/claude-code/src/tasks/types.ts`](../../sources/claude-code/src/tasks/types.ts)
+源码镜像：[`../../src/tasks/types.ts`](../../src/tasks/types.ts)
 
 `isBackgroundTask(task)` 只做两件事：
 
@@ -51,7 +51,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 4. `getSelectableBackgroundTasks()` 说明后台任务表面还要再减去“当前正在前台看的那个任务”
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 `getSelectableBackgroundTasks(tasks, foregroundedTaskId)` 在 `isBackgroundTask()` 之上又多做了一步：
 
@@ -62,7 +62,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 5. `BackgroundTasksDialog` 的初始模式机首先围绕“是否跳过列表页”设计
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 它的 `ViewState` 只有两态：
 
@@ -78,7 +78,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 6. “Back 是回列表还是直接关掉对话框”在这里是显式协议，不是 incidental 行为
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 `goBackToList()` 的判定是：
 
@@ -92,7 +92,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 7. `BackgroundTasksDialog` 先统一把所有任务映射到 `ListItem`，再做真正的前台排序与分组
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 这里不是边渲染边判断，而是先：
 
@@ -111,7 +111,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 8. 任务排序规则说明这个工作面优先呈现“现在还能操作的东西”
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 排序策略是：
 
@@ -126,7 +126,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 9. `showSpinnerTree` 会改变后台任务对话框里 teammate 的可见性，说明它和另一套前台 surface 共享显示责任
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 当 `expandedView === 'teammates'` 时：
 
@@ -136,7 +136,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 10. `leaderItem` 说明 teammate 组在前台不是纯任务列表，而是带有“回到 leader”的导航结构
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/utils/swarm/constants.ts)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/utils/swarm/constants.ts)
 
 当存在 teammates 时，这里会人为插入一个：
 
@@ -148,7 +148,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 11. `allSelectableItems` 的顺序是显式契约，不只是实现巧合
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 代码里专门写了注释，要求 `allSelectableItems` 顺序必须和 JSX render 顺序一致：
 
@@ -164,7 +164,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 12. `BackgroundTask` 组件说明不同 task type 的行内语义是明确分叉的，而不是统一模板
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTask.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTask.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTask.tsx`](../../src/components/tasks/BackgroundTask.tsx)
 
 `BackgroundTask` 对不同类型采取了不同展示协议：
 
@@ -185,7 +185,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 13. `remote_agent` 的 diamond 语义已经从普通任务列表升级成产品状态语言
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTask.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTask.tsx), [`../../sources/claude-code/src/tasks/pillLabel.ts`](../../sources/claude-code/src/tasks/pillLabel.ts)
+源码镜像：[`../../src/components/tasks/BackgroundTask.tsx`](../../src/components/tasks/BackgroundTask.tsx), [`../../src/tasks/pillLabel.ts`](../../src/tasks/pillLabel.ts)
 
 这里的规则是：
 
@@ -203,7 +203,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 14. `pillLabel.ts` 不是简单计数器，而是后台任务系统的术语压缩器
 
-源码镜像：[`../../sources/claude-code/src/tasks/pillLabel.ts`](../../sources/claude-code/src/tasks/pillLabel.ts)
+源码镜像：[`../../src/tasks/pillLabel.ts`](../../src/tasks/pillLabel.ts)
 
 `getPillLabel(tasks)` 做的不是“返回任务数”，而是把一组后台任务压缩成用户能扫读的术语：
 
@@ -223,7 +223,7 @@ Claude Code 的后台任务早就不只是 shell：
 
 ## 15. `pillNeedsCta()` 说明不是所有后台任务都值得显示“↓ to view”，只有 attention state 才会提升
 
-源码镜像：[`../../sources/claude-code/src/tasks/pillLabel.ts`](../../sources/claude-code/src/tasks/pillLabel.ts)
+源码镜像：[`../../src/tasks/pillLabel.ts`](../../src/tasks/pillLabel.ts)
 
 CTA 触发条件很苛刻：
 
@@ -236,7 +236,7 @@ CTA 触发条件很苛刻：
 
 ## 16. `BackgroundTasksDialog` 的 kill / foreground 键位表明它是统一 operator console，而不只是 viewer
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 `x` 键会按类型调用不同的 stop 路径：
 
@@ -258,7 +258,7 @@ CTA 触发条件很苛刻：
 
 ## 17. detail 路由说明这层承担的是“任务壳路由器”，而不是每个任务内部逻辑本体
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 进入 detail 后，这里只是按 `task.type` 做分发：
 
@@ -274,7 +274,7 @@ CTA 触发条件很苛刻：
 
 ## 18. `local_workflow` 和 `monitor_mcp` 在当前镜像里是 feature-gated detail surface，不应被硬写成完全可见实现
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx), [`../../sources/claude-code/src/tasks/types.ts`](../../sources/claude-code/src/tasks/types.ts)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx), [`../../src/tasks/types.ts`](../../src/tasks/types.ts)
 
 当前可明确确认的是：
 
@@ -292,7 +292,7 @@ CTA 触发条件很苛刻：
 
 ## 19. 后台任务对话框还显式处理了“任务消失后 detail 怎么退场”的生命周期问题
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx), [`../../sources/claude-code/src/tasks/types.ts`](../../sources/claude-code/src/tasks/types.ts)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx), [`../../src/tasks/types.ts`](../../src/tasks/types.ts)
 
 当 detail 模式下发现：
 
@@ -308,7 +308,7 @@ CTA 触发条件很苛刻：
 
 ## 20. 这套 background-task runtime，本质上是 Claude Code 的“多异步执行统一前台壳”
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTask.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTask.tsx), [`../../sources/claude-code/src/tasks/types.ts`](../../sources/claude-code/src/tasks/types.ts), [`../../sources/claude-code/src/tasks/pillLabel.ts`](../../sources/claude-code/src/tasks/pillLabel.ts)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx), [`../../src/components/tasks/BackgroundTask.tsx`](../../src/components/tasks/BackgroundTask.tsx), [`../../src/tasks/types.ts`](../../src/tasks/types.ts), [`../../src/tasks/pillLabel.ts`](../../src/tasks/pillLabel.ts)
 
 把这几层放在一起看，Claude Code 后台任务系统的前台侧已经很明确：
 

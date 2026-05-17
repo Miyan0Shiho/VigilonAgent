@@ -15,7 +15,7 @@
 
 ## 1. `TaskStopTool` 自己很薄，真正的实现故意下沉到共享 helper
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskStopTool/TaskStopTool.ts`](../../sources/claude-code/src/tools/TaskStopTool/TaskStopTool.ts), [`../../sources/claude-code/src/tasks/stopTask.ts`](../../sources/claude-code/src/tasks/stopTask.ts)
+源码镜像：[`../../src/tools/TaskStopTool/TaskStopTool.ts`](../../src/tools/TaskStopTool/TaskStopTool.ts), [`../../src/tasks/stopTask.ts`](../../src/tasks/stopTask.ts)
 
 `TaskStopTool.call()` 只做三件事：
 
@@ -27,7 +27,7 @@
 
 ## 2. prompt contract 也很克制：它不是通用“取消一切”，只承认 running background task
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskStopTool/prompt.ts`](../../sources/claude-code/src/tools/TaskStopTool/prompt.ts)
+源码镜像：[`../../src/tools/TaskStopTool/prompt.ts`](../../src/tools/TaskStopTool/prompt.ts)
 
 提示词只承诺：
 
@@ -45,7 +45,7 @@
 
 ## 3. validate 阶段先在工具入口挡掉最常见错误：缺参、找不到、不是 running
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskStopTool/TaskStopTool.ts`](../../sources/claude-code/src/tools/TaskStopTool/TaskStopTool.ts)
+源码镜像：[`../../src/tools/TaskStopTool/TaskStopTool.ts`](../../src/tools/TaskStopTool/TaskStopTool.ts)
 
 `validateInput()` 在真正调用前就会检查：
 
@@ -63,7 +63,7 @@
 
 ## 4. 但共享 helper 仍然重复做一次同类检查，因为 SDK control request 也复用它
 
-源码镜像：[`../../sources/claude-code/src/tasks/stopTask.ts`](../../sources/claude-code/src/tasks/stopTask.ts), [`../../sources/claude-code/src/cli/print.ts`](../../sources/claude-code/src/cli/print.ts)
+源码镜像：[`../../src/tasks/stopTask.ts`](../../src/tasks/stopTask.ts), [`../../src/cli/print.ts`](../../src/cli/print.ts)
 
 `stopTask(...)` 自己还会再校验一次：
 
@@ -75,7 +75,7 @@
 
 ## 5. 所谓“停止任务”不是统一写死状态，而是先按 `task.type` 找到真正的 task host
 
-源码镜像：[`../../sources/claude-code/src/tasks.ts`](../../sources/claude-code/src/tasks.ts), [`../../sources/claude-code/src/tasks/stopTask.ts`](../../sources/claude-code/src/tasks/stopTask.ts)
+源码镜像：[`../../src/tasks.ts`](../../src/tasks.ts), [`../../src/tasks/stopTask.ts`](../../src/tasks/stopTask.ts)
 
 `stopTask(...)` 的核心分派是：
 
@@ -95,7 +95,7 @@
 
 ## 6. 本地 shell 的 kill 语义最特殊：要 suppress 噪音型 “137 exited” 通知
 
-源码镜像：[`../../sources/claude-code/src/tasks/stopTask.ts`](../../sources/claude-code/src/tasks/stopTask.ts), [`../../sources/claude-code/src/tasks/LocalShellTask/guards.ts`](../../sources/claude-code/src/tasks/LocalShellTask/guards.ts), [`../../sources/claude-code/src/tasks/LocalShellTask/LocalShellTask.tsx`](../../sources/claude-code/src/tasks/LocalShellTask/LocalShellTask.tsx)
+源码镜像：[`../../src/tasks/stopTask.ts`](../../src/tasks/stopTask.ts), [`../../src/tasks/LocalShellTask/guards.ts`](../../src/tasks/LocalShellTask/guards.ts), [`../../src/tasks/LocalShellTask/LocalShellTask.tsx`](../../src/tasks/LocalShellTask/LocalShellTask.tsx)
 
 `stopTask(...)` 对 `local_bash` 有一段专门逻辑：
 
@@ -112,7 +112,7 @@
 
 ## 7. suppress XML 通知以后，还要手动补一条 SDK bookend，不然 headless 客户端会丢结束事件
 
-源码镜像：[`../../sources/claude-code/src/tasks/stopTask.ts`](../../sources/claude-code/src/tasks/stopTask.ts), [`../../sources/claude-code/src/utils/sdkEventQueue.ts`](../../sources/claude-code/src/utils/sdkEventQueue.ts)
+源码镜像：[`../../src/tasks/stopTask.ts`](../../src/tasks/stopTask.ts), [`../../src/utils/sdkEventQueue.ts`](../../src/utils/sdkEventQueue.ts)
 
 当本地 bash 被标记成 `notified: true` 以后，标准 XML `<task_notification>` 路径就被压掉了。于是 `stopTask(...)` 会直接调用：
 
@@ -127,7 +127,7 @@
 
 ## 8. 这条 bookend 语义很关键，因为 `registerTask()` 总会发 `task_started`
 
-源码镜像：[`../../sources/claude-code/src/utils/sdkEventQueue.ts`](../../sources/claude-code/src/utils/sdkEventQueue.ts)
+源码镜像：[`../../src/utils/sdkEventQueue.ts`](../../src/utils/sdkEventQueue.ts)
 
 `emitTaskTerminatedSdk(...)` 的注释把 contract 说得很清楚：
 
@@ -142,7 +142,7 @@
 
 ## 9. `LocalShellTask.kill()` 本身很薄，说明 shell 终止的真内核在 `killTask(...)`
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalShellTask/LocalShellTask.tsx`](../../sources/claude-code/src/tasks/LocalShellTask/LocalShellTask.tsx)
+源码镜像：[`../../src/tasks/LocalShellTask/LocalShellTask.tsx`](../../src/tasks/LocalShellTask/LocalShellTask.tsx)
 
 `LocalShellTask.kill()` 几乎只做：
 
@@ -152,7 +152,7 @@
 
 ## 10. `LocalAgentTask.kill()` 和 shell 完全不同：它要保留 transcript，并进入 panel linger
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 `killAsyncAgent(...)` 会：
 
@@ -168,7 +168,7 @@
 
 ## 11. remote agent 的 kill 又是第三种语义：本地先封账，再异步 archive 云端 session
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
 
 `RemoteAgentTask.kill()` 会：
 
@@ -199,7 +199,7 @@
 
 ## 13. `TaskStopTool` 的前台表面也很克制：tool-use 静默，tool-result 只回一行 “command stopped”
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskStopTool/UI.tsx`](../../sources/claude-code/src/tools/TaskStopTool/UI.tsx)
+源码镜像：[`../../src/tools/TaskStopTool/UI.tsx`](../../src/tools/TaskStopTool/UI.tsx)
 
 UI 层有两个明显选择：
 
@@ -215,7 +215,7 @@ UI 层有两个明显选择：
 
 ## 14. `task_id` 与 legacy `shell_id` 双字段不是偶然，而是 KillShell 的兼容壳
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskStopTool/TaskStopTool.ts`](../../sources/claude-code/src/tools/TaskStopTool/TaskStopTool.ts)
+源码镜像：[`../../src/tools/TaskStopTool/TaskStopTool.ts`](../../src/tools/TaskStopTool/TaskStopTool.ts)
 
 工具定义里显式保留了：
 
@@ -226,7 +226,7 @@ UI 层有两个明显选择：
 
 ## 15. 它还被刻意允许出现在简化工具池里，说明这是 coordinator/brief 模式保留的最小操作能力之一
 
-源码镜像：[`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/tools.ts)
+源码镜像：[`../../src/tools.ts`](../../src/tools.ts)
 
 `tools.ts` 里可以看到：
 
@@ -237,7 +237,7 @@ UI 层有两个明显选择：
 
 ## 16. SDK control request 明确复用同一 helper，避免 CLI/SDK/LLM 三套 stop 语义分叉
 
-源码镜像：[`../../sources/claude-code/src/cli/print.ts`](../../sources/claude-code/src/cli/print.ts)
+源码镜像：[`../../src/cli/print.ts`](../../src/cli/print.ts)
 
 `print.ts` 处理 `message.request.subtype === 'stop_task'` 时，直接复用：
 
@@ -253,7 +253,7 @@ Claude Code 在这里明显优先“共享 kill runtime”，而不是“每个�
 
 ## 17. 它和 `TaskOutput` / task output 宿主是配对关系：stop 负责封账，结果读取走另一条链
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalShellTask/LocalShellTask.tsx`](../../sources/claude-code/src/tasks/LocalShellTask/LocalShellTask.tsx)
+源码镜像：[`../../src/tasks/LocalShellTask/LocalShellTask.tsx`](../../src/tasks/LocalShellTask/LocalShellTask.tsx)
 
 `LocalShellTask` 注释里写得很直白：
 

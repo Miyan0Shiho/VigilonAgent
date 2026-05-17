@@ -14,7 +14,7 @@
 
 ## 1. `generateAgent()` 不是普通聊天，而是一次无工具的 definition compilation
 
-源码镜像：[`../../sources/claude-code/src/components/agents/generateAgent.ts`](../../sources/claude-code/src/components/agents/generateAgent.ts)
+源码镜像：[`../../src/components/agents/generateAgent.ts`](../../src/components/agents/generateAgent.ts)
 
 `generateAgent()` 的输入只有四个核心量：
 
@@ -33,7 +33,7 @@
 
 ## 2. 唯一性在这一层只是 prompt-time 软约束，不是最终真相源
 
-源码镜像：[`../../sources/claude-code/src/components/agents/generateAgent.ts`](../../sources/claude-code/src/components/agents/generateAgent.ts), [`../../sources/claude-code/src/components/agents/validateAgent.ts`](../../sources/claude-code/src/components/agents/validateAgent.ts)
+源码镜像：[`../../src/components/agents/generateAgent.ts`](../../src/components/agents/generateAgent.ts), [`../../src/components/agents/validateAgent.ts`](../../src/components/agents/validateAgent.ts)
 
 `existingIdentifiers` 只会被拼成一段 prompt：
 
@@ -48,7 +48,7 @@
 
 ## 3. 生成器会吃到真实 user/project context，不是裸 prompt
 
-源码镜像：[`../../sources/claude-code/src/components/agents/generateAgent.ts`](../../sources/claude-code/src/components/agents/generateAgent.ts)
+源码镜像：[`../../src/components/agents/generateAgent.ts`](../../src/components/agents/generateAgent.ts)
 
 生成链里有两步很关键：
 
@@ -59,7 +59,7 @@
 
 ## 4. memory 指令不是后处理补丁，而是生成时就进了 system prompt
 
-源码镜像：[`../../sources/claude-code/src/components/agents/generateAgent.ts`](../../sources/claude-code/src/components/agents/generateAgent.ts)
+源码镜像：[`../../src/components/agents/generateAgent.ts`](../../src/components/agents/generateAgent.ts)
 
 `generateAgent.ts` 里把生成用 system prompt 分成两层：
 
@@ -75,7 +75,7 @@
 
 ## 5. 生成请求被刻意锁成无工具、无思维流、专用 query source
 
-源码镜像：[`../../sources/claude-code/src/components/agents/generateAgent.ts`](../../sources/claude-code/src/components/agents/generateAgent.ts)
+源码镜像：[`../../src/components/agents/generateAgent.ts`](../../src/components/agents/generateAgent.ts)
 
 调用 `queryModelWithoutStreaming()` 时，关键选项是：
 
@@ -95,7 +95,7 @@
 
 ## 6. JSON 解析策略是“严格优先，宽容兜底”
 
-源码镜像：[`../../sources/claude-code/src/components/agents/generateAgent.ts`](../../sources/claude-code/src/components/agents/generateAgent.ts)
+源码镜像：[`../../src/components/agents/generateAgent.ts`](../../src/components/agents/generateAgent.ts)
 
 结果解析分两层：
 
@@ -112,7 +112,7 @@
 
 ## 7. 生成成功后并不会立刻变成最终 agent，而是故意先回到人工校订链
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx), [`../../sources/claude-code/src/components/agents/new-agent-creation/CreateAgentWizard.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/CreateAgentWizard.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx), [`../../src/components/agents/new-agent-creation/CreateAgentWizard.tsx`](../../src/components/agents/new-agent-creation/CreateAgentWizard.tsx)
 
 生成结果只会先写回 wizard state：
 
@@ -136,7 +136,7 @@
 
 ## 8. `ColorStep` 才第一次把分散字段 materialize 成 `finalAgent`
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ColorStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ColorStep.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ColorStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ColorStep.tsx)
 
 到 `ColorStep` 之前，wizardData 里还是散的：
 
@@ -161,7 +161,7 @@
 
 ## 9. `MemoryStep` 不是只写个 frontmatter 字段，而是重写 `getSystemPrompt()` 闭包
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/MemoryStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/MemoryStep.tsx), [`../../sources/claude-code/src/tools/AgentTool/agentMemory.ts`](../../sources/claude-code/src/tools/AgentTool/agentMemory.ts)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/MemoryStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/MemoryStep.tsx), [`../../src/tools/AgentTool/agentMemory.ts`](../../src/tools/AgentTool/agentMemory.ts)
 
 `MemoryStep` 的关键不是 `selectedMemory`，而是它会把现有 `finalAgent` 再改写一次：
 
@@ -176,7 +176,7 @@
 
 ## 10. memory 推荐顺序依赖 agent 放置位置，位置治理会一路渗透到 prompt 装配
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/LocationStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/MemoryStep.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/LocationStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/MemoryStep.tsx)
 
 `MemoryStep` 会根据 `wizardData.location` 调整选项顺序：
 
@@ -187,7 +187,7 @@
 
 ## 11. `ConfirmStepWrapper` 才是真正的 mutation boundary
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx), [`../../sources/claude-code/src/components/agents/agentFileUtils.ts`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx), [`../../src/components/agents/agentFileUtils.ts`](../../src/components/agents/agentFileUtils.ts)
 
 前面所有步骤都只是准备 `wizardData`。真正发生持久化、副作用和前台状态收口的地方，是 `ConfirmStepWrapper.saveAgent()`：
 
@@ -202,7 +202,7 @@
 
 ## 12. “保存并编辑”不是先拿保存结果回传路径，而是按 source + identifier 重新推导新文件路径
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx), [`../../sources/claude-code/src/components/agents/agentFileUtils.ts`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx), [`../../src/components/agents/agentFileUtils.ts`](../../src/components/agents/agentFileUtils.ts)
 
 `openInEditor` 分支不会依赖 `saveAgentToFile()` 返回文件路径，而是重新调用：
 
@@ -217,7 +217,7 @@
 
 ## 13. analytics 在这里记录的是 authoring feature truth，而不是底层文件细节
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx), [`../../sources/claude-code/src/components/agents/generateAgent.ts`](../../sources/claude-code/src/components/agents/generateAgent.ts)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx), [`../../src/components/agents/generateAgent.ts`](../../src/components/agents/generateAgent.ts)
 
 creation 链里有两次关键埋点：
 

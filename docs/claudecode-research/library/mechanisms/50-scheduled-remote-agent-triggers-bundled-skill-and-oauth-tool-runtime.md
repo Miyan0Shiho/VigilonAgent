@@ -13,7 +13,7 @@
 
 ## 1. scheduled remote agents 不是独立命令，而是 “bundled skill + tool” 双层接入
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/index.ts`](../../sources/claude-code/src/skills/bundled/index.ts), [`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/tools.ts)
+源码镜像：[`../../src/skills/bundled/index.ts`](../../src/skills/bundled/index.ts), [`../../src/tools.ts`](../../src/tools.ts)
 
 这条能力不是直接在 `commands.ts` 里挂一个 builtin slash command，而是走两层：
 
@@ -29,7 +29,7 @@
 
 ## 2. `/schedule` 的 visibility 不是只看 feature flag，还要同时过 remote policy gate
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts`](../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts), [`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/skills/bundled/scheduleRemoteAgents.ts`](../../src/skills/bundled/scheduleRemoteAgents.ts), [`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 skill 和 tool 都不是只看 `AGENT_TRIGGERS_REMOTE`：
 
@@ -47,7 +47,7 @@ skill 和 tool 都不是只看 `AGENT_TRIGGERS_REMOTE`：
 
 ## 3. `/schedule` 不是硬编码命令体，而是一个 user-invocable bundled skill
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts`](../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts)
+源码镜像：[`../../src/skills/bundled/scheduleRemoteAgents.ts`](../../src/skills/bundled/scheduleRemoteAgents.ts)
 
 `registerBundledSkill()` 里给出的形态是：
 
@@ -66,7 +66,7 @@ skill 和 tool 都不是只看 `AGENT_TRIGGERS_REMOTE`：
 
 ## 4. 它故意把可用工具压到两把：`AskUserQuestion` 和 `RemoteTrigger`
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts`](../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts)
+源码镜像：[`../../src/skills/bundled/scheduleRemoteAgents.ts`](../../src/skills/bundled/scheduleRemoteAgents.ts)
 
 `allowedTools` 只给：
 
@@ -83,7 +83,7 @@ skill 和 tool 都不是只看 `AGENT_TRIGGERS_REMOTE`：
 
 ## 5. skill prompt 的首步不是建议，而是强制先走 `AskUserQuestion`
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts`](../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts)
+源码镜像：[`../../src/skills/bundled/scheduleRemoteAgents.ts`](../../src/skills/bundled/scheduleRemoteAgents.ts)
 
 `buildPrompt()` 会生成一个非常强的 first-step contract：
 
@@ -97,7 +97,7 @@ skill 和 tool 都不是只看 `AGENT_TRIGGERS_REMOTE`：
 
 ## 6. 如果用户带了参数，skill 会直接跳过首问，但不会丢掉 setup notes
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts`](../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts)
+源码镜像：[`../../src/skills/bundled/scheduleRemoteAgents.ts`](../../src/skills/bundled/scheduleRemoteAgents.ts)
 
 `buildPrompt()` 最容易漏看的点是：
 
@@ -110,7 +110,7 @@ skill 和 tool 都不是只看 `AGENT_TRIGGERS_REMOTE`：
 
 ## 7. repo / GitHub / MCP 检查都是 soft gate，不会像本地命令一样直接 hard fail
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts`](../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts), [`../../sources/claude-code/src/utils/background/remote/preconditions.ts`](../../sources/claude-code/src/utils/background/remote/preconditions.ts), [`../../sources/claude-code/src/utils/detectRepository.ts`](../../sources/claude-code/src/utils/detectRepository.ts)
+源码镜像：[`../../src/skills/bundled/scheduleRemoteAgents.ts`](../../src/skills/bundled/scheduleRemoteAgents.ts), [`../../src/utils/background/remote/preconditions.ts`](../../src/utils/background/remote/preconditions.ts), [`../../src/utils/detectRepository.ts`](../../src/utils/detectRepository.ts)
 
 这条 skill 在真正生成 prompt 前会做几类检查：
 
@@ -128,7 +128,7 @@ skill 和 tool 都不是只看 `AGENT_TRIGGERS_REMOTE`：
 
 ## 8. environment 是 create-time 必填，但 skill 会先尝试自动补齐
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts`](../../sources/claude-code/src/utils/teleport/environments.ts)
+源码镜像：[`../../src/skills/bundled/scheduleRemoteAgents.ts`](../../src/utils/teleport/environments.ts)
 
 `getPromptForCommand()` 会先：
 
@@ -145,7 +145,7 @@ skill 和 tool 都不是只看 `AGENT_TRIGGERS_REMOTE`：
 
 ## 9. connector 列表不是直接透传 MCP config，而是先做 claude.ai connector 归一化
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts`](../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts)
+源码镜像：[`../../src/skills/bundled/scheduleRemoteAgents.ts`](../../src/skills/bundled/scheduleRemoteAgents.ts)
 
 skill 不会把所有 MCP client 都当成可挂到 trigger 上的 connector。它先做三层筛选：
 
@@ -164,7 +164,7 @@ skill 不会把所有 MCP client 都当成可挂到 trigger 上的 connector。�
 
 ## 10. prompt body 明确把 `RemoteTrigger` 放在 `ToolSearch select:` 之后，而不是默认假设工具已加载
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/prompt.ts)
+源码镜像：[`../../src/skills/bundled/scheduleRemoteAgents.ts`](../../src/tools/RemoteTriggerTool/prompt.ts)
 
 生成出来的 prompt 明确要求：
 
@@ -182,7 +182,7 @@ skill 不会把所有 MCP client 都当成可挂到 trigger 上的 connector。�
 
 ## 11. `RemoteTriggerTool` 的动作面故意极小，而且没有 delete
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/prompt.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/prompt.ts)
 
 工具输入 schema 只有：
 
@@ -203,7 +203,7 @@ skill 不会把所有 MCP client 都当成可挂到 trigger 上的 connector。�
 
 ## 12. update 不是 PATCH，而是 `POST /{trigger_id}` 的 partial update 协议
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/prompt.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/prompt.ts)
 
 `RemoteTriggerTool` 对五个动作的 HTTP 映射是：
 
@@ -223,7 +223,7 @@ skill 不会把所有 MCP client 都当成可挂到 trigger 上的 connector。�
 
 ## 13. 这把工具是真正的 first-party OAuth tool，不让 token 出现在 shell
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/prompt.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/prompt.ts)
 
 工具调用前会：
 
@@ -243,7 +243,7 @@ skill 不会把所有 MCP client 都当成可挂到 trigger 上的 connector。�
 
 ## 14. 结果 schema 故意只保留 `status + json`，不帮用户做业务摘要
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/UI.tsx)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/UI.tsx)
 
 输出 schema 只有：
 
@@ -268,7 +268,7 @@ UI 层进一步收敛成：
 
 ## 15. 这把工具被明确标成 defer-safe、concurrency-safe、read-only-aware
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 `RemoteTriggerTool` 上有几条很典型的 runtime 标注：
 
@@ -286,7 +286,7 @@ UI 层进一步收敛成：
 
 ## 16. skill prompt 实际上在教模型如何当一个远端任务调度 operator
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts`](../../sources/claude-code/src/skills/bundled/scheduleRemoteAgents.ts)
+源码镜像：[`../../src/skills/bundled/scheduleRemoteAgents.ts`](../../src/skills/bundled/scheduleRemoteAgents.ts)
 
 这份 prompt 不是只给字段示例，而是写了完整 operator procedure：
 

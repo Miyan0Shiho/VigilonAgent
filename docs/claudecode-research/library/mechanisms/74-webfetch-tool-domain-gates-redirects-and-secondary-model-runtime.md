@@ -6,7 +6,7 @@
 
 ## 1. `WebFetchTool` 不是 `WebSearchTool` 的替身，而是“用户定点抓取网页并再加工”的二级处理管线
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/WebFetchTool.ts`](../../sources/claude-code/src/tools/WebFetchTool/WebFetchTool.ts), [`../../sources/claude-code/src/tools/WebFetchTool/prompt.ts`](../../sources/claude-code/src/tools/WebFetchTool/prompt.ts)
+源码镜像：[`../../src/tools/WebFetchTool/WebFetchTool.ts`](../../src/tools/WebFetchTool/WebFetchTool.ts), [`../../src/tools/WebFetchTool/prompt.ts`](../../src/tools/WebFetchTool/prompt.ts)
 
 它的输入不是 query，而是：
 
@@ -22,7 +22,7 @@
 
 ## 2. prompt 已经明确把它降级成“authenticated URL 不适用”的后备工具
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/WebFetchTool.ts`](../../sources/claude-code/src/tools/WebFetchTool/WebFetchTool.ts), [`../../sources/claude-code/src/tools/WebFetchTool/prompt.ts`](../../sources/claude-code/src/tools/WebFetchTool/prompt.ts)
+源码镜像：[`../../src/tools/WebFetchTool/WebFetchTool.ts`](../../src/tools/WebFetchTool/WebFetchTool.ts), [`../../src/tools/WebFetchTool/prompt.ts`](../../src/tools/WebFetchTool/prompt.ts)
 
 真正返回给模型的 prompt 由两段拼成：
 
@@ -39,7 +39,7 @@
 
 ## 3. 这个工具是 concurrency-safe + read-only，但权限核心不是路径，而是域名
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/WebFetchTool.ts`](../../sources/claude-code/src/tools/WebFetchTool/WebFetchTool.ts)
+源码镜像：[`../../src/tools/WebFetchTool/WebFetchTool.ts`](../../src/tools/WebFetchTool/WebFetchTool.ts)
 
 它声明：
 
@@ -54,7 +54,7 @@
 
 ## 4. preapproved host 不是 sandbox 网络白名单，而是只对 WebFetch 生效的更窄例外
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/preapproved.ts`](../../sources/claude-code/src/tools/WebFetchTool/preapproved.ts)
+源码镜像：[`../../src/tools/WebFetchTool/preapproved.ts`](../../src/tools/WebFetchTool/preapproved.ts)
 
 这个文件最重要的不是 host 列表本身，而是头部注释的安全边界：
 
@@ -66,7 +66,7 @@
 
 ## 5. preapproved host 还支持 path-scoped trust，而不是只有整域白名单
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/preapproved.ts`](../../sources/claude-code/src/tools/WebFetchTool/preapproved.ts)
+源码镜像：[`../../src/tools/WebFetchTool/preapproved.ts`](../../src/tools/WebFetchTool/preapproved.ts)
 
 实现里把列表拆成：
 
@@ -81,7 +81,7 @@
 
 ## 6. permission 流程是四段式：preapproved -> deny -> ask -> allow，而不是只要没规则就弹框
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/WebFetchTool.ts`](../../sources/claude-code/src/tools/WebFetchTool/WebFetchTool.ts)
+源码镜像：[`../../src/tools/WebFetchTool/WebFetchTool.ts`](../../src/tools/WebFetchTool/WebFetchTool.ts)
 
 `checkPermissions(...)` 的优先级非常明确：
 
@@ -95,7 +95,7 @@
 
 ## 7. 本地审批 UI 也以域名为中心组织，而不是把整 URL 当权限粒度
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/WebFetchPermissionRequest/WebFetchPermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/WebFetchPermissionRequest/WebFetchPermissionRequest.tsx)
+源码镜像：[`../../src/components/permissions/WebFetchPermissionRequest/WebFetchPermissionRequest.tsx`](../../src/components/permissions/WebFetchPermissionRequest/WebFetchPermissionRequest.tsx)
 
 审批 UI 会：
 
@@ -109,7 +109,7 @@
 
 ## 8. “永不再问”并不是私有 side effect，而是标准 permission update 写回 `localSettings`
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/WebFetchPermissionRequest/WebFetchPermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/WebFetchPermissionRequest/WebFetchPermissionRequest.tsx)
+源码镜像：[`../../src/components/permissions/WebFetchPermissionRequest/WebFetchPermissionRequest.tsx`](../../src/components/permissions/WebFetchPermissionRequest/WebFetchPermissionRequest.tsx)
 
 用户选择 “don't ask again” 时，UI 会构造：
 
@@ -123,7 +123,7 @@
 
 ## 9. URL 校验并不只是 `new URL()`，还带了“不能含用户名密码、必须像公网域名”的初步过滤
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/utils.ts`](../../sources/claude-code/src/tools/WebFetchTool/utils.ts)
+源码镜像：[`../../src/tools/WebFetchTool/utils.ts`](../../src/tools/WebFetchTool/utils.ts)
 
 `validateURL(...)` 额外限制了：
 
@@ -135,7 +135,7 @@
 
 ## 10. `http -> https` 自动升级说明它会主动收紧传输层，而不是忠实照抄用户输入
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/utils.ts`](../../sources/claude-code/src/tools/WebFetchTool/utils.ts)
+源码镜像：[`../../src/tools/WebFetchTool/utils.ts`](../../src/tools/WebFetchTool/utils.ts)
 
 在真正 fetch 前：
 
@@ -146,7 +146,7 @@
 
 ## 11. 抓取前还有一层 domain preflight 到 `api.anthropic.com`，用来判定域名是否允许被取回
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/utils.ts`](../../sources/claude-code/src/tools/WebFetchTool/utils.ts)
+源码镜像：[`../../src/tools/WebFetchTool/utils.ts`](../../src/tools/WebFetchTool/utils.ts)
 
 默认情况下会做：
 
@@ -162,7 +162,7 @@
 
 ## 12. 这条 preflight 也有独立缓存，说明设计者明确在优化“同域多路径重复抓取”的成本
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/utils.ts`](../../sources/claude-code/src/tools/WebFetchTool/utils.ts)
+源码镜像：[`../../src/tools/WebFetchTool/utils.ts`](../../src/tools/WebFetchTool/utils.ts)
 
 除了 URL 级 `URL_CACHE`，还有一个：
 
@@ -181,7 +181,7 @@
 
 ## 13. enterprise 可以通过 `skipWebFetchPreflight` 跳过域名预检，说明这条链已经考虑到受限网络宿主
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/utils.ts`](../../sources/claude-code/src/utils/settings/settings.ts)
+源码镜像：[`../../src/tools/WebFetchTool/utils.ts`](../../src/utils/settings/settings.ts)
 
 如果：
 
@@ -193,7 +193,7 @@
 
 ## 14. redirect 不是自动乱跟，而是只允许非常窄的同源变体
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/utils.ts`](../../sources/claude-code/src/tools/WebFetchTool/utils.ts)
+源码镜像：[`../../src/tools/WebFetchTool/utils.ts`](../../src/tools/WebFetchTool/utils.ts)
 
 `isPermittedRedirect(...)` 允许的情况只有：
 
@@ -207,7 +207,7 @@
 
 ## 15. 遇到跨 host redirect，它不会偷偷继续，而是把 redirect 当成显式结果返回给模型
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/WebFetchTool.ts`](../../sources/claude-code/src/tools/WebFetchTool/WebFetchTool.ts), [`../../sources/claude-code/src/tools/WebFetchTool/utils.ts`](../../sources/claude-code/src/tools/WebFetchTool/utils.ts)
+源码镜像：[`../../src/tools/WebFetchTool/WebFetchTool.ts`](../../src/tools/WebFetchTool/WebFetchTool.ts), [`../../src/tools/WebFetchTool/utils.ts`](../../src/tools/WebFetchTool/utils.ts)
 
 如果拿到的是 redirect info：
 
@@ -221,7 +221,7 @@
 
 ## 16. egress proxy block 有专门错误语义，不会被伪装成普通 403
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/utils.ts`](../../sources/claude-code/src/tools/WebFetchTool/utils.ts)
+源码镜像：[`../../src/tools/WebFetchTool/utils.ts`](../../src/tools/WebFetchTool/utils.ts)
 
 如果发现：
 
@@ -239,7 +239,7 @@
 
 ## 17. HTML 不是直接送模型，而是先 turndown 成 markdown；binary 内容则走“双轨保留”
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/utils.ts`](../../sources/claude-code/src/tools/WebFetchTool/utils.ts)
+源码镜像：[`../../src/tools/WebFetchTool/utils.ts`](../../src/tools/WebFetchTool/utils.ts)
 
 内容处理链是：
 
@@ -258,7 +258,7 @@
 
 ## 18. 二级模型不是泛模型调用，而是专门的 `queryHaiku(...)` content distillation stage
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/utils.ts`](../../sources/claude-code/src/tools/WebFetchTool/prompt.ts)
+源码镜像：[`../../src/tools/WebFetchTool/utils.ts`](../../src/tools/WebFetchTool/prompt.ts)
 
 `applyPromptToMarkdown(...)` 会：
 
@@ -271,7 +271,7 @@
 
 ## 19. preapproved domain 与普通 domain 的二级提示词也不一样，体现了版权/引用约束分层
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/prompt.ts`](../../sources/claude-code/src/tools/WebFetchTool/prompt.ts)
+源码镜像：[`../../src/tools/WebFetchTool/prompt.ts`](../../src/tools/WebFetchTool/prompt.ts)
 
 `makeSecondaryModelPrompt(...)` 里：
 
@@ -286,7 +286,7 @@
 
 ## 20. 返回结果不总是 model 摘要：preapproved markdown 小页面可以直接透传原内容
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/WebFetchTool.ts`](../../sources/claude-code/src/tools/WebFetchTool/WebFetchTool.ts), [`../../sources/claude-code/src/tools/WebFetchTool/utils.ts`](../../sources/claude-code/src/tools/WebFetchTool/utils.ts)
+源码镜像：[`../../src/tools/WebFetchTool/WebFetchTool.ts`](../../src/tools/WebFetchTool/WebFetchTool.ts), [`../../src/tools/WebFetchTool/utils.ts`](../../src/tools/WebFetchTool/utils.ts)
 
 如果满足：
 
@@ -302,7 +302,7 @@
 
 ## 21. 前台 UI 也明确把它设计成“收到多少、状态码多少”的 I/O 事件，而不是浏览器式页面查看器
 
-源码镜像：[`../../sources/claude-code/src/tools/WebFetchTool/UI.tsx`](../../sources/claude-code/src/tools/WebFetchTool/UI.tsx)
+源码镜像：[`../../src/tools/WebFetchTool/UI.tsx`](../../src/tools/WebFetchTool/UI.tsx)
 
 它的 UI 重点是：
 

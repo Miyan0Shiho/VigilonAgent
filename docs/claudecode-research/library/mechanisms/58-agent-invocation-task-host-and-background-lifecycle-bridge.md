@@ -21,7 +21,7 @@
 
 ## 1. `AgentTool.tsx` 先决定“这次调用属于哪种宿主”，然后才决定结果面
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx)
 
 `AgentTool` 本体不只是挑 agent definition。它还要在调用期决定这次工作最终落到哪种宿主：
 
@@ -35,7 +35,7 @@
 
 ## 2. foreground agent 不是“普通同步调用”，而是先注册成可被打断升级的 host
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 `registerAgentForeground(...)` 很重要。它创建的不是纯临时状态，而是一份正式 `LocalAgentTaskState`：
 
@@ -54,7 +54,7 @@
 
 ## 3. `backgroundSignal` 才是 foreground -> background 的真正切换闸门
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 `registerAgentForeground()` 会把 resolver 存进：
 
@@ -74,7 +74,7 @@
 
 ## 4. `AgentTool` 从一开始就给 foreground agent 准备了“后面可能变后台”的控制面
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx)
 
 从 imports 和装配关系可以看出，`AgentTool` 本体同时依赖：
 
@@ -93,7 +93,7 @@
 
 ## 5. async-from-start 和 foreground-later-background 共享同一条 `runAsyncAgentLifecycle()` 主链
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts`](../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts)
+源码镜像：[`../../src/tools/AgentTool/agentToolUtils.ts`](../../src/tools/AgentTool/agentToolUtils.ts)
 
 `runAsyncAgentLifecycle()` 的注释直接写明：
 
@@ -112,7 +112,7 @@
 
 ## 6. retain-aware append 说明 task host 和 transcript 结果面在执行中持续耦合
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts`](../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts)
+源码镜像：[`../../src/tools/AgentTool/agentToolUtils.ts`](../../src/tools/AgentTool/agentToolUtils.ts)
 
 `runAsyncAgentLifecycle()` 每收一条 message，都会先看一次 root app state：
 
@@ -128,7 +128,7 @@
 
 ## 7. `completeAsyncAgent()` 先切状态，再补 handoff/worktree/notification，是为了和 `TaskOutput` / panel 宿主解耦
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts`](../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts)
+源码镜像：[`../../src/tools/AgentTool/agentToolUtils.ts`](../../src/tools/AgentTool/agentToolUtils.ts)
 
 异步生命周期的顺序是故意设计过的：
 
@@ -145,7 +145,7 @@
 
 ## 8. `LocalAgentTask` 的 foreground host 和 async host 共享同一 shape，只在启动语义上分叉
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 对比：
 
@@ -161,7 +161,7 @@
 
 ## 9. `unregisterAgentForeground()` 说明“没被后台化就正常结束”的前台 host 会被完全回收
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 如果一个 foreground agent 顺利完成且没有 background，它不会继续留在 task host 生态里。`unregisterAgentForeground()` 会：
 
@@ -176,7 +176,7 @@
 
 ## 10. 背景主会话复用的不是 panel 语义，而是“agent-style task host + isolated transcript”语义
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalMainSessionTask.ts`](../../sources/claude-code/src/tasks/LocalMainSessionTask.ts)
+源码镜像：[`../../src/tasks/LocalMainSessionTask.ts`](../../src/tasks/LocalMainSessionTask.ts)
 
 `startBackgroundSession(...)` 进一步证明，这套桥不仅服务 subagent，也服务主会话 background：
 

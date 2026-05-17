@@ -15,7 +15,7 @@
 
 ## 1. `ConfirmStep` 是 review console，不是被动摘要页
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx)
 
 `ConfirmStep` 不只是把字段打印出来，而是把 `wizardData.finalAgent` 重新做一轮前台审计：
 
@@ -37,7 +37,7 @@
 
 ## 2. 最终路径不是保存后推断，而是在确认页显式可见
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx), [`../../sources/claude-code/src/components/agents/agentFileUtils.ts`](../../sources/claude-code/src/components/agents/agentFileUtils.ts)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx), [`../../src/components/agents/agentFileUtils.ts`](../../src/components/agents/agentFileUtils.ts)
 
 确认页用：
 
@@ -53,7 +53,7 @@
 
 ## 3. `ConfirmStep` 的键位协议不是表单提交，而是双提交通道
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx)
 
 确认页把键盘协议显式切成三种：
 
@@ -70,7 +70,7 @@
 
 ## 4. `ConfirmStepWrapper` 才是真正的 commit boundary
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx)
 
 `ConfirmStep` 本身不写盘，只暴露 `onSave/onSaveAndEdit`。真正的提交边界在 `ConfirmStepWrapper.saveAgent(openInEditor)`：
 
@@ -85,7 +85,7 @@
 
 ## 5. `save + edit` 不是 UI 装饰，而是持久化后的二段式 authoring
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStepWrapper.tsx)
 
 `openInEditor` 分支先保存，再打开编辑器，而不是反过来。这个顺序很重要：
 
@@ -97,7 +97,7 @@
 
 ## 6. `WizardDialogLayout` 把 wizard step 统一包成 cancel-driven dialog
 
-源码镜像：[`../../sources/claude-code/src/components/wizard/WizardDialogLayout.tsx`](../../sources/claude-code/src/components/wizard/WizardDialogLayout.tsx)
+源码镜像：[`../../src/components/wizard/WizardDialogLayout.tsx`](../../src/components/wizard/WizardDialogLayout.tsx)
 
 所有 wizard steps 最终都走同一个壳：
 
@@ -116,7 +116,7 @@
 
 ## 7. `WizardNavigationFooter` 和 `AgentNavigationFooter` 不是一个组件的两种皮肤
 
-源码镜像：[`../../sources/claude-code/src/components/wizard/WizardNavigationFooter.tsx`](../../sources/claude-code/src/components/wizard/WizardNavigationFooter.tsx), [`../../sources/claude-code/src/components/agents/AgentNavigationFooter.tsx`](../../sources/claude-code/src/components/agents/AgentNavigationFooter.tsx)
+源码镜像：[`../../src/components/wizard/WizardNavigationFooter.tsx`](../../src/components/wizard/WizardNavigationFooter.tsx), [`../../src/components/agents/AgentNavigationFooter.tsx`](../../src/components/agents/AgentNavigationFooter.tsx)
 
 这两个 footer 表面长得相似，但责任不同：
 
@@ -137,7 +137,7 @@
 
 ## 8. `ConfirmStep` 用 `WizardDialogLayout`，而 `/agents` 主工作台用 `AgentNavigationFooter`
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx), [`../../sources/claude-code/src/components/agents/AgentsMenu.tsx`](../../sources/claude-code/src/components/agents/AgentsMenu.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx), [`../../src/components/agents/AgentsMenu.tsx`](../../src/components/agents/AgentsMenu.tsx)
 
 创建流最后一页和 `/agents` 主菜单看起来都像“一个 dialog + 一个底部提示”，但宿主完全不同：
 
@@ -157,7 +157,7 @@
 
 ## 9. `AgentNavigationFooter` 在 `/agents` 里承担 mode-specific 文案切换
 
-源码镜像：[`../../sources/claude-code/src/components/agents/AgentsMenu.tsx`](../../sources/claude-code/src/components/agents/AgentsMenu.tsx), [`../../sources/claude-code/src/components/agents/AgentNavigationFooter.tsx`](../../sources/claude-code/src/components/agents/AgentNavigationFooter.tsx)
+源码镜像：[`../../src/components/agents/AgentsMenu.tsx`](../../src/components/agents/AgentsMenu.tsx), [`../../src/components/agents/AgentNavigationFooter.tsx`](../../src/components/agents/AgentNavigationFooter.tsx)
 
 `AgentsMenu` 不是处处复用同一行提示，而是按 mode 切不同说明：
 
@@ -169,7 +169,7 @@
 
 ## 10. `ConfirmStep` 的上下文切换解释了为什么前面很多 step 用 `Settings`，这里却回到 `Confirmation`
 
-源码镜像：[`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/TypeStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/MethodStep.tsx), [`../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../sources/claude-code/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx)
+源码镜像：[`../../src/components/agents/new-agent-creation/wizard-steps/TypeStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/MethodStep.tsx), [`../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx`](../../src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx)
 
 前面的文本输入 step 往往把 `confirm:no` 放在 `Settings` context，目的是避免用户输入普通字符时误触取消。`MethodStep` 这种选择面则留在 `Confirmation` context。
 

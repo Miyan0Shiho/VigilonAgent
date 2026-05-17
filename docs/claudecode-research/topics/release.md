@@ -23,7 +23,7 @@
 ## Evidence-backed Findings（按项目）
 
 ### Claude Code（CC）
-> 代码根：`research/sources/claude-code/`
+> 代码根：`research/`
 
 - **REL-CC-001（CODE）**：`claude update` 会打印当前版本并按设置选择更新通道（默认 `latest`），同时埋点“更新检查”事件。  
   - 证据：`sources/claude-code/src/cli/update.ts` → `update()`：`writeToStdout(\`Current version: ${MACRO.VERSION}\`)`、`getInitialSettings()?.autoUpdatesChannel ?? 'latest'`、`logEvent('tengu_update_check', {})`

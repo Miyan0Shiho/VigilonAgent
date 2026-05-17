@@ -16,7 +16,7 @@
 
 ## 1. 这两把工具是 `MCPTool` 旁边的平行资源面，不是它的 alias
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts), [`../../sources/claude-code/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../sources/claude-code/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts), [`../../sources/claude-code/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts`](../../sources/claude-code/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts), [`../../src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts), [`../../src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts`](../../src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
 
 在 MCP client 主文件里，三条入口是并列注册的：
 
@@ -34,7 +34,7 @@
 
 ## 2. 两把资源工具都被声明成 `readOnly + concurrencySafe + shouldDefer`
 
-源码镜像：[`../../sources/claude-code/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../sources/claude-code/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts), [`../../sources/claude-code/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts`](../../sources/claude-code/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
+源码镜像：[`../../src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts), [`../../src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts`](../../src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
 
 它们共同的底层姿态是：
 
@@ -52,7 +52,7 @@
 
 ## 3. `ListMcpResourcesTool` 的 schema 极小，表明它的职责只是“列目录”，不负责进一步过滤或分页
 
-源码镜像：[`../../sources/claude-code/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../sources/claude-code/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts)
+源码镜像：[`../../src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts)
 
 input 只有：
 
@@ -76,7 +76,7 @@ output 是一个资源数组，每项包含：
 
 ## 4. `ReadMcpResourceTool` 的 schema 刻意要求 `server + uri` 二元组，说明 URI 不是全局唯一真相源
 
-源码镜像：[`../../sources/claude-code/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts`](../../sources/claude-code/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
+源码镜像：[`../../src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts`](../../src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
 
 输入要求：
 
@@ -91,7 +91,7 @@ output 是一个资源数组，每项包含：
 
 ## 5. 两把工具的 auto-classifier 输入都故意压得很短，说明它们的意图足够单纯
 
-源码镜像：[`../../sources/claude-code/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../sources/claude-code/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
+源码镜像：[`../../src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
 
 它们给 classifier 的输入分别是：
 
@@ -105,7 +105,7 @@ output 是一个资源数组，每项包含：
 
 ## 6. `ListMcpResourcesTool` 的核心不是发请求，而是“逐 server 容错 + per-server reconnect”
 
-源码镜像：[`../../sources/claude-code/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../src/services/mcp/client.ts)
 
 它不是简单调用一次全局 `resources/list`，而是：
 
@@ -122,7 +122,7 @@ output 是一个资源数组，每项包含：
 
 ## 7. `server` 过滤先发生在工具层，不在 MCP service 层做模糊匹配
 
-源码镜像：[`../../sources/claude-code/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../sources/claude-code/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
+源码镜像：[`../../src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
 
 不管 list 还是 read，server 选择逻辑都很硬：
 
@@ -133,7 +133,7 @@ output 是一个资源数组，每项包含：
 
 ## 8. `fetchResourcesForClient` 用 LRU cache 按 server name 记忆目录结果，因此“列资源”默认读的是缓存快照
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 client 层把 `fetchResourcesForClient` 包进了：
 
@@ -151,7 +151,7 @@ client 层把 `fetchResourcesForClient` 包进了：
 
 ## 9. 这层资源缓存不是永远不变，而是靠 `onclose` 和 `resources/list_changed` 两条边触发失效
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts), [`../../sources/claude-code/src/services/mcp/useManageMCPConnections.ts`](../../sources/claude-code/src/services/mcp/useManageMCPConnections.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts), [`../../src/services/mcp/useManageMCPConnections.ts`](../../src/services/mcp/useManageMCPConnections.ts)
 
 当前可见的失效机制有两条：
 
@@ -164,7 +164,7 @@ client 层把 `fetchResourcesForClient` 包进了：
 
 ## 10. `resources/list_changed` 不只刷新资源，还会在启用 `MCP_SKILLS` 时级联刷新 skills/commands
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/useManageMCPConnections.ts`](../../sources/claude-code/src/services/mcp/useManageMCPConnections.ts)
+源码镜像：[`../../src/services/mcp/useManageMCPConnections.ts`](../../src/services/mcp/useManageMCPConnections.ts)
 
 当 server 支持：
 
@@ -184,7 +184,7 @@ client 层把 `fetchResourcesForClient` 包进了：
 
 ## 11. `ensureConnectedClient` 先做“SDK server 直通”，再做普通 server 的 reconnect
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 这层函数的关键分义是：
 
@@ -203,7 +203,7 @@ client 层把 `fetchResourcesForClient` 包进了：
 
 ## 12. `ReadMcpResourceTool` 先验证 capability，再发 `resources/read`，因此“连接成功”不等于“能读资源”
 
-源码镜像：[`../../sources/claude-code/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts`](../../src/services/mcp/client.ts)
 
 它按顺序检查：
 
@@ -217,7 +217,7 @@ client 层把 `fetchResourcesForClient` 包进了：
 
 ## 13. `ListMcpResourcesTool` 返回“资源目录 JSON”，`ReadMcpResourceTool` 返回“contents array”，两者不是同型输出
 
-源码镜像：[`../../sources/claude-code/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../sources/claude-code/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
+源码镜像：[`../../src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
 
 list 的输出是：
 
@@ -237,7 +237,7 @@ read 的输出则是：
 
 ## 14. text content 直接内联，blob content 则强制走 persist-to-disk，这是一条硬分流
 
-源码镜像：[`../../sources/claude-code/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts`](../../sources/claude-code/src/utils/mcpOutputStorage.ts)
+源码镜像：[`../../src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts`](../../src/utils/mcpOutputStorage.ts)
 
 `result.contents.map(...)` 时：
 
@@ -254,7 +254,7 @@ read 的输出则是：
 
 ## 15. binary persist 的真正目标不是节省字符，而是保住原始文件类型和后续本地工具可用性
 
-源码镜像：[`../../sources/claude-code/src/utils/mcpOutputStorage.ts`](../../sources/claude-code/src/utils/mcpOutputStorage.ts)
+源码镜像：[`../../src/utils/mcpOutputStorage.ts`](../../src/utils/mcpOutputStorage.ts)
 
 这层工具明确做了：
 
@@ -271,7 +271,7 @@ read 的输出则是：
 
 ## 16. blob 保存失败也不会把 read 整体判死，而是退化成一段错误文本
 
-源码镜像：[`../../sources/claude-code/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts`](../../sources/claude-code/src/utils/mcpOutputStorage.ts)
+源码镜像：[`../../src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts`](../../src/utils/mcpOutputStorage.ts)
 
 如果 `persistBinaryContent(...)` 返回：
 
@@ -285,7 +285,7 @@ read 工具不会抛错中断整轮，而是把该块改写成：
 
 ## 17. `getBinaryBlobSavedMessage(...)` 的文案刻意保守，只告诉模型“文件在哪”，不强加处理策略
 
-源码镜像：[`../../sources/claude-code/src/utils/mcpOutputStorage.ts`](../../sources/claude-code/src/utils/mcpOutputStorage.ts)
+源码镜像：[`../../src/utils/mcpOutputStorage.ts`](../../src/utils/mcpOutputStorage.ts)
 
 返回消息只包含：
 
@@ -303,7 +303,7 @@ read 工具不会抛错中断整轮，而是把该块改写成：
 
 ## 18. 两把工具的 UI 都选择直接把 JSON pretty-print 成 human-facing result，而不是再设计专门富文本列表
 
-源码镜像：[`../../sources/claude-code/src/tools/ListMcpResourcesTool/UI.tsx`](../../sources/claude-code/src/tools/ReadMcpResourceTool/UI.tsx)
+源码镜像：[`../../src/tools/ListMcpResourcesTool/UI.tsx`](../../src/tools/ReadMcpResourceTool/UI.tsx)
 
 UI 共同点是：
 
@@ -319,7 +319,7 @@ UI 共同点是：
 
 ## 19. `ListMcpResourcesTool` 特意把 `server` 字段灌回每个 resource，说明它默认支持“跨 server 扁平聚合视图”
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts)
 
 `fetchResourcesForClient(...)` 会对每个 resource 追加：
 
@@ -333,7 +333,7 @@ UI 共同点是：
 
 ## 20. no-resource 和 no-content 都被设计成 benign result，而不是异常
 
-源码镜像：[`../../sources/claude-code/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../sources/claude-code/src/tools/ListMcpResourcesTool/UI.tsx), [`../../sources/claude-code/src/tools/ReadMcpResourceTool/UI.tsx`](../../sources/claude-code/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
+源码镜像：[`../../src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts`](../../src/tools/ListMcpResourcesTool/UI.tsx), [`../../src/tools/ReadMcpResourceTool/UI.tsx`](../../src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts)
 
 这里有两种“空”：
 

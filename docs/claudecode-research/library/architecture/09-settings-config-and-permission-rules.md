@@ -6,7 +6,7 @@
 
 ## 1. `Config.tsx` 是设置控制台，不是普通偏好页
 
-源码镜像：[`../../sources/claude-code/src/components/Settings/Config.tsx`](../../sources/claude-code/src/components/Settings/Config.tsx)
+源码镜像：[`../../src/components/Settings/Config.tsx`](../../src/components/Settings/Config.tsx)
 
 这个组件从一开始就在同时维护多种状态源：
 
@@ -20,7 +20,7 @@
 
 ## 2. 它自带一套搜索驱动的设置导航
 
-源码镜像：[`../../sources/claude-code/src/components/Settings/Config.tsx`](../../sources/claude-code/src/components/Settings/Config.tsx), [`../../sources/claude-code/src/hooks/useSearchInput.ts`](../../sources/claude-code/src/hooks/useSearchInput.ts)
+源码镜像：[`../../src/components/Settings/Config.tsx`](../../src/components/Settings/Config.tsx), [`../../src/hooks/useSearchInput.ts`](../../src/hooks/useSearchInput.ts)
 
 `Config` 会直接嵌入 `useSearchInput()`，并维护：
 
@@ -44,7 +44,7 @@
 
 ## 4. `PermissionRuleList` 是权限治理工作台
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/rules/PermissionRuleList.tsx`](../../sources/claude-code/src/components/permissions/rules/PermissionRuleList.tsx)
+源码镜像：[`../../src/components/permissions/rules/PermissionRuleList.tsx`](../../src/components/permissions/rules/PermissionRuleList.tsx)
 
 这个文件暴露了权限规则系统的完整治理面：
 
@@ -58,7 +58,7 @@
 
 ## 5. Rule detail 视图体现了“规则来源”是一级语义
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/rules/PermissionRuleList.tsx`](../../sources/claude-code/src/components/permissions/rules/PermissionRuleList.tsx)
+源码镜像：[`../../src/components/permissions/rules/PermissionRuleList.tsx`](../../src/components/permissions/rules/PermissionRuleList.tsx)
 
 `RuleDetails` 这一段很关键，因为它明确区分了：
 
@@ -70,7 +70,7 @@
 
 ## 6. `AddPermissionRules` 暴露了规则保存目的地的产品选择
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/rules/AddPermissionRules.tsx`](../../sources/claude-code/src/components/permissions/rules/AddPermissionRules.tsx)
+源码镜像：[`../../src/components/permissions/rules/AddPermissionRules.tsx`](../../src/components/permissions/rules/AddPermissionRules.tsx)
 
 添加权限规则时，系统不会默认偷偷落盘，而是让用户显式选择：
 
@@ -88,7 +88,7 @@
 
 ## 7. `WorkspaceTab` 管的是额外工作目录，而不是浏览文件树
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/rules/WorkspaceTab.tsx`](../../sources/claude-code/src/components/permissions/rules/WorkspaceTab.tsx)
+源码镜像：[`../../src/components/permissions/rules/WorkspaceTab.tsx`](../../src/components/permissions/rules/WorkspaceTab.tsx)
 
 这个 tab 的职责很明确：
 

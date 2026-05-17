@@ -10,10 +10,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 TARGETS = [
     ROOT / "README.md",
-    ROOT / "report.md",
+    ROOT / "SOURCE_RECOVERY.md",
     ROOT / "notes" / "catalog.md",
     ROOT / "notes" / "catalog.solo.md",
     ROOT / "library",
+    ROOT / "topics",
 ]
 LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 BAD_SCHEMES = ("file://", "computer://")

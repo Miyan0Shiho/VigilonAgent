@@ -6,7 +6,7 @@
 
 ## 1. 权限上下文是会话状态，不是弹窗状态
 
-源码入口：[`../../sources/claude-code/src/Tool.ts`](../../sources/claude-code/src/Tool.ts)
+源码入口：[`../../src/Tool.ts`](../../src/Tool.ts)
 
 `ToolPermissionContext` 包含：
 
@@ -21,7 +21,7 @@
 
 ## 2. hooks 可以在多个阶段改变执行语义
 
-源码入口：[`../../sources/claude-code/src/types/hooks.ts`](../../sources/claude-code/src/types/hooks.ts), [`../../sources/claude-code/src/utils/processUserInput/processUserInput.ts`](../../sources/claude-code/src/utils/processUserInput/processUserInput.ts)
+源码入口：[`../../src/types/hooks.ts`](../../src/types/hooks.ts), [`../../src/utils/processUserInput/processUserInput.ts`](../../src/utils/processUserInput/processUserInput.ts)
 
 从当前已读代码可以确认两点：
 

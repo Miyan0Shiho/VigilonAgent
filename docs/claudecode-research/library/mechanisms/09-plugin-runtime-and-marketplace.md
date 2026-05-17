@@ -6,7 +6,7 @@
 
 ## 1. Built-in plugin 和 bundled skill 不是一回事
 
-源码镜像：[`../../sources/claude-code/src/plugins/builtinPlugins.ts`](../../sources/claude-code/src/plugins/builtinPlugins.ts)
+源码镜像：[`../../src/plugins/builtinPlugins.ts`](../../src/plugins/builtinPlugins.ts)
 
 文件头的注释已经把差异说得很清楚：
 
@@ -30,7 +30,7 @@
 
 ## 3. marketplace 安装是后台任务，不阻塞启动
 
-源码镜像：[`../../sources/claude-code/src/services/plugins/PluginInstallationManager.ts`](../../sources/claude-code/src/services/plugins/PluginInstallationManager.ts)
+源码镜像：[`../../src/services/plugins/PluginInstallationManager.ts`](../../src/services/plugins/PluginInstallationManager.ts)
 
 这个模块的设计目标非常明确：
 
@@ -43,7 +43,7 @@
 
 ## 4. `pluginOperations.ts` 是纯库层
 
-源码镜像：[`../../sources/claude-code/src/services/plugins/pluginOperations.ts`](../../sources/claude-code/src/services/plugins/pluginOperations.ts)
+源码镜像：[`../../src/services/plugins/pluginOperations.ts`](../../src/services/plugins/pluginOperations.ts)
 
 这里的注释很有代表性：同一套核心插件操作要同时服务于 CLI 和交互式 UI，因此这些函数：
 
@@ -61,7 +61,7 @@
 
 ## 5. `/plugin` 命令本质上是插件控制台
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/plugin.tsx`](../../sources/claude-code/src/commands/plugin/plugin.tsx)
+源码镜像：[`../../src/commands/plugin/plugin.tsx`](../../src/commands/plugin/plugin.tsx)
 
 虽然入口文件本身很薄，只是把 `PluginSettings` 挂进本地 JSX command，但目录结构已经暴露出完整产品面：
 

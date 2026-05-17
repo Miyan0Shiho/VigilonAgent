@@ -18,7 +18,7 @@
 
 ## 1. `NotebookEditTool` 的定位不是“改 JSON 文件”，而是“改 notebook cell 语义”
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts`](../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts), [`../../sources/claude-code/src/tools/NotebookEditTool/prompt.ts`](../../sources/claude-code/src/tools/NotebookEditTool/prompt.ts)
+源码镜像：[`../../src/tools/NotebookEditTool/NotebookEditTool.ts`](../../src/tools/NotebookEditTool/NotebookEditTool.ts), [`../../src/tools/NotebookEditTool/prompt.ts`](../../src/tools/NotebookEditTool/prompt.ts)
 
 它的输入核心不是文本 patch，而是：
 
@@ -40,7 +40,7 @@
 
 ## 2. 工具 prompt 和真实 schema 之间有一个值得单独记住的边界：运行时已经完全转向 `cell_id`
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/prompt.ts`](../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts), [`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/utils/notebook.ts)
+源码镜像：[`../../src/tools/NotebookEditTool/prompt.ts`](../../src/tools/NotebookEditTool/NotebookEditTool.ts), [`../../src/utils/notebook.ts`](../../src/utils/notebook.ts)
 
 `prompt.ts` 里仍然在说：
 
@@ -66,7 +66,7 @@
 
 ## 3. `NotebookEdit` 是写操作家族里唯一明确把 `.ipynb` 变成独立工具的成员
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts`](../../sources/claude-code/src/tools/NotebookEditTool/constants.ts)
+源码镜像：[`../../src/tools/FileEditTool/FileEditTool.ts`](../../src/tools/NotebookEditTool/constants.ts)
 
 在现有写入家族里，边界是明确切开的：
 
@@ -80,7 +80,7 @@
 
 ## 4. 输入验证先保护宿主级边界：绝对路径、UNC、`.ipynb` 扩展名、合法 edit mode
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts`](../../sources/claude-code/src/utils/permissions/filesystem.ts)
+源码镜像：[`../../src/tools/NotebookEditTool/NotebookEditTool.ts`](../../src/utils/permissions/filesystem.ts)
 
 `validateInput(...)` 的前几层先做最外层闸门：
 
@@ -97,7 +97,7 @@
 
 ## 5. 它和 `Edit/Write` 一样强制 read-before-write，但这里保护的是“最近读过的 notebook 视图”
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/NotebookEditTool/NotebookEditTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `NotebookEditTool` 明确复用了同一套治理原则：
 
@@ -114,7 +114,7 @@
 
 ## 6. `validateInput(...)` 里的核心不是 patch 校验，而是 notebook-aware cell 定位校验
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts`](../../sources/claude-code/src/utils/notebook.ts)
+源码镜像：[`../../src/tools/NotebookEditTool/NotebookEditTool.ts`](../../src/utils/notebook.ts)
 
 它会先：
 
@@ -136,7 +136,7 @@
 
 ## 7. `cell_id` 缺省并不总是错误；只有 insert 允许无锚点，语义是“插到最前面”
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts`](../../sources/claude-code/src/components/permissions/NotebookEditPermissionRequest/NotebookEditPermissionRequest.tsx)
+源码镜像：[`../../src/tools/NotebookEditTool/NotebookEditTool.ts`](../../src/components/permissions/NotebookEditPermissionRequest/NotebookEditPermissionRequest.tsx)
 
 `validateInput(...)` 对 `cell_id` 的规则是：
 
@@ -160,7 +160,7 @@
 
 ## 8. `replace one past the end` 会被自动翻译成 `insert`
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts`](../../sources/claude-code/src/utils/notebook.ts)
+源码镜像：[`../../src/tools/NotebookEditTool/NotebookEditTool.ts`](../../src/utils/notebook.ts)
 
 这是这把工具最有意思的一条兼容分支：
 
@@ -179,7 +179,7 @@
 
 ## 9. 真正的 notebook materialization 是 “parse JSON -> mutate notebook object -> stringify with fixed indent”
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts`](../../sources/claude-code/src/utils/slowOperations.ts)
+源码镜像：[`../../src/tools/NotebookEditTool/NotebookEditTool.ts`](../../src/utils/slowOperations.ts)
 
 `call(...)` 的核心不是 text diff，而是：
 
@@ -200,7 +200,7 @@
 
 ## 10. replace / insert / delete 三态的真实修改逻辑完全不同
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts`](../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts)
+源码镜像：[`../../src/tools/NotebookEditTool/NotebookEditTool.ts`](../../src/tools/NotebookEditTool/NotebookEditTool.ts)
 
 三种模式分别做的是：
 
@@ -226,7 +226,7 @@
 
 ## 11. `nbformat >= 4.5` 时还会 materialize 新的真实 cell id
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts`](../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts)
+源码镜像：[`../../src/tools/NotebookEditTool/NotebookEditTool.ts`](../../src/tools/NotebookEditTool/NotebookEditTool.ts)
 
 运行时会检查：
 
@@ -248,7 +248,7 @@
 
 ## 12. 它保留原文件 encoding 和 line endings，但不像 `Write` 那样重设物理格式策略
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts`](../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts)
+源码镜像：[`../../src/tools/NotebookEditTool/NotebookEditTool.ts`](../../src/tools/FileWriteTool/FileWriteTool.ts)
 
 `NotebookEditTool` 的写盘用的是：
 
@@ -267,7 +267,7 @@
 
 ## 13. notebook permission surface 是“cell 级 diff console”，不是普通文件 diff
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/NotebookEditPermissionRequest/NotebookEditPermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/NotebookEditPermissionRequest/NotebookEditToolDiff.tsx)
+源码镜像：[`../../src/components/permissions/NotebookEditPermissionRequest/NotebookEditPermissionRequest.tsx`](../../src/components/permissions/NotebookEditPermissionRequest/NotebookEditToolDiff.tsx)
 
 这条前台链和文本写工具明显不同：
 
@@ -292,7 +292,7 @@
 
 ## 14. rejected / success surface 也以 cell 为主语，而不是以文件为主语
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/UI.tsx`](../../sources/claude-code/src/components/NotebookEditToolUseRejectedMessage.tsx)
+源码镜像：[`../../src/tools/NotebookEditTool/UI.tsx`](../../src/components/NotebookEditToolUseRejectedMessage.tsx)
 
 前台消息的语法很统一：
 
@@ -313,7 +313,7 @@
 
 ## 15. `readFileState` 的写后回填不是普通去重优化，而是 notebook 读写回环正确性的必要条件
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/NotebookEditTool/NotebookEditTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 写盘后它会立刻：
 
@@ -330,7 +330,7 @@
 
 ## 16. 它和 `Edit/Write` 的真正边界可以压缩成一句话：前两者保护文本，`NotebookEdit` 保护 cell topology
 
-源码镜像：[`../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts`](../../sources/claude-code/src/utils/notebook.ts)
+源码镜像：[`../../src/tools/NotebookEditTool/NotebookEditTool.ts`](../../src/utils/notebook.ts)
 
 如果把三把写工具并排看：
 

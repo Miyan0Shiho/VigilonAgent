@@ -13,7 +13,7 @@
 
 ## 1. `checkEnabledPlugins()` 的真相源是 merged settings，不是 installed registry
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginStartupCheck.ts`](../../sources/claude-code/src/utils/plugins/pluginStartupCheck.ts)
+源码镜像：[`../../src/utils/plugins/pluginStartupCheck.ts`](../../src/utils/plugins/pluginStartupCheck.ts)
 
 `checkEnabledPlugins()` 做的第一件事不是读 `installed_plugins.json`，而是：
 
@@ -38,7 +38,7 @@
 
 ## 2. `getPluginEditableScopes()` 解决的是“回写到哪里”，不是“是否真的生效”
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginStartupCheck.ts`](../../sources/claude-code/src/utils/plugins/pluginStartupCheck.ts)
+源码镜像：[`../../src/utils/plugins/pluginStartupCheck.ts`](../../src/utils/plugins/pluginStartupCheck.ts)
 
 同文件里最容易被误用的是 `getPluginEditableScopes()`。注释已经点得很明白：
 
@@ -66,7 +66,7 @@
 
 ## 3. startup check 里 “enabled” 和 “installed” 是两张不同表
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginStartupCheck.ts`](../../sources/claude-code/src/utils/plugins/installedPluginsManager.ts)
+源码镜像：[`../../src/utils/plugins/pluginStartupCheck.ts`](../../src/utils/plugins/installedPluginsManager.ts)
 
 `getInstalledPlugins()` 走的是：
 
@@ -84,7 +84,7 @@
 
 ## 4. `findMissingPlugins()` 不是“全部未安装都报缺失”，而是“未安装且 marketplace 中仍存在”
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginStartupCheck.ts`](../../sources/claude-code/src/utils/plugins/marketplaceManager.ts)
+源码镜像：[`../../src/utils/plugins/pluginStartupCheck.ts`](../../src/utils/plugins/marketplaceManager.ts)
 
 实现顺序是：
 
@@ -101,7 +101,7 @@
 
 ## 5. `installSelectedPlugins()` 是一条旧式 bootstrap path，不是完整 dependency-aware install core
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginStartupCheck.ts`](../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts)
+源码镜像：[`../../src/utils/plugins/pluginStartupCheck.ts`](../../src/utils/plugins/pluginInstallationHelpers.ts)
 
 这条路径非常值得单独看，因为它和 `installResolvedPlugin()` 不一样。
 
@@ -135,7 +135,7 @@
 
 ## 6. REPL 的 `useManagePlugins()` 是会话启动时的 Layer-3 初始装配，不是 refresh 通道
 
-源码镜像：[`../../sources/claude-code/src/hooks/useManagePlugins.ts`](../../sources/claude-code/src/utils/plugins/pluginLoader.ts)
+源码镜像：[`../../src/hooks/useManagePlugins.ts`](../../src/utils/plugins/pluginLoader.ts)
 
 `useManagePlugins()` 在 mount 时做的是：
 
@@ -164,7 +164,7 @@
 
 ## 7. `useManagePlugins()` 故意把首次装配和后续刷新拆开，是为了避免半刷新
 
-源码镜像：[`../../sources/claude-code/src/hooks/useManagePlugins.ts`](../../sources/claude-code/src/utils/plugins/refresh.ts)
+源码镜像：[`../../src/hooks/useManagePlugins.ts`](../../src/utils/plugins/refresh.ts)
 
 这条拆分不是架构洁癖，而是修一个真实坑：
 
@@ -183,7 +183,7 @@
 
 ## 8. `needsRefresh` 的处理策略是“提醒，不自动切换”
 
-源码镜像：[`../../sources/claude-code/src/hooks/useManagePlugins.ts`](../../sources/claude-code/src/hooks/useManagePlugins.ts)
+源码镜像：[`../../src/hooks/useManagePlugins.ts`](../../src/hooks/useManagePlugins.ts)
 
 第二个 `useEffect` 的行为很克制：
 
@@ -204,7 +204,7 @@
 
 ## 9. headless 路径和 REPL 路径共享“刷新核心”，但不共享状态宿主
 
-源码镜像：[`../../sources/claude-code/src/cli/print.ts`](../../sources/claude-code/src/utils/plugins/refresh.ts)
+源码镜像：[`../../src/cli/print.ts`](../../src/utils/plugins/refresh.ts)
 
 `print.ts` 里的 headless path 也会跑 plugin 安装，但它的激活方式不一样：
 
@@ -225,7 +225,7 @@
 
 ## 10. headless `refreshPluginState()` 还专门处理了 SDK-injected agents 的保留
 
-源码镜像：[`../../sources/claude-code/src/cli/print.ts`](../../sources/claude-code/src/utils/processUserInput/processUserInput.ts)
+源码镜像：[`../../src/cli/print.ts`](../../src/utils/processUserInput/processUserInput.ts)
 
 `print.ts` 刷新完插件代理后，并不会直接把 `freshAgentDefs` 全量拿来替代当前 agent 列表，而是还会：
 
@@ -243,7 +243,7 @@
 
 ## 11. `useOfficialMarketplaceNotification()` 是 startup sidecar 的 UI 包装，不是安装逻辑本体
 
-源码镜像：[`../../sources/claude-code/src/hooks/useOfficialMarketplaceNotification.tsx`](../../sources/claude-code/src/hooks/useOfficialMarketplaceNotification.tsx), [`../../sources/claude-code/src/utils/plugins/officialMarketplaceStartupCheck.ts`](../../sources/claude-code/src/utils/plugins/officialMarketplaceStartupCheck.ts)
+源码镜像：[`../../src/hooks/useOfficialMarketplaceNotification.tsx`](../../src/hooks/useOfficialMarketplaceNotification.tsx), [`../../src/utils/plugins/officialMarketplaceStartupCheck.ts`](../../src/utils/plugins/officialMarketplaceStartupCheck.ts)
 
 这个 hook 自己不决定是否安装 marketplace。它只是：
 
@@ -268,7 +268,7 @@
 
 ## 12. `useStartupNotification()` 把一大类 startup sidecar 统一成“只在本地 REPL 首次 mount 运行一次”
 
-源码镜像：[`../../sources/claude-code/src/hooks/notifs/useStartupNotification.ts`](../../sources/claude-code/src/hooks/notifs/useStartupNotification.ts)
+源码镜像：[`../../src/hooks/notifs/useStartupNotification.ts`](../../src/hooks/notifs/useStartupNotification.ts)
 
 这个底座很小，但对行为约束非常关键：
 
@@ -288,7 +288,7 @@
 
 ## 13. CLI plugin commands 不是核心逻辑，它们主要负责 console + telemetry + exit semantics
 
-源码镜像：[`../../sources/claude-code/src/services/plugins/pluginCliCommands.ts`](../../sources/claude-code/src/services/plugins/pluginOperations.ts)
+源码镜像：[`../../src/services/plugins/pluginCliCommands.ts`](../../src/services/plugins/pluginOperations.ts)
 
 `pluginCliCommands.ts` 的工作非常纯：
 
@@ -305,7 +305,7 @@
 
 ## 14. `handlePluginCommandError()` 把错误分类面也 CLI 化了
 
-源码镜像：[`../../sources/claude-code/src/services/plugins/pluginCliCommands.ts`](../../sources/claude-code/src/utils/telemetry/pluginTelemetry.ts)
+源码镜像：[`../../src/services/plugins/pluginCliCommands.ts`](../../src/utils/telemetry/pluginTelemetry.ts)
 
 统一错误处理器会：
 
@@ -324,7 +324,7 @@
 
 ## 15. update CLI 特意用 `gracefulShutdown(0)`，而不是裸 `process.exit(0)`
 
-源码镜像：[`../../sources/claude-code/src/services/plugins/pluginCliCommands.ts`](../../sources/claude-code/src/utils/gracefulShutdown.ts)
+源码镜像：[`../../src/services/plugins/pluginCliCommands.ts`](../../src/utils/gracefulShutdown.ts)
 
 前面的 install/uninstall/enable/disable 都是直接：
 
@@ -342,7 +342,7 @@
 
 ## 16. 这条链的总装配关系
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginStartupCheck.ts`](../../sources/claude-code/src/utils/plugins/pluginStartupCheck.ts), [`../../sources/claude-code/src/hooks/useManagePlugins.ts`](../../sources/claude-code/src/hooks/useManagePlugins.ts), [`../../sources/claude-code/src/hooks/useOfficialMarketplaceNotification.tsx`](../../sources/claude-code/src/hooks/useOfficialMarketplaceNotification.tsx), [`../../sources/claude-code/src/hooks/notifs/useStartupNotification.ts`](../../sources/claude-code/src/hooks/notifs/useStartupNotification.ts), [`../../sources/claude-code/src/services/plugins/pluginCliCommands.ts`](../../sources/claude-code/src/services/plugins/pluginCliCommands.ts), [`../../sources/claude-code/src/cli/print.ts`](../../sources/claude-code/src/cli/print.ts)
+源码镜像：[`../../src/utils/plugins/pluginStartupCheck.ts`](../../src/utils/plugins/pluginStartupCheck.ts), [`../../src/hooks/useManagePlugins.ts`](../../src/hooks/useManagePlugins.ts), [`../../src/hooks/useOfficialMarketplaceNotification.tsx`](../../src/hooks/useOfficialMarketplaceNotification.tsx), [`../../src/hooks/notifs/useStartupNotification.ts`](../../src/hooks/notifs/useStartupNotification.ts), [`../../src/services/plugins/pluginCliCommands.ts`](../../src/services/plugins/pluginCliCommands.ts), [`../../src/cli/print.ts`](../../src/cli/print.ts)
 
 可以把这套操作面收成 6 层：
 

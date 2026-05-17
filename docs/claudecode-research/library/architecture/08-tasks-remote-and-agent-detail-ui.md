@@ -6,7 +6,7 @@
 
 ## 1. `BackgroundTasksDialog` 是任务目录页，不是单一对话框
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 它首先做的是任务分类与导航，而不是展示详情：
 
@@ -40,7 +40,7 @@
 
 ## 3. 任务列表不只是展示，还承载控制动作
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 在 list 模式下，它已经支持：
 
@@ -54,7 +54,7 @@
 
 ## 4. `RemoteSessionDetailDialog` 展示的是“远端 agent 产品状态”
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/RemoteSessionDetailDialog.tsx`](../../src/components/tasks/RemoteSessionDetailDialog.tsx)
 
 从 `formatToolUseSummary()` 和 `UltraplanSessionDetail` 可以看出，它不是简单回放 transcript，而是在做产品摘要：
 
@@ -68,7 +68,7 @@
 
 ## 5. `AsyncAgentDetailDialog` 是本地 agent 的最小观察窗
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/AsyncAgentDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/AsyncAgentDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/AsyncAgentDetailDialog.tsx`](../../src/components/tasks/AsyncAgentDetailDialog.tsx)
 
 这个组件的结构很清楚：
 
@@ -82,7 +82,7 @@
 
 ## 6. `useRemoteSession` 才是远端 viewer 真正的运行时桥
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 这个 hook 负责的不是单一 websocket 连接，而是一套 REPL 适配层：
 
@@ -97,7 +97,7 @@
 
 ## 7. `RemoteSessionManager` 管的是协议，不是视图
 
-源码镜像：[`../../sources/claude-code/src/remote/RemoteSessionManager.ts`](../../sources/claude-code/src/remote/RemoteSessionManager.ts)
+源码镜像：[`../../src/remote/RemoteSessionManager.ts`](../../src/remote/RemoteSessionManager.ts)
 
 这个类把远端 session 切成三类通信：
 

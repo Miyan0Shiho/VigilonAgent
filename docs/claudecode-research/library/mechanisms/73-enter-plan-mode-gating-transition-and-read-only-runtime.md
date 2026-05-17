@@ -6,7 +6,7 @@
 
 ## 1. `EnterPlanModeTool` 不是普通开关，而是“读写相位切换工具”
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts`](../../sources/claude-code/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts)
+源码镜像：[`../../src/tools/EnterPlanModeTool/EnterPlanModeTool.ts`](../../src/tools/EnterPlanModeTool/EnterPlanModeTool.ts)
 
 这个工具最关键的几条声明是：
 
@@ -24,7 +24,7 @@
 
 ## 2. 它的产品定义不是“复杂任务前总要计划”，而是“当实现路径有真实歧义时，先申请进入只读规划相位”
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterPlanModeTool/prompt.ts`](../../sources/claude-code/src/tools/EnterPlanModeTool/prompt.ts)
+源码镜像：[`../../src/tools/EnterPlanModeTool/prompt.ts`](../../src/tools/EnterPlanModeTool/prompt.ts)
 
 prompt 里其实有两套话术：
 
@@ -35,7 +35,7 @@ prompt 里其实有两套话术：
 
 ## 3. `isPlanModeInterviewPhaseEnabled()` 决定的不是单一文案，而是整个进入协议的形态
 
-源码镜像：[`../../sources/claude-code/src/utils/planModeV2.ts`](../../sources/claude-code/src/utils/planModeV2.ts), [`../../sources/claude-code/src/tools/EnterPlanModeTool/prompt.ts`](../../sources/claude-code/src/tools/EnterPlanModeTool/prompt.ts)
+源码镜像：[`../../src/utils/planModeV2.ts`](../../src/utils/planModeV2.ts), [`../../src/tools/EnterPlanModeTool/prompt.ts`](../../src/tools/EnterPlanModeTool/prompt.ts)
 
 这个 gate 的来源是三层：
 
@@ -53,7 +53,7 @@ prompt 里其实有两套话术：
 
 ## 4. `EnterPlanModeTool` 的宿主边界非常硬：agent context 直接报错
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts`](../../sources/claude-code/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts)
+源码镜像：[`../../src/tools/EnterPlanModeTool/EnterPlanModeTool.ts`](../../src/tools/EnterPlanModeTool/EnterPlanModeTool.ts)
 
 调用时第一条硬边界就是：
 
@@ -68,7 +68,7 @@ prompt 里其实有两套话术：
 
 ## 5. `--channels` 打开时，这个工具会整体失效，因为 plan mode 不能变成“进得去、出不来”的 trap
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts`](../../sources/claude-code/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
+源码镜像：[`../../src/tools/EnterPlanModeTool/EnterPlanModeTool.ts`](../../src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
 
 `isEnabled()` 里有一条特别关键的 gate：
 
@@ -81,7 +81,7 @@ prompt 里其实有两套话术：
 
 ## 6. 真正的相位切换不是只改 `mode='plan'`，而是两段式：先打 attachment 信号，再改 permission context
 
-源码镜像：[`../../sources/claude-code/src/bootstrap/state.ts`](../../sources/claude-code/src/bootstrap/state.ts), [`../../sources/claude-code/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts`](../../sources/claude-code/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts)
+源码镜像：[`../../src/bootstrap/state.ts`](../../src/bootstrap/state.ts), [`../../src/tools/EnterPlanModeTool/EnterPlanModeTool.ts`](../../src/tools/EnterPlanModeTool/EnterPlanModeTool.ts)
 
 工具主链是：
 
@@ -99,7 +99,7 @@ prompt 里其实有两套话术：
 
 ## 7. `prepareContextForPlanMode(...)` 才是这条链最复杂的核心，不是简单写个 `prePlanMode`
 
-源码镜像：[`../../sources/claude-code/src/utils/permissions/permissionSetup.ts`](../../sources/claude-code/src/utils/permissions/permissionSetup.ts)
+源码镜像：[`../../src/utils/permissions/permissionSetup.ts`](../../src/utils/permissions/permissionSetup.ts)
 
 这个函数除了记录：
 
@@ -119,7 +119,7 @@ prompt 里其实有两套话术：
 
 ## 8. `prePlanMode` 不是元数据装饰，而是 exit 时能否恢复原宿主语义的唯一锚点
 
-源码镜像：[`../../sources/claude-code/src/utils/permissions/permissionSetup.ts`](../../sources/claude-code/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
+源码镜像：[`../../src/utils/permissions/permissionSetup.ts`](../../src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
 
 `prepareContextForPlanMode` 里所有分支都要保留 `prePlanMode`，因为退出时需要知道：
 
@@ -131,7 +131,7 @@ prompt 里其实有两套话术：
 
 ## 9. tool_result 本身也承担了强只读约束传播
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts`](../../sources/claude-code/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts)
+源码镜像：[`../../src/tools/EnterPlanModeTool/EnterPlanModeTool.ts`](../../src/tools/EnterPlanModeTool/EnterPlanModeTool.ts)
 
 返回给模型的内容不是一句成功确认，而是明确告知：
 
@@ -144,7 +144,7 @@ prompt 里其实有两套话术：
 
 ## 10. `renderToolUseMessage() => null`，但 `renderToolResultMessage()` 有专属 UI，说明它更像状态切换横幅而不是工具气泡
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterPlanModeTool/UI.tsx`](../../sources/claude-code/src/tools/EnterPlanModeTool/UI.tsx)
+源码镜像：[`../../src/tools/EnterPlanModeTool/UI.tsx`](../../src/tools/EnterPlanModeTool/UI.tsx)
 
 前台渲染协议是：
 
@@ -159,7 +159,7 @@ prompt 里其实有两套话术：
 
 ## 11. 本地审批 UI 不是简单 yes/no 确认，而是正式的 permission-request surface
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/EnterPlanModePermissionRequest/EnterPlanModePermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/EnterPlanModePermissionRequest/EnterPlanModePermissionRequest.tsx), [`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/PermissionRequest.tsx)
+源码镜像：[`../../src/components/permissions/EnterPlanModePermissionRequest/EnterPlanModePermissionRequest.tsx`](../../src/components/permissions/EnterPlanModePermissionRequest/EnterPlanModePermissionRequest.tsx), [`../../src/components/permissions/PermissionRequest.tsx`](../../src/components/permissions/PermissionRequest.tsx)
 
 进入 plan mode 会落到专门的 `EnterPlanModePermissionRequest`：
 
@@ -176,7 +176,7 @@ prompt 里其实有两套话术：
 
 ## 12. 这个审批 UI 还会把“同意进入”编码成标准 permission updates，而不是私有 side effect
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/EnterPlanModePermissionRequest/EnterPlanModePermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/EnterPlanModePermissionRequest/EnterPlanModePermissionRequest.tsx)
+源码镜像：[`../../src/components/permissions/EnterPlanModePermissionRequest/EnterPlanModePermissionRequest.tsx`](../../src/components/permissions/EnterPlanModePermissionRequest/EnterPlanModePermissionRequest.tsx)
 
 当用户选择 yes：
 
@@ -187,7 +187,7 @@ prompt 里其实有两套话术：
 
 ## 13. `/plan` 命令和 `EnterPlanModeTool` 走的是同一条切换主链
 
-源码镜像：[`../../sources/claude-code/src/commands/plan/plan.tsx`](../../sources/claude-code/src/commands/plan/plan.tsx)
+源码镜像：[`../../src/commands/plan/plan.tsx`](../../src/commands/plan/plan.tsx)
 
 `/plan` 在“不在 plan mode”时做的事情和工具版几乎同构：
 
@@ -203,7 +203,7 @@ prompt 里其实有两套话术：
 
 ## 14. `EnterPlanModeTool` 的只读语义是“探索可写、代码不可写”的混合相位，不是绝对禁止一切写入
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts`](../../sources/claude-code/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts), [`../../sources/claude-code/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`](../../sources/claude-code/src/utils/plans.ts)
+源码镜像：[`../../src/tools/EnterPlanModeTool/EnterPlanModeTool.ts`](../../src/tools/EnterPlanModeTool/EnterPlanModeTool.ts), [`../../src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`](../../src/utils/plans.ts)
 
 interview phase 分支里已经明确保留了一个例外：
 
@@ -218,7 +218,7 @@ interview phase 分支里已经明确保留了一个例外：
 
 ## 15. 这条链的分析与 telemetry 也是单独埋点的，说明 plan entry 是一等产品事件
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/EnterPlanModePermissionRequest/EnterPlanModePermissionRequest.tsx`](../../sources/claude-code/src/services/analytics/index.ts)
+源码镜像：[`../../src/components/permissions/EnterPlanModePermissionRequest/EnterPlanModePermissionRequest.tsx`](../../src/services/analytics/index.ts)
 
 同意进入时会打：
 

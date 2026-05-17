@@ -22,7 +22,7 @@
 ## Evidence-backed Findings（按项目）
 
 ### Claude Code（CC）
-> 代码根：`research/sources/claude-code/`
+> 代码根：`research/`
 
 - **PRI-CC-001（CODE）**：Analytics 模块刻意“零依赖”，避免 import cycle；事件在 sink attach 前进入队列，降低初始化顺序导致的数据泄漏与崩溃风险。  
   - 证据：`sources/claude-code/src/services/analytics/index.ts` 头部注释（NO dependencies / queued until attach）

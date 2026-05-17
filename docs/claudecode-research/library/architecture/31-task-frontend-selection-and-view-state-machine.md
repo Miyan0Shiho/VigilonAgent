@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是“前台焦点归谁”，不是任务怎么执行
 
-源码镜像：[`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts), [`../../sources/claude-code/src/state/onChangeAppState.ts`](../../sources/claude-code/src/state/onChangeAppState.ts), [`../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx`](../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx), [`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts), [`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx), [`../../sources/claude-code/src/state/selectors.ts`](../../sources/claude-code/src/state/selectors.ts)
+源码镜像：[`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts), [`../../src/state/onChangeAppState.ts`](../../src/state/onChangeAppState.ts), [`../../src/hooks/useGlobalKeybindings.tsx`](../../src/hooks/useGlobalKeybindings.tsx), [`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/hooks/useBackgroundTaskNavigation.ts), [`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/CoordinatorAgentStatus.tsx), [`../../src/state/selectors.ts`](../../src/state/selectors.ts)
 
 前几卷已经拆开了：
 
@@ -25,7 +25,7 @@
 
 ## 2. `AppState` 直接把这套协议提升成全局状态，而不是让每个组件各记一份局部 state
 
-源码镜像：[`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts), [`../../sources/claude-code/src/main.tsx`](../../sources/claude-code/src/main.tsx)
+源码镜像：[`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts), [`../../src/main.tsx`](../../src/main.tsx)
 
 关键字段全部直接挂在 `AppState`：
 
@@ -48,7 +48,7 @@
 
 ## 3. `expandedView` 是最外层模式位，决定当前前台主 surface 是 tasks、teammates 还是都不展开
 
-源码镜像：[`../../sources/claude-code/src/main.tsx`](../../sources/claude-code/src/main.tsx), [`../../sources/claude-code/src/state/onChangeAppState.ts`](../../sources/claude-code/src/state/onChangeAppState.ts), [`../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx`](../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx)
+源码镜像：[`../../src/main.tsx`](../../src/main.tsx), [`../../src/state/onChangeAppState.ts`](../../src/state/onChangeAppState.ts), [`../../src/hooks/useGlobalKeybindings.tsx`](../../src/hooks/useGlobalKeybindings.tsx)
 
 运行时真相已经不是旧的两个布尔位，而是：
 
@@ -73,7 +73,7 @@
 
 ## 4. `ctrl+t` 不是简单 toggle，而是整个前台状态机的最外层循环驱动器
 
-源码镜像：[`../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx`](../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx)
+源码镜像：[`../../src/hooks/useGlobalKeybindings.tsx`](../../src/hooks/useGlobalKeybindings.tsx)
 
 `handleToggleTodos()` 的行为不是固定二态，而是取决于是否有 running teammates：
 
@@ -84,7 +84,7 @@
 
 ## 5. `footerSelection` 不是 PromptInput 私有状态，因为被 focus 的 pill 可能根本不在 PromptInput 组件里
 
-源码镜像：[`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/state/AppStateStore.ts`](../../src/components/PromptInput/PromptInput.tsx)
 
 `footerSelection` 的注释写得很明确：
 
@@ -102,7 +102,7 @@
 
 ## 6. footer 选中项本身还要经过一次“仍然存在吗”的派生裁剪，防止幽灵焦点复活
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 `PromptInput` 里不是直接信任 `rawFooterSelection`，而是先算：
 
@@ -122,7 +122,7 @@
 
 ## 7. `coordinatorTaskIndex` 不是普通数组下标，它带一个 `-1` sentinel 用来表示“停在 tasks pill 上，还没进 panel 行”
 
-源码镜像：[`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/state/AppStateStore.ts`](../../src/components/PromptInput/PromptInput.tsx)
 
 这里有一个很容易被忽略的协议：
 
@@ -142,7 +142,7 @@
 
 ## 8. 但 `-1` 也不是永远合法；当 tasks pill 根本不存在时，最小索引要提升成 `0`
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/CoordinatorAgentStatus.tsx)
 
 `minCoordinatorIndex` 的计算是：
 
@@ -159,7 +159,7 @@
 
 ## 9. `coordinatorTaskIndex` 会在任务数量变化时被自动 clamp，保证光标永远不指向已经消失的 panel 行
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/CoordinatorAgentStatus.tsx)
 
 `PromptInput.tsx` 有一段专门的 clamp effect：
 
@@ -179,7 +179,7 @@
 
 ## 10. `selectedIPAgentIndex` 是 teammate spinner tree 的游标，不是 coordinator panel 的游标
 
-源码镜像：[`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx)
+源码镜像：[`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/components/Spinner/TeammateSpinnerTree.tsx)
 
 和 `coordinatorTaskIndex` 并列存在的另一套游标是：
 
@@ -200,7 +200,7 @@
 
 ## 11. `viewSelectionMode` 把“正在选 teammate”和“已经切到某个 transcript 前台”明确分成两种状态
 
-源码镜像：[`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/state/AppStateStore.ts)
+源码镜像：[`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/state/AppStateStore.ts)
 
 `viewSelectionMode` 有三态：
 
@@ -223,7 +223,7 @@
 
 ## 12. `viewingAgentTaskId` 才是真正决定 transcript foreground ownership 的字段
 
-源码镜像：[`../../sources/claude-code/src/state/selectors.ts`](../../sources/claude-code/src/state/selectors.ts), [`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx)
+源码镜像：[`../../src/state/selectors.ts`](../../src/state/selectors.ts), [`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/CoordinatorAgentStatus.tsx)
 
 `viewingAgentTaskId` 的职责非常直接：
 
@@ -241,7 +241,7 @@
 
 ## 13. `expandedView` 和 `viewingAgentTaskId` 是正交状态：可以不展开 tree，但仍然前台查看某个 agent transcript
 
-源码镜像：[`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/state/selectors.ts), [`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/state/selectors.ts), [`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 这套状态机里一个关键点是：
 
@@ -261,7 +261,7 @@
 
 ## 14. `useBackgroundTaskNavigation()` 说明 teammate 状态机的第一步常常不是移动，而是先把 `expandedView` 从别的模式切到 `teammates`
 
-源码镜像：[`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts)
+源码镜像：[`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/hooks/useBackgroundTaskNavigation.ts)
 
 `stepTeammateSelection()` 的第一分支就是：
 
@@ -274,7 +274,7 @@
 
 ## 15. footer 键位和 teammate 键位是两套并行协议，分别操纵两组状态字段
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/hooks/useBackgroundTaskNavigation.ts)
 
 两条键位链路分工非常明确：
 
@@ -294,7 +294,7 @@
 
 ## 16. `footer:openSelected` 把 tasks pill 分裂成了三种完全不同的语义分支
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/CoordinatorAgentStatus.tsx)
 
 当当前选中 `tasks` pill 时，`Enter` 的行为不是固定打开一个对话框，而是分三种：
 
@@ -311,7 +311,7 @@
 
 ## 17. `footer:close` 说明关闭动作也不是统一的“dismiss task”，而要看当前选中的行是否正是 foreground transcript
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/state/teammateViewHelpers.ts)
 
 `footer:close` 在 coordinator rows 上有一个很关键的分叉：
 
@@ -325,7 +325,7 @@
 
 ## 18. `PromptInput` 的 `onSubmit` 还要反向尊重这套状态机，避免 `Enter` 一边确认选择一边误提交 prompt
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/hooks/useBackgroundTaskNavigation.ts)
 
 `onSubmit()` 在真正发 prompt 前会先读 store：
 
@@ -341,7 +341,7 @@
 
 ## 19. 这套前台状态机的真正结构，可以压缩成“外层展开模式 + 中层选择模式 + 内层前台所有权”
 
-源码镜像：[`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx), [`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/state/selectors.ts`](../../sources/claude-code/src/state/selectors.ts)
+源码镜像：[`../../src/state/AppStateStore.ts`](../../src/hooks/useGlobalKeybindings.tsx), [`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/state/selectors.ts`](../../src/state/selectors.ts)
 
 从上到下看，可以把它压成三层：
 

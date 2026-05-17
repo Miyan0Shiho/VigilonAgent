@@ -11,7 +11,7 @@
 
 ## 1. session memory 的运行时定位已经从“后台笔记”升级成了共享 read model
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts), [`../../sources/claude-code/src/services/awaySummary.ts`](../../sources/claude-code/src/services/awaySummary.ts), [`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemoryUtils.ts`](../../src/services/SessionMemory/sessionMemoryUtils.ts), [`../../src/services/awaySummary.ts`](../../src/services/awaySummary.ts), [`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/skillify.ts)
 
 这几条链都直接读取：
 
@@ -27,7 +27,7 @@
 
 ## 2. `getSessionMemoryContent()` 故意做成无环依赖 utility，就是为了给下游功能随时拿来读
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemoryUtils.ts`](../../src/services/SessionMemory/sessionMemoryUtils.ts)
 
 `sessionMemoryUtils.ts` 顶部就明确写了：它和主 `sessionMemory.ts` 分离，是为了避免把 `runAgent` 那条重运行时链带进来。这使它能提供几种轻量只读能力：
 
@@ -39,7 +39,7 @@
 
 ## 3. away summary 不是“再做一次 transcript 总结”，而是 `session memory + recent window` 的双层 recap
 
-源码镜像：[`../../sources/claude-code/src/services/awaySummary.ts`](../../sources/claude-code/src/services/awaySummary.ts)
+源码镜像：[`../../src/services/awaySummary.ts`](../../src/services/awaySummary.ts)
 
 `generateAwaySummary(...)` 的 prompt 装配非常克制：
 
@@ -56,7 +56,7 @@
 
 ## 4. away summary 的 prompt 明确把 session memory 定义成 broader context，而不是最终答案来源
 
-源码镜像：[`../../sources/claude-code/src/services/awaySummary.ts`](../../sources/claude-code/src/services/awaySummary.ts)
+源码镜像：[`../../src/services/awaySummary.ts`](../../src/services/awaySummary.ts)
 
 `buildAwaySummaryPrompt(memory)` 里把 notes 包装成：
 
@@ -73,7 +73,7 @@
 
 ## 5. away summary 还是一个特意做小的模型调用：小模型、无工具、无 streaming、recent-only
 
-源码镜像：[`../../sources/claude-code/src/services/awaySummary.ts`](../../sources/claude-code/src/services/awaySummary.ts)
+源码镜像：[`../../src/services/awaySummary.ts`](../../src/services/awaySummary.ts)
 
 它调用的是：
 
@@ -95,7 +95,7 @@
 
 ## 6. `useAwaySummary` 说明 away summary 的真实宿主不是命令，而是 terminal focus hook
 
-源码镜像：[`../../sources/claude-code/src/hooks/useAwaySummary.ts`](../../sources/claude-code/src/hooks/useAwaySummary.ts)
+源码镜像：[`../../src/hooks/useAwaySummary.ts`](../../src/hooks/useAwaySummary.ts)
 
 前台触发条件并不是 slash command，而是：
 
@@ -113,7 +113,7 @@
 
 ## 7. away summary 会在 turn 中途主动延迟，说明它优先服从主会话节奏
 
-源码镜像：[`../../sources/claude-code/src/hooks/useAwaySummary.ts`](../../sources/claude-code/src/hooks/useAwaySummary.ts)
+源码镜像：[`../../src/hooks/useAwaySummary.ts`](../../src/hooks/useAwaySummary.ts)
 
 当 blur 定时器到点时，如果：
 
@@ -127,7 +127,7 @@
 
 ## 8. away summary 还用 compact boundary 做切口，避免旧 recap 重复污染新阶段
 
-源码镜像：[`../../sources/claude-code/src/utils/messages.ts`](../../sources/claude-code/src/utils/messages.ts), [`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts)
+源码镜像：[`../../src/utils/messages.ts`](../../src/utils/messages.ts), [`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/skillify.ts)
 
 session memory 这条线和 compaction 的一个重要接缝是：
 
@@ -137,7 +137,7 @@ skillify 明确只看 compact boundary 之后的用户消息，away summary 虽�
 
 ## 9. `skillify` 不是简单导出 notes，而是把 session memory 当作访谈前的结构化 briefing
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts)
+源码镜像：[`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/skillify.ts)
 
 `skillify` 的 prompt 结构很清楚：
 
@@ -155,7 +155,7 @@ skillify 明确只看 compact boundary 之后的用户消息，away summary 虽�
 
 ## 10. `skillify` 还特意保留 user raw messages，说明 notes 无法替代 steering 细节
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts)
+源码镜像：[`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/skillify.ts)
 
 它没有只靠 session memory，而是还会：
 
@@ -175,7 +175,7 @@ skillify 明确只看 compact boundary 之后的用户消息，away summary 虽�
 
 ## 11. `skillify` 还是一个强约束的人机协作面，不允许模型直接静默落盘
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts)
+源码镜像：[`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/skillify.ts)
 
 这条 skill 的 prompt 明确要求：
 
@@ -188,7 +188,7 @@ skillify 明确只看 compact boundary 之后的用户消息，away summary 虽�
 
 ## 12. `disableModelInvocation: true` 说明 skillify 是 operator-invoked capture flow，不是模型自发套路
 
-源码镜像：[`../../sources/claude-code/src/skills/bundled/skillify.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts)
+源码镜像：[`../../src/skills/bundled/skillify.ts`](../../src/skills/bundled/skillify.ts)
 
 注册时它显式声明：
 
@@ -199,7 +199,7 @@ skillify 明确只看 compact boundary 之后的用户消息，away summary 虽�
 
 ## 13. `tipRegistry` 又给这条消费链补了一层 discoverability sidecar
 
-源码镜像：[`../../sources/claude-code/src/services/tips/tipRegistry.ts`](../../sources/claude-code/src/services/tips/tipRegistry.ts)
+源码镜像：[`../../src/services/tips/tipRegistry.ts`](../../src/services/tips/tipRegistry.ts)
 
 当前镜像里还存在一条内部 tip：
 
@@ -209,7 +209,7 @@ skillify 明确只看 compact boundary 之后的用户消息，away summary 虽�
 
 ## 14. away summary 和 skillify 体现了 session memory 的两种截然不同消费风格
 
-源码镜像：[`../../sources/claude-code/src/services/awaySummary.ts`](../../sources/claude-code/src/skills/bundled/skillify.ts)
+源码镜像：[`../../src/services/awaySummary.ts`](../../src/skills/bundled/skillify.ts)
 
 away summary 的风格是：
 

@@ -6,7 +6,7 @@
 
 ## 1. 这组前台工作面解决的是“命令进入后怎么继续操作”
 
-源码镜像：[`../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx`](../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx), [`../../sources/claude-code/src/components/skills/SkillsMenu.tsx`](../../sources/claude-code/src/components/skills/SkillsMenu.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx), [`../../sources/claude-code/src/commands/bridge/bridge.tsx`](../../sources/claude-code/src/commands/bridge/bridge.tsx)
+源码镜像：[`../../src/components/memory/MemoryFileSelector.tsx`](../../src/components/memory/MemoryFileSelector.tsx), [`../../src/components/skills/SkillsMenu.tsx`](../../src/components/skills/SkillsMenu.tsx), [`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx), [`../../src/commands/bridge/bridge.tsx`](../../src/commands/bridge/bridge.tsx)
 
 这几块 UI 覆盖的是四种完全不同的 operator 问题：
 
@@ -19,7 +19,7 @@
 
 ## 2. `MemoryFileSelector` 不是文件选择器，而是 memory topology operator
 
-源码镜像：[`../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx`](../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx)
+源码镜像：[`../../src/components/memory/MemoryFileSelector.tsx`](../../src/components/memory/MemoryFileSelector.tsx)
 
 这块组件先做的不是渲染，而是把当前可操作的 memory 空间整理成一个拓扑：
 
@@ -32,7 +32,7 @@
 
 ## 3. `MemoryFileSelector` 会显式制造“可新建目标”，而不是只列真实文件
 
-源码镜像：[`../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx`](../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx)
+源码镜像：[`../../src/components/memory/MemoryFileSelector.tsx`](../../src/components/memory/MemoryFileSelector.tsx)
 
 它会检查：
 
@@ -48,7 +48,7 @@
 
 ## 4. nested memory 的缩进和描述说明它在渲染一棵导入树
 
-源码镜像：[`../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx`](../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx)
+源码镜像：[`../../src/components/memory/MemoryFileSelector.tsx`](../../src/components/memory/MemoryFileSelector.tsx)
 
 `depths`、`parent`、`isNested`、`"@-imported"` 这些字段组合起来，说明这不是平铺列表。它会：
 
@@ -60,7 +60,7 @@
 
 ## 5. `MemoryFileSelector` 把 auto-memory 和 auto-dream 直接内嵌成可切换运行时开关
 
-源码镜像：[`../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx`](../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx)
+源码镜像：[`../../src/components/memory/MemoryFileSelector.tsx`](../../src/components/memory/MemoryFileSelector.tsx)
 
 它在文件选择列表上方额外渲染两条 toggle：
 
@@ -76,7 +76,7 @@
 
 ## 6. dream 状态行说明 memory 面板已经接到后台 consolidation runtime
 
-源码镜像：[`../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx`](../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx)
+源码镜像：[`../../src/components/memory/MemoryFileSelector.tsx`](../../src/components/memory/MemoryFileSelector.tsx)
 
 `MemoryFileSelector` 还会从两条运行时信号读状态：
 
@@ -94,7 +94,7 @@
 
 ## 7. `MemoryFileSelector` 的键位设计是“双焦点模式机”，不是单一列表
 
-源码镜像：[`../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx`](../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx), [`../../sources/claude-code/src/components/CustomSelect/index.ts`](../../sources/claude-code/src/components/CustomSelect/index.ts)
+源码镜像：[`../../src/components/memory/MemoryFileSelector.tsx`](../../src/components/memory/MemoryFileSelector.tsx), [`../../src/components/CustomSelect/index.ts`](../../src/components/CustomSelect/index.ts)
 
 它内部显式维护 `focusedToggle`，把交互拆成两层：
 
@@ -110,7 +110,7 @@
 
 ## 8. open-folder 选项说明 memory 面板同时承担“目录探针”角色
 
-源码镜像：[`../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx`](../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx)
+源码镜像：[`../../src/components/memory/MemoryFileSelector.tsx`](../../src/components/memory/MemoryFileSelector.tsx)
 
 当 auto-memory 打开时，它会追加：
 
@@ -127,7 +127,7 @@
 
 ## 9. `SkillsMenu` 不是技能文件浏览器，而是当前会话 capability registry
 
-源码镜像：[`../../sources/claude-code/src/components/skills/SkillsMenu.tsx`](../../sources/claude-code/src/components/skills/SkillsMenu.tsx)
+源码镜像：[`../../src/components/skills/SkillsMenu.tsx`](../../src/components/skills/SkillsMenu.tsx)
 
 `SkillsMenu` 一上来就过滤命令集合，只保留：
 
@@ -140,7 +140,7 @@
 
 ## 10. `SkillsMenu` 的分组模型直接暴露了 Claude Code 的 skill 来源分层
 
-源码镜像：[`../../sources/claude-code/src/components/skills/SkillsMenu.tsx`](../../sources/claude-code/src/components/skills/SkillsMenu.tsx)
+源码镜像：[`../../src/components/skills/SkillsMenu.tsx`](../../src/components/skills/SkillsMenu.tsx)
 
 它按 source 分成：
 
@@ -159,7 +159,7 @@
 
 ## 11. `SkillsMenu` 把 description token 预算做成了一等信息
 
-源码镜像：[`../../sources/claude-code/src/components/skills/SkillsMenu.tsx`](../../sources/claude-code/src/components/skills/SkillsMenu.tsx), [`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/components/skills/SkillsMenu.tsx`](../../src/components/skills/SkillsMenu.tsx), [`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 每条 skill 旁边都会显示：
 
@@ -173,7 +173,7 @@
 
 ## 12. `SkillsMenu` 的 empty state 也在强化“应该去哪个目录加能力”
 
-源码镜像：[`../../sources/claude-code/src/components/skills/SkillsMenu.tsx`](../../sources/claude-code/src/components/skills/SkillsMenu.tsx)
+源码镜像：[`../../src/components/skills/SkillsMenu.tsx`](../../src/components/skills/SkillsMenu.tsx)
 
 当没有 skills 时，它不会报错，而是明确提示：
 
@@ -183,7 +183,7 @@
 
 ## 13. `BackgroundTasksDialog` 是 Claude Code 的后台任务总控台，不是简单列表
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 这块组件做的第一件大事，是把所有 background task 归并成可操作项目：
 
@@ -205,7 +205,7 @@
 
 ## 14. `BackgroundTasksDialog` 的 list/detail 双模式说明它本质是控制台，而不是 drawer
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 它显式维护：
 
@@ -222,7 +222,7 @@
 
 ## 15. `BackgroundTasksDialog` 其实在编排七类任务分区和一个团队视角
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 列表模式下它固定按视觉顺序组织成：
 
@@ -238,7 +238,7 @@
 
 ## 16. `BackgroundTasksDialog` 的键位设计是“按任务类型动态暴露动作”
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 标准动作是：
 
@@ -256,7 +256,7 @@
 
 ## 17. detail dispatch 说明它真正在统一多个子系统，而不是伪统一
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 进入 detail 后，它会按 task type 分发到完全不同的子对话框：
 
@@ -277,7 +277,7 @@
 
 ## 18. `BridgeDisconnectDialog` 揭示 `/remote-control` 已连接后的真实 operator 语义
 
-源码镜像：[`../../sources/claude-code/src/commands/bridge/bridge.tsx`](../../sources/claude-code/src/commands/bridge/bridge.tsx)
+源码镜像：[`../../src/commands/bridge/bridge.tsx`](../../src/commands/bridge/bridge.tsx)
 
 当 `/remote-control` 已连接时，`BridgeToggle` 不会继续 connect，而是切到 `BridgeDisconnectDialog`。这个对话框的焦点不是“告诉你已连上”，而是给三种后续动作：
 
@@ -289,7 +289,7 @@
 
 ## 19. `BridgeDisconnectDialog` 自己就是一个小型 select-mode 状态机
 
-源码镜像：[`../../sources/claude-code/src/commands/bridge/bridge.tsx`](../../sources/claude-code/src/commands/bridge/bridge.tsx)
+源码镜像：[`../../src/commands/bridge/bridge.tsx`](../../src/commands/bridge/bridge.tsx)
 
 它内部维护：
 
@@ -307,7 +307,7 @@
 
 ## 20. 二维码逻辑说明这不是本机专属 UI，而是跨设备 handoff surface
 
-源码镜像：[`../../sources/claude-code/src/commands/bridge/bridge.tsx`](../../sources/claude-code/src/commands/bridge/bridge.tsx)
+源码镜像：[`../../src/commands/bridge/bridge.tsx`](../../src/commands/bridge/bridge.tsx)
 
 `BridgeDisconnectDialog` 会根据：
 
@@ -321,7 +321,7 @@
 
 ## 21. `checkBridgePrerequisites()` 说明 bridge operator surface 前面还有一整条 gate pipeline
 
-源码镜像：[`../../sources/claude-code/src/commands/bridge/bridge.tsx`](../../sources/claude-code/src/commands/bridge/bridge.tsx)
+源码镜像：[`../../src/commands/bridge/bridge.tsx`](../../src/commands/bridge/bridge.tsx)
 
 真正 connect 之前，bridge.tsx 还会跑一遍前置检查：
 

@@ -2,7 +2,7 @@
 
 导航：[`首页`](../README.md) | [`总索引`](../master-index.md) | [`上一站：ScheduleCron Tools / Scheduler / Durable-Session Runtime`](./81-schedule-cron-tools-scheduler-and-durable-session-runtime.md) | [`下一站：RemoteTriggerTool / OAuth Headers / Action Surface / Raw Result Runtime`](./83-remote-trigger-tool-oauth-headers-action-surface-and-raw-result-runtime.md)
 
-本文把 `SleepTool` 单独从 proactive/assistant/queue 总述里拆出来。但要先说明一个边界：当前源码镜像里只有 [`../../sources/claude-code/src/tools/SleepTool/prompt.ts`](../../sources/claude-code/src/tools/SleepTool/prompt.ts) 可见，`SleepTool` 主体实现文件本身没有展开。所以这篇不会硬装成“已经拿到完整 tool body”，而是只写当前镜像里真正能证实的外围 runtime：
+本文把 `SleepTool` 单独从 proactive/assistant/queue 总述里拆出来。但要先说明一个边界：当前源码镜像里只有 [`../../src/tools/SleepTool/prompt.ts`](../../src/tools/SleepTool/prompt.ts) 可见，`SleepTool` 主体实现文件本身没有展开。所以这篇不会硬装成“已经拿到完整 tool body”，而是只写当前镜像里真正能证实的外围 runtime：
 
 - tool exposure gate
 - proactive tick loop
@@ -16,7 +16,7 @@
 
 ## 1. `SleepTool` 不是普通常驻工具，它只在 proactive 能力打开时才装进工具池
 
-源码镜像：[`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/tools.ts), [`../../sources/claude-code/src/main.tsx`](../../sources/claude-code/src/main.tsx)
+源码镜像：[`../../src/tools.ts`](../../src/tools.ts), [`../../src/main.tsx`](../../src/main.tsx)
 
 `tools.ts` 里它的装配条件是：
 
@@ -34,7 +34,7 @@
 
 ## 2. 在 assistant mode 下，brief 会被强制开启，但 Sleep 不会被 assistant 本身强开
 
-源码镜像：[`../../sources/claude-code/src/main.tsx`](../../sources/claude-code/src/main.tsx)
+源码镜像：[`../../src/main.tsx`](../../src/main.tsx)
 
 `main.tsx` 里写得很清楚：
 
@@ -52,7 +52,7 @@
 
 ## 3. 从 prompt contract 看，`SleepTool` 的产品定位就是“无事可做时的低成本挂起”
 
-源码镜像：[`../../sources/claude-code/src/tools/SleepTool/prompt.ts`](../../sources/claude-code/src/tools/SleepTool/prompt.ts)
+源码镜像：[`../../src/tools/SleepTool/prompt.ts`](../../src/tools/SleepTool/prompt.ts)
 
 当前可见 prompt contract 非常直接：
 
@@ -66,7 +66,7 @@
 
 ## 4. system prompt 甚至把它上升成 proactive 模式下的强制 idle protocol
 
-源码镜像：[`../../sources/claude-code/src/constants/prompts.ts`](../../sources/claude-code/src/constants/prompts.ts)
+源码镜像：[`../../src/constants/prompts.ts`](../../src/constants/prompts.ts)
 
 在 proactive/assistant 提示词里，Claude Code 明确要求：
 
@@ -79,7 +79,7 @@
 
 ## 5. `<tick>` prompt 才是它的上游驱动器，Sleep 只是把 tick-to-tick 间隔显式工具化
 
-源码镜像：[`../../sources/claude-code/src/constants/prompts.ts`](../../sources/claude-code/src/cli/print.ts)
+源码镜像：[`../../src/constants/prompts.ts`](../../src/cli/print.ts)
 
 headless/proactive 路径会在队列空的时候注入：
 
@@ -99,7 +99,7 @@ headless/proactive 路径会在队列空的时候注入：
 
 ## 6. 当前镜像里看不到 `SleepTool` 主体，但能确认它是唯一被宿主当作 `interruptBehavior: 'cancel'` 典型案例的工具
 
-源码镜像：[`../../sources/claude-code/src/Tool.ts`](../../sources/claude-code/src/Tool.ts), [`../../sources/claude-code/src/utils/handlePromptSubmit.ts`](../../sources/claude-code/src/utils/handlePromptSubmit.ts), [`../../sources/claude-code/src/services/tools/StreamingToolExecutor.ts`](../../sources/claude-code/src/services/tools/StreamingToolExecutor.ts)
+源码镜像：[`../../src/Tool.ts`](../../src/Tool.ts), [`../../src/utils/handlePromptSubmit.ts`](../../src/utils/handlePromptSubmit.ts), [`../../src/services/tools/StreamingToolExecutor.ts`](../../src/services/tools/StreamingToolExecutor.ts)
 
 `Tool.ts` 定义了：
 
@@ -124,7 +124,7 @@ headless/proactive 路径会在队列空的时候注入：
 
 ## 7. 这就是为什么 `Sleep` 会和普通长工具产生不同的输入体验
 
-源码镜像：[`../../sources/claude-code/src/utils/handlePromptSubmit.ts`](../../sources/claude-code/src/services/tools/StreamingToolExecutor.ts)
+源码镜像：[`../../src/utils/handlePromptSubmit.ts`](../../src/services/tools/StreamingToolExecutor.ts)
 
 对 block 型工具，用户新消息只是进队列。
 
@@ -138,7 +138,7 @@ headless/proactive 路径会在队列空的时候注入：
 
 ## 8. `QueuePriority` 注释还明确写了：`next/later` 队列都可以唤醒 in-progress Sleep
 
-源码镜像：[`../../sources/claude-code/src/types/textInputTypes.ts`](../../sources/claude-code/src/types/textInputTypes.ts), [`../../sources/claude-code/src/query.ts`](../../sources/claude-code/src/query.ts)
+源码镜像：[`../../src/types/textInputTypes.ts`](../../src/types/textInputTypes.ts), [`../../src/query.ts`](../../src/query.ts)
 
 类型注释里直接写着：
 
@@ -155,7 +155,7 @@ headless/proactive 路径会在队列空的时候注入：
 
 ## 9. 这条“Sleep flush” 不是抽象优化，而是为后台通知设计的
 
-源码镜像：[`../../sources/claude-code/src/query.ts`](../../sources/claude-code/src/query.ts)
+源码镜像：[`../../src/query.ts`](../../src/query.ts)
 
 `query.ts` 的注释已经把原因讲明白了：
 
@@ -169,7 +169,7 @@ headless/proactive 路径会在队列空的时候注入：
 
 ## 10. `REPL` 还专门为 Sleep 做了 spinner 抑制，说明它不该被看成“正在忙”
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 REPL 会计算：
 
@@ -191,7 +191,7 @@ Sleep 更接近一种“静默等待态”。
 
 ## 11. `REPL` 里还有一句关键注释：`proactive tick -> Sleep -> tick` 会饿死 scheduler，所以 assistant mode 要绕过 loading gate
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/hooks/useScheduledTasks.ts`](../../sources/claude-code/src/hooks/useScheduledTasks.ts)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/hooks/useScheduledTasks.ts`](../../src/hooks/useScheduledTasks.ts)
 
 `useScheduledTasks` 的 assistantMode 旁边写得很直白：
 
@@ -202,7 +202,7 @@ Sleep 更接近一种“静默等待态”。
 
 ## 12. headless path 的 proactive tick loop和 REPL path 共享同一条核心语义
 
-源码镜像：[`../../sources/claude-code/src/cli/print.ts`](../../sources/claude-code/src/main.tsx)
+源码镜像：[`../../src/cli/print.ts`](../../src/main.tsx)
 
 `print.ts` 在 headless path 下：
 
@@ -214,7 +214,7 @@ Sleep 更接近一种“静默等待态”。
 
 ## 13. `channelNotification` 还把 Sleep 当成 channel message 唤醒机制的一部分
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/channelNotification.ts`](../../sources/claude-code/src/services/mcp/channelNotification.ts)
+源码镜像：[`../../src/services/mcp/channelNotification.ts`](../../src/services/mcp/channelNotification.ts)
 
 channel inbound notification 的注释写着：
 
@@ -230,7 +230,7 @@ channel inbound notification 的注释写着：
 
 ## 14. 被唤醒的外部事件并不只有人类输入，还包括 system-generated meta commands
 
-源码镜像：[`../../sources/claude-code/src/utils/messageQueueManager.ts`](../../sources/claude-code/src/cli/print.ts), [`../../sources/claude-code/src/hooks/useScheduledTasks.ts`](../../sources/claude-code/src/services/mcp/channelNotification.ts)
+源码镜像：[`../../src/utils/messageQueueManager.ts`](../../src/cli/print.ts), [`../../src/hooks/useScheduledTasks.ts`](../../src/services/mcp/channelNotification.ts)
 
 队列里会进入很多 `isMeta` 命令：
 
@@ -243,7 +243,7 @@ channel inbound notification 的注释写着：
 
 ## 15. `Sleep` 还被列进 auto-mode 安全白名单，说明它被视为低风险控制工具
 
-源码镜像：[`../../sources/claude-code/src/utils/permissions/classifierDecision.ts`](../../sources/claude-code/src/tools/SleepTool/prompt.ts)
+源码镜像：[`../../src/utils/permissions/classifierDecision.ts`](../../src/tools/SleepTool/prompt.ts)
 
 `SAFE_YOLO_ALLOWLISTED_TOOLS` 显式包含：
 
@@ -270,7 +270,7 @@ channel inbound notification 的注释写着：
 
 ## 17. `Sleep` 的一个重要产品目的，是替代 `Bash(sleep ...)` 这类“占壳等待”
 
-源码镜像：[`../../sources/claude-code/src/tools/SleepTool/prompt.ts`](../../sources/claude-code/src/tools/SleepTool/prompt.ts)
+源码镜像：[`../../src/tools/SleepTool/prompt.ts`](../../src/tools/SleepTool/prompt.ts)
 
 prompt 里明确说：
 

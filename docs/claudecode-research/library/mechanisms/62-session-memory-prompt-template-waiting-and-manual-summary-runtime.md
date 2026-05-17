@@ -13,7 +13,7 @@
 
 ## 1. session memory 不是硬编码 markdown 文件，它先加载可替换模板
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/prompts.ts`](../../sources/claude-code/src/services/SessionMemory/prompts.ts)
+源码镜像：[`../../src/services/SessionMemory/prompts.ts`](../../src/services/SessionMemory/prompts.ts)
 
 `loadSessionMemoryTemplate()` 会优先读：
 
@@ -27,7 +27,7 @@
 
 ## 2. 默认模板本身是一个强结构笔记协议，不是自由摘要
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/prompts.ts`](../../sources/claude-code/src/services/SessionMemory/prompts.ts)
+源码镜像：[`../../src/services/SessionMemory/prompts.ts`](../../src/services/SessionMemory/prompts.ts)
 
 默认模板强制定义了固定 section：
 
@@ -46,7 +46,7 @@
 
 ## 3. update prompt 也不是写死在代码里，它同样支持用户替换
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/prompts.ts`](../../sources/claude-code/src/services/SessionMemory/prompts.ts)
+源码镜像：[`../../src/services/SessionMemory/prompts.ts`](../../src/services/SessionMemory/prompts.ts)
 
 `loadSessionMemoryPrompt()` 优先读：
 
@@ -61,7 +61,7 @@
 
 ## 4. prompt/template 不是纯文本包含，而是走 `{{variable}}` 单次替换协议
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/prompts.ts`](../../sources/claude-code/src/services/SessionMemory/prompts.ts)
+源码镜像：[`../../src/services/SessionMemory/prompts.ts`](../../src/services/SessionMemory/prompts.ts)
 
 `substituteVariables(...)` 当前支持的是：
 
@@ -81,7 +81,7 @@
 
 ## 5. 默认 update prompt 的首要目标不是“写好总结”，而是“严守结构”
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/prompts.ts`](../../sources/claude-code/src/services/SessionMemory/prompts.ts)
+源码镜像：[`../../src/services/SessionMemory/prompts.ts`](../../src/services/SessionMemory/prompts.ts)
 
 默认 prompt 里最重的约束不是内容风格，而是结构保护：
 
@@ -95,7 +95,7 @@
 
 ## 6. section-size 和 total-budget 管理是 prompt-building 阶段就做的，不等模型自己悟出来
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/prompts.ts`](../../sources/claude-code/src/services/SessionMemory/prompts.ts)
+源码镜像：[`../../src/services/SessionMemory/prompts.ts`](../../src/services/SessionMemory/prompts.ts)
 
 这一层有两组硬预算：
 
@@ -112,7 +112,7 @@
 
 ## 7. oversized-section 提醒说明 session memory 被视为会持续膨胀的资产
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/prompts.ts`](../../sources/claude-code/src/services/SessionMemory/prompts.ts)
+源码镜像：[`../../src/services/SessionMemory/prompts.ts`](../../src/services/SessionMemory/prompts.ts)
 
 当某个 section 超预算，或者整份 notes 超总预算时，prompt 会自动追加：
 
@@ -124,7 +124,7 @@
 
 ## 8. `isSessionMemoryEmpty()` 说明 notes 文件不只是显示面，还是 compact 路线的判定输入
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/prompts.ts`](../../sources/claude-code/src/services/SessionMemory/prompts.ts)
+源码镜像：[`../../src/services/SessionMemory/prompts.ts`](../../src/services/SessionMemory/prompts.ts)
 
 `isSessionMemoryEmpty(content)` 的语义不是单纯“文件有没有字”，而是：
 
@@ -139,7 +139,7 @@
 
 ## 9. `waitForSessionMemoryExtraction()` 是一条跨功能同步协议，不是 session-memory 内部细节
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemoryUtils.ts`](../../src/services/SessionMemory/sessionMemoryUtils.ts)
 
 它维护了一个单独的等待协议：
 
@@ -157,7 +157,7 @@
 
 ## 10. extraction state 被单独抽成 util shared state，说明有多个消费者要同步它
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemoryUtils.ts`](../../src/services/SessionMemory/sessionMemoryUtils.ts)
 
 这层共享状态至少包括：
 
@@ -179,7 +179,7 @@
 
 ## 11. `/summary` 不是 UI 假动作，而是正式走一条 manual fork 路线
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
 
 `manuallyExtractSessionMemory(...)` 明确写着：
 
@@ -198,7 +198,7 @@
 
 ## 12. manual `/summary` 和自动 post-sampling 路线共享目标，但不共享完整入口条件
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
 
 自动路径要求：
 
@@ -214,7 +214,7 @@
 
 ## 13. manual 路线还会重建 system prompt / contexts，而不是依赖 stop-hook 上下文现成透传
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
 
 自动 post-sampling 路线可以直接：
 
@@ -231,7 +231,7 @@
 
 ## 14. `getSessionMemoryContent()` 把 session memory 正式暴露成可消费资产
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemoryUtils.ts`](../../src/services/SessionMemory/sessionMemoryUtils.ts)
 
 这层不仅允许等待 extraction，还允许直接读取内容：
 

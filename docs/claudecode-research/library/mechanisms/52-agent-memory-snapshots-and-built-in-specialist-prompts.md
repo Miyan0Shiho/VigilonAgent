@@ -11,7 +11,7 @@
 
 ## 1. Agent memory 不是 session memory 的别名，而是按 agent type 切开的长期知识层
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentMemory.ts`](../../sources/claude-code/src/tools/AgentTool/agentMemory.ts)
+源码镜像：[`../../src/tools/AgentTool/agentMemory.ts`](../../src/tools/AgentTool/agentMemory.ts)
 
 `AgentMemoryScope` 只有三种：
 
@@ -28,7 +28,7 @@
 
 ## 2. `agentType` 先被 sanitize 再入盘，说明 plugin-namespaced agents 从一开始就被当成合法一等来源
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentMemory.ts`](../../sources/claude-code/src/tools/AgentTool/agentMemory.ts)
+源码镜像：[`../../src/tools/AgentTool/agentMemory.ts`](../../src/tools/AgentTool/agentMemory.ts)
 
 `sanitizeAgentTypeForPath()` 会把 `:` 换成 `-`。原因写得很明白：
 
@@ -45,7 +45,7 @@
 
 ## 3. `local` memory scope 在 remote mount 下会被重定向到 project-namespaced 挂载目录
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentMemory.ts`](../../sources/claude-code/src/tools/AgentTool/agentMemory.ts)
+源码镜像：[`../../src/tools/AgentTool/agentMemory.ts`](../../src/tools/AgentTool/agentMemory.ts)
 
 `getLocalAgentMemoryDir()` 有一条非常关键的分叉：
 
@@ -57,7 +57,7 @@
 
 ## 4. `isAgentMemoryPath()` 不只是便利函数，而是一道路径信任边界
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentMemory.ts`](../../sources/claude-code/src/tools/AgentTool/agentMemory.ts)
+源码镜像：[`../../src/tools/AgentTool/agentMemory.ts`](../../src/tools/AgentTool/agentMemory.ts)
 
 这段逻辑先做：
 
@@ -75,7 +75,7 @@
 
 ## 5. `loadAgentMemoryPrompt()` 把 memory 目录变成系统提示的一部分，而不是后台静默附带
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentMemory.ts`](../../sources/claude-code/src/tools/AgentTool/agentMemory.ts)
+源码镜像：[`../../src/tools/AgentTool/agentMemory.ts`](../../src/tools/AgentTool/agentMemory.ts)
 
 agent memory 的接入方式不是把文件内容偷偷塞到某个 store，而是：
 
@@ -93,7 +93,7 @@ agent memory 的接入方式不是把文件内容偷偷塞到某个 store，而�
 
 ## 6. `ensureMemoryDirExists()` 是 fire-and-forget，说明 agent memory 创建被设计成“不阻塞 spawn，但最终一致”
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentMemory.ts`](../../sources/claude-code/src/tools/AgentTool/agentMemory.ts)
+源码镜像：[`../../src/tools/AgentTool/agentMemory.ts`](../../src/tools/AgentTool/agentMemory.ts)
 
 这里没有 `await` mkdir。注释解释得很工程化：
 
@@ -109,7 +109,7 @@ agent memory 的接入方式不是把文件内容偷偷塞到某个 store，而�
 
 ## 7. snapshot 不是 memory 本体，而是 project 提供给 agent 的 seed image
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentMemorySnapshot.ts`](../../sources/claude-code/src/tools/AgentTool/agentMemorySnapshot.ts)
+源码镜像：[`../../src/tools/AgentTool/agentMemorySnapshot.ts`](../../src/tools/AgentTool/agentMemorySnapshot.ts)
 
 snapshot 系统固定几件事：
 
@@ -126,7 +126,7 @@ snapshot 系统固定几件事：
 
 ## 8. `checkAgentMemorySnapshot()` 把 snapshot 同步分成三种动作，而不是只有“有/没有”
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentMemorySnapshot.ts`](../../sources/claude-code/src/tools/AgentTool/agentMemorySnapshot.ts)
+源码镜像：[`../../src/tools/AgentTool/agentMemorySnapshot.ts`](../../src/tools/AgentTool/agentMemorySnapshot.ts)
 
 返回值只有三态：
 
@@ -149,7 +149,7 @@ snapshot 系统固定几件事：
 
 ## 9. “本地是否已有 agent memory” 的判断极其保守，只看 `.md` 文件
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentMemorySnapshot.ts`](../../sources/claude-code/src/tools/AgentTool/agentMemorySnapshot.ts)
+源码镜像：[`../../src/tools/AgentTool/agentMemorySnapshot.ts`](../../src/tools/AgentTool/agentMemorySnapshot.ts)
 
 `hasLocalMemory` 的规则不是目录存在，而是：
 
@@ -164,7 +164,7 @@ snapshot 系统固定几件事：
 
 ## 10. `initializeFromSnapshot()` 和 `replaceFromSnapshot()` 说明 snapshot 更新分成“首次拷贝”和“整包替换”两种严格语义
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentMemorySnapshot.ts`](../../sources/claude-code/src/tools/AgentTool/agentMemorySnapshot.ts)
+源码镜像：[`../../src/tools/AgentTool/agentMemorySnapshot.ts`](../../src/tools/AgentTool/agentMemorySnapshot.ts)
 
 两条动作差别很大：
 
@@ -180,7 +180,7 @@ snapshot 系统固定几件事：
 
 ## 11. `.snapshot-synced.json` 说明 snapshot 系统追踪的是“最后同步来源时间”，不是文件级 diff
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentMemorySnapshot.ts`](../../sources/claude-code/src/tools/AgentTool/agentMemorySnapshot.ts)
+源码镜像：[`../../src/tools/AgentTool/agentMemorySnapshot.ts`](../../src/tools/AgentTool/agentMemorySnapshot.ts)
 
 同步元数据只记：
 
@@ -196,7 +196,7 @@ snapshot 系统固定几件事：
 
 ## 12. builtin agent catalog 的变化不是内容差异，而是“哪些 specialist 会出现在这次宿主里”
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/builtInAgents.ts`](../../sources/claude-code/src/tools/AgentTool/builtInAgents.ts)
+源码镜像：[`../../src/tools/AgentTool/builtInAgents.ts`](../../src/tools/AgentTool/builtInAgents.ts)
 
 当前 builtin catalog 的主要成员包括：
 
@@ -219,7 +219,7 @@ snapshot 系统固定几件事：
 
 ## 13. `general-purpose` 的存在说明 Claude Code 把“子代理”默认看成研究/搜索 worker，而不是实现 worker
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/built-in/generalPurposeAgent.ts`](../../sources/claude-code/src/tools/AgentTool/built-in/generalPurposeAgent.ts)
+源码镜像：[`../../src/tools/AgentTool/built-in/generalPurposeAgent.ts`](../../src/tools/AgentTool/built-in/generalPurposeAgent.ts)
 
 `general-purpose` 的系统提示重点是：
 
@@ -237,7 +237,7 @@ snapshot 系统固定几件事：
 
 ## 14. `Explore` 和 `Plan` 两个 builtin agent 都是强 read-only specialist，不只是“风格不同”
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/built-in/exploreAgent.ts`](../../sources/claude-code/src/tools/AgentTool/built-in/planAgent.ts)
+源码镜像：[`../../src/tools/AgentTool/built-in/exploreAgent.ts`](../../src/tools/AgentTool/built-in/planAgent.ts)
 
 两者都明确：
 
@@ -254,7 +254,7 @@ snapshot 系统固定几件事：
 
 ## 15. `Explore` 的系统提示强调 “快” 和 “并行搜”，说明它是内建的 repo navigation accelerator
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/built-in/exploreAgent.ts`](../../sources/claude-code/src/tools/AgentTool/built-in/exploreAgent.ts)
+源码镜像：[`../../src/tools/AgentTool/built-in/exploreAgent.ts`](../../src/tools/AgentTool/built-in/exploreAgent.ts)
 
 这份 prompt 明确要求：
 
@@ -266,7 +266,7 @@ snapshot 系统固定几件事：
 
 ## 16. `Plan` 不是“输出一个 TODO 列表”，而是带架构责任的 read-only architect role
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/built-in/planAgent.ts`](../../sources/claude-code/src/tools/AgentTool/built-in/planAgent.ts)
+源码镜像：[`../../src/tools/AgentTool/built-in/planAgent.ts`](../../src/tools/AgentTool/built-in/planAgent.ts)
 
 Plan agent 的 required output 里强制要求：
 
@@ -284,7 +284,7 @@ Plan agent 的 required output 里强制要求：
 
 ## 17. `verification` agent 是 builtin catalog 里最强的“敌意 prompt”，说明 Claude Code 已经把 verifier 当成 first-class role
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/built-in/verificationAgent.ts`](../../sources/claude-code/src/tools/AgentTool/built-in/verificationAgent.ts)
+源码镜像：[`../../src/tools/AgentTool/built-in/verificationAgent.ts`](../../src/tools/AgentTool/built-in/verificationAgent.ts)
 
 这份系统提示明显不是通用 agent 风格，而是明确灌入：
 
@@ -298,7 +298,7 @@ Plan agent 的 required output 里强制要求：
 
 ## 18. `verification` agent 还被定义成 `background: true`，说明内建 verifier 从一开始就按后台生命周期设计
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/built-in/verificationAgent.ts`](../../sources/claude-code/src/tools/AgentTool/built-in/verificationAgent.ts)
+源码镜像：[`../../src/tools/AgentTool/built-in/verificationAgent.ts`](../../src/tools/AgentTool/built-in/verificationAgent.ts)
 
 它不仅是 specialist prompt，还自带：
 
@@ -316,7 +316,7 @@ Plan agent 的 required output 里强制要求：
 
 ## 19. `claude-code-guide` 说明 builtin agents 不只服务代码实现，也承担“官方文档中枢”角色
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/built-in/claudeCodeGuideAgent.ts`](../../sources/claude-code/src/tools/AgentTool/built-in/claudeCodeGuideAgent.ts)
+源码镜像：[`../../src/tools/AgentTool/built-in/claudeCodeGuideAgent.ts`](../../src/tools/AgentTool/built-in/claudeCodeGuideAgent.ts)
 
 这个 agent 的角色和前几类完全不同，它专门负责：
 
@@ -336,7 +336,7 @@ Plan agent 的 required output 里强制要求：
 
 ## 20. `statusline-setup` 说明 builtin agent 还能是高度垂直的 operator specialist，而不是只做通用研究/验证
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/built-in/statuslineSetup.ts`](../../sources/claude-code/src/tools/AgentTool/built-in/statuslineSetup.ts)
+源码镜像：[`../../src/tools/AgentTool/built-in/statuslineSetup.ts`](../../src/tools/AgentTool/built-in/statuslineSetup.ts)
 
 这个 agent 的 prompt 已经不是一般“帮我配置个东西”，而是细到：
 

@@ -22,7 +22,7 @@
 ## Evidence-backed Findings（按项目）
 
 ### Claude Code（CC）
-> 代码根：`research/sources/claude-code/`
+> 代码根：`research/`
 
 - **DXD-CC-001（CODE）**：Help UI 采用 Tabs 信息架构，把帮助内容拆为 general/commands/custom-commands 三类视图。  
   - 证据：`sources/claude-code/src/components/HelpV2/HelpV2.tsx` → `HelpV2()`：`<Tabs ... defaultTab="general">` + `<Tab key="commands">` + `<Tab key="custom">`

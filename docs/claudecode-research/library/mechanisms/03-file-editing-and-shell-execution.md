@@ -6,7 +6,7 @@
 
 ## 1. BashTool 不是“执行命令然后回显”
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/BashTool.tsx`](../../sources/claude-code/src/tools/BashTool/BashTool.tsx)
+源码镜像：[`../../src/tools/BashTool/BashTool.tsx`](../../src/tools/BashTool/BashTool.tsx)
 
 从文件体量和配套模块可以看到 BashTool 自带一套完整子系统：
 
@@ -35,7 +35,7 @@
 
 ## 3. FileEditTool 的复杂度也不在 diff 算法
 
-源码镜像：[`../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts`](../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts)
+源码镜像：[`../../src/tools/FileEditTool/FileEditTool.ts`](../../src/tools/FileEditTool/FileEditTool.ts)
 
 它首先解决的是写文件的前置约束：
 

@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是 ask-permission 从工具调用现场怎样长成 swarm 协议，而不是 leader 端如何回复
 
-源码镜像：[`../../sources/claude-code/src/hooks/useCanUseTool.tsx`](../../sources/claude-code/src/hooks/useCanUseTool.tsx), [`../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../sources/claude-code/src/utils/swarm/inProcessRunner.ts`](../../sources/claude-code/src/utils/swarm/inProcessRunner.ts), [`../../sources/claude-code/src/utils/swarm/permissionSync.ts`](../../sources/claude-code/src/utils/swarm/permissionSync.ts), [`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/components/permissions/WorkerPendingPermission.tsx`](../../sources/claude-code/src/components/permissions/WorkerPendingPermission.tsx), [`../../sources/claude-code/src/components/messages/AssistantToolUseMessage.tsx`](../../sources/claude-code/src/components/messages/AssistantToolUseMessage.tsx)
+源码镜像：[`../../src/hooks/useCanUseTool.tsx`](../../src/hooks/useCanUseTool.tsx), [`../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../src/utils/swarm/inProcessRunner.ts`](../../src/utils/swarm/inProcessRunner.ts), [`../../src/utils/swarm/permissionSync.ts`](../../src/utils/swarm/permissionSync.ts), [`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/components/permissions/WorkerPendingPermission.tsx`](../../src/components/permissions/WorkerPendingPermission.tsx), [`../../src/components/messages/AssistantToolUseMessage.tsx`](../../src/components/messages/AssistantToolUseMessage.tsx)
 
 前一篇 `mechanisms/21` 已经把 inbox router、permission response、sandbox queue、plan/shutdown cleanup 拆明白了。这里继续回答更靠前的问题：
 
@@ -18,7 +18,7 @@
 
 ## 2. `useCanUseTool()` 是所有 tool permission 路由的总闸，不是 swarm 的专用入口
 
-源码镜像：[`../../sources/claude-code/src/hooks/useCanUseTool.tsx`](../../sources/claude-code/src/hooks/useCanUseTool.tsx)
+源码镜像：[`../../src/hooks/useCanUseTool.tsx`](../../src/hooks/useCanUseTool.tsx)
 
 这层先统一做三件事：
 
@@ -37,7 +37,7 @@
 
 ## 3. `handleSwarmWorkerPermission()` 只在 “agent swarms enabled + isSwarmWorker()” 时接管，说明 swarm ask 是角色化分叉
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../sources/claude-code/src/utils/swarm/permissionSync.ts`](../../sources/claude-code/src/utils/swarm/permissionSync.ts)
+源码镜像：[`../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../src/utils/swarm/permissionSync.ts`](../../src/utils/swarm/permissionSync.ts)
 
 它一开始就要求：
 
@@ -50,7 +50,7 @@
 
 ## 4. bash classifier 在 swarm worker 路径里仍然优先，说明 leader 不会被无意义的低风险 ask 打断
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../sources/claude-code/src/tools/BashTool/bashPermissions.ts`](../../sources/claude-code/src/tools/BashTool/bashPermissions.ts)
+源码镜像：[`../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../src/tools/BashTool/bashPermissions.ts`](../../src/tools/BashTool/bashPermissions.ts)
 
 `swarmWorkerHandler` 的第一步不是立刻发 mailbox，而是：
 
@@ -64,7 +64,7 @@
 
 ## 5. process worker 的 ask-permission 是“注册 callback 再发请求”，说明代码优先防 race，不优先发消息
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../sources/claude-code/src/hooks/useSwarmPermissionPoller.ts)
+源码镜像：[`../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../src/hooks/useSwarmPermissionPoller.ts)
 
 这条链的关键顺序是：
 
@@ -81,7 +81,7 @@
 
 ## 6. `createPermissionRequest()` 说明 worker ask 被序列化成一份稳定协议对象，而不是临时 UI 事件
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/permissionSync.ts`](../../sources/claude-code/src/utils/swarm/permissionSync.ts)
+源码镜像：[`../../src/utils/swarm/permissionSync.ts`](../../src/utils/swarm/permissionSync.ts)
 
 这份请求会固定带上：
 
@@ -101,7 +101,7 @@
 
 ## 7. `pendingWorkerRequest` 说明 process worker 在等待 leader 时会把 ask 状态显式写进全局 AppState
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts)
+源码镜像：[`../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts)
 
 等待态字段非常小：
 
@@ -113,7 +113,7 @@
 
 ## 8. `pendingWorkerRequest` 不只是装饰，它会直接改 `sessionStatus` 和 `waitingFor`
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 REPL 会把这些合起来计算：
 
@@ -125,7 +125,7 @@ REPL 会把这些合起来计算：
 
 ## 9. `WorkerPendingPermission` 说明 process worker 等待 leader 时会有专门的本地等待壳，而不是只在 transcript 里静默卡住
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/WorkerPendingPermission.tsx`](../../sources/claude-code/src/components/permissions/WorkerPendingPermission.tsx), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/components/permissions/WorkerPendingPermission.tsx`](../../src/components/permissions/WorkerPendingPermission.tsx), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 这个组件会显示：
 
@@ -139,7 +139,7 @@ REPL 会把这些合起来计算：
 
 ## 10. `AssistantToolUseMessage` 也消费 `pendingWorkerRequest.toolUseId`，说明等待态会回流到具体的 tool-use block
 
-源码镜像：[`../../sources/claude-code/src/components/messages/AssistantToolUseMessage.tsx`](../../sources/claude-code/src/components/messages/AssistantToolUseMessage.tsx)
+源码镜像：[`../../src/components/messages/AssistantToolUseMessage.tsx`](../../src/components/messages/AssistantToolUseMessage.tsx)
 
 这里会算：
 
@@ -149,7 +149,7 @@ REPL 会把这些合起来计算：
 
 ## 11. process worker 路径的 abort 语义是“清等待态 + 取消 promise”，说明 permission wait 被视为可中断工作
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts)
+源码镜像：[`../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../src/hooks/toolPermission/PermissionContext.ts)
 
 这条路里会：
 
@@ -162,7 +162,7 @@ REPL 会把这些合起来计算：
 
 ## 12. in-process teammate 的 permission 起点不走 `swarmWorkerHandler`，而是 `createInProcessCanUseTool()`
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/inProcessRunner.ts`](../../sources/claude-code/src/utils/swarm/inProcessRunner.ts)
+源码镜像：[`../../src/utils/swarm/inProcessRunner.ts`](../../src/utils/swarm/inProcessRunner.ts)
 
 这是另一条完全不同的起点：
 
@@ -175,7 +175,7 @@ REPL 会把这些合起来计算：
 
 ## 13. in-process teammate 的标准路径不是 `pendingWorkerRequest`，而是 leader 的 `ToolUseConfirmQueue`
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/inProcessRunner.ts`](../../sources/claude-code/src/utils/swarm/leaderPermissionBridge.ts)
+源码镜像：[`../../src/utils/swarm/inProcessRunner.ts`](../../src/utils/swarm/leaderPermissionBridge.ts)
 
 只要 `getLeaderToolUseConfirmQueue()` 可用，它就会：
 
@@ -187,7 +187,7 @@ REPL 会把这些合起来计算：
 
 ## 14. in-process teammate 的 mailbox fallback 仍然存在，说明 leader UI bridge 只是优化路径，不是唯一前提
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/inProcessRunner.ts`](../../sources/claude-code/src/hooks/useSwarmPermissionPoller.ts)
+源码镜像：[`../../src/utils/swarm/inProcessRunner.ts`](../../src/hooks/useSwarmPermissionPoller.ts)
 
 如果 leader queue 不可用，它会退回到：
 
@@ -201,7 +201,7 @@ REPL 会把这些合起来计算：
 
 ## 15. process worker 与 in-process teammate 的分歧，本质上是“谁拥有最短权限回路”的分歧
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../sources/claude-code/src/utils/swarm/inProcessRunner.ts`](../../sources/claude-code/src/utils/swarm/inProcessRunner.ts)
+源码镜像：[`../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../src/utils/swarm/inProcessRunner.ts`](../../src/utils/swarm/inProcessRunner.ts)
 
 两条起点最核心的差异是：
 
@@ -214,7 +214,7 @@ REPL 会把这些合起来计算：
 
 ## 16. 这条机制最终说明 swarm permission 的真正起源层由四段拼起来
 
-源码镜像：[`../../sources/claude-code/src/hooks/useCanUseTool.tsx`](../../sources/claude-code/src/hooks/useCanUseTool.tsx), [`../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../sources/claude-code/src/utils/swarm/inProcessRunner.ts`](../../sources/claude-code/src/utils/swarm/inProcessRunner.ts), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/components/permissions/WorkerPendingPermission.tsx`](../../sources/claude-code/src/components/permissions/WorkerPendingPermission.tsx)
+源码镜像：[`../../src/hooks/useCanUseTool.tsx`](../../src/hooks/useCanUseTool.tsx), [`../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts`](../../src/hooks/toolPermission/handlers/swarmWorkerHandler.ts), [`../../src/utils/swarm/inProcessRunner.ts`](../../src/utils/swarm/inProcessRunner.ts), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/components/permissions/WorkerPendingPermission.tsx`](../../src/components/permissions/WorkerPendingPermission.tsx)
 
 真正叠在一起工作的是：
 

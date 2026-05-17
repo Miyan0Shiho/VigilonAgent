@@ -6,7 +6,7 @@
 
 ## 1. swarm 不是先 spawn teammate，再补 team；而是先建 team namespace
 
-源码镜像：[`../../sources/claude-code/src/tools/TeamCreateTool/TeamCreateTool.ts`](../../sources/claude-code/src/tools/TeamCreateTool/TeamCreateTool.ts), [`../../sources/claude-code/src/utils/swarm/teamHelpers.ts`](../../sources/claude-code/src/utils/swarm/teamHelpers.ts)
+源码镜像：[`../../src/tools/TeamCreateTool/TeamCreateTool.ts`](../../src/tools/TeamCreateTool/TeamCreateTool.ts), [`../../src/utils/swarm/teamHelpers.ts`](../../src/utils/swarm/teamHelpers.ts)
 
 `TeamCreateTool` 的职责不是“生成第一个 worker”，而是先建立整个 swarm 的命名空间：
 
@@ -21,7 +21,7 @@
 
 ## 2. `TeamCreateTool` 明确把 team、task list 和 leader context 绑成同一个单位
 
-源码镜像：[`../../sources/claude-code/src/tools/TeamCreateTool/TeamCreateTool.ts`](../../sources/claude-code/src/tools/TeamCreateTool/TeamCreateTool.ts)
+源码镜像：[`../../src/tools/TeamCreateTool/TeamCreateTool.ts`](../../src/tools/TeamCreateTool/TeamCreateTool.ts)
 
 `call()` 里有三步很关键：
 
@@ -39,7 +39,7 @@
 
 ## 3. leader 也会被写进 team file，但不会被当成 teammate
 
-源码镜像：[`../../sources/claude-code/src/tools/TeamCreateTool/TeamCreateTool.ts`](../../sources/claude-code/src/utils/swarm/teamHelpers.ts)
+源码镜像：[`../../src/tools/TeamCreateTool/TeamCreateTool.ts`](../../src/utils/swarm/teamHelpers.ts)
 
 `teamFile.members` 会先写入一个 leader 记录，但注释也明确强调：
 
@@ -50,7 +50,7 @@
 
 ## 4. team file 不是轻量配置，而是 swarm 的中心状态文件
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/teamHelpers.ts`](../../sources/claude-code/src/utils/swarm/teamHelpers.ts)
+源码镜像：[`../../src/utils/swarm/teamHelpers.ts`](../../src/utils/swarm/teamHelpers.ts)
 
 `TeamFile` 里已经包含了多类运行时状态：
 
@@ -82,7 +82,7 @@
 
 ## 5. backend registry 不是简单 factory，而是“执行模式仲裁器”
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/backends/registry.ts`](../../sources/claude-code/src/utils/swarm/backends/registry.ts)
+源码镜像：[`../../src/utils/swarm/backends/registry.ts`](../../src/utils/swarm/backends/registry.ts)
 
 registry 做的事情比创建实例多得多：
 
@@ -96,7 +96,7 @@ registry 做的事情比创建实例多得多：
 
 ## 6. backend detection 的优先级是产品策略，不是环境探测附带品
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/backends/registry.ts`](../../sources/claude-code/src/utils/swarm/backends/registry.ts), [`../../sources/claude-code/src/utils/swarm/backends/detection.ts`](../../sources/claude-code/src/utils/swarm/backends/detection.ts)
+源码镜像：[`../../src/utils/swarm/backends/registry.ts`](../../src/utils/swarm/backends/registry.ts), [`../../src/utils/swarm/backends/detection.ts`](../../src/utils/swarm/backends/detection.ts)
 
 `detectAndGetBackend()` 的优先级非常明确：
 
@@ -114,7 +114,7 @@ registry 做的事情比创建实例多得多：
 
 ## 7. detection 模块刻意区分“当前进程在 tmux 内”和“系统上安装了 tmux”
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/backends/detection.ts`](../../sources/claude-code/src/utils/swarm/backends/detection.ts)
+源码镜像：[`../../src/utils/swarm/backends/detection.ts`](../../src/utils/swarm/backends/detection.ts)
 
 这点很重要。`isInsideTmux()` 只看模块加载时捕获的原始 `TMUX` env，不会拿 `tmux display-message` 之类命令做兜底。源码注释直接解释了原因：
 
@@ -125,7 +125,7 @@ registry 做的事情比创建实例多得多：
 
 ## 8. iTerm2 backend 并不依赖 GUI 自动化，而是依赖 `it2` Python API CLI
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/backends/detection.ts`](../../sources/claude-code/src/utils/swarm/backends/detection.ts), [`../../sources/claude-code/src/utils/swarm/backends/ITermBackend.ts`](../../sources/claude-code/src/utils/swarm/backends/ITermBackend.ts)
+源码镜像：[`../../src/utils/swarm/backends/detection.ts`](../../src/utils/swarm/backends/detection.ts), [`../../src/utils/swarm/backends/ITermBackend.ts`](../../src/utils/swarm/backends/ITermBackend.ts)
 
 这里探测的不是 AppleScript 能不能跑，而是：
 
@@ -136,7 +136,7 @@ registry 做的事情比创建实例多得多：
 
 ## 9. `PaneBackendExecutor` 把 pane backend 统一适配成 teammate executor
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/backends/PaneBackendExecutor.ts`](../../sources/claude-code/src/utils/swarm/backends/PaneBackendExecutor.ts)
+源码镜像：[`../../src/utils/swarm/backends/PaneBackendExecutor.ts`](../../src/utils/swarm/backends/PaneBackendExecutor.ts)
 
 这层适配器做了一个关键抽象：把 pane backend 变成和 in-process backend 同级的 `TeammateExecutor`。它统一暴露：
 
@@ -150,7 +150,7 @@ registry 做的事情比创建实例多得多：
 
 ## 10. pane-based spawn 的本质是“创建 pane + 注入身份 CLI + 首条 prompt 走 mailbox”
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/backends/PaneBackendExecutor.ts`](../../sources/claude-code/src/utils/swarm/backends/PaneBackendExecutor.ts)
+源码镜像：[`../../src/utils/swarm/backends/PaneBackendExecutor.ts`](../../src/utils/swarm/backends/PaneBackendExecutor.ts)
 
 `spawn()` 的真实动作链是：
 
@@ -169,7 +169,7 @@ registry 做的事情比创建实例多得多：
 
 ## 11. in-process backend 是“总能工作”的兜底执行器
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/backends/InProcessBackend.ts`](../../sources/claude-code/src/utils/swarm/backends/InProcessBackend.ts)
+源码镜像：[`../../src/utils/swarm/backends/InProcessBackend.ts`](../../src/utils/swarm/backends/InProcessBackend.ts)
 
 `InProcessBackend` 的特征是：
 
@@ -182,7 +182,7 @@ registry 做的事情比创建实例多得多：
 
 ## 12. tmux backend 区分“用户本来就在 tmux”与“外部 swarm session”
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/backends/TmuxBackend.ts`](../../sources/claude-code/src/utils/swarm/backends/TmuxBackend.ts)
+源码镜像：[`../../src/utils/swarm/backends/TmuxBackend.ts`](../../src/utils/swarm/backends/TmuxBackend.ts)
 
 tmux backend 至少有两种运行形态：
 
@@ -199,7 +199,7 @@ tmux backend 至少有两种运行形态：
 
 ## 13. iTerm2 backend 的布局策略和 tmux backend 不同，而且明确针对 leader pane 稳定性
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/backends/ITermBackend.ts`](../../sources/claude-code/src/utils/swarm/backends/ITermBackend.ts)
+源码镜像：[`../../src/utils/swarm/backends/ITermBackend.ts`](../../src/utils/swarm/backends/ITermBackend.ts)
 
 iTerm2 backend 的布局策略是：
 
@@ -210,7 +210,7 @@ iTerm2 backend 的布局策略是：
 
 ## 14. backend 层的 lock 说明 pane creation 默认面向并发 teammate spawn
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/backends/TmuxBackend.ts`](../../sources/claude-code/src/utils/swarm/backends/TmuxBackend.ts), [`../../sources/claude-code/src/utils/swarm/backends/ITermBackend.ts`](../../sources/claude-code/src/utils/swarm/backends/ITermBackend.ts)
+源码镜像：[`../../src/utils/swarm/backends/TmuxBackend.ts`](../../src/utils/swarm/backends/TmuxBackend.ts), [`../../src/utils/swarm/backends/ITermBackend.ts`](../../src/utils/swarm/backends/ITermBackend.ts)
 
 tmux 和 iTerm2 backend 都有 pane creation lock。这个信号很明确：
 
@@ -222,7 +222,7 @@ tmux 和 iTerm2 backend 都有 pane creation lock。这个信号很明确：
 
 ## 15. reconnection 不是 UI 补丁，而是 resumed session 恢复 swarm 身份的同步初始化步骤
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/reconnection.ts`](../../sources/claude-code/src/utils/swarm/reconnection.ts)
+源码镜像：[`../../src/utils/swarm/reconnection.ts`](../../src/utils/swarm/reconnection.ts)
 
 `computeInitialTeamContext()` 解决的是 fresh spawn 路径：
 
@@ -240,7 +240,7 @@ tmux 和 iTerm2 backend 都有 pane creation lock。这个信号很明确：
 
 ## 16. team 恢复依赖 team file，而不是 transcript 自己足够闭环
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/reconnection.ts`](../../sources/claude-code/src/utils/swarm/teamHelpers.ts)
+源码镜像：[`../../src/utils/swarm/reconnection.ts`](../../src/utils/swarm/teamHelpers.ts)
 
 恢复时 transcript 里只提供：
 
@@ -258,7 +258,7 @@ tmux 和 iTerm2 backend 都有 pane creation lock。这个信号很明确：
 
 ## 17. 这条生成与恢复子系统的真实闭环应该这样理解
 
-源码镜像：[`../../sources/claude-code/src/tools/TeamCreateTool/TeamCreateTool.ts`](../../sources/claude-code/src/tools/TeamCreateTool/TeamCreateTool.ts), [`../../sources/claude-code/src/utils/swarm/teamHelpers.ts`](../../sources/claude-code/src/utils/swarm/teamHelpers.ts), [`../../sources/claude-code/src/utils/swarm/backends/registry.ts`](../../sources/claude-code/src/utils/swarm/backends/registry.ts), [`../../sources/claude-code/src/utils/swarm/backends/detection.ts`](../../sources/claude-code/src/utils/swarm/backends/detection.ts), [`../../sources/claude-code/src/utils/swarm/backends/PaneBackendExecutor.ts`](../../sources/claude-code/src/utils/swarm/backends/PaneBackendExecutor.ts), [`../../sources/claude-code/src/utils/swarm/backends/InProcessBackend.ts`](../../sources/claude-code/src/utils/swarm/backends/InProcessBackend.ts), [`../../sources/claude-code/src/utils/swarm/backends/TmuxBackend.ts`](../../sources/claude-code/src/utils/swarm/backends/TmuxBackend.ts), [`../../sources/claude-code/src/utils/swarm/backends/ITermBackend.ts`](../../sources/claude-code/src/utils/swarm/backends/ITermBackend.ts), [`../../sources/claude-code/src/utils/swarm/reconnection.ts`](../../sources/claude-code/src/utils/swarm/reconnection.ts)
+源码镜像：[`../../src/tools/TeamCreateTool/TeamCreateTool.ts`](../../src/tools/TeamCreateTool/TeamCreateTool.ts), [`../../src/utils/swarm/teamHelpers.ts`](../../src/utils/swarm/teamHelpers.ts), [`../../src/utils/swarm/backends/registry.ts`](../../src/utils/swarm/backends/registry.ts), [`../../src/utils/swarm/backends/detection.ts`](../../src/utils/swarm/backends/detection.ts), [`../../src/utils/swarm/backends/PaneBackendExecutor.ts`](../../src/utils/swarm/backends/PaneBackendExecutor.ts), [`../../src/utils/swarm/backends/InProcessBackend.ts`](../../src/utils/swarm/backends/InProcessBackend.ts), [`../../src/utils/swarm/backends/TmuxBackend.ts`](../../src/utils/swarm/backends/TmuxBackend.ts), [`../../src/utils/swarm/backends/ITermBackend.ts`](../../src/utils/swarm/backends/ITermBackend.ts), [`../../src/utils/swarm/reconnection.ts`](../../src/utils/swarm/reconnection.ts)
 
 可以压成七步：
 

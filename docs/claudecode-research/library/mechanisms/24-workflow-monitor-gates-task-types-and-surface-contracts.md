@@ -6,7 +6,7 @@
 
 ## 1. 当前镜像里最可靠的事实不是 tool body，而是 `workflow/monitor` 已经被正式接进 Claude Code 的统一 runtime contract
 
-源码镜像：[`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/tools.ts), [`../../sources/claude-code/src/tasks.ts`](../../sources/claude-code/src/tasks.ts), [`../../sources/claude-code/src/Task.ts`](../../sources/claude-code/src/Task.ts), [`../../sources/claude-code/src/tasks/types.ts`](../../sources/claude-code/src/tasks/types.ts)
+源码镜像：[`../../src/tools.ts`](../../src/tools.ts), [`../../src/tasks.ts`](../../src/tasks.ts), [`../../src/Task.ts`](../../src/Task.ts), [`../../src/tasks/types.ts`](../../src/tasks/types.ts)
 
 这几层一起证明了三件事：
 
@@ -18,7 +18,7 @@
 
 ## 2. `feature('WORKFLOW_SCRIPTS')` 与 `feature('MONITOR_TOOL')` 说明这两条链是 compile-time / build-time gated，不是单纯的 runtime hide
 
-源码镜像：[`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/tools.ts), [`../../sources/claude-code/src/tasks.ts`](../../sources/claude-code/src/tasks.ts), [`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/tools.ts`](../../src/tools.ts), [`../../src/tasks.ts`](../../src/tasks.ts), [`../../src/commands.ts`](../../src/commands.ts)
 
 三处 gate 非常一致：
 
@@ -36,7 +36,7 @@
 
 ## 3. `WorkflowTool` 的加载方式暴露了一个重要事实：workflow 不只是单个工具，而是带 bundled bootstrap 的工具家族
 
-源码镜像：[`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/tools.ts)
+源码镜像：[`../../src/tools.ts`](../../src/tools.ts)
 
 `WorkflowTool` 的初始化不是直接 `require('./tools/WorkflowTool/WorkflowTool')`，而是先：
 
@@ -52,7 +52,7 @@
 
 ## 4. `MonitorTool` 和 `MonitorMcpTask` 的命名分裂说明 monitor 不是普通 shell 轮询，而是偏向 MCP-backed 长生命周期任务
 
-源码镜像：[`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/tasks.ts), [`../../sources/claude-code/src/Task.ts`](../../sources/claude-code/src/tasks/pillLabel.ts)
+源码镜像：[`../../src/tools.ts`](../../src/tasks.ts), [`../../src/Task.ts`](../../src/tasks/pillLabel.ts)
 
 这里有两个容易混淆的层：
 
@@ -68,7 +68,7 @@
 
 ## 5. `Task.ts` 里的 task ID 前缀和共享 base state，说明 workflow/monitor 从任务协议层就被当成 durable background object
 
-源码镜像：[`../../sources/claude-code/src/Task.ts`](../../sources/claude-code/src/Task.ts)
+源码镜像：[`../../src/Task.ts`](../../src/Task.ts)
 
 `TaskType` 明确包括：
 
@@ -98,7 +98,7 @@
 
 ## 6. `tasks/types.ts` 说明 background task 可见性对 workflow/monitor 没有特殊豁免，它们遵循统一的前台显隐规则
 
-源码镜像：[`../../sources/claude-code/src/tasks/types.ts`](../../sources/claude-code/src/Task.ts)
+源码镜像：[`../../src/tasks/types.ts`](../../src/Task.ts)
 
 `BackgroundTaskState` 显式把二者纳入联合类型。`isBackgroundTask()` 的判定也没有对 workflow/monitor 开后门，只看：
 
@@ -109,7 +109,7 @@
 
 ## 7. `pillLabel.ts` 揭示了产品术语差异：workflow 被讲成“background workflows”，monitor 被讲成“monitors”，而 shell monitor 又是第三种东西
 
-源码镜像：[`../../sources/claude-code/src/tasks/pillLabel.ts`](../../sources/claude-code/src/tasks/LocalShellTask/guards.ts)
+源码镜像：[`../../src/tasks/pillLabel.ts`](../../src/tasks/LocalShellTask/guards.ts)
 
 这里有三个层次必须分开：
 
@@ -132,7 +132,7 @@
 
 ## 8. `cli/print.ts` 证明 workflow 已经进入 headless / SDK 输出语义，不只是 fullscreen REPL 里的本地 UI 特例
 
-源码镜像：[`../../sources/claude-code/src/cli/print.ts`](../../sources/claude-code/src/tasks/types.ts)
+源码镜像：[`../../src/cli/print.ts`](../../src/tasks/types.ts)
 
 headless draining loop 有一个关键 hold-back 条件：
 
@@ -148,7 +148,7 @@ monitor 没出现在这条 hold-back 条件里，也说明它和 workflow 的流
 
 ## 9. `commandSuggestions.ts` 证明 workflow commands 在 slash UX 里有专门 badge，而不是普通 prompt command
 
-源码镜像：[`../../sources/claude-code/src/utils/suggestions/commandSuggestions.ts`](../../sources/claude-code/src/types/command.ts), [`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/utils/suggestions/commandSuggestions.ts`](../../src/types/command.ts), [`../../src/commands.ts`](../../src/commands.ts)
 
 `createCommandSuggestionItem()` 里有一条专门分支：
 
@@ -175,7 +175,7 @@ monitor 没出现在这条 hold-back 条件里，也说明它和 workflow 的流
 
 ## 10. `ALL_AGENT_DISALLOWED_TOOLS` 与 classifier allowlist 说明 workflow 在权限上被当成“可安全编排、但不可递归扩散”的特殊工具
 
-源码镜像：[`../../sources/claude-code/src/constants/tools.ts`](../../sources/claude-code/src/utils/permissions/classifierDecision.ts)
+源码镜像：[`../../src/constants/tools.ts`](../../src/utils/permissions/classifierDecision.ts)
 
 这里有两个关键信号：
 
@@ -195,7 +195,7 @@ monitor 没出现在这条 hold-back 条件里，也说明它和 workflow 的流
 
 ## 11. `commands/tasks/index.ts` 与现有 task UI 卷册一起证明：workflow/monitor 的真正产品表面首先是统一后台任务控制台
 
-源码镜像：[`../../sources/claude-code/src/commands/tasks/index.ts`](../../sources/claude-code/src/commands/tasks/index.ts), [`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTask.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTask.tsx)
+源码镜像：[`../../src/commands/tasks/index.ts`](../../src/commands/tasks/index.ts), [`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx), [`../../src/components/tasks/BackgroundTask.tsx`](../../src/components/tasks/BackgroundTask.tsx)
 
 `/tasks` 的定义非常薄，只是：
 
@@ -208,7 +208,7 @@ monitor 没出现在这条 hold-back 条件里，也说明它和 workflow 的流
 
 ## 12. `collapseBackgroundBashNotifications.ts` 揭示了通知层一个很重要的边界：workflow/monitor 完成事件不会被压扁成 generic “N commands completed”
 
-源码镜像：[`../../sources/claude-code/src/utils/collapseBackgroundBashNotifications.ts`](../../sources/claude-code/src/constants/xml.ts)
+源码镜像：[`../../src/utils/collapseBackgroundBashNotifications.ts`](../../src/constants/xml.ts)
 
 这里的 collapse 条件非常严格：
 

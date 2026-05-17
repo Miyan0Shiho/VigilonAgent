@@ -6,7 +6,7 @@
 
 ## 1. Skills 是“按需加载能力包”
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 `loadSkillsDir.ts` 说明 skills 至少有这些属性：
 
@@ -29,7 +29,7 @@
 
 ## 3. memdir typed memory 是跨会话长期记忆
 
-源码镜像：[`../../sources/claude-code/src/memdir/memdir.ts`](../../sources/claude-code/src/memdir/memdir.ts)
+源码镜像：[`../../src/memdir/memdir.ts`](../../src/memdir/memdir.ts)
 
 `memdir.ts` 明确把长期记忆建模成：
 
@@ -42,7 +42,7 @@
 
 ## 4. SessionMemory 不是同一回事
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
 
 SessionMemory 的目标不同：
 

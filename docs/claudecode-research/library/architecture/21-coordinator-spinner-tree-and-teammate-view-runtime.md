@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是“多 agent 前台如何被操纵”，不是 task 如何被创建
 
-源码镜像：[`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx), [`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/Spinner.tsx), [`../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx), [`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../sources/claude-code/src/state/teammateViewHelpers.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/CoordinatorAgentStatus.tsx), [`../../src/components/Spinner.tsx`](../../src/components/Spinner.tsx), [`../../src/components/Spinner/TeammateSpinnerTree.tsx`](../../src/components/Spinner/TeammateSpinnerTree.tsx), [`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../src/state/teammateViewHelpers.ts`](../../src/state/teammateViewHelpers.ts)
 
 前面几卷已经把这些层拆开：
 
@@ -25,7 +25,7 @@
 
 ## 2. `CoordinatorTaskPanel` 说明 panel-managed local agent 是一条独立于 background tasks 的工作面
 
-源码镜像：[`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx), [`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/CoordinatorAgentStatus.tsx), [`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 `CoordinatorTaskPanel` 只看一类任务：
 
@@ -36,7 +36,7 @@
 
 ## 3. `getVisibleAgentTasks()` 说明可见性不是 UI 即时判断，而是被提升成共享过滤协议
 
-源码镜像：[`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx)
+源码镜像：[`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/CoordinatorAgentStatus.tsx)
 
 这个 helper 同时服务：
 
@@ -54,7 +54,7 @@
 
 ## 4. `evictAfter` 说明 panel row 的生命周期被设计成“可 linger 的 stub”，不是任务一结束就消失
 
-源码镜像：[`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/components/CoordinatorAgentStatus.tsx`](../../src/state/teammateViewHelpers.ts)
 
 这里有三种状态：
 
@@ -66,7 +66,7 @@
 
 ## 5. `MainLine` 和 `AgentLine` 说明 coordinator panel 本质上编码了 leader/main 与 agent transcript 的双向导航
 
-源码镜像：[`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/components/CoordinatorAgentStatus.tsx`](../../src/state/teammateViewHelpers.ts)
 
 `MainLine` 点击走：
 
@@ -86,7 +86,7 @@
 
 ## 6. `AgentLine` 说明 coordinator panel 讲的是“agent work summary”，不是 transcript 原文
 
-源码镜像：[`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx), [`../../sources/claude-code/src/ink/stringWidth.ts`](../../sources/claude-code/src/ink/stringWidth.ts)
+源码镜像：[`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/CoordinatorAgentStatus.tsx), [`../../src/ink/stringWidth.ts`](../../src/ink/stringWidth.ts)
 
 每一行拼装的信息包括：
 
@@ -101,7 +101,7 @@
 
 ## 7. `enterTeammateView()` 说明切到 teammate transcript 的关键副作用不是“只改一个 selected id”
 
-源码镜像：[`../../sources/claude-code/src/state/teammateViewHelpers.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/state/teammateViewHelpers.ts`](../../src/state/teammateViewHelpers.ts)
 
 它至少会做三件事：
 
@@ -113,7 +113,7 @@
 
 ## 8. `release()` 说明 teammate transcript 退出后不会保留完整内存态，而是回退成 stub 任务对象
 
-源码镜像：[`../../sources/claude-code/src/state/teammateViewHelpers.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/state/teammateViewHelpers.ts`](../../src/state/teammateViewHelpers.ts)
 
 `release(task)` 会：
 
@@ -126,7 +126,7 @@
 
 ## 9. `exitTeammateView()` 和 `stopOrDismissAgent()` 说明 foreground transcript 与 row 生命周期是耦合治理的
 
-源码镜像：[`../../sources/claude-code/src/state/teammateViewHelpers.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/state/teammateViewHelpers.ts`](../../src/state/teammateViewHelpers.ts)
 
 `exitTeammateView()` 会：
 
@@ -144,7 +144,7 @@
 
 ## 10. `SpinnerWithVerbInner` 说明 spinner 不是纯动画，而是 task/team 前台路由器
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/Spinner.tsx), [`../../sources/claude-code/src/state/selectors.ts`](../../sources/claude-code/src/state/selectors.ts)
+源码镜像：[`../../src/components/Spinner.tsx`](../../src/components/Spinner.tsx), [`../../src/state/selectors.ts`](../../src/state/selectors.ts)
 
 这个组件会同时读：
 
@@ -166,7 +166,7 @@
 
 ## 11. `expandedView` 说明 footer / spinner / task list 之间有一个显式三态工作面切换器
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx)
+源码镜像：[`../../src/components/Spinner.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx)
 
 当前可见分叉核心是：
 
@@ -184,7 +184,7 @@
 
 ## 12. `leaderIsIdle + teammates running` 的分支说明 leader spinner 和 swarm spinner 语义必须拆开
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/Spinner.tsx)
+源码镜像：[`../../src/components/Spinner.tsx`](../../src/components/Spinner.tsx)
 
 当：
 
@@ -202,7 +202,7 @@
 
 ## 13. `foregroundedTeammate?.isIdle` 的特殊分支说明 teammate transcript 前台也要避免假忙动画
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/Spinner.tsx), [`../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx)
+源码镜像：[`../../src/components/Spinner.tsx`](../../src/components/Spinner.tsx), [`../../src/components/Spinner/TeammateSpinnerTree.tsx`](../../src/components/Spinner/TeammateSpinnerTree.tsx)
 
 如果当前前台 teammate 已 idle，就直接显示：
 
@@ -213,7 +213,7 @@
 
 ## 14. `TeammateSpinnerTree` 说明 teammate 展示面不是 pill 列表放大版，而是一棵可导航的树
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx), [`../../sources/claude-code/src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx`](../../sources/claude-code/src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx)
+源码镜像：[`../../src/components/Spinner/TeammateSpinnerTree.tsx`](../../src/components/Spinner/TeammateSpinnerTree.tsx), [`../../src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx`](../../src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx)
 
 它先构造：
 
@@ -232,7 +232,7 @@
 
 ## 15. `selectedIndex === -1` 和 `selectedIndex === teammateTasks.length` 说明这棵树把 leader 与 collapse 都编码成一等节点
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx)
+源码镜像：[`../../src/components/Spinner/TeammateSpinnerTree.tsx`](../../src/components/Spinner/TeammateSpinnerTree.tsx)
 
 这里的索引语义是：
 
@@ -244,7 +244,7 @@
 
 ## 16. `TEAMMATE_SELECT_HINT`、`enter to view`、`enter to collapse` 说明 tree 的第一职责是 steer，不是摘要
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx`](../../sources/claude-code/src/components/Spinner/teammateSelectHint.ts)
+源码镜像：[`../../src/components/Spinner/TeammateSpinnerTree.tsx`](../../src/components/Spinner/teammateSelectHint.ts)
 
 leader 行和 hide 行都会直接提示：
 
@@ -256,7 +256,7 @@ leader 行和 hide 行都会直接提示：
 
 ## 17. `PromptInputFooterLeftSide` 说明 footer 不是单一 byline，而是多 surface 汇流器
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/components/tasks/BackgroundTaskStatus.tsx)
 
 这一层同时判断：
 
@@ -278,7 +278,7 @@ leader 行和 hide 行都会直接提示：
 
 ## 18. `hasTeammatePills` 与 `showSpinnerTree` 的互斥说明 teammate pills 和 spinner tree 是两种互斥主表面
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../src/components/tasks/taskStatusUtils.tsx`](../../src/components/tasks/taskStatusUtils.tsx)
 
 源码里明确写了两层规则：
 
@@ -294,7 +294,7 @@ Claude Code 没有让二者同时争夺主可见性。
 
 ## 19. 这条链最终说明 Claude Code 的多 agent 前台不是“任务列表”，而是三套协同 surface
 
-源码镜像：[`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx), [`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/Spinner.tsx), [`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../sources/claude-code/src/state/teammateViewHelpers.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/CoordinatorAgentStatus.tsx), [`../../src/components/Spinner.tsx`](../../src/components/Spinner.tsx), [`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../src/state/teammateViewHelpers.ts`](../../src/state/teammateViewHelpers.ts)
 
 真正协同工作的不是一个大列表，而是三套表面：
 

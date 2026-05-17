@@ -17,7 +17,7 @@
 
 ## 1. `GrepTool` 不是 Bash 包装器，而是强约束的 ripgrep runtime
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/prompt.ts`](../../sources/claude-code/src/tools/GrepTool/prompt.ts), [`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/prompt.ts`](../../src/tools/GrepTool/prompt.ts), [`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 `prompt.ts` 里先把产品契约写死了：
 
@@ -32,7 +32,7 @@
 
 ## 2. 输入 schema 的核心不是 `pattern + path`，而是一整套“搜索视图配置”
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 `GrepTool` 的 schema 除了基本的：
 
@@ -59,7 +59,7 @@
 
 ## 3. `validateInput(...)` 很薄，但仍然保留了 path-exists 与 UNC 特判
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 如果用户提供了 `path`，验证层只做两件事：
 
@@ -75,7 +75,7 @@
 
 ## 4. 路径不存在时，它也复用了 cwd-aware 的友好 miss 协议
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/utils/file.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/utils/file.ts)
 
 `stat(...)` 命中 `ENOENT` 后，不是直接报：
 
@@ -91,7 +91,7 @@
 
 ## 5. 真正的执行核心是一条“从结构化字段稳定编译到 rg args”的流水线
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 `call(...)` 里一开始就进入：
 
@@ -116,7 +116,7 @@
 
 ## 6. `--hidden` 是默认开启的，说明 Claude Code 搜索默认不以“尊重 shell 习惯”为第一目标
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/prompt.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/prompt.ts)
 
 args 起手就是：
 
@@ -131,7 +131,7 @@ args 起手就是：
 
 ## 7. VCS 目录排除是硬编码的第一层降噪，不依赖 gitignore 或 permission rules
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 一上来就会对这些目录补：
 
@@ -150,7 +150,7 @@ args 起手就是：
 
 ## 8. `--max-columns 500` 把超长行压断，说明这把工具默认是“给模型看”而不是“给人原样看”
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/UI.tsx)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/UI.tsx)
 
 代码里明确注释：
 
@@ -165,7 +165,7 @@ args 起手就是：
 
 ## 9. multiline 不是默认打开，而是一个显式昂贵开关
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/prompt.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/prompt.ts)
 
 只有 `multiline: true` 时才会补：
 
@@ -180,7 +180,7 @@ args 起手就是：
 
 ## 10. output mode 不是 cosmetic 文案差异，而是直接改变 rg 的执行语义
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/UI.tsx)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/UI.tsx)
 
 三种 mode 的分叉很硬：
 
@@ -199,7 +199,7 @@ args 起手就是：
 
 ## 11. `-n` 和上下文参数只在 `content` mode 生效，显示层和执行层被刻意绑定
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 代码里明确只在：
 
@@ -218,7 +218,7 @@ args 起手就是：
 
 ## 12. pattern 以 `-` 开头时会自动改写成 `-e pattern`，这是典型的 CLI sharp edge 收敛层
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 有一条很实用的小修复：
 
@@ -232,7 +232,7 @@ args 起手就是：
 
 ## 13. `glob` 的解析不是简单 split，而是显式保护 `{}` brace pattern
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 处理逻辑是：
 
@@ -248,7 +248,7 @@ args 起手就是：
 
 ## 14. ignore 合成至少有三层：permission ignore、plugin cache exclusion、VCS exclusion
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/utils/permissions/filesystem.ts), [`../../sources/claude-code/src/utils/plugins/orphanedPluginFilter.ts`](../../sources/claude-code/src/utils/plugins/orphanedPluginFilter.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/utils/permissions/filesystem.ts), [`../../src/utils/plugins/orphanedPluginFilter.ts`](../../src/utils/plugins/orphanedPluginFilter.ts)
 
 把参数组装链串起来看，ignore 至少来自：
 
@@ -266,7 +266,7 @@ args 起手就是：
 
 ## 15. permission ignore pattern 还要再改写成 rg 能理解的相对 glob 形式
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/utils/permissions/filesystem.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/utils/permissions/filesystem.ts)
 
 permission ignore pattern 进来后，不是直接喂给 rg，而是：
 
@@ -281,7 +281,7 @@ permission ignore pattern 进来后，不是直接喂给 rg，而是：
 
 ## 16. orphaned plugin version 目录排除是单独的一层 repo hygiene，而不是 permission 逻辑的一部分
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/utils/plugins/orphanedPluginFilter.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/utils/plugins/orphanedPluginFilter.ts)
 
 代码单独 await：
 
@@ -298,7 +298,7 @@ permission ignore pattern 进来后，不是直接喂给 rg，而是：
 
 ## 17. 分页不是 UI 层行为，而是在 runtime 里通过 `applyHeadLimit(...)` 真实裁剪结果集
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/UI.tsx)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/UI.tsx)
 
 `head_limit` 和 `offset` 的执行核心是：
 
@@ -317,7 +317,7 @@ permission ignore pattern 进来后，不是直接喂给 rg，而是：
 
 ## 18. `DEFAULT_HEAD_LIMIT = 250` 不是随手选的值，而是上下文预算治理策略
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 注释解释了默认 250 的意图：
 
@@ -330,7 +330,7 @@ permission ignore pattern 进来后，不是直接喂给 rg，而是：
 
 ## 19. `content` 与 `count` 模式会在裁剪之后才把绝对路径转成相对路径，避免浪费每行处理成本
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 代码里专门解释了顺序：
 
@@ -346,7 +346,7 @@ permission ignore pattern 进来后，不是直接喂给 rg，而是：
 
 ## 20. `files_with_matches` 模式还会先按 mtime 排序，再分页，而不是原样返回 rg 顺序
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 默认模式里会：
 
@@ -367,7 +367,7 @@ permission ignore pattern 进来后，不是直接喂给 rg，而是：
 
 ## 21. `Promise.allSettled(stat)` 说明作者明确在防“rg 看见了，stat 时文件刚消失”这种竞争条件
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 代码注释直接说了：
 
@@ -381,7 +381,7 @@ permission ignore pattern 进来后，不是直接喂给 rg，而是：
 
 ## 22. `count` 模式不是只把 rg 输出透传回来，它还额外再汇总总命中数与文件数
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/UI.tsx)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/UI.tsx)
 
 `count` 路径除了保留：
 
@@ -404,7 +404,7 @@ permission ignore pattern 进来后，不是直接喂给 rg，而是：
 
 ## 23. `content` / `count` / `files_with_matches` 三种 tool-result 文案是专门不同的，而不是一个模板换字段
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/UI.tsx)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/UI.tsx)
 
 mapper 层三路分叉：
 
@@ -422,7 +422,7 @@ mapper 层三路分叉：
 
 ## 24. UI 层也故意把三种模式压成统一的 `SearchResultSummary` 骨架
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/UI.tsx`](../../sources/claude-code/src/tools/GrepTool/UI.tsx)
+源码镜像：[`../../src/tools/GrepTool/UI.tsx`](../../src/tools/GrepTool/UI.tsx)
 
 尽管 model-facing result 差异很大，前台还是统一走：
 
@@ -445,7 +445,7 @@ mapper 层三路分叉：
 
 ## 25. 把这一卷和 `32` 对照看，`GrepTool` 的真正职责是“把危险/嘈杂/无界的 rg 变成 permission-aware、paged、token-conscious search appliance”
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/prompt.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/prompt.ts)
 
 如果只看表面，`GrepTool` 像是把 `rg` 套进工具；但把整条链拆开后可以看到它实际多做了很多事：
 

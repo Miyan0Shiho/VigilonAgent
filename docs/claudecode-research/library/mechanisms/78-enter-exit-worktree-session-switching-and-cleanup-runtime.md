@@ -17,7 +17,7 @@
 
 ## 1. 这两把工具不是普通 git 包装层，而是会话级迁移 runtime
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../sources/claude-code/src/tools/EnterWorktreeTool/EnterWorktreeTool.ts), [`../../sources/claude-code/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../sources/claude-code/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts)
+源码镜像：[`../../src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../src/tools/EnterWorktreeTool/EnterWorktreeTool.ts), [`../../src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../src/tools/ExitWorktreeTool/ExitWorktreeTool.ts)
 
 它们都不止做 git 操作，还会改：
 
@@ -33,7 +33,7 @@
 
 ## 2. prompt 从入口就把使用边界卡得很死：只有用户显式提到 worktree 才该调用
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterWorktreeTool/prompt.ts`](../../sources/claude-code/src/tools/EnterWorktreeTool/prompt.ts), [`../../sources/claude-code/src/tools/ExitWorktreeTool/prompt.ts`](../../sources/claude-code/src/tools/ExitWorktreeTool/prompt.ts)
+源码镜像：[`../../src/tools/EnterWorktreeTool/prompt.ts`](../../src/tools/EnterWorktreeTool/prompt.ts), [`../../src/tools/ExitWorktreeTool/prompt.ts`](../../src/tools/ExitWorktreeTool/prompt.ts)
 
 两把工具的提示词都强调：
 
@@ -45,7 +45,7 @@
 
 ## 3. `EnterWorktree` 的首个 gate 不是 git 检查，而是“当前 session 是否已经处在一个 tool-created worktree 里”
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../sources/claude-code/src/tools/EnterWorktreeTool/EnterWorktreeTool.ts), [`../../sources/claude-code/src/utils/worktree.ts`](../../sources/claude-code/src/utils/worktree.ts)
+源码镜像：[`../../src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../src/tools/EnterWorktreeTool/EnterWorktreeTool.ts), [`../../src/utils/worktree.ts`](../../src/utils/worktree.ts)
 
 进入时第一件事是：
 
@@ -57,7 +57,7 @@
 
 ## 4. `name` 不是随意字符串，而是经过 path-segment 级别验证的 worktree slug
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../sources/claude-code/src/utils/worktree.ts)
+源码镜像：[`../../src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../src/utils/worktree.ts)
 
 `validateWorktreeSlug(...)` 至少限制：
 
@@ -78,7 +78,7 @@
 
 ## 5. Enter 路径优先不是 git，而是 hook-based worktree create
 
-源码镜像：[`../../sources/claude-code/src/utils/worktree.ts`](../../sources/claude-code/src/utils/worktree.ts), [`../../sources/claude-code/src/tools/EnterWorktreeTool/prompt.ts`](../../sources/claude-code/src/tools/EnterWorktreeTool/prompt.ts)
+源码镜像：[`../../src/utils/worktree.ts`](../../src/utils/worktree.ts), [`../../src/tools/EnterWorktreeTool/prompt.ts`](../../src/tools/EnterWorktreeTool/prompt.ts)
 
 `createWorktreeForSession(...)` 的顺序是：
 
@@ -96,7 +96,7 @@
 
 ## 6. 即使当前人已经在某个 worktree 里，Enter 也会先回到 canonical main repo root 再创建新 worktree
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../sources/claude-code/src/utils/git.ts)
+源码镜像：[`../../src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../src/utils/git.ts)
 
 进入前它会：
 
@@ -109,7 +109,7 @@
 
 ## 7. 进入 worktree 后，Claude Code 故意只改 `originalCwd`，不改 `projectRoot`
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../sources/claude-code/src/bootstrap/state.ts)
+源码镜像：[`../../src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../src/bootstrap/state.ts)
 
 mid-session enter 的关键动作是：
 
@@ -131,7 +131,7 @@ mid-session enter 的关键动作是：
 
 ## 8. `saveWorktreeState(...)` 会把 worktree session 追加进 transcript metadata，因此这条迁移是可恢复的
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../sources/claude-code/src/utils/sessionStorage.ts)
+源码镜像：[`../../src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../src/utils/sessionStorage.ts)
 
 每次 enter/exit 都会：
 
@@ -155,7 +155,7 @@ mid-session enter 的关键动作是：
 
 ## 9. `saveWorktreeState(...)` 还会主动剥掉 ephemeral 字段，说明 transcript 里只保存长期恢复需要的状态
 
-源码镜像：[`../../sources/claude-code/src/utils/sessionStorage.ts`](../../sources/claude-code/src/utils/sessionStorage.ts)
+源码镜像：[`../../src/utils/sessionStorage.ts`](../../src/utils/sessionStorage.ts)
 
 保存前会丢弃：
 
@@ -166,7 +166,7 @@ mid-session enter 的关键动作是：
 
 ## 10. enter 完成后会清掉 system prompt / memory / plans 三类 CWD 相关缓存
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../sources/claude-code/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts)
+源码镜像：[`../../src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../src/tools/ExitWorktreeTool/ExitWorktreeTool.ts)
 
 enter 和 exit 都会清：
 
@@ -184,7 +184,7 @@ enter 和 exit 都会清：
 
 ## 11. `ExitWorktree` 的入口 scope guard 比 enter 更强：只认“当前 session 的 activeWorktreeSession”
 
-源码镜像：[`../../sources/claude-code/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../sources/claude-code/src/tools/ExitWorktreeTool/prompt.ts)
+源码镜像：[`../../src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../src/tools/ExitWorktreeTool/prompt.ts)
 
 validate 阶段直接写死：
 
@@ -200,7 +200,7 @@ validate 阶段直接写死：
 
 ## 12. `remove` 不是随便 destructive，而是默认 fail-closed 的双重安全闸门
 
-源码镜像：[`../../sources/claude-code/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../sources/claude-code/src/utils/worktree.ts)
+源码镜像：[`../../src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../src/utils/worktree.ts)
 
 当：
 
@@ -217,7 +217,7 @@ validate 阶段直接写死：
 
 ## 13. `countWorktreeChanges(...)` 同时检查未提交文件和相对 `originalHeadCommit` 的新提交
 
-源码镜像：[`../../sources/claude-code/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../sources/claude-code/src/utils/execFileNoThrow.ts)
+源码镜像：[`../../src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../src/utils/execFileNoThrow.ts)
 
 它不是只看 `git status --porcelain`，还会：
 
@@ -232,7 +232,7 @@ validate 阶段直接写死：
 
 ## 14. `discard_changes: true` 不是参数糖，而是二次确认令牌
 
-源码镜像：[`../../sources/claude-code/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../sources/claude-code/src/tools/ExitWorktreeTool/prompt.ts)
+源码镜像：[`../../src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../src/tools/ExitWorktreeTool/prompt.ts)
 
 如果发现：
 
@@ -250,7 +250,7 @@ validate 阶段直接写死：
 
 ## 15. `keep` 和 `remove` 不是同一条 cleanup 代码路径改文案，而是两套不同操作
 
-源码镜像：[`../../sources/claude-code/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../sources/claude-code/src/utils/worktree.ts)
+源码镜像：[`../../src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../src/utils/worktree.ts)
 
 `keep` 路径：
 
@@ -269,7 +269,7 @@ validate 阶段直接写死：
 
 ## 16. `restoreSessionToOriginalCwd(...)` 是 worktree runtime 的真正状态回滚中心
 
-源码镜像：[`../../sources/claude-code/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../sources/claude-code/src/bootstrap/state.ts), [`../../sources/claude-code/src/utils/sessionStorage.ts`](../../sources/claude-code/src/utils/sessionStorage.ts)
+源码镜像：[`../../src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../src/bootstrap/state.ts), [`../../src/utils/sessionStorage.ts`](../../src/utils/sessionStorage.ts)
 
 exit 时真正收束状态的是：
 
@@ -284,7 +284,7 @@ exit 时真正收束状态的是：
 
 ## 17. `projectRootIsWorktree` 这条判断把 `--worktree startup` 和 `mid-session EnterWorktree` 严格区分开了
 
-源码镜像：[`../../sources/claude-code/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../sources/claude-code/src/bootstrap/state.ts)
+源码镜像：[`../../src/tools/ExitWorktreeTool/ExitWorktreeTool.ts`](../../src/bootstrap/state.ts)
 
 exit 前先算：
 
@@ -303,7 +303,7 @@ exit 前先算：
 
 ## 18. `cleanupWorktree()` 先离开 worktree，再删目录/分支，避免在被删目录里执行 git 清理
 
-源码镜像：[`../../sources/claude-code/src/utils/worktree.ts`](../../sources/claude-code/src/utils/worktree.ts)
+源码镜像：[`../../src/utils/worktree.ts`](../../src/utils/worktree.ts)
 
 cleanup 时会先：
 
@@ -319,7 +319,7 @@ cleanup 时会先：
 
 ## 19. hook-based remove 和 git-based remove 是并列后端，且 hook 缺失时不会假装完成
 
-源码镜像：[`../../sources/claude-code/src/utils/worktree.ts`](../../sources/claude-code/src/utils/worktree.ts)
+源码镜像：[`../../src/utils/worktree.ts`](../../src/utils/worktree.ts)
 
 如果是 hook-based worktree：
 
@@ -330,7 +330,7 @@ cleanup 时会先：
 
 ## 20. git-based create 还包含一整条 post-creation setup，不只是 `git worktree add`
 
-源码镜像：[`../../sources/claude-code/src/utils/worktree.ts`](../../sources/claude-code/src/utils/worktree.ts)
+源码镜像：[`../../src/utils/worktree.ts`](../../src/utils/worktree.ts)
 
 `performPostCreationSetup(...)` 会继续做：
 
@@ -344,7 +344,7 @@ cleanup 时会先：
 
 ## 21. `tmuxSessionName` 是 worktree session state 的正式成员，因此 tmux sidecar 不是额外脚本，而是内建生命周期的一部分
 
-源码镜像：[`../../sources/claude-code/src/utils/worktree.ts`](../../sources/claude-code/src/utils/sessionStorage.ts)
+源码镜像：[`../../src/utils/worktree.ts`](../../src/utils/sessionStorage.ts)
 
 `WorktreeSession` 里正式保存：
 
@@ -361,7 +361,7 @@ exit 时：
 
 ## 22. analytics 也把 enter/keep/remove 拆成三条独立事件，而不是只记录一次 worktree usage
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../sources/claude-code/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts)
+源码镜像：[`../../src/tools/EnterWorktreeTool/EnterWorktreeTool.ts`](../../src/tools/ExitWorktreeTool/ExitWorktreeTool.ts)
 
 可见事件有：
 
@@ -385,7 +385,7 @@ exit 时：
 
 ## 23. `userFacingName` 和 UI 文案也说明它们是迁移动作，而不是静态 git 状态查看
 
-源码镜像：[`../../sources/claude-code/src/tools/EnterWorktreeTool/UI.tsx`](../../sources/claude-code/src/tools/ExitWorktreeTool/UI.tsx)
+源码镜像：[`../../src/tools/EnterWorktreeTool/UI.tsx`](../../src/tools/ExitWorktreeTool/UI.tsx)
 
 前台表面是：
 

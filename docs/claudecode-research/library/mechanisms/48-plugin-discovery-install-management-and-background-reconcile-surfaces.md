@@ -13,7 +13,7 @@
 
 ## 1. `BrowseMarketplace` 和 `DiscoverPlugins` 不是一个页面换个标题，而是两种检索入口
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx`](../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx), [`../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx`](../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx)
+源码镜像：[`../../src/commands/plugin/BrowseMarketplace.tsx`](../../src/commands/plugin/BrowseMarketplace.tsx), [`../../src/commands/plugin/DiscoverPlugins.tsx`](../../src/commands/plugin/DiscoverPlugins.tsx)
 
 两者的第一层差异是数据切片方式：
 
@@ -36,7 +36,7 @@
 
 ## 2. 两个发现面都故意把 “project/local installed” 视为仍可继续安装到 user scope
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx`](../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx), [`../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx`](../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx)
+源码镜像：[`../../src/commands/plugin/BrowseMarketplace.tsx`](../../src/commands/plugin/BrowseMarketplace.tsx), [`../../src/commands/plugin/DiscoverPlugins.tsx`](../../src/commands/plugin/DiscoverPlugins.tsx)
 
 二者判断已安装时都用的是：
 
@@ -59,7 +59,7 @@
 
 ## 3. install count 排序是产品排序层，不是 marketplace catalog 顺序
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx`](../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx), [`../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx`](../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx)
+源码镜像：[`../../src/commands/plugin/BrowseMarketplace.tsx`](../../src/commands/plugin/BrowseMarketplace.tsx), [`../../src/commands/plugin/DiscoverPlugins.tsx`](../../src/commands/plugin/DiscoverPlugins.tsx)
 
 两个发现面都主动拉：
 
@@ -78,7 +78,7 @@
 
 ## 4. `targetMarketplace` / `targetPlugin` 让发现面可以当成命令跳转目的地，而不是只能从头浏览
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx`](../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx), [`../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx`](../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx)
+源码镜像：[`../../src/commands/plugin/BrowseMarketplace.tsx`](../../src/commands/plugin/BrowseMarketplace.tsx), [`../../src/commands/plugin/DiscoverPlugins.tsx`](../../src/commands/plugin/DiscoverPlugins.tsx)
 
 这两页都支持：
 
@@ -99,7 +99,7 @@
 
 ## 5. 批量安装和单插件安装共用同一个 install core，但收尾导航不同
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx`](../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx), [`../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx`](../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx), [`../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts`](../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts)
+源码镜像：[`../../src/commands/plugin/BrowseMarketplace.tsx`](../../src/commands/plugin/BrowseMarketplace.tsx), [`../../src/commands/plugin/DiscoverPlugins.tsx`](../../src/commands/plugin/DiscoverPlugins.tsx), [`../../src/utils/plugins/pluginInstallationHelpers.ts`](../../src/utils/plugins/pluginInstallationHelpers.ts)
 
 两条页面都把实际安装委托给：
 
@@ -128,7 +128,7 @@
 
 ## 6. `PluginOptionsFlow` 是安装事务的尾巴，不是独立设置页
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx`](../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx), [`../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx`](../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx)
+源码镜像：[`../../src/commands/plugin/BrowseMarketplace.tsx`](../../src/commands/plugin/BrowseMarketplace.tsx), [`../../src/commands/plugin/DiscoverPlugins.tsx`](../../src/commands/plugin/DiscoverPlugins.tsx)
 
 在两个发现页里，只要 `findPluginOptionsTarget()` 找到刚安装好的插件，就会：
 
@@ -146,7 +146,7 @@
 
 ## 7. `PluginTrustWarning` 被放在 details view，不是安装时异常弹窗
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx`](../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx), [`../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx`](../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx)
+源码镜像：[`../../src/commands/plugin/BrowseMarketplace.tsx`](../../src/commands/plugin/BrowseMarketplace.tsx), [`../../src/commands/plugin/DiscoverPlugins.tsx`](../../src/commands/plugin/DiscoverPlugins.tsx)
 
 这点很产品化：
 
@@ -165,7 +165,7 @@
 
 ## 8. `DiscoverPlugins` 把搜索模式做成了 first-class 输入态，不是列表过滤小挂件
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx`](../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx), [`../../sources/claude-code/src/components/SearchBox.tsx`](../../sources/claude-code/src/components/SearchBox.tsx)
+源码镜像：[`../../src/commands/plugin/DiscoverPlugins.tsx`](../../src/commands/plugin/DiscoverPlugins.tsx), [`../../src/components/SearchBox.tsx`](../../src/components/SearchBox.tsx)
 
 这页显式维护：
 
@@ -189,7 +189,7 @@
 
 ## 9. `ManagePlugins` 管的不是纯 plugin list，而是 unified inventory
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx`](../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx)
+源码镜像：[`../../src/commands/plugin/ManagePlugins.tsx`](../../src/commands/plugin/ManagePlugins.tsx)
 
 这页的 item 类型至少有：
 
@@ -211,7 +211,7 @@
 
 ## 10. `targetPlugin + action` 让 `ManagePlugins` 能被当成操作型 deep link，而不是只会显示详情
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx`](../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx)
+源码镜像：[`../../src/commands/plugin/ManagePlugins.tsx`](../../src/commands/plugin/ManagePlugins.tsx)
 
 `ManagePlugins` 不只支持定位某个 plugin，还支持：
 
@@ -232,7 +232,7 @@
 
 ## 11. uninstall 在管理页里不是一个按钮，而是一串保护分支
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx`](../../sources/claude-code/src/services/plugins/pluginOperations.ts)
+源码镜像：[`../../src/commands/plugin/ManagePlugins.tsx`](../../src/services/plugins/pluginOperations.ts)
 
 `handleSingleOperation('uninstall')` 至少会检查：
 
@@ -250,7 +250,7 @@
 
 ## 12. `confirm-project-uninstall` 的实质是“用 local disable 覆盖 shared enable”
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx`](../../sources/claude-code/src/services/plugins/pluginOperations.ts)
+源码镜像：[`../../src/commands/plugin/ManagePlugins.tsx`](../../src/services/plugins/pluginOperations.ts)
 
 当插件同时在 `.claude/settings.json` 启用时，管理页不会鼓励直接卸载，而是先问：
 
@@ -264,7 +264,7 @@
 
 ## 13. `confirm-data-cleanup` 把 plugin data dir 的删除做成显式二选一
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx`](../../sources/claude-code/src/utils/plugins/pluginDirectories.ts)
+源码镜像：[`../../src/commands/plugin/ManagePlugins.tsx`](../../src/utils/plugins/pluginDirectories.ts)
 
 如果插件是 last scope 且有持久化数据，管理页会切到：
 
@@ -280,7 +280,7 @@
 
 ## 14. flagged plugin 和 failed plugin 在管理页里是两种不同故障语义
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx`](../../sources/claude-code/src/commands/plugin/PluginErrors.tsx)
+源码镜像：[`../../src/commands/plugin/ManagePlugins.tsx`](../../src/commands/plugin/PluginErrors.tsx)
 
 `flagged-plugin`：
 
@@ -301,7 +301,7 @@
 
 ## 15. MCP detail 被直接挂进同一个 inventory，说明插件和 MCP 在操作面上已经是同构资产
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx`](../../sources/claude-code/src/components/mcp/MCPToolDetailView.tsx)
+源码镜像：[`../../src/commands/plugin/ManagePlugins.tsx`](../../src/components/mcp/MCPToolDetailView.tsx)
 
 `ManagePlugins` 里 MCP 有：
 
@@ -319,7 +319,7 @@
 
 ## 16. `PluginInstallationManager` 是后台 reconcile 的 UI 桥，不是新的安装引擎
 
-源码镜像：[`../../sources/claude-code/src/services/plugins/PluginInstallationManager.ts`](../../sources/claude-code/src/utils/plugins/reconciler.ts)
+源码镜像：[`../../src/services/plugins/PluginInstallationManager.ts`](../../src/utils/plugins/reconciler.ts)
 
 这个服务自己不发明安装逻辑。它做的是：
 
@@ -338,7 +338,7 @@
 
 ## 17. 后台安装对 “new install” 和 “update only” 的处理是两条不同激活策略
 
-源码镜像：[`../../sources/claude-code/src/services/plugins/PluginInstallationManager.ts`](../../sources/claude-code/src/utils/plugins/refresh.ts)
+源码镜像：[`../../src/services/plugins/PluginInstallationManager.ts`](../../src/utils/plugins/refresh.ts)
 
 这是这条链里最关键的行为分叉：
 
@@ -359,7 +359,7 @@
 
 ## 18. auto-refresh 失败后会退化成同一条 `/reload-plugins` 协议
 
-源码镜像：[`../../sources/claude-code/src/services/plugins/PluginInstallationManager.ts`](../../sources/claude-code/src/utils/plugins/pluginLoader.ts)
+源码镜像：[`../../src/services/plugins/PluginInstallationManager.ts`](../../src/utils/plugins/pluginLoader.ts)
 
 `refreshActivePlugins()` 如果失败，后台安装管理器会：
 
@@ -374,7 +374,7 @@
 
 ## 19. 这条链的总装配关系
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx`](../../sources/claude-code/src/commands/plugin/BrowseMarketplace.tsx), [`../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx`](../../sources/claude-code/src/commands/plugin/DiscoverPlugins.tsx), [`../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx`](../../sources/claude-code/src/commands/plugin/ManagePlugins.tsx), [`../../sources/claude-code/src/services/plugins/PluginInstallationManager.ts`](../../sources/claude-code/src/services/plugins/PluginInstallationManager.ts)
+源码镜像：[`../../src/commands/plugin/BrowseMarketplace.tsx`](../../src/commands/plugin/BrowseMarketplace.tsx), [`../../src/commands/plugin/DiscoverPlugins.tsx`](../../src/commands/plugin/DiscoverPlugins.tsx), [`../../src/commands/plugin/ManagePlugins.tsx`](../../src/commands/plugin/ManagePlugins.tsx), [`../../src/services/plugins/PluginInstallationManager.ts`](../../src/services/plugins/PluginInstallationManager.ts)
 
 可以把用户可见的插件操作面收成 4 层：
 

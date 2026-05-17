@@ -17,7 +17,7 @@
 
 ## 1. `.ipynb` 在 `FileReadTool` 里不是普通 JSON 文本，而是独立分支
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts), [`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/utils/notebook.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts), [`../../src/utils/notebook.ts`](../../src/utils/notebook.ts)
 
 `callInner(...)` 里对 notebook 有一条完全独立的路径：
 
@@ -37,7 +37,7 @@
 
 ## 2. `readNotebook(...)` 的第一职责不是返回原 JSON，而是把 notebook 规整成 `NotebookCellSource[]`
 
-源码镜像：[`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/utils/notebook.ts)
+源码镜像：[`../../src/utils/notebook.ts`](../../src/utils/notebook.ts)
 
 `readNotebook(...)` 会：
 
@@ -57,7 +57,7 @@
 
 ## 3. `cell_id` 读取侧就已经统一了：真实 `cell.id` 优先，缺失时退化成 `cell-N`
 
-源码镜像：[`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts)
+源码镜像：[`../../src/utils/notebook.ts`](../../src/tools/NotebookEditTool/NotebookEditTool.ts)
 
 `processCell(...)` 里对 cell identity 的规则是：
 
@@ -75,7 +75,7 @@
 
 ## 4. 读取侧也会主动区分 code cell 和 markdown cell，而不是让模型自己猜
 
-源码镜像：[`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/utils/notebook.ts)
+源码镜像：[`../../src/utils/notebook.ts`](../../src/utils/notebook.ts)
 
 `processCell(...)` 统一填充的字段包括：
 
@@ -97,7 +97,7 @@
 
 ## 5. cell source 不是原样数组透传，而是被规范成单一字符串
 
-源码镜像：[`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/utils/slowOperations.ts)
+源码镜像：[`../../src/utils/notebook.ts`](../../src/utils/slowOperations.ts)
 
 notebook 里 `cell.source` 可能是：
 
@@ -114,7 +114,7 @@ notebook 里 `cell.source` 可能是：
 
 ## 6. 输出处理不是简单附带 `outputs` 字段，而是先经过按类型规整和截断
 
-源码镜像：[`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/tools/BashTool/utils.ts)
+源码镜像：[`../../src/utils/notebook.ts`](../../src/tools/BashTool/utils.ts)
 
 `processOutput(...)` 会把三类 notebook output 规整成统一结构：
 
@@ -132,7 +132,7 @@ notebook 里 `cell.source` 可能是：
 
 ## 7. image output 也在读取阶段就被提取成真正的 image block 原料
 
-源码镜像：[`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/utils/notebook.ts)
+源码镜像：[`../../src/utils/notebook.ts`](../../src/utils/notebook.ts)
 
 `extractImage(...)` 只认：
 
@@ -152,7 +152,7 @@ notebook 里 `cell.source` 可能是：
 
 ## 8. `large outputs` 有正式阈值，不会让 notebook 成为无限制输出黑洞
 
-源码镜像：[`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/utils/notebook.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 读取侧有一条明确的输出尺寸闸门：
 
@@ -177,7 +177,7 @@ notebook 里 `cell.source` 可能是：
 
 ## 9. 这条 `jq` 提示不是装饰文案，而是 notebook read runtime 的正式降级协议
 
-源码镜像：[`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/tools/BashTool/toolName.ts)
+源码镜像：[`../../src/utils/notebook.ts`](../../src/tools/BashTool/toolName.ts)
 
 large-output fallback 给出的不是抽象错误，而是具体建议：
 
@@ -192,7 +192,7 @@ large-output fallback 给出的不是抽象错误，而是具体建议：
 
 ## 10. `readNotebook(cellId?)` 还支持单 cell 精确读取，但这里目前只接受真实 `cell.id`
 
-源码镜像：[`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts)
+源码镜像：[`../../src/utils/notebook.ts`](../../src/tools/NotebookEditTool/NotebookEditTool.ts)
 
 `readNotebook(...)` 自身支持：
 
@@ -211,7 +211,7 @@ large-output fallback 给出的不是抽象错误，而是具体建议：
 
 ## 11. `FileReadTool` 的 notebook 分支会先把 cell IR 再序列化成 JSON，用它做统一预算与 read-state 基线
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/utils/fileOperationAnalytics.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/utils/fileOperationAnalytics.ts)
 
 `.ipynb` 分支里读取完 `cells` 之后马上做：
 
@@ -232,7 +232,7 @@ large-output fallback 给出的不是抽象错误，而是具体建议：
 
 ## 12. notebook 有两层大小治理：整本 notebook 大小上限和单 cell output 大小上限
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/utils/notebook.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/utils/notebook.ts)
 
 这条链实际上有两层预算：
 
@@ -251,7 +251,7 @@ large-output fallback 给出的不是抽象错误，而是具体建议：
 
 ## 13. notebook 到 `tool_result` 的映射不是单文本，而是 text/image 混合 block 流
 
-源码镜像：[`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/utils/notebook.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `mapNotebookCellsToToolResult(...)` 的内部步骤是：
 
@@ -270,7 +270,7 @@ large-output fallback 给出的不是抽象错误，而是具体建议：
 
 ## 14. text block 不是裸文本，而是带 `<cell id="...">` wrapper 的 notebook DSL
 
-源码镜像：[`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts)
+源码镜像：[`../../src/utils/notebook.ts`](../../src/tools/NotebookEditTool/NotebookEditTool.ts)
 
 `cellContentToToolResult(...)` 会把每个 cell 编成：
 
@@ -292,7 +292,7 @@ large-output fallback 给出的不是抽象错误，而是具体建议：
 
 ## 15. 邻接 text blocks 会在结果侧被主动合并，避免 notebook transcript 过碎
 
-源码镜像：[`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/components/messages/UserToolResultMessage/UserToolSuccessMessage.tsx)
+源码镜像：[`../../src/utils/notebook.ts`](../../src/components/messages/UserToolResultMessage/UserToolSuccessMessage.tsx)
 
 `mapNotebookCellsToToolResult(...)` 最后有一步专门做：
 
@@ -310,7 +310,7 @@ large-output fallback 给出的不是抽象错误，而是具体建议：
 
 ## 16. notebook 读取和 notebook 编辑一起构成了一条完整的 `cell identity` 闭环
 
-源码镜像：[`../../sources/claude-code/src/utils/notebook.ts`](../../sources/claude-code/src/tools/NotebookEditTool/NotebookEditTool.ts)
+源码镜像：[`../../src/utils/notebook.ts`](../../src/tools/NotebookEditTool/NotebookEditTool.ts)
 
 把 `90` 和 `89` 放在一起看，会得到一条完整闭环：
 
@@ -330,7 +330,7 @@ large-output fallback 给出的不是抽象错误，而是具体建议：
 
 ## 17. 这条 notebook read 链和普通 `FileReadTool` 的真正差别，可以压缩成一句话：普通文件返回内容，notebook 返回语义场景
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/utils/notebook.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/utils/notebook.ts)
 
 普通文本读取主要解决：
 

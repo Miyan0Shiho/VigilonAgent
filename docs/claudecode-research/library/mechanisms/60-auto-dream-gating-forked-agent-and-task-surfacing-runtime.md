@@ -15,7 +15,7 @@
 
 ## 1. auto-dream 是 stop-hook sidecar，不是普通 slash command
 
-源码镜像：[`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
+源码镜像：[`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
 
 文件头已经把它的定位写死了：
 
@@ -28,7 +28,7 @@
 
 ## 2. gate 顺序被明确优化成“先便宜后昂贵”
 
-源码镜像：[`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
+源码镜像：[`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
 
 auto-dream 的 gate order 在注释里就是显式协议：
 
@@ -48,8 +48,8 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/autoDream/config.ts`](../../sources/claude-code/src/services/autoDream/config.ts)
-- [`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
+- [`../../src/services/autoDream/config.ts`](../../src/services/autoDream/config.ts)
+- [`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
 
 `isAutoDreamEnabled()` 自己只决定：
 
@@ -67,7 +67,7 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 ## 4. scheduling knobs 来自 GB，但会做 defensive validation
 
-源码镜像：[`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
+源码镜像：[`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
 
 `getConfig()` 会从 `tengu_onyx_plover` 里取：
 
@@ -89,7 +89,7 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 ## 5. time gate 之后还有一层 scan throttle，避免“每回合都重新扫 transcript”
 
-源码镜像：[`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
+源码镜像：[`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
 
 即使 `hoursSince >= minHours`，也不会每个 turn 都扫 session：
 
@@ -100,7 +100,7 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 ## 6. session gate 用的是“自上次 consolidation 以来被 touched 的 session”，不是 birthtime
 
-源码镜像：[`../../sources/claude-code/src/services/autoDream/consolidationLock.ts`](../../sources/claude-code/src/services/autoDream/consolidationLock.ts)
+源码镜像：[`../../src/services/autoDream/consolidationLock.ts`](../../src/services/autoDream/consolidationLock.ts)
 
 `listSessionsTouchedSince(sinceMs)` 的语义是：
 
@@ -116,7 +116,7 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 ## 7. lock file 既是互斥锁，也是 `lastConsolidatedAt` 的存储体
 
-源码镜像：[`../../sources/claude-code/src/services/autoDream/consolidationLock.ts`](../../sources/claude-code/src/services/autoDream/consolidationLock.ts)
+源码镜像：[`../../src/services/autoDream/consolidationLock.ts`](../../src/services/autoDream/consolidationLock.ts)
 
 `.consolidate-lock` 有双重语义：
 
@@ -133,7 +133,7 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 ## 8. lock reclaim 不是只看 PID，还看 holder age
 
-源码镜像：[`../../sources/claude-code/src/services/autoDream/consolidationLock.ts`](../../sources/claude-code/src/services/autoDream/consolidationLock.ts)
+源码镜像：[`../../src/services/autoDream/consolidationLock.ts`](../../src/services/autoDream/consolidationLock.ts)
 
 `tryAcquireConsolidationLock()` 的阻塞条件是：
 
@@ -151,8 +151,8 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
-- [`../../sources/claude-code/src/tasks/DreamTask/DreamTask.ts`](../../sources/claude-code/src/tasks/DreamTask/DreamTask.ts)
+- [`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
+- [`../../src/tasks/DreamTask/DreamTask.ts`](../../src/tasks/DreamTask/DreamTask.ts)
 
 触发路径里最关键的转折是：
 
@@ -164,7 +164,7 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 ## 10. consolidation prompt 不是通用 dream prompt，而是一个明确四阶段的 memory-maintenance script
 
-源码镜像：[`../../sources/claude-code/src/services/autoDream/consolidationPrompt.ts`](../../sources/claude-code/src/services/autoDream/consolidationPrompt.ts)
+源码镜像：[`../../src/services/autoDream/consolidationPrompt.ts`](../../src/services/autoDream/consolidationPrompt.ts)
 
 `buildConsolidationPrompt(...)` 明确把任务分成：
 
@@ -184,7 +184,7 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 ## 11. prompt 的 “Additional context” 会把本次待看的 sessions 和工具约束显式灌进去
 
-源码镜像：[`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
+源码镜像：[`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
 
 构造 prompt 时，`autoDream.ts` 还会附加一段 `extra`：
 
@@ -201,8 +201,8 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
-- [`../../sources/claude-code/src/utils/forkedAgent.ts`](../../sources/claude-code/src/utils/forkedAgent.ts)
+- [`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
+- [`../../src/utils/forkedAgent.ts`](../../src/utils/forkedAgent.ts)
 
 真正执行时传的是：
 
@@ -221,7 +221,7 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 ## 13. tool 权限不是梦游式放开，而是复用 auto-memory 的最小 allowlist
 
-源码镜像：[`../../sources/claude-code/src/services/extractMemories/extractMemories.ts`](../../sources/claude-code/src/services/extractMemories/extractMemories.ts)
+源码镜像：[`../../src/services/extractMemories/extractMemories.ts`](../../src/services/extractMemories/extractMemories.ts)
 
 `createAutoMemCanUseTool(memoryDir)` 被 extract-memories 和 auto-dream 共用，允许的只有：
 
@@ -236,7 +236,7 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 ## 14. REPL 被放行不是放宽权限，而是为了保持工具表 cache-identical
 
-源码镜像：[`../../sources/claude-code/src/services/extractMemories/extractMemories.ts`](../../sources/claude-code/src/services/extractMemories/extractMemories.ts)
+源码镜像：[`../../src/services/extractMemories/extractMemories.ts`](../../src/services/extractMemories/extractMemories.ts)
 
 注释明确说明：
 
@@ -248,7 +248,7 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 ## 15. progress watcher 只消费 assistant message，并把它压成 `text + toolUseCount + touchedPaths`
 
-源码镜像：[`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
+源码镜像：[`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
 
 `makeDreamProgressWatcher(...)` 的逻辑很克制：
 
@@ -266,7 +266,7 @@ auto-dream 的 gate order 在注释里就是显式协议：
 
 ## 16. completion surface 是“双收尾”：任务终态 + 主 transcript 的 memory-saved system message
 
-源码镜像：[`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
+源码镜像：[`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
 
 fork 成功后会先：
 
@@ -289,7 +289,7 @@ fork 成功后会先：
 
 ## 17. failure 和 user-kill 会被刻意分流，避免双重 rollback
 
-源码镜像：[`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
+源码镜像：[`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
 
 异常路径里先看：
 
@@ -309,7 +309,7 @@ fork 成功后会先：
 
 ## 18. dream 真正成为一等后台任务，是因为它正式注册进 `getAllTasks()`
 
-源码镜像：[`../../sources/claude-code/src/tasks.ts`](../../sources/claude-code/src/tasks.ts)
+源码镜像：[`../../src/tasks.ts`](../../src/tasks.ts)
 
 `getAllTasks()` 里直接包含：
 

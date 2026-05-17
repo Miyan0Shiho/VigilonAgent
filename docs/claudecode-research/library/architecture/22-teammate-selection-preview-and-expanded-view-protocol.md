@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是“多 teammate 交互协议怎么保持一致”，不是单个组件怎么画
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner/TeammateSpinnerLine.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerLine.tsx), [`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts), [`../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx`](../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx), [`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts), [`../../sources/claude-code/src/state/onChangeAppState.ts`](../../sources/claude-code/src/state/onChangeAppState.ts), [`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../sources/claude-code/src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx`](../../sources/claude-code/src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx)
+源码镜像：[`../../src/components/Spinner/TeammateSpinnerLine.tsx`](../../src/components/Spinner/TeammateSpinnerLine.tsx), [`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/hooks/useBackgroundTaskNavigation.ts), [`../../src/hooks/useGlobalKeybindings.tsx`](../../src/hooks/useGlobalKeybindings.tsx), [`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts), [`../../src/state/onChangeAppState.ts`](../../src/state/onChangeAppState.ts), [`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx`](../../src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx)
 
 前一卷已经说明：
 
@@ -24,7 +24,7 @@
 
 ## 2. `AppStateStore` 说明这套协议一开始就是全局状态，而不是 spinner 本地 state
 
-源码镜像：[`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts)
+源码镜像：[`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts)
 
 关键字段直接挂在 `AppState`：
 
@@ -45,7 +45,7 @@
 
 ## 3. `main.tsx` 和 `onChangeAppState.ts` 说明新三态协议仍然要兼容旧的两组配置位
 
-源码镜像：[`../../sources/claude-code/src/main.tsx`](../../sources/claude-code/src/main.tsx), [`../../sources/claude-code/src/state/onChangeAppState.ts`](../../sources/claude-code/src/state/onChangeAppState.ts)
+源码镜像：[`../../src/main.tsx`](../../src/main.tsx), [`../../src/state/onChangeAppState.ts`](../../src/state/onChangeAppState.ts)
 
 启动时：
 
@@ -62,7 +62,7 @@
 
 ## 4. `getRunningTeammatesSorted()` 说明所有 teammate 选择都锚定同一排序数组，不能各自算各自的
 
-源码镜像：[`../../sources/claude-code/src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx`](../../sources/claude-code/src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx)
+源码镜像：[`../../src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx`](../../src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx)
 
 这个 helper 的注释就是协议声明：
 
@@ -80,7 +80,7 @@
 
 ## 5. `selectedIPAgentIndex` 的语义不是单纯“第几个 teammate”，而是带哨兵位的树游标
 
-源码镜像：[`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts), [`../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx)
+源码镜像：[`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/hooks/useBackgroundTaskNavigation.ts), [`../../src/components/Spinner/TeammateSpinnerTree.tsx`](../../src/components/Spinner/TeammateSpinnerTree.tsx)
 
 这里的索引被明确扩展成：
 
@@ -92,7 +92,7 @@
 
 ## 6. `stepTeammateSelection()` 说明 `shift+↑/↓` 的第一步不是移动，而是把压缩 surface 展开成树
 
-源码镜像：[`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts)
+源码镜像：[`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/hooks/useBackgroundTaskNavigation.ts)
 
 当当前不是 `expandedView === "teammates"` 时，第一次步进会直接把状态改成：
 
@@ -104,7 +104,7 @@
 
 ## 7. `useBackgroundTaskNavigation` 说明 teammate 键盘协议是独立于普通 prompt submit 的一套前置层
 
-源码镜像：[`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/components/PromptInput/PromptInput.tsx)
 
 这套 hook 接管了：
 
@@ -122,7 +122,7 @@
 
 ## 8. `esc` 的语义被拆成两层，说明 selecting 与 viewing 是不同模式，不是同一个 flag
 
-源码镜像：[`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/state/teammateViewHelpers.ts)
 
 `esc` 在两种模式下行为不同：
 
@@ -133,7 +133,7 @@
 
 ## 9. `enter`、`f`、`k` 三个键说明 spinner tree 不只是看状态，而是直接承载操作语义
 
-源码镜像：[`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx)
+源码镜像：[`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/tasks/InProcessTeammateTask/InProcessTeammateTask.tsx)
 
 在 `selecting-agent` 模式下：
 
@@ -150,7 +150,7 @@
 
 ## 10. teammate 数量变化时的 clamp/reset 逻辑说明游标稳定性是被显式维护的
 
-源码镜像：[`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts)
+源码镜像：[`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/hooks/useBackgroundTaskNavigation.ts)
 
 这个 hook 还专门维护了：
 
@@ -166,7 +166,7 @@
 
 ## 11. `useGlobalKeybindings` 说明 `ctrl+t` 在有 teammate 时不是二态切换，而是三段循环
 
-源码镜像：[`../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx`](../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx)
+源码镜像：[`../../src/hooks/useGlobalKeybindings.tsx`](../../src/hooks/useGlobalKeybindings.tsx)
 
 如果当前存在 running teammates：
 
@@ -182,7 +182,7 @@
 
 ## 12. `PromptInputFooterLeftSide` 的 hint 文案也跟着三态协议变化，说明这不是内部状态，是真实可发现性协议
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx)
 
 `getSpinnerHintParts(...)` 会根据 `expandedView` 生成不同文案：
 
@@ -194,7 +194,7 @@
 
 ## 13. `TeammateSpinnerLine` 说明单行 teammate surface 是响应式摘要卡，不是固定模板
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner/TeammateSpinnerLine.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerLine.tsx)
+源码镜像：[`../../src/components/Spinner/TeammateSpinnerLine.tsx`](../../src/components/Spinner/TeammateSpinnerLine.tsx)
 
 这行的布局先算：
 
@@ -214,7 +214,7 @@
 
 ## 14. `getMessagePreview()` 说明 preview 不是 transcript 末尾硬切三行，而是带 block 类型意识的抽样
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner/TeammateSpinnerLine.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerLine.tsx)
+源码镜像：[`../../src/components/Spinner/TeammateSpinnerLine.tsx`](../../src/components/Spinner/TeammateSpinnerLine.tsx)
 
 这个 helper 会：
 
@@ -228,7 +228,7 @@
 
 ## 15. active / idle / all-idle 三种 teammate 状态说明 `TeammateSpinnerLine` 自己也有一套时间语义
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner/TeammateSpinnerLine.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerLine.tsx), [`../../sources/claude-code/src/hooks/useElapsedTime.ts`](../../sources/claude-code/src/hooks/useElapsedTime.ts)
+源码镜像：[`../../src/components/Spinner/TeammateSpinnerLine.tsx`](../../src/components/Spinner/TeammateSpinnerLine.tsx), [`../../src/hooks/useElapsedTime.ts`](../../src/hooks/useElapsedTime.ts)
 
 单行状态分三种：
 
@@ -245,7 +245,7 @@
 
 ## 16. `isSelected`、`isForegrounded`、`showPreview` 三个维度说明单行 teammate 同时承担导航、前台归属和窥视三种职责
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner/TeammateSpinnerLine.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerTree.tsx)
+源码镜像：[`../../src/components/Spinner/TeammateSpinnerLine.tsx`](../../src/components/Spinner/TeammateSpinnerTree.tsx)
 
 这些 flag 分别控制：
 
@@ -257,7 +257,7 @@
 
 ## 17. `PromptInput` 的 footer 导航分支说明 teammate pills 与 coordinator rows 共享入口键，但走不同对象模型
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/CoordinatorAgentStatus.tsx)
 
 `footer:openSelected` 对 `tasks` 会再分叉：
 
@@ -273,7 +273,7 @@
 
 ## 18. 这一层最终说明 Claude Code 的 swarm 前台靠的是“共享协议”，不是“共享组件”
 
-源码镜像：[`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts), [`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts), [`../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx`](../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx), [`../../sources/claude-code/src/components/Spinner/TeammateSpinnerLine.tsx`](../../sources/claude-code/src/components/Spinner/TeammateSpinnerLine.tsx)
+源码镜像：[`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts), [`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/hooks/useBackgroundTaskNavigation.ts), [`../../src/hooks/useGlobalKeybindings.tsx`](../../src/hooks/useGlobalKeybindings.tsx), [`../../src/components/Spinner/TeammateSpinnerLine.tsx`](../../src/components/Spinner/TeammateSpinnerLine.tsx)
 
 真正被共享的是：
 

@@ -6,7 +6,7 @@
 
 ## 1. 这组命令不能放在一个“集成工作流总览”里糊过去
 
-源码镜像：[`../../sources/claude-code/src/commands/memory/memory.tsx`](../../sources/claude-code/src/commands/memory/memory.tsx), [`../../sources/claude-code/src/commands/skills/skills.tsx`](../../sources/claude-code/src/commands/skills/skills.tsx), [`../../sources/claude-code/src/commands/plan/plan.tsx`](../../sources/claude-code/src/commands/plan/plan.tsx), [`../../sources/claude-code/src/commands/tasks/tasks.tsx`](../../sources/claude-code/src/commands/tasks/tasks.tsx), [`../../sources/claude-code/src/commands/compact/compact.ts`](../../sources/claude-code/src/commands/compact/compact.ts)
+源码镜像：[`../../src/commands/memory/memory.tsx`](../../src/commands/memory/memory.tsx), [`../../src/commands/skills/skills.tsx`](../../src/commands/skills/skills.tsx), [`../../src/commands/plan/plan.tsx`](../../src/commands/plan/plan.tsx), [`../../src/commands/tasks/tasks.tsx`](../../src/commands/tasks/tasks.tsx), [`../../src/commands/compact/compact.ts`](../../src/commands/compact/compact.ts)
 
 它们虽然都挂在 slash command 层，但工程角色完全不同：
 
@@ -20,7 +20,7 @@
 
 ## 2. `/memory` 不是只读查看器，而是“文件创建 + 编辑器跳转”命令
 
-源码镜像：[`../../sources/claude-code/src/commands/memory/memory.tsx`](../../sources/claude-code/src/commands/memory/memory.tsx), [`../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx`](../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx)
+源码镜像：[`../../src/commands/memory/memory.tsx`](../../src/commands/memory/memory.tsx), [`../../src/components/memory/MemoryFileSelector.tsx`](../../src/components/memory/MemoryFileSelector.tsx)
 
 `/memory` 的关键行为不是展示列表，而是：
 
@@ -33,7 +33,7 @@
 
 ## 3. `MemoryFileSelector` 暴露的是 memory namespace，而不是两个固定文件
 
-源码镜像：[`../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx`](../../sources/claude-code/src/components/memory/MemoryFileSelector.tsx)
+源码镜像：[`../../src/components/memory/MemoryFileSelector.tsx`](../../src/components/memory/MemoryFileSelector.tsx)
 
 这个选择器至少会汇总：
 
@@ -54,7 +54,7 @@
 
 ## 4. `/memory` 在命令层就承担了 editor 协议解释责任
 
-源码镜像：[`../../sources/claude-code/src/commands/memory/memory.tsx`](../../sources/claude-code/src/commands/memory/memory.tsx)
+源码镜像：[`../../src/commands/memory/memory.tsx`](../../src/commands/memory/memory.tsx)
 
 命令完成后，它不会只说“已打开文件”，还会补：
 
@@ -66,7 +66,7 @@
 
 ## 5. `/skills` 是一个“当前会话技能能力图”，不是文件浏览器
 
-源码镜像：[`../../sources/claude-code/src/commands/skills/skills.tsx`](../../sources/claude-code/src/commands/skills/skills.tsx), [`../../sources/claude-code/src/components/skills/SkillsMenu.tsx`](../../sources/claude-code/src/components/skills/SkillsMenu.tsx)
+源码镜像：[`../../src/commands/skills/skills.tsx`](../../src/commands/skills/skills.tsx), [`../../src/components/skills/SkillsMenu.tsx`](../../src/components/skills/SkillsMenu.tsx)
 
 `/skills` 自己很薄，只把 `context.options.commands` 交给 `SkillsMenu`。但这不意味着它简单，因为真正的逻辑在 `SkillsMenu`：
 
@@ -79,7 +79,7 @@
 
 ## 6. `SkillsMenu` 证明 skill 已经不只是本地文件能力
 
-源码镜像：[`../../sources/claude-code/src/components/skills/SkillsMenu.tsx`](../../sources/claude-code/src/components/skills/SkillsMenu.tsx)
+源码镜像：[`../../src/components/skills/SkillsMenu.tsx`](../../src/components/skills/SkillsMenu.tsx)
 
 这个菜单显式区分：
 
@@ -99,7 +99,7 @@
 
 ## 7. `/plan` 的第一职责不是展示计划，而是切换 permission mode
 
-源码镜像：[`../../sources/claude-code/src/commands/plan/plan.tsx`](../../sources/claude-code/src/commands/plan/plan.tsx)
+源码镜像：[`../../src/commands/plan/plan.tsx`](../../src/commands/plan/plan.tsx)
 
 `/plan` 最关键的行为是：
 
@@ -111,7 +111,7 @@
 
 ## 8. `/plan` 在 plan mode 前后，其实是两条完全不同的命令语义
 
-源码镜像：[`../../sources/claude-code/src/commands/plan/plan.tsx`](../../sources/claude-code/src/commands/plan/plan.tsx)
+源码镜像：[`../../src/commands/plan/plan.tsx`](../../src/commands/plan/plan.tsx)
 
 当当前不在 plan mode 时：
 
@@ -128,7 +128,7 @@
 
 ## 9. `/tasks` 本身很薄，但它把后台任务系统提升成了显式 operator surface
 
-源码镜像：[`../../sources/claude-code/src/commands/tasks/tasks.tsx`](../../sources/claude-code/src/commands/tasks/tasks.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/commands/tasks/tasks.tsx`](../../src/commands/tasks/tasks.tsx), [`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 `/tasks` 自己只做一件事：
 
@@ -138,7 +138,7 @@
 
 ## 10. `BackgroundTasksDialog` 不是列表框，而是后台执行统一总控台
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 它会把后台执行分成多类：
 
@@ -161,7 +161,7 @@
 
 ## 11. `/compact` 是这组命令里最像真正 runtime mutation 的一条
 
-源码镜像：[`../../sources/claude-code/src/commands/compact/compact.ts`](../../sources/claude-code/src/commands/compact/compact.ts)
+源码镜像：[`../../src/commands/compact/compact.ts`](../../src/commands/compact/compact.ts)
 
 和其他本地 JSX 控制台不同，`/compact` 是一个 `local` 命令，而且支持 non-interactive。它会：
 
@@ -173,7 +173,7 @@
 
 ## 12. `/compact` 实际上有三条压缩路径，而不是一种摘要算法
 
-源码镜像：[`../../sources/claude-code/src/commands/compact/compact.ts`](../../sources/claude-code/src/commands/compact/compact.ts)
+源码镜像：[`../../src/commands/compact/compact.ts`](../../src/commands/compact/compact.ts)
 
 它的优先级是：
 
@@ -185,7 +185,7 @@
 
 ## 13. `/compact` 的成功路径不只是返回摘要，还会重置多处运行时状态
 
-源码镜像：[`../../sources/claude-code/src/commands/compact/compact.ts`](../../sources/claude-code/src/commands/compact/compact.ts)
+源码镜像：[`../../src/commands/compact/compact.ts`](../../src/commands/compact/compact.ts)
 
 成功后它会组合做这些事：
 
@@ -200,7 +200,7 @@
 
 ## 14. `compactViaReactive()` 证明 reactive compact 还接了 hooks 和 cache-sharing 参数
 
-源码镜像：[`../../sources/claude-code/src/commands/compact/compact.ts`](../../sources/claude-code/src/commands/compact/compact.ts)
+源码镜像：[`../../src/commands/compact/compact.ts`](../../src/commands/compact/compact.ts)
 
 reactive 路径里还会：
 
@@ -213,7 +213,7 @@ reactive 路径里还会：
 
 ## 15. `/summary` 在当前镜像里不是功能命令，而是显式隐藏的 stub
 
-源码镜像：[`../../sources/claude-code/src/commands/summary/index.js`](../../sources/claude-code/src/commands/summary/index.js)
+源码镜像：[`../../src/commands/summary/index.js`](../../src/commands/summary/index.js)
 
 当前工作区里 `/summary` 只剩：
 

@@ -6,7 +6,7 @@
 
 ## 1. Bridge 入口为什么重要
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMain.ts`](../../sources/claude-code/src/bridge/bridgeMain.ts)
+源码镜像：[`../../src/bridge/bridgeMain.ts`](../../src/bridge/bridgeMain.ts)
 
 Bridge 不是简单“远程 shell 代理”，而是一整套环境承载层：
 

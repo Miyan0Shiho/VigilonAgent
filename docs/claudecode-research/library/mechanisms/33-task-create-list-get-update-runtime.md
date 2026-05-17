@@ -6,7 +6,7 @@
 
 ## 1. 这四个工具不是对 `utils/tasks.ts` 的薄包装，而是四种不同的任务控制面
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts`](../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts), [`../../sources/claude-code/src/tools/TaskListTool/TaskListTool.ts`](../../sources/claude-code/src/tools/TaskListTool/TaskListTool.ts), [`../../sources/claude-code/src/tools/TaskGetTool/TaskGetTool.ts`](../../sources/claude-code/src/tools/TaskGetTool/TaskGetTool.ts), [`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskCreateTool/TaskCreateTool.ts`](../../src/tools/TaskCreateTool/TaskCreateTool.ts), [`../../src/tools/TaskListTool/TaskListTool.ts`](../../src/tools/TaskListTool/TaskListTool.ts), [`../../src/tools/TaskGetTool/TaskGetTool.ts`](../../src/tools/TaskGetTool/TaskGetTool.ts), [`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 它们各自控制的是不同粒度：
 
@@ -19,13 +19,13 @@
 
 ## 2. 四个工具都挂 `shouldDefer`，说明任务面被当成可按需发现的工作流能力，而不是永远常驻的小工具
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts`](../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts), [`../../sources/claude-code/src/tools/TaskListTool/TaskListTool.ts`](../../sources/claude-code/src/tools/TaskListTool/TaskListTool.ts), [`../../sources/claude-code/src/tools/TaskGetTool/TaskGetTool.ts`](../../sources/claude-code/src/tools/TaskGetTool/TaskGetTool.ts), [`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskCreateTool/TaskCreateTool.ts`](../../src/tools/TaskCreateTool/TaskCreateTool.ts), [`../../src/tools/TaskListTool/TaskListTool.ts`](../../src/tools/TaskListTool/TaskListTool.ts), [`../../src/tools/TaskGetTool/TaskGetTool.ts`](../../src/tools/TaskGetTool/TaskGetTool.ts), [`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 这说明 Claude Code 没把任务系统降格成永远裸露的“todo helper”。它把任务能力视为需要时再暴露的 higher-level workflow surface。
 
 ## 3. `isTodoV2Enabled()` 揭示了任务工具的宿主边界: 交互式 CLI 默认开，非交互模式默认关，除非显式环境变量强开
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 真实 gate 很简单：
 
@@ -36,7 +36,7 @@
 
 ## 4. `TaskCreateTool` 真正创建的不是 todo 文本，而是一个带默认生命周期语义的 task object
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts`](../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts)
+源码镜像：[`../../src/tools/TaskCreateTool/TaskCreateTool.ts`](../../src/tools/TaskCreateTool/TaskCreateTool.ts)
 
 创建时直接固化：
 
@@ -49,7 +49,7 @@
 
 ## 5. `TaskCreateTool` 的 prompt 说明它的定位不是记事本，而是“复杂任务的结构化计划器”
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskCreateTool/prompt.ts`](../../sources/claude-code/src/tools/TaskCreateTool/prompt.ts)
+源码镜像：[`../../src/tools/TaskCreateTool/prompt.ts`](../../src/tools/TaskCreateTool/prompt.ts)
 
 prompt 里明确规定：
 
@@ -63,7 +63,7 @@ prompt 里明确规定：
 
 ## 6. teammate 模式下，TaskCreate 的 prompt 已经假设任务会跨 agent 流转
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskCreateTool/prompt.ts`](../../sources/claude-code/src/tools/TaskCreateTool/prompt.ts)
+源码镜像：[`../../src/tools/TaskCreateTool/prompt.ts`](../../src/tools/TaskCreateTool/prompt.ts)
 
 当 swarm 打开后，prompt 会额外强调：
 
@@ -75,7 +75,7 @@ prompt 里明确规定：
 
 ## 7. `executeTaskCreatedHooks()` 说明任务创建不是本地落盘即成功，而是先过 hook gate
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts`](../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts)
+源码镜像：[`../../src/tools/TaskCreateTool/TaskCreateTool.ts`](../../src/tools/TaskCreateTool/TaskCreateTool.ts)
 
 创建流程是：
 
@@ -87,7 +87,7 @@ prompt 里明确规定：
 
 ## 8. 创建后强制展开 `expandedView = tasks`，说明任务工具不是后台静默协议，而是会主动改前台 operator surface
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts`](../../sources/claude-code/src/tools/TaskCreateTool/TaskCreateTool.ts)
+源码镜像：[`../../src/tools/TaskCreateTool/TaskCreateTool.ts`](../../src/tools/TaskCreateTool/TaskCreateTool.ts)
 
 只要创建或更新任务，Claude Code 就倾向把任务面板抬到前台。任务 runtime 因而同时影响：
 
@@ -97,7 +97,7 @@ prompt 里明确规定：
 
 ## 9. `TaskListTool` 不是把目录全量 dump 出来，而是返回一个专门为调度决策整形过的摘要板
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskListTool/TaskListTool.ts`](../../sources/claude-code/src/tools/TaskListTool/TaskListTool.ts)
+源码镜像：[`../../src/tools/TaskListTool/TaskListTool.ts`](../../src/tools/TaskListTool/TaskListTool.ts)
 
 它返回的不是完整 task schema，而只保留：
 
@@ -111,7 +111,7 @@ prompt 里明确规定：
 
 ## 10. `_internal` metadata 过滤说明 task 文件可以承载系统态，但 TaskList 不把内部实现细节暴露给模型
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskListTool/TaskListTool.ts`](../../sources/claude-code/src/tools/TaskListTool/TaskListTool.ts)
+源码镜像：[`../../src/tools/TaskListTool/TaskListTool.ts`](../../src/tools/TaskListTool/TaskListTool.ts)
 
 List 阶段会直接过滤：
 
@@ -121,13 +121,13 @@ List 阶段会直接过滤：
 
 ## 11. `resolvedTaskIds` 过滤暴露出一个细粒度设计: List 面只暴露“仍然有效的 blocker”
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskListTool/TaskListTool.ts`](../../sources/claude-code/src/tools/TaskListTool/TaskListTool.ts)
+源码镜像：[`../../src/tools/TaskListTool/TaskListTool.ts`](../../src/tools/TaskListTool/TaskListTool.ts)
 
 `blockedBy` 并不是原样返回，而是先剔除已经 `completed` 的任务 ID。也就是说，TaskList 给模型的不是原始图结构，而是“当前仍然生效的依赖图”。
 
 ## 12. `TaskListTool` 的 prompt 已经内置 teammate 调度策略，而不是只告诉模型“把列表列出来”
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskListTool/prompt.ts`](../../sources/claude-code/src/tools/TaskListTool/prompt.ts)
+源码镜像：[`../../src/tools/TaskListTool/prompt.ts`](../../src/tools/TaskListTool/prompt.ts)
 
 尤其在 teammate 模式下，它明确写了：
 
@@ -139,7 +139,7 @@ List 阶段会直接过滤：
 
 ## 13. `TaskGetTool` 的定位是详情拉取器，不是通用读接口
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskGetTool/TaskGetTool.ts`](../../sources/claude-code/src/tools/TaskGetTool/TaskGetTool.ts), [`../../sources/claude-code/src/tools/TaskGetTool/prompt.ts`](../../sources/claude-code/src/tools/TaskGetTool/prompt.ts)
+源码镜像：[`../../src/tools/TaskGetTool/TaskGetTool.ts`](../../src/tools/TaskGetTool/TaskGetTool.ts), [`../../src/tools/TaskGetTool/prompt.ts`](../../src/tools/TaskGetTool/prompt.ts)
 
 它刻意只暴露：
 
@@ -153,13 +153,13 @@ List 阶段会直接过滤：
 
 ## 14. `task: null` 和 `Task not found` 被当作正常 tool_result，而不是异常
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskGetTool/TaskGetTool.ts`](../../sources/claude-code/src/tools/TaskGetTool/TaskGetTool.ts)
+源码镜像：[`../../src/tools/TaskGetTool/TaskGetTool.ts`](../../src/tools/TaskGetTool/TaskGetTool.ts)
 
 这和 TaskUpdate 的 benign failure 语义是一致的：任务列表是并发变化的，所以“没找到”被视为模型可恢复条件，不应该把整个工具执行流炸掉。
 
 ## 15. `TaskUpdateTool` 才是任务家族真正复杂的中枢
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 它不仅改字段，还同时负责：
 
@@ -175,7 +175,7 @@ List 阶段会直接过滤：
 
 ## 16. `deleted` 被编码成 status 的扩展动作，而不是单独的删除工具
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 输入 schema 允许：
 
@@ -185,13 +185,13 @@ List 阶段会直接过滤：
 
 ## 17. metadata merge 语义不是替换，而是 key-level overlay，`null` 代表删除
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 这说明 metadata 被当成长期挂在任务上的增量上下文容器，而不是一次性 payload。模型可以逐步丰富，也可以局部擦除。
 
 ## 18. swarm 模式下，`in_progress` 且未显式 owner 时会自动填 owner，说明 UI activity 和任务所有权被正式绑定
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 这条自动补 owner 的逻辑不是锦上添花，而是为了让任务列表能够可靠映射：
 
@@ -202,7 +202,7 @@ List 阶段会直接过滤：
 
 ## 19. 完成任务前要过 `executeTaskCompletedHooks()`，所以“完成”是被审查的状态跃迁
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 `status === 'completed'` 时不会直接写盘，而是：
 
@@ -214,13 +214,13 @@ List 阶段会直接过滤：
 
 ## 20. owner 变化后写 teammate mailbox，说明任务指派不是被动轮询，而是带显式通知通道
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 当 owner 变化时，会发一条 `task_assignment` mailbox message。也就是说，任务系统不仅靠别人 `TaskList` 发现工作，也支持 leader 显式派发。
 
 ## 21. `addBlocks` 和 `addBlockedBy` 说明依赖图在工具层就是一等能力
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts), [`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts), [`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 这两组字段都会落到 `blockTask()`，而 `blockTask()` 会双向维护：
 
@@ -231,19 +231,19 @@ List 阶段会直接过滤：
 
 ## 22. `verificationNudgeNeeded` 说明 TaskUpdate 还承担 loop-exit 级的行为矫正
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 当主线程刚关闭一个 3+ 任务列表、又没有任何 verification task 时，它会把 verifier 提醒直接拼到 tool_result 里。说明任务工具不只是记状态，还在约束“收尾时别漏验证”。
 
 ## 23. `TaskUpdate` 的 benign failure 设计是为了避免 sibling tool cancellation
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 即使失败，它也尽量返回正常 `tool_result` 而不是抛硬错。源码注释已经写明原因：不要触发 `StreamingToolExecutor` 里的兄弟工具取消。
 
 ## 24. `getTaskListId()` 解释了为什么这些工具首先是“命名空间工具”，其次才是任务工具
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 优先级是：
 
@@ -257,7 +257,7 @@ List 阶段会直接过滤：
 
 ## 25. `createTask()` 和 `resetTaskList()` 说明 TaskCreate 背后不是 append-only，而是带高水位和锁的 durable allocator
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 关键点包括：
 
@@ -270,7 +270,7 @@ List 阶段会直接过滤：
 
 ## 26. `deleteTask()` 不是删文件即完，而是要级联清理其他任务里的依赖引用
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 删除后还会遍历所有任务，把这个 task 从：
 
@@ -281,7 +281,7 @@ List 阶段会直接过滤：
 
 ## 27. `claimTask()` 说明真正的“领取下一件工作”协议主要在底层，而不是只在 TaskUpdate prompt 里
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 它会结构化拒绝：
 

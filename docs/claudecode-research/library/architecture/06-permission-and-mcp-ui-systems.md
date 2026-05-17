@@ -6,7 +6,7 @@
 
 ## 1. 权限系统的入口不是单个弹窗，而是一套分派器
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/PermissionRequest.tsx)
+源码镜像：[`../../src/components/permissions/PermissionRequest.tsx`](../../src/components/permissions/PermissionRequest.tsx)
 
 `PermissionRequest.tsx` 做的第一件事不是渲染 UI，而是做工具到权限组件的映射：
 
@@ -20,7 +20,7 @@
 
 ## 2. `PermissionPrompt` 不是按钮组，而是“带反馈的决策界面”
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/PermissionPrompt.tsx`](../../sources/claude-code/src/components/permissions/PermissionPrompt.tsx)
+源码镜像：[`../../src/components/permissions/PermissionPrompt.tsx`](../../src/components/permissions/PermissionPrompt.tsx)
 
 这个组件揭示了权限系统的一个关键产品选择：用户不只是在选 `yes/no`，还可以给出下一步指令。
 
@@ -36,7 +36,7 @@
 
 ## 3. `PermissionContext.ts` 才是权限系统的调度中枢
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts`](../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts)
+源码镜像：[`../../src/hooks/toolPermission/PermissionContext.ts`](../../src/hooks/toolPermission/PermissionContext.ts)
 
 这里可以看到权限判定的完整链路：
 
@@ -50,7 +50,7 @@
 
 ## 4. `PermissionDialog` 只是视觉骨架
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/PermissionDialog.tsx`](../../sources/claude-code/src/components/permissions/PermissionDialog.tsx)
+源码镜像：[`../../src/components/permissions/PermissionDialog.tsx`](../../src/components/permissions/PermissionDialog.tsx)
 
 它提供的能力很朴素：
 
@@ -62,7 +62,7 @@
 
 ## 5. MCP UI 不是“设置表单”，而是一套状态浏览器
 
-源码镜像：[`../../sources/claude-code/src/components/mcp/MCPSettings.tsx`](../../sources/claude-code/src/components/mcp/MCPSettings.tsx), [`../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx`](../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx)
+源码镜像：[`../../src/components/mcp/MCPSettings.tsx`](../../src/components/mcp/MCPSettings.tsx), [`../../src/components/mcp/ElicitationDialog.tsx`](../../src/components/mcp/ElicitationDialog.tsx)
 
 MCP UI 至少分成三类界面：
 
@@ -76,7 +76,7 @@ MCP UI 至少分成三类界面：
 
 ## 6. `.mcp.json` 新 server 的批准链路是独立系统
 
-源码镜像：[`../../sources/claude-code/src/services/mcpServerApproval.tsx`](../../sources/claude-code/src/services/mcpServerApproval.tsx), [`../../sources/claude-code/src/components/MCPServerApprovalDialog.tsx`](../../sources/claude-code/src/components/MCPServerApprovalDialog.tsx)
+源码镜像：[`../../src/services/mcpServerApproval.tsx`](../../src/services/mcpServerApproval.tsx), [`../../src/components/MCPServerApprovalDialog.tsx`](../../src/components/MCPServerApprovalDialog.tsx)
 
 这条链清楚地展示了“发现新 server”如何转成用户决策：
 
@@ -90,7 +90,7 @@ MCP UI 至少分成三类界面：
 
 ## 7. MCP 连接异常还会被提升成全局通知
 
-源码镜像：[`../../sources/claude-code/src/hooks/notifs/useMcpConnectivityStatus.tsx`](../../sources/claude-code/src/hooks/notifs/useMcpConnectivityStatus.tsx)
+源码镜像：[`../../src/hooks/notifs/useMcpConnectivityStatus.tsx`](../../src/hooks/notifs/useMcpConnectivityStatus.tsx)
 
 这个 hook 会把几类状态主动抬升出来：
 

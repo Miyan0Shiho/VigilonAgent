@@ -10,7 +10,7 @@
 
 ## 1. 这条链的核心不是 task execution，而是 task visibility ownership
 
-源码镜像：[`../../sources/claude-code/src/main.tsx`](../../sources/claude-code/src/main.tsx), [`../../sources/claude-code/src/state/onChangeAppState.ts`](../../sources/claude-code/src/state/onChangeAppState.ts), [`../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx`](../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx), [`../../sources/claude-code/src/hooks/useTasksV2.ts`](../../sources/claude-code/src/hooks/useTasksV2.ts), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/Spinner.tsx), [`../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx), [`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx), [`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx), [`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts), [`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/main.tsx`](../../src/main.tsx), [`../../src/state/onChangeAppState.ts`](../../src/state/onChangeAppState.ts), [`../../src/hooks/useGlobalKeybindings.tsx`](../../src/hooks/useGlobalKeybindings.tsx), [`../../src/hooks/useTasksV2.ts`](../../src/hooks/useTasksV2.ts), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/components/Spinner.tsx`](../../src/components/Spinner.tsx), [`../../src/components/PromptInput/PromptInputFooterLeftSide.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx), [`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/components/tasks/BackgroundTaskStatus.tsx), [`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/CoordinatorAgentStatus.tsx), [`../../src/components/tasks/taskStatusUtils.tsx`](../../src/components/tasks/taskStatusUtils.tsx), [`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/hooks/useBackgroundTaskNavigation.ts), [`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 Claude Code 这里至少有四种“任务看得见”的表面：
 
@@ -30,7 +30,7 @@ Claude Code 这里至少有四种“任务看得见”的表面：
 
 ## 2. `expandedView` 是唯一的全局显示模式位，决定“展开任务”还是“展开 teammates”
 
-源码镜像：[`../../sources/claude-code/src/main.tsx`](../../sources/claude-code/src/main.tsx), [`../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx`](../../sources/claude-code/src/hooks/useGlobalKeybindings.tsx), [`../../sources/claude-code/src/state/onChangeAppState.ts`](../../sources/claude-code/src/state/onChangeAppState.ts)
+源码镜像：[`../../src/main.tsx`](../../src/main.tsx), [`../../src/hooks/useGlobalKeybindings.tsx`](../../src/hooks/useGlobalKeybindings.tsx), [`../../src/state/onChangeAppState.ts`](../../src/state/onChangeAppState.ts)
 
 这条状态链很明确：
 
@@ -55,7 +55,7 @@ Claude Code 这里至少有四种“任务看得见”的表面：
 
 ## 3. `useTasksV2` 不是普通 hook，而是任务可见性的共享背板
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTasksV2.ts`](../../sources/claude-code/src/hooks/useTasksV2.ts)
+源码镜像：[`../../src/hooks/useTasksV2.ts`](../../src/hooks/useTasksV2.ts)
 
 `useTasksV2` 这一层的重要性不在“返回任务列表”，而在它把多个 UI 面统一绑到一个 store：
 
@@ -76,7 +76,7 @@ Claude Code 这里至少有四种“任务看得见”的表面：
 
 ## 4. `useTasksV2WithCollapseEffect()` 说明 REPL 才是可见性收口点
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTasksV2.ts`](../../sources/claude-code/src/hooks/useTasksV2.ts), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/hooks/useTasksV2.ts`](../../src/hooks/useTasksV2.ts), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 `useTasksV2WithCollapseEffect()` 只多做了一件事：
 
@@ -101,7 +101,7 @@ Claude Code 这里至少有四种“任务看得见”的表面：
 
 ## 5. `REPL` 同时拥有两种任务展开槽位，但它们被 `showSpinner` 分成上下文不同的两条路径
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/Spinner.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/components/Spinner.tsx`](../../src/components/Spinner.tsx)
 
 任务展开并不总在一个地方：
 
@@ -122,7 +122,7 @@ Claude Code 这里至少有四种“任务看得见”的表面：
 
 ## 6. `Spinner.tsx` 是运行中任务展开的主调度器，而不是纯动画组件
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/Spinner.tsx)
+源码镜像：[`../../src/components/Spinner.tsx`](../../src/components/Spinner.tsx)
 
 `SpinnerWithVerbInner()` 里，任务分流非常明确：
 
@@ -149,7 +149,7 @@ Claude Code 这里至少有四种“任务看得见”的表面：
 
 ## 7. Footer 不是任务列表的缩略图，而是任务拥有权和导航权的压缩面
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputFooterLeftSide.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInputFooterLeftSide.tsx)
 
 `PromptInput.tsx` 先决定 footer 里“tasks”这一项是否存在：
 
@@ -172,7 +172,7 @@ Claude Code 这里至少有四种“任务看得见”的表面：
 
 ## 8. `BackgroundTaskStatus` 真正决定了 footer 是 summary pill 还是 teammate pills
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTaskStatus.tsx), [`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTaskStatus.tsx`](../../src/components/tasks/BackgroundTaskStatus.tsx), [`../../src/components/tasks/taskStatusUtils.tsx`](../../src/components/tasks/taskStatusUtils.tsx)
 
 `BackgroundTaskStatus` 自己内部有两套完全不同的输出协议。
 
@@ -198,7 +198,7 @@ Claude Code 这里至少有四种“任务看得见”的表面：
 
 ## 9. `CoordinatorTaskPanel` 证明“可见任务”并不都来自 `useTasksV2`
 
-源码镜像：[`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 这里有一个容易误判的点：Claude Code 的任务 UI 不是单一数据源。
 
@@ -225,7 +225,7 @@ Claude Code 这里至少有四种“任务看得见”的表面：
 
 ## 10. `useBackgroundTaskNavigation()` 只负责 teammate tree 交互，不负责 generic task list
 
-源码镜像：[`../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts`](../../sources/claude-code/src/hooks/useBackgroundTaskNavigation.ts)
+源码镜像：[`../../src/hooks/useBackgroundTaskNavigation.ts`](../../src/hooks/useBackgroundTaskNavigation.ts)
 
 这条 hook 处理的是：
 

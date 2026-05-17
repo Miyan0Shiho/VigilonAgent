@@ -20,7 +20,7 @@
 
 ## 1. `BashTool` 的 schema 从一开始就带着运行时策略，不只是参数定义
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/BashTool.tsx`](../../sources/claude-code/src/tools/BashTool/BashTool.tsx), [`../../sources/claude-code/src/tools/BashTool/prompt.ts`](../../sources/claude-code/src/tools/BashTool/prompt.ts)
+源码镜像：[`../../src/tools/BashTool/BashTool.tsx`](../../src/tools/BashTool/BashTool.tsx), [`../../src/tools/BashTool/prompt.ts`](../../src/tools/BashTool/prompt.ts)
 
 模型看到的输入并不是裸 `command`，而是带着这些运行时位：
 
@@ -44,7 +44,7 @@
 
 ## 2. read/search/list 折叠和 silent command 识别都在 tool 内核里，不是通用 transcript 功能
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/BashTool.tsx`](../../sources/claude-code/src/tools/BashTool/BashTool.tsx)
+源码镜像：[`../../src/tools/BashTool/BashTool.tsx`](../../src/tools/BashTool/BashTool.tsx)
 
 `isSearchOrReadBashCommand()` 会把 compound command 分成：
 
@@ -74,7 +74,7 @@
 
 ## 3. auto-background 不是随便超时就后台，而是显式受命令族和宿主模式约束
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/BashTool.tsx`](../../sources/claude-code/src/tools/BashTool/BashTool.tsx)
+源码镜像：[`../../src/tools/BashTool/BashTool.tsx`](../../src/tools/BashTool/BashTool.tsx)
 
 这里至少有三条独立 gate：
 
@@ -86,7 +86,7 @@
 
 ## 4. `sed -i` 在 Claude Code 里不是普通 shell write，而是 permission-gated simulated file edit
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/sedEditParser.ts`](../../sources/claude-code/src/tools/BashTool/sedEditParser.ts), [`../../sources/claude-code/src/tools/BashTool/BashTool.tsx`](../../sources/claude-code/src/tools/BashTool/BashTool.tsx), [`../../sources/claude-code/src/tools/BashTool/UI.tsx`](../../sources/claude-code/src/tools/BashTool/UI.tsx)
+源码镜像：[`../../src/tools/BashTool/sedEditParser.ts`](../../src/tools/BashTool/sedEditParser.ts), [`../../src/tools/BashTool/BashTool.tsx`](../../src/tools/BashTool/BashTool.tsx), [`../../src/tools/BashTool/UI.tsx`](../../src/tools/BashTool/UI.tsx)
 
 `parseSedEditCommand()` 只接受非常窄的子集：
 
@@ -108,7 +108,7 @@
 
 ## 5. sandbox 不是一刀切，而是 `policy + user exclusions + explicit override` 三层决策
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/shouldUseSandbox.ts`](../../sources/claude-code/src/tools/BashTool/shouldUseSandbox.ts)
+源码镜像：[`../../src/tools/BashTool/shouldUseSandbox.ts`](../../src/tools/BashTool/shouldUseSandbox.ts)
 
 `shouldUseSandbox()` 的判断顺序很清楚：
 
@@ -128,7 +128,7 @@
 
 ## 6. permission 核心不是匹配一条 rule，而是一个多阶段 classifier pipeline
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/bashPermissions.ts`](../../sources/claude-code/src/tools/BashTool/bashPermissions.ts)
+源码镜像：[`../../src/tools/BashTool/bashPermissions.ts`](../../src/tools/BashTool/bashPermissions.ts)
 
 `bashToolHasPermission(...)` 这条链不是单步判断。围绕它已经单独拆出了这些局部系统：
 
@@ -148,7 +148,7 @@
 
 ## 7. prefix suggestion 不是 UX 小优化，而是围绕 shell wrapper 绕过风险设计出来的
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/bashPermissions.ts`](../../sources/claude-code/src/tools/BashTool/bashPermissions.ts)
+源码镜像：[`../../src/tools/BashTool/bashPermissions.ts`](../../src/tools/BashTool/bashPermissions.ts)
 
 代码里专门维护了 `BARE_SHELL_PREFIXES`，明确拒绝为这些命令生成宽前缀：
 
@@ -167,7 +167,7 @@
 
 ## 8. `bashSecurity.ts` 真正防的是 shell 语法级逃逸，而不是文件系统权限
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/bashSecurity.ts`](../../sources/claude-code/src/tools/BashTool/bashSecurity.ts)
+源码镜像：[`../../src/tools/BashTool/bashSecurity.ts`](../../src/tools/BashTool/bashSecurity.ts)
 
 这层重点盯的是 shell feature abuse：
 
@@ -183,7 +183,7 @@
 
 ## 9. read-only 判定不是看命令名，而是 `allowlist + flag grammar + path extractor` 的组合
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/readOnlyValidation.ts`](../../sources/claude-code/src/tools/BashTool/readOnlyValidation.ts), [`../../sources/claude-code/src/tools/BashTool/pathValidation.ts`](../../sources/claude-code/src/tools/BashTool/pathValidation.ts)
+源码镜像：[`../../src/tools/BashTool/readOnlyValidation.ts`](../../src/tools/BashTool/readOnlyValidation.ts), [`../../src/tools/BashTool/pathValidation.ts`](../../src/tools/BashTool/pathValidation.ts)
 
 `checkReadOnlyConstraints()` 并不是简单维护一个只读命令白名单。它真正依赖的是：
 
@@ -202,7 +202,7 @@
 
 ## 10. dangerous path 检查会故意绕开 symlink 解析，先保护用户再说
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/pathValidation.ts`](../../sources/claude-code/src/tools/BashTool/pathValidation.ts)
+源码镜像：[`../../src/tools/BashTool/pathValidation.ts`](../../src/tools/BashTool/pathValidation.ts)
 
 `checkDangerousRemovalPaths()` 对 `rm/rmdir` 的处理非常明确：
 
@@ -219,7 +219,7 @@
 
 ## 11. mode-specific permission 不是全局逻辑，而是 BashTool 自己先认领一部分
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/modeValidation.ts`](../../sources/claude-code/src/tools/BashTool/modeValidation.ts)
+源码镜像：[`../../src/tools/BashTool/modeValidation.ts`](../../src/tools/BashTool/modeValidation.ts)
 
 `checkPermissionMode()` 目前至少做了一件事：
 
@@ -239,7 +239,7 @@
 
 ## 12. destructive warning 是纯信息层，不影响审批逻辑
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/destructiveCommandWarning.ts`](../../sources/claude-code/src/tools/BashTool/destructiveCommandWarning.ts)
+源码镜像：[`../../src/tools/BashTool/destructiveCommandWarning.ts`](../../src/tools/BashTool/destructiveCommandWarning.ts)
 
 这层专门识别：
 
@@ -262,7 +262,7 @@
 
 ## 13. exit code interpretation 也是专门建模过的，不把所有非零都当失败
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/commandSemantics.ts`](../../sources/claude-code/src/tools/BashTool/commandSemantics.ts)
+源码镜像：[`../../src/tools/BashTool/commandSemantics.ts`](../../src/tools/BashTool/commandSemantics.ts)
 
 `interpretCommandResult()` 对这些命令做了特判：
 
@@ -280,7 +280,7 @@
 
 ## 14. 前台结果面是 shell host-aware 的，而不是把 stdout/stderr 原样贴上来
 
-源码镜像：[`../../sources/claude-code/src/tools/BashTool/UI.tsx`](../../sources/claude-code/src/tools/BashTool/UI.tsx), [`../../sources/claude-code/src/tools/BashTool/BashTool.tsx`](../../sources/claude-code/src/tools/BashTool/BashTool.tsx)
+源码镜像：[`../../src/tools/BashTool/UI.tsx`](../../src/tools/BashTool/UI.tsx), [`../../src/tools/BashTool/BashTool.tsx`](../../src/tools/BashTool/BashTool.tsx)
 
 这层至少做了四件额外工作：
 

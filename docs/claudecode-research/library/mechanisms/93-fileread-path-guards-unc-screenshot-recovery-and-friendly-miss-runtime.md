@@ -18,7 +18,7 @@
 
 ## 1. `FileReadTool` 的第一层防线不是 stat/read，而是一组纯路径判定
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `validateInput(...)` 的注释非常一致地强调：
 
@@ -34,7 +34,7 @@
 
 ## 2. `expandPath(...)` 不是小清洗，而是整个 guard 链的 canonical path 起点
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `validateInput(...)` 一上来就做：
 
@@ -56,7 +56,7 @@
 
 ## 3. deny rule 在 `Read` 里是最先执行的策略 gate，优先级高于格式/media 判定
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/utils/permissions/filesystem.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/utils/permissions/filesystem.ts)
 
 路径归一化后，第一件事是：
 
@@ -79,7 +79,7 @@
 
 ## 4. UNC path 是一个专门的安全特判，目的不是拒绝，而是把 permission 提前到任何 I/O 之前
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/utils/permissions/filesystem.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/utils/permissions/filesystem.ts)
 
 代码和注释都写得很重：
 
@@ -104,7 +104,7 @@
 
 ## 5. binary extension gate 不是“禁止非文本”，而是把 PDF 和 image 明确保留给本工具的原生媒体路径
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/constants/files.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/constants/files.ts)
 
 二进制 gate 的条件是：
 
@@ -128,7 +128,7 @@
 
 ## 6. 注释里特意提到 SVG 被排除在“binary”之外，说明 `Read` 把它当普通文本/标记语言看待
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/constants/files.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/constants/files.ts)
 
 binary gate 的注释说：
 
@@ -148,7 +148,7 @@ binary gate 的注释说：
 
 ## 7. device-path guard 是纯路径黑名单，目标是防“无穷输出”与“阻塞输入”
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `BLOCKED_DEVICE_PATHS` 明确分了三类：
 
@@ -175,7 +175,7 @@ binary gate 的注释说：
 
 ## 8. Linux `/proc/.../fd/0-2` 也被并入同一条 guard，说明这层不是按平台分叉，而是按语义同类归并
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `isBlockedDevicePath(...)` 除了直接查 set，还额外判断：
 
@@ -192,7 +192,7 @@ binary gate 的注释说：
 
 ## 9. macOS screenshot alternate-path 恢复不是泛化 fuzzy match，而是只修“AM/PM 前空格字符不同”的单一系统兼容问题
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 这里有一个非常具体的兼容器：
 
@@ -213,7 +213,7 @@ binary gate 的注释说：
 
 ## 10. 这条 screenshot 恢复链只在 `ENOENT` 时才触发，而且先试 alternate path，再决定是否进入友好 miss 文案
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 外层 `call(...)` 捕获 `ENOENT` 后，顺序是：
 
@@ -229,7 +229,7 @@ binary gate 的注释说：
 
 ## 11. `ENOENT` 的最终报错也不是裸异常，而是一条带 cwd 上下文和路径建议的恢复性 receipt
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/utils/file.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/utils/file.ts)
 
 alternate screenshot 路径失败后，才会去算：
 
@@ -249,7 +249,7 @@ alternate screenshot 路径失败后，才会去算：
 
 ## 12. `cwdSuggestion` 优先于 `similarFilename`，说明恢复策略更偏“你是不是少写了 cwd 前缀/相对根”而不是“拼写有点像”
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/utils/file.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/utils/file.ts)
 
 拼接逻辑是：
 
@@ -269,7 +269,7 @@ alternate screenshot 路径失败后，才会去算：
 
 ## 13. `renderToolUseErrorMessage(...)` 也专门认识这条 cwd-aware miss 协议，并把它压成前台 `File not found`
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/UI.tsx`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/UI.tsx`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 UI 里有个专门分支：
 
@@ -284,7 +284,7 @@ UI 里有个专门分支：
 
 ## 14. 把这些 guard 串起来看，`FileReadTool` 的 path/runtime 边界是“先做安全路径分类，再做媒体分类，最后才做真实读取”
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/UI.tsx)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/UI.tsx)
 
 顺序大致可以收束成：
 
@@ -301,7 +301,7 @@ UI 里有个专门分支：
 
 ## 15. 这也解释了为什么 `Read` 在 Claude Code 里已经不是“内容工具”，而是半个宿主兼容层
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/constants/files.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/constants/files.ts)
 
 如果只看主结果协议，`Read` 像一个内容摄取工具；但把这篇和 `91/92` 放在一起看，会发现它还承担了很多宿主层职责：
 

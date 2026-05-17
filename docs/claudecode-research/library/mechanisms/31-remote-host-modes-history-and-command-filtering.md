@@ -6,7 +6,7 @@
 
 ## 1. Claude Code 的 remote 不是单一模式，而是三个宿主共用一套 REPL 回调面
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts), [`../../sources/claude-code/src/hooks/useDirectConnect.ts`](../../sources/claude-code/src/hooks/useDirectConnect.ts), [`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts), [`../../src/hooks/useDirectConnect.ts`](../../src/hooks/useDirectConnect.ts), [`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts)
 
 在当前源码里，REPL 最终只关心一组统一返回值：
 
@@ -38,7 +38,7 @@
 
 ## 3. 这三条 hook 共享的不是 UI，而是 `sdkMessageAdapter + remotePermissionBridge` 这两块协议底座
 
-源码镜像：[`../../sources/claude-code/src/remote/sdkMessageAdapter.ts`](../../sources/claude-code/src/remote/sdkMessageAdapter.ts), [`../../sources/claude-code/src/remote/remotePermissionBridge.ts`](../../sources/claude-code/src/remote/remotePermissionBridge.ts), [`../../sources/claude-code/src/hooks/useDirectConnect.ts`](../../sources/claude-code/src/hooks/useDirectConnect.ts), [`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts)
+源码镜像：[`../../src/remote/sdkMessageAdapter.ts`](../../src/remote/sdkMessageAdapter.ts), [`../../src/remote/remotePermissionBridge.ts`](../../src/remote/remotePermissionBridge.ts), [`../../src/hooks/useDirectConnect.ts`](../../src/hooks/useDirectConnect.ts), [`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts)
 
 `useDirectConnect` 和 `useSSHSession` 跟 `useRemoteSession` 的真正共用层是：
 
@@ -54,7 +54,7 @@
 
 ## 4. `useDirectConnect` 和 `useSSHSession` 都固定打开 `convertToolResults`，因为它们不是 viewer replay，而是实时把远端工具结果折回本地 transcript
 
-源码镜像：[`../../sources/claude-code/src/hooks/useDirectConnect.ts`](../../sources/claude-code/src/hooks/useDirectConnect.ts), [`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts)
+源码镜像：[`../../src/hooks/useDirectConnect.ts`](../../src/hooks/useDirectConnect.ts), [`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts)
 
 这两条 hook 调 `convertSDKMessage()` 时都传：
 
@@ -68,7 +68,7 @@
 
 ## 5. `useDirectConnect` 的本质是“stream-json over WebSocket”，不是 Sessions API subscriber
 
-源码镜像：[`../../sources/claude-code/src/server/directConnectManager.ts`](../../sources/claude-code/src/server/directConnectManager.ts), [`../../sources/claude-code/src/hooks/useDirectConnect.ts`](../../sources/claude-code/src/hooks/useDirectConnect.ts)
+源码镜像：[`../../src/server/directConnectManager.ts`](../../src/server/directConnectManager.ts), [`../../src/hooks/useDirectConnect.ts`](../../src/hooks/useDirectConnect.ts)
 
 `DirectConnectSessionManager` 跟 `RemoteSessionManager` 差别很大：
 
@@ -81,7 +81,7 @@
 
 ## 6. direct connect 明确过滤 `keep_alive`、`streamlined_text`、`streamlined_tool_use_summary` 和 `post_turn_summary`
 
-源码镜像：[`../../sources/claude-code/src/server/directConnectManager.ts`](../../sources/claude-code/src/server/directConnectManager.ts)
+源码镜像：[`../../src/server/directConnectManager.ts`](../../src/server/directConnectManager.ts)
 
 这条链说明 direct connect 宿主发来的内容比 CCR viewer 更“靠近 agent 原始 stdout”。因此 manager 要主动忽略一些不该进 transcript 的帧：
 
@@ -96,7 +96,7 @@
 
 ## 7. 对未知 control request subtype，它和 CCR manager 一样主动回 error，说明“不要让远端挂住”等级高于 transport 差异
 
-源码镜像：[`../../sources/claude-code/src/server/directConnectManager.ts`](../../sources/claude-code/src/server/directConnectManager.ts), [`../../sources/claude-code/src/remote/RemoteSessionManager.ts`](../../sources/claude-code/src/remote/RemoteSessionManager.ts)
+源码镜像：[`../../src/server/directConnectManager.ts`](../../src/server/directConnectManager.ts), [`../../src/remote/RemoteSessionManager.ts`](../../src/remote/RemoteSessionManager.ts)
 
 `DirectConnectSessionManager` 也复制了那条重要原则：
 
@@ -107,7 +107,7 @@
 
 ## 8. `useDirectConnect` 的连接失败语义是“进程级失败”，不是“会话内重连”
 
-源码镜像：[`../../sources/claude-code/src/hooks/useDirectConnect.ts`](../../sources/claude-code/src/hooks/useDirectConnect.ts)
+源码镜像：[`../../src/hooks/useDirectConnect.ts`](../../src/hooks/useDirectConnect.ts)
 
 它的断开策略很硬：
 
@@ -119,7 +119,7 @@
 
 ## 9. `useSSHSession` 明确说自己是 `useDirectConnect` 的 sibling，而不是它的泛化版
 
-源码镜像：[`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts)
+源码镜像：[`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts)
 
 文件头注释直接给出设计意图：
 
@@ -131,7 +131,7 @@
 
 ## 10. SSH 模式在当前镜像里只有 hook 表面是完整可见的；底层 `createSSHSession / SSHSessionManager` 主体未展开
 
-源码证据：[`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts)；相关调用点：`packages/claude-code/src/main.tsx`
+源码证据：[`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts)；相关调用点：`packages/claude-code/src/main.tsx`
 
 当前工作区能直接读到：
 
@@ -152,7 +152,7 @@
 
 ## 11. 即便底层主体缺失，hook 已经暴露出 SSH 宿主跟 direct connect 的两个关键差异：可重连提示和 stderr 收尾
 
-源码镜像：[`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts)
+源码镜像：[`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts)
 
 跟 direct connect 相比，SSH hook 额外明确了两层行为：
 
@@ -163,7 +163,7 @@
 
 ## 12. `cancelRequest()` 在 direct connect 和 SSH 里都退化成 `sendInterrupt()`，说明本地没有 viewer-only 这类更细控制面
 
-源码镜像：[`../../sources/claude-code/src/hooks/useDirectConnect.ts`](../../sources/claude-code/src/hooks/useDirectConnect.ts), [`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts)
+源码镜像：[`../../src/hooks/useDirectConnect.ts`](../../src/hooks/useDirectConnect.ts), [`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts)
 
 这两条 hook 的取消语义都非常简单：
 
@@ -200,7 +200,7 @@
 
 ## 15. `useAssistantHistory()` 则是另一条完全不同的 remote transcript 补图路径：不是 live stream，而是惰性分页 prepend
 
-源码镜像：[`../../sources/claude-code/src/hooks/useAssistantHistory.ts`](../../sources/claude-code/src/hooks/useAssistantHistory.ts)
+源码镜像：[`../../src/hooks/useAssistantHistory.ts`](../../src/hooks/useAssistantHistory.ts)
 
 这个 hook 只在 `config.viewerOnly === true` 时工作，核心责任是：
 
@@ -213,7 +213,7 @@
 
 ## 16. 历史分页和 viewer live stream 复用同一个 `convertSDKMessage()` 选项组合，说明 transcript 语义必须一致
 
-源码镜像：[`../../sources/claude-code/src/hooks/useAssistantHistory.ts`](../../sources/claude-code/src/hooks/useAssistantHistory.ts), [`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/hooks/useAssistantHistory.ts`](../../src/hooks/useAssistantHistory.ts), [`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 `useAssistantHistory.pageToMessages()` 明确使用：
 
@@ -229,7 +229,7 @@
 
 ## 17. 历史分页用 sentinel + layout anchoring，而不是粗暴 prepend，因为 remote transcript 很长且滚动体验必须稳定
 
-源码镜像：[`../../sources/claude-code/src/hooks/useAssistantHistory.ts`](../../sources/claude-code/src/hooks/useAssistantHistory.ts)
+源码镜像：[`../../src/hooks/useAssistantHistory.ts`](../../src/hooks/useAssistantHistory.ts)
 
 这个 hook 的实现很讲究：
 

@@ -13,7 +13,7 @@
 
 ## 1. `changeDetector` 不是文件 watcher，而是 settings runtime 的统一变更总线
 
-源码镜像：[`../../sources/claude-code/src/utils/settings/changeDetector.ts`](../../sources/claude-code/src/utils/settings/changeDetector.ts)
+源码镜像：[`../../src/utils/settings/changeDetector.ts`](../../src/utils/settings/changeDetector.ts)
 
 它统一接了四类来源：
 
@@ -26,7 +26,7 @@
 
 ## 2. watcher 只盯“可能成为 settings truth 的路径”，不是盲扫目录
 
-源码镜像：[`../../sources/claude-code/src/utils/settings/changeDetector.ts`](../../sources/claude-code/src/utils/settings/changeDetector.ts)
+源码镜像：[`../../src/utils/settings/changeDetector.ts`](../../src/utils/settings/changeDetector.ts)
 
 `getWatchTargets()` 会：
 
@@ -39,7 +39,7 @@
 
 ## 3. delete-and-recreate 被当成一等写入模式处理，不会被误判成两次独立变化
 
-源码镜像：[`../../sources/claude-code/src/utils/settings/changeDetector.ts`](../../sources/claude-code/src/utils/settings/changeDetector.ts)
+源码镜像：[`../../src/utils/settings/changeDetector.ts`](../../src/utils/settings/changeDetector.ts)
 
 `handleDelete()` 不会立刻广播，而是进一个 `DELETION_GRACE_MS` 窗口。若随后出现 `add/change`：
 
@@ -50,7 +50,7 @@
 
 ## 4. internal write suppression 说明它既监听外部改动，也监听自己写出的文件
 
-源码镜像：[`../../sources/claude-code/src/utils/settings/changeDetector.ts`](../../sources/claude-code/src/utils/settings/changeDetector.ts)
+源码镜像：[`../../src/utils/settings/changeDetector.ts`](../../src/utils/settings/changeDetector.ts)
 
 `consumeInternalWrite(path, INTERNAL_WRITE_WINDOW_MS)` 这层非常关键。Claude Code 不是假设“所有文件变化都来自别人”，而是承认：
 
@@ -61,7 +61,7 @@
 
 ## 5. ConfigChange hooks 在 event bus 前面，不在 consumer 后面
 
-源码镜像：[`../../sources/claude-code/src/utils/settings/changeDetector.ts`](../../sources/claude-code/src/utils/settings/changeDetector.ts)
+源码镜像：[`../../src/utils/settings/changeDetector.ts`](../../src/utils/settings/changeDetector.ts)
 
 无论是 change 还是 delete，流程都会先：
 
@@ -73,7 +73,7 @@
 
 ## 6. `fanOut()` 里的单点 `resetSettingsCache()` 是这条链的核心收口
 
-源码镜像：[`../../sources/claude-code/src/utils/settings/changeDetector.ts`](../../sources/claude-code/src/utils/settings/changeDetector.ts)
+源码镜像：[`../../src/utils/settings/changeDetector.ts`](../../src/utils/settings/changeDetector.ts)
 
 这条注释写得很直：cache reset 必须在 producer 端完成，而不能交给 N 个 listener 各自做。否则会变成：
 
@@ -88,7 +88,7 @@
 
 ## 7. `useSettingsChange()` 是 React 宿主的薄适配层，不再自己做 cache 管理
 
-源码镜像：[`../../sources/claude-code/src/hooks/useSettingsChange.ts`](../../sources/claude-code/src/hooks/useSettingsChange.ts)
+源码镜像：[`../../src/hooks/useSettingsChange.ts`](../../src/hooks/useSettingsChange.ts)
 
 这个 hook 现在只做两件事：
 
@@ -99,7 +99,7 @@
 
 ## 8. `AppStateProvider` 才是 TUI 侧真正把 settings 变化转成运行态的地方
 
-源码镜像：[`../../sources/claude-code/src/state/AppState.tsx`](../../sources/claude-code/src/state/AppState.tsx), [`../../sources/claude-code/src/utils/settings/applySettingsChange.ts`](../../sources/claude-code/src/utils/settings/applySettingsChange.ts)
+源码镜像：[`../../src/state/AppState.tsx`](../../src/state/AppState.tsx), [`../../src/utils/settings/applySettingsChange.ts`](../../src/utils/settings/applySettingsChange.ts)
 
 TUI 路径不是每个组件各自读磁盘。真正的主链是：
 
@@ -112,7 +112,7 @@ TUI 路径不是每个组件各自读磁盘。真正的主链是：
 
 ## 9. `applySettingsChange()` 不只是换一份 settings，还会重建权限与 hooks 运行态
 
-源码镜像：[`../../sources/claude-code/src/utils/settings/applySettingsChange.ts`](../../sources/claude-code/src/utils/settings/applySettingsChange.ts)
+源码镜像：[`../../src/utils/settings/applySettingsChange.ts`](../../src/utils/settings/applySettingsChange.ts)
 
 这个函数会同步做几件事：
 
@@ -128,7 +128,7 @@ TUI 路径不是每个组件各自读磁盘。真正的主链是：
 
 ## 10. `AppStateProvider` 还有一条 mount-time race 修补，只为处理“settings 先到、React 后挂”
 
-源码镜像：[`../../sources/claude-code/src/state/AppState.tsx`](../../sources/claude-code/src/state/AppState.tsx)
+源码镜像：[`../../src/state/AppState.tsx`](../../src/state/AppState.tsx)
 
 它在 mount 时会额外检查：
 
@@ -139,7 +139,7 @@ TUI 路径不是每个组件各自读磁盘。真正的主链是：
 
 ## 11. `useSettings()` 说明 React 侧推荐读法已经切到 AppState，而不是直接打 settings loader
 
-源码镜像：[`../../sources/claude-code/src/hooks/useSettings.ts`](../../sources/claude-code/src/hooks/useSettings.ts)
+源码镜像：[`../../src/hooks/useSettings.ts`](../../src/hooks/useSettings.ts)
 
 `useSettings()` 只是：
 
@@ -149,7 +149,7 @@ TUI 路径不是每个组件各自读磁盘。真正的主链是：
 
 ## 12. headless `print.ts` 走的是同一条总线，但必须自己订阅
 
-源码镜像：[`../../sources/claude-code/src/cli/print.ts`](../../sources/claude-code/src/cli/print.ts), [`../../sources/claude-code/src/utils/settings/applySettingsChange.ts`](../../sources/claude-code/src/utils/settings/applySettingsChange.ts)
+源码镜像：[`../../src/cli/print.ts`](../../src/cli/print.ts), [`../../src/utils/settings/applySettingsChange.ts`](../../src/utils/settings/applySettingsChange.ts)
 
 因为 headless 模式没有 React tree，也就没有 `useSettingsChange()`。所以它直接：
 
@@ -161,7 +161,7 @@ TUI 路径不是每个组件各自读磁盘。真正的主链是：
 
 ## 13. sandbox 是“全量热更新 consumer”，不做字段级差分
 
-源码镜像：[`../../sources/claude-code/src/utils/sandbox/sandbox-adapter.ts`](../../sources/claude-code/src/utils/sandbox/sandbox-adapter.ts)
+源码镜像：[`../../src/utils/sandbox/sandbox-adapter.ts`](../../src/utils/sandbox/sandbox-adapter.ts)
 
 初始化完成后，sandbox 会订阅 settings 变化，并在每次通知时：
 
@@ -173,7 +173,7 @@ TUI 路径不是每个组件各自读磁盘。真正的主链是：
 
 ## 14. plugin hooks 是“差分热更新 consumer”，只盯 plugin-affecting settings
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/loadPluginHooks.ts`](../../sources/claude-code/src/utils/plugins/loadPluginHooks.ts)
+源码镜像：[`../../src/utils/plugins/loadPluginHooks.ts`](../../src/utils/plugins/loadPluginHooks.ts)
 
 `setupPluginHookHotReload()` 不会看到任何 `policySettings` 变化就 reload。它会先做 snapshot：
 
@@ -192,7 +192,7 @@ TUI 路径不是每个组件各自读磁盘。真正的主链是：
 
 ## 15. 轻量 UI consumer 走的是同一条反应式链，但只消费局部副作用
 
-源码镜像：[`../../sources/claude-code/src/components/hooks/HooksConfigMenu.tsx`](../../sources/claude-code/src/components/hooks/HooksConfigMenu.tsx), [`../../sources/claude-code/src/hooks/notifs/useSettingsErrors.tsx`](../../sources/claude-code/src/hooks/notifs/useSettingsErrors.tsx)
+源码镜像：[`../../src/components/hooks/HooksConfigMenu.tsx`](../../src/components/hooks/HooksConfigMenu.tsx), [`../../src/hooks/notifs/useSettingsErrors.tsx`](../../src/hooks/notifs/useSettingsErrors.tsx)
 
 这类 consumer 不重装 whole runtime，只做局部反馈：
 

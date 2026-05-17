@@ -18,7 +18,7 @@
 
 ## 1. 背景化主会话不是 shell trick，而是把主线程 query 变成 `local_agent(agentType='main-session')`
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalMainSessionTask.ts`](../../sources/claude-code/src/tasks/LocalMainSessionTask.ts)
+源码镜像：[`../../src/tasks/LocalMainSessionTask.ts`](../../src/tasks/LocalMainSessionTask.ts)
 
 `LocalMainSessionTaskState` 没有发明新的 task shape，而是直接复用：
 
@@ -37,7 +37,7 @@
 
 ## 2. `main-session` 是 `local_agent` 家族里的例外成员：共享 host，但刻意不进 panel
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx), [`../../sources/claude-code/src/tasks/LocalMainSessionTask.ts`](../../sources/claude-code/src/tasks/LocalMainSessionTask.ts)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx), [`../../src/tasks/LocalMainSessionTask.ts`](../../src/tasks/LocalMainSessionTask.ts)
 
 上一卷已经确认：
 
@@ -56,7 +56,7 @@
 
 ## 3. 背景化主会话用 `s` 前缀 task ID，说明它和普通 agent sidechain transcript 共享协议但保留独立身份空间
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalMainSessionTask.ts`](../../sources/claude-code/src/tasks/LocalMainSessionTask.ts)
+源码镜像：[`../../src/tasks/LocalMainSessionTask.ts`](../../src/tasks/LocalMainSessionTask.ts)
 
 `generateMainSessionTaskId()` 生成：
 
@@ -70,7 +70,7 @@
 
 ## 4. 后台主会话的输出文件不是主 transcript，而是隔离 sidechain transcript
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalMainSessionTask.ts`](../../sources/claude-code/src/tasks/LocalMainSessionTask.ts)
+源码镜像：[`../../src/tasks/LocalMainSessionTask.ts`](../../src/tasks/LocalMainSessionTask.ts)
 
 `registerMainSessionTask()` 在注册时会：
 
@@ -89,7 +89,7 @@
 
 ## 5. `startBackgroundSession()` 会先把“后台化之前的上下文”整包写进 sidechain，再开始增量 query
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalMainSessionTask.ts`](../../sources/claude-code/src/tasks/LocalMainSessionTask.ts)
+源码镜像：[`../../src/tasks/LocalMainSessionTask.ts`](../../src/tasks/LocalMainSessionTask.ts)
 
 后台主会话启动顺序是：
 
@@ -105,7 +105,7 @@
 
 ## 6. 后台主会话也跑在独立 agent context 里，这样 skill/memory/cleanup 都能按 taskId 隔离
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalMainSessionTask.ts`](../../sources/claude-code/src/tasks/LocalMainSessionTask.ts)
+源码镜像：[`../../src/tasks/LocalMainSessionTask.ts`](../../src/tasks/LocalMainSessionTask.ts)
 
 `startBackgroundSession()` 会用：
 
@@ -127,7 +127,7 @@
 
 ## 7. `foregroundedTaskId` 说明后台主会话有自己的一套“重新前台化”协议，不走 teammate retain/view 体系
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalMainSessionTask.ts`](../../sources/claude-code/src/tasks/LocalMainSessionTask.ts), [`../architecture/19-background-task-aggregation-and-list-runtime.md`](../architecture/19-background-task-aggregation-and-list-runtime.md)
+源码镜像：[`../../src/tasks/LocalMainSessionTask.ts`](../../src/tasks/LocalMainSessionTask.ts), [`../architecture/19-background-task-aggregation-and-list-runtime.md`](../architecture/19-background-task-aggregation-and-list-runtime.md)
 
 `foregroundMainSessionTask()` 做的不是 `retain/viewingAgentTaskId`，而是：
 
@@ -142,7 +142,7 @@
 
 ## 8. 主会话后台任务完成时会裁成“只保留最后一条消息”，说明它的 messages 宿主目标是摘要式回看，不是完整 sidechain 常驻
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalMainSessionTask.ts`](../../sources/claude-code/src/tasks/LocalMainSessionTask.ts)
+源码镜像：[`../../src/tasks/LocalMainSessionTask.ts`](../../src/tasks/LocalMainSessionTask.ts)
 
 `completeMainSessionTask()` 在成功/失败时会把：
 
@@ -159,7 +159,7 @@
 
 ## 9. 后台主会话通知也走 XML task-notification，但只有“仍在后台”时才发
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalMainSessionTask.ts`](../../sources/claude-code/src/tasks/LocalMainSessionTask.ts)
+源码镜像：[`../../src/tasks/LocalMainSessionTask.ts`](../../src/tasks/LocalMainSessionTask.ts)
 
 `completeMainSessionTask()` 会先看：
 
@@ -182,7 +182,7 @@
 
 ## 10. `TaskOutputTool` 虽然标记 deprecated，但仍然是后台任务向模型暴露输出的兼容协议
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskOutputTool/TaskOutputTool.tsx`](../../sources/claude-code/src/tools/TaskOutputTool/TaskOutputTool.tsx)
+源码镜像：[`../../src/tools/TaskOutputTool/TaskOutputTool.tsx`](../../src/tools/TaskOutputTool/TaskOutputTool.tsx)
 
 它的 prompt 和 description 都明确写着：
 
@@ -206,7 +206,7 @@
 
 ## 11. `TaskOutputTool` 对 agent task 不返回原始 JSONL transcript，而优先返回 clean final answer
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskOutputTool/TaskOutputTool.tsx`](../../sources/claude-code/src/tools/TaskOutputTool/TaskOutputTool.tsx)
+源码镜像：[`../../src/tools/TaskOutputTool/TaskOutputTool.tsx`](../../src/tools/TaskOutputTool/TaskOutputTool.tsx)
 
 对 `local_agent`，它明确优先：
 
@@ -223,7 +223,7 @@
 
 ## 12. `TaskOutputTool` 的 wait 协议是 polling，不是订阅；因此它只保证 eventually-read，不保证流式 tail
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskOutputTool/TaskOutputTool.tsx`](../../sources/claude-code/src/tools/TaskOutputTool/TaskOutputTool.tsx)
+源码镜像：[`../../src/tools/TaskOutputTool/TaskOutputTool.tsx`](../../src/tools/TaskOutputTool/TaskOutputTool.tsx)
 
 `waitForTaskCompletion()` 做的是：
 
@@ -240,7 +240,7 @@
 
 ## 13. 输出格式化协议故意只保留尾部，并把完整文件路径塞进 header
 
-源码镜像：[`../../sources/claude-code/src/utils/task/outputFormatting.ts`](../../sources/claude-code/src/utils/task/outputFormatting.ts)
+源码镜像：[`../../src/utils/task/outputFormatting.ts`](../../src/utils/task/outputFormatting.ts)
 
 `formatTaskOutput()` 的规则非常明确：
 
@@ -258,7 +258,7 @@
 
 ## 14. `diskOutput.getTaskOutput()` 也是 tail 语义，不是 full-file 语义
 
-源码镜像：[`../../sources/claude-code/src/utils/task/diskOutput.ts`](../../sources/claude-code/src/utils/task/diskOutput.ts)
+源码镜像：[`../../src/utils/task/diskOutput.ts`](../../src/utils/task/diskOutput.ts)
 
 `getTaskOutput()` 用的是：
 
@@ -273,7 +273,7 @@
 
 ## 15. `TaskOutputResultDisplay` 说明前台对 agent/bsh/remote task 的读取结果刻意做了类型分化
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskOutputTool/TaskOutputTool.tsx`](../../sources/claude-code/src/tools/TaskOutputTool/TaskOutputTool.tsx)
+源码镜像：[`../../src/tools/TaskOutputTool/TaskOutputTool.tsx`](../../src/tools/TaskOutputTool/TaskOutputTool.tsx)
 
 前台渲染分三路：
 

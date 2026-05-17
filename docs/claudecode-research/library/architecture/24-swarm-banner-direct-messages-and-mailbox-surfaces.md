@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是“swarm 内消息如何被看见和投递”，不是 teammate 如何被创建
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/useSwarmBanner.ts`](../../sources/claude-code/src/components/PromptInput/useSwarmBanner.ts), [`../../sources/claude-code/src/utils/directMemberMessage.ts`](../../sources/claude-code/src/utils/directMemberMessage.ts), [`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts), [`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts), [`../../sources/claude-code/src/components/messages/AttachmentMessage.tsx`](../../sources/claude-code/src/components/messages/AttachmentMessage.tsx), [`../../sources/claude-code/src/context/mailbox.tsx`](../../sources/claude-code/src/context/mailbox.tsx), [`../../sources/claude-code/src/utils/mailbox.ts`](../../sources/claude-code/src/utils/mailbox.ts)
+源码镜像：[`../../src/components/PromptInput/useSwarmBanner.ts`](../../src/components/PromptInput/useSwarmBanner.ts), [`../../src/utils/directMemberMessage.ts`](../../src/utils/directMemberMessage.ts), [`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts), [`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/utils/attachments.ts`](../../src/utils/attachments.ts), [`../../src/components/messages/AttachmentMessage.tsx`](../../src/components/messages/AttachmentMessage.tsx), [`../../src/context/mailbox.tsx`](../../src/context/mailbox.tsx), [`../../src/utils/mailbox.ts`](../../src/utils/mailbox.ts)
 
 前几卷已经把这些讲清了：
 
@@ -24,7 +24,7 @@
 
 ## 2. `useSwarmBanner()` 说明 banner 不是纯装饰，而是当前输入所有权和 swarm 拓扑的压缩读数
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/useSwarmBanner.ts`](../../sources/claude-code/src/components/PromptInput/useSwarmBanner.ts)
+源码镜像：[`../../src/components/PromptInput/useSwarmBanner.ts`](../../src/components/PromptInput/useSwarmBanner.ts)
 
 `useSwarmBanner()` 不是简单读一个名字字段，而是先把当前会话分成几种互斥状态：
 
@@ -39,7 +39,7 @@
 
 ## 3. tmux attach hint 说明 leader UI 明确承认“有些 swarm 不在当前前台里”，而不是假装所有 teammate 都能内嵌显示
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/useSwarmBanner.ts`](../../sources/claude-code/src/components/PromptInput/useSwarmBanner.ts)
+源码镜像：[`../../src/components/PromptInput/useSwarmBanner.ts`](../../src/components/PromptInput/useSwarmBanner.ts)
 
 当满足这些条件时：
 
@@ -56,7 +56,7 @@ banner 不会硬显示某个 agent 名，而是退回：
 
 ## 4. `parseDirectMemberMessage()` 说明 `@agent` 前缀是一条独立输入协议，不是普通 prompt 上的字符串约定
 
-源码镜像：[`../../sources/claude-code/src/utils/directMemberMessage.ts`](../../sources/claude-code/src/utils/directMemberMessage.ts)
+源码镜像：[`../../src/utils/directMemberMessage.ts`](../../src/utils/directMemberMessage.ts)
 
 它只接受这种语法：
 
@@ -72,7 +72,7 @@ banner 不会硬显示某个 agent 名，而是退回：
 
 ## 5. `sendDirectMemberMessage()` 说明 peer DM 的真正语义是“写 mailbox”，不是“替用户发起一轮模型对话”
 
-源码镜像：[`../../sources/claude-code/src/utils/directMemberMessage.ts`](../../sources/claude-code/src/utils/directMemberMessage.ts), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/utils/directMemberMessage.ts`](../../src/utils/directMemberMessage.ts), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts)
 
 这条链非常硬：
 
@@ -95,7 +95,7 @@ banner 不会硬显示某个 agent 名，而是退回：
 
 ## 6. `PromptInput` 说明这条协议是“优先级高于普通 submit 的早分流”，成功后整轮 prompt 会被短路
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/utils/directMemberMessage.ts`](../../sources/claude-code/src/utils/directMemberMessage.ts)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/utils/directMemberMessage.ts`](../../src/utils/directMemberMessage.ts)
 
 `PromptInput` 在正常 submit 路由之前就会：
 
@@ -120,7 +120,7 @@ banner 不会硬显示某个 agent 名，而是退回：
 
 ## 7. `teammateMailbox.ts` 说明 swarm 邮箱的 durability layer 是“每个 teammate 一个 inbox 文件”，而不是 leader 内存态
 
-源码镜像：[`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts)
 
 文件层协议很明确：
 
@@ -141,7 +141,7 @@ banner 不会硬显示某个 agent 名，而是退回：
 
 ## 8. `useInboxPoller()` 说明 mailbox 文件不是直接渲染到前台，而是先经过“协议消息分类器”
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts)
 
 poller 每秒读一次 unread mailbox，但不会把所有未读都当普通 teammate 文本，而是先拆成：
 
@@ -163,7 +163,7 @@ poller 每秒读一次 unread mailbox，但不会把所有未读都当普通 tea
 
 ## 9. in-process teammate 不跑 `useInboxPoller()`，说明“共享 React 上下文”与“文件邮箱轮询”是两套互斥接收面
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/utils/teammateContext.ts`](../../sources/claude-code/src/utils/teammateContext.ts)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/utils/teammateContext.ts`](../../src/utils/teammateContext.ts)
 
 `getAgentNameToPoll()` 第一件事就是：
 
@@ -179,7 +179,7 @@ poller 每秒读一次 unread mailbox，但不会把所有未读都当普通 tea
 
 ## 10. `isStructuredProtocolMessage()` 说明不是所有 mailbox 文本都能被模型看到，有一批必须保持“协议不可见”
 
-源码镜像：[`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts), [`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts)
+源码镜像：[`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts), [`../../src/utils/attachments.ts`](../../src/utils/attachments.ts)
 
 系统明确把这些类型视为 structured protocol：
 
@@ -200,7 +200,7 @@ poller 每秒读一次 unread mailbox，但不会把所有未读都当普通 tea
 
 ## 11. `getTeammateMailboxAttachments()` 说明 transcript 看到的 mailbox，不是原始 inbox 文件，而是“文件邮箱 + AppState.inbox”的桥接视图
 
-源码镜像：[`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts), [`../../sources/claude-code/src/state/AppState.tsx`](../../sources/claude-code/src/state/AppState.tsx)
+源码镜像：[`../../src/utils/attachments.ts`](../../src/utils/attachments.ts), [`../../src/state/AppState.tsx`](../../src/state/AppState.tsx)
 
 这条桥接做了四件事：
 
@@ -218,7 +218,7 @@ poller 每秒读一次 unread mailbox，但不会把所有未读都当普通 tea
 
 ## 12. `viewedTeammate || isInProcessTeammate()` 分支说明 leader inbox 不允许泄漏到 teammate transcript
 
-源码镜像：[`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts), [`../../sources/claude-code/src/state/selectors.ts`](../../sources/claude-code/src/state/selectors.ts)
+源码镜像：[`../../src/utils/attachments.ts`](../../src/utils/attachments.ts), [`../../src/state/selectors.ts`](../../src/state/selectors.ts)
 
 如果当前：
 
@@ -237,7 +237,7 @@ poller 每秒读一次 unread mailbox，但不会把所有未读都当普通 tea
 
 ## 13. idle collapse 说明 mailbox attachment 不是忠实镜像，而是会为了可读性主动做 UI 级压缩
 
-源码镜像：[`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/utils/attachments.ts`](../../src/utils/attachments.ts), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts)
 
 在汇总所有消息后，系统会：
 
@@ -250,7 +250,7 @@ poller 每秒读一次 unread mailbox，但不会把所有未读都当普通 tea
 
 ## 14. `AttachmentMessage` 说明 teammate mailbox 渲染不是“纯文本列表”，而是按内容类型再分层显示
 
-源码镜像：[`../../sources/claude-code/src/components/messages/AttachmentMessage.tsx`](../../sources/claude-code/src/components/messages/AttachmentMessage.tsx)
+源码镜像：[`../../src/components/messages/AttachmentMessage.tsx`](../../src/components/messages/AttachmentMessage.tsx)
 
 `attachment.type === "teammate_mailbox"` 时，渲染器会再分四类：
 
@@ -269,7 +269,7 @@ poller 每秒读一次 unread mailbox，但不会把所有未读都当普通 tea
 
 ## 15. 只在构造完 attachment 后再 mark read，说明这里优先保证“不丢消息”，不是优先清空 inbox
 
-源码镜像：[`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/utils/attachments.ts`](../../src/utils/attachments.ts), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts)
 
 `getTeammateMailboxAttachments()` 的顺序是：
 
@@ -285,7 +285,7 @@ poller 每秒读一次 unread mailbox，但不会把所有未读都当普通 tea
 
 ## 16. `context/mailbox.tsx` 和 `utils/mailbox.ts` 说明系统里还存在一层内存 mailbox，用于 React runtime 内的等待/派发，不等于 swarm inbox 文件
 
-源码镜像：[`../../sources/claude-code/src/context/mailbox.tsx`](../../sources/claude-code/src/context/mailbox.tsx), [`../../sources/claude-code/src/utils/mailbox.ts`](../../sources/claude-code/src/utils/mailbox.ts)
+源码镜像：[`../../src/context/mailbox.tsx`](../../src/context/mailbox.tsx), [`../../src/utils/mailbox.ts`](../../src/utils/mailbox.ts)
 
 这里有另一套更轻的抽象：
 
@@ -302,7 +302,7 @@ poller 每秒读一次 unread mailbox，但不会把所有未读都当普通 tea
 
 ## 17. 这条链最终说明 swarm message surface 实际上由四段协议拼起来
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/useSwarmBanner.ts`](../../sources/claude-code/src/components/PromptInput/useSwarmBanner.ts), [`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx), [`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts), [`../../sources/claude-code/src/components/messages/AttachmentMessage.tsx`](../../sources/claude-code/src/components/messages/AttachmentMessage.tsx)
+源码镜像：[`../../src/components/PromptInput/useSwarmBanner.ts`](../../src/components/PromptInput/useSwarmBanner.ts), [`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx), [`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/utils/attachments.ts`](../../src/utils/attachments.ts), [`../../src/components/messages/AttachmentMessage.tsx`](../../src/components/messages/AttachmentMessage.tsx)
 
 真正拼在一起工作的，是这四段：
 

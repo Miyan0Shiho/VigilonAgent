@@ -18,7 +18,7 @@
 
 ## 1. `FileReadTool` 不只是内容摄取器，它还是一条“读到哪里就顺手暴露哪里能力”的触发器
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts), [`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts), [`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 在正式进入 `callInner(...)` 之前，`call(...)` 先做了一段和“读文件内容”无关的工作：
 
@@ -36,7 +36,7 @@
 
 ## 2. 动态 skill 发现不是全库扫描，而是“从当前文件路径往上爬到 cwd”的局部发现协议
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 `discoverSkillDirsForPaths(...)` 的注释写得很明确：
 
@@ -56,7 +56,7 @@
 
 ## 3. 这条动态发现链还有两个显式抑制面：simple mode 和 plugin-only policy
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/skills/loadSkillsDir.ts)
 
 `FileReadTool.call(...)` 外层先挡：
 
@@ -79,7 +79,7 @@
 
 ## 4. `dynamicSkillDirTriggers` 不是加载器本体，而是给 attachment/display 用的 sidecar 记录
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/skills/loadSkillsDir.ts)
 
 发现到新目录后，`FileReadTool` 先做：
 
@@ -97,7 +97,7 @@
 
 ## 5. `addSkillDirectories(...)` 刻意不 `await`，说明读文件不会为 skill 物化阻塞主读取
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/skills/loadSkillsDir.ts)
 
 `FileReadTool` 这里专门注释：
 
@@ -113,7 +113,7 @@
 
 ## 6. conditional skill activation 是另一条链：它不发现目录，只把已加载但未激活的 skill 推入 dynamic pool
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `activateConditionalSkillsForPaths(...)` 和 `discoverSkillDirsForPaths(...)` 做的不是同一件事。
 
@@ -134,7 +134,7 @@
 
 ## 7. 这条条件激活链是单向翻转：一旦激活，就从 `conditionalSkills` 移出
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 匹配命中后不是简单打个 flag，而是直接：
 
@@ -150,7 +150,7 @@
 
 ## 8. `nestedMemoryAttachmentTriggers` 是另一条完全独立的 read-side sidecar，不属于 skill runtime
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 在不同分支里，`FileReadTool` 都会做：
 
@@ -173,7 +173,7 @@
 
 ## 9. text-read listener 是一个显式的插件点，说明 `Read` 还承担“被动广播已读内容”职责
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `FileReadTool.ts` 顶部就定义了：
 
@@ -193,7 +193,7 @@
 
 ## 10. `slice()` 快照说明作者明确在防“监听器自删导致跳过下一个 listener”的可重入 bug
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 循环前的注释已经把问题说透了：
 
@@ -212,7 +212,7 @@
 
 ## 11. `detectSessionFileType(...)` 在 `FileReadTool` 里有一份局部实现，职责只限 analytics 分类
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/utils/memoryFileDetection.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/utils/memoryFileDetection.ts)
 
 这里有一个容易混淆的点：
 
@@ -232,7 +232,7 @@
 
 ## 12. `tengu_session_file_read` 不是泛用 file-read 埋点，而是专盯 session-memory / transcript 的细粒度 telemetry
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 text 路径成功后，除了普通 `logFileOperation(...)`，还会单独打：
 
@@ -255,7 +255,7 @@ text 路径成功后，除了普通 `logFileOperation(...)`，还会单独打：
 
 ## 13. `isAutoMemFile(...)` 只在 text 路径落一份 WeakMap side channel，不影响正式 schema
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/utils/memoryFileDetection.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/utils/memoryFileDetection.ts)
 
 当文本文件命中：
 
@@ -277,7 +277,7 @@ text 路径成功后，除了普通 `logFileOperation(...)`，还会单独打：
 
 ## 14. freshness note 的目标不是“告诉用户文件改过了”，而是“提醒模型这份 memory 可能已经过时”
 
-源码镜像：[`../../sources/claude-code/src/memdir/memoryAge.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/memdir/memoryAge.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `memoryFreshnessNote(...)` 的语义不是常规文件时间戳提示，而是：
 
@@ -295,7 +295,7 @@ text 路径成功后，除了普通 `logFileOperation(...)`，还会单独打：
 
 ## 15. `memoryFreshnessNote(...)` 和 `tengu_session_file_read` 说明 `Read` 在 memory/session 文件上已经进入“特殊治理”模式
 
-源码镜像：[`../../sources/claude-code/src/memdir/memoryAge.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts), [`../../sources/claude-code/src/utils/memoryFileDetection.ts`](../../sources/claude-code/src/utils/memoryFileDetection.ts)
+源码镜像：[`../../src/memdir/memoryAge.ts`](../../src/tools/FileReadTool/FileReadTool.ts), [`../../src/utils/memoryFileDetection.ts`](../../src/utils/memoryFileDetection.ts)
 
 把几条 sidecar 合在一起看：
 
@@ -314,7 +314,7 @@ text 路径成功后，除了普通 `logFileOperation(...)`，还会单独打：
 
 ## 16. 把这一卷和 `91` 合起来看，`FileReadTool` 的真正结构其实是“两层主链 + 多条 sidecar”
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts), [`../../sources/claude-code/src/utils/memoryFileDetection.ts`](../../sources/claude-code/src/utils/memoryFileDetection.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/skills/loadSkillsDir.ts), [`../../src/utils/memoryFileDetection.ts`](../../src/utils/memoryFileDetection.ts)
 
 前一卷 `91` 拆的是主结果协议：
 

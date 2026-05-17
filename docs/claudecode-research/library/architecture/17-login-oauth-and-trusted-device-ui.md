@@ -12,7 +12,7 @@
 
 ## 1. 这条链不是普通设置页，而是“会重写当前会话身份”的前台系统
 
-源码镜像：[`../../sources/claude-code/src/commands/login/login.tsx`](../../sources/claude-code/src/commands/login/login.tsx), [`../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx`](../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx), [`../../sources/claude-code/src/bridge/trustedDevice.ts`](../../sources/claude-code/src/bridge/trustedDevice.ts)
+源码镜像：[`../../src/commands/login/login.tsx`](../../src/commands/login/login.tsx), [`../../src/components/ConsoleOAuthFlow.tsx`](../../src/components/ConsoleOAuthFlow.tsx), [`../../src/bridge/trustedDevice.ts`](../../src/bridge/trustedDevice.ts)
 
 它和一般 dialog 最大的区别是：
 
@@ -23,7 +23,7 @@
 
 ## 2. `Login` 组件本身非常薄，它的职责是把登录流壳化成标准 dialog
 
-源码镜像：[`../../sources/claude-code/src/commands/login/login.tsx`](../../sources/claude-code/src/commands/login/login.tsx), [`../../sources/claude-code/src/components/design-system/Dialog.tsx`](../../sources/claude-code/src/components/design-system/Dialog.tsx)
+源码镜像：[`../../src/commands/login/login.tsx`](../../src/commands/login/login.tsx), [`../../src/components/design-system/Dialog.tsx`](../../src/components/design-system/Dialog.tsx)
 
 `Login` 组件本身只做三件事：
 
@@ -35,7 +35,7 @@
 
 ## 3. `call()` 的关键不在渲染，而在登录成功后的 runtime refresh protocol
 
-源码镜像：[`../../sources/claude-code/src/commands/login/login.tsx`](../../sources/claude-code/src/commands/login/login.tsx)
+源码镜像：[`../../src/commands/login/login.tsx`](../../src/commands/login/login.tsx)
 
 `call()` 成功后会立刻串起一条后置刷新链：
 
@@ -55,7 +55,7 @@
 
 ## 4. `stripSignatureBlocks` 说明身份切换会 retroactively 改写 transcript 可复用性
 
-源码镜像：[`../../sources/claude-code/src/commands/login/login.tsx`](../../sources/claude-code/src/commands/login/login.tsx)
+源码镜像：[`../../src/commands/login/login.tsx`](../../src/commands/login/login.tsx)
 
 这里最容易被忽略的一行是：
 
@@ -70,7 +70,7 @@
 
 ## 5. `ConsoleOAuthFlow` 才是这条子系统真正的状态机核心
 
-源码镜像：[`../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx`](../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx)
+源码镜像：[`../../src/components/ConsoleOAuthFlow.tsx`](../../src/components/ConsoleOAuthFlow.tsx)
 
 它显式维护了一套 `OAuthStatus`：
 
@@ -87,7 +87,7 @@
 
 ## 6. 这套 OAuth flow 从一开始就是多登录面、多模式，不是单一 Claude.ai 登录
 
-源码镜像：[`../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx`](../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx), [`../../sources/claude-code/src/services/oauth/client.ts`](../../sources/claude-code/src/services/oauth/client.ts)
+源码镜像：[`../../src/components/ConsoleOAuthFlow.tsx`](../../src/components/ConsoleOAuthFlow.tsx), [`../../src/services/oauth/client.ts`](../../src/services/oauth/client.ts)
 
 从 props 和 URL 构造就能看出它在同时支持：
 
@@ -102,7 +102,7 @@
 
 ## 7. `ConsoleOAuthFlow` 里被产品化得最彻底的是“自动浏览器 + 手工粘贴码”双通道
 
-源码镜像：[`../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx`](../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx)
+源码镜像：[`../../src/components/ConsoleOAuthFlow.tsx`](../../src/components/ConsoleOAuthFlow.tsx)
 
 这条流不是把浏览器当成唯一 happy path，而是内建了两套并行交互：
 
@@ -120,7 +120,7 @@
 
 ## 8. `useKeybinding` 在这里不是辅助，而是 OAuth UI 的一等控制面
 
-源码镜像：[`../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx`](../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx)
+源码镜像：[`../../src/components/ConsoleOAuthFlow.tsx`](../../src/components/ConsoleOAuthFlow.tsx)
 
 这份组件里至少有三组确认键绑定：
 
@@ -132,7 +132,7 @@
 
 ## 9. `useTerminalSize`、`useTerminalNotification` 和 `setClipboard` 让这条登录流变成“真正的终端原生 UI”
 
-源码镜像：[`../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx`](../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx), [`../../sources/claude-code/src/hooks/useTerminalSize.ts`](../../sources/claude-code/src/hooks/useTerminalSize.ts), [`../../sources/claude-code/src/ink/useTerminalNotification.ts`](../../sources/claude-code/src/ink/useTerminalNotification.ts)
+源码镜像：[`../../src/components/ConsoleOAuthFlow.tsx`](../../src/components/ConsoleOAuthFlow.tsx), [`../../src/hooks/useTerminalSize.ts`](../../src/hooks/useTerminalSize.ts), [`../../src/ink/useTerminalNotification.ts`](../../src/ink/useTerminalNotification.ts)
 
 几个看起来零碎的 hook/utility，合在一起其实很关键：
 
@@ -144,7 +144,7 @@
 
 ## 10. `trustedDevice` 不是附属细节，而是 `/login` 后置安全链的一部分
 
-源码镜像：[`../../sources/claude-code/src/bridge/trustedDevice.ts`](../../sources/claude-code/src/bridge/trustedDevice.ts)
+源码镜像：[`../../src/bridge/trustedDevice.ts`](../../src/bridge/trustedDevice.ts)
 
 这个模块的语义很明确：
 
@@ -157,7 +157,7 @@
 
 ## 11. `clearTrustedDeviceToken()` 和 `enrollTrustedDevice()` 说明账号切换时必须清旧 token 再补新 token
 
-源码镜像：[`../../sources/claude-code/src/bridge/trustedDevice.ts`](../../sources/claude-code/src/bridge/trustedDevice.ts), [`../../sources/claude-code/src/commands/login/login.tsx`](../../sources/claude-code/src/commands/login/login.tsx)
+源码镜像：[`../../src/bridge/trustedDevice.ts`](../../src/bridge/trustedDevice.ts), [`../../src/commands/login/login.tsx`](../../src/commands/login/login.tsx)
 
 这条链做得非常谨慎：
 
@@ -174,7 +174,7 @@
 
 ## 12. `trustedDevice` 的实现重点是 best-effort，不阻塞登录主链
 
-源码镜像：[`../../sources/claude-code/src/bridge/trustedDevice.ts`](../../sources/claude-code/src/bridge/trustedDevice.ts)
+源码镜像：[`../../src/bridge/trustedDevice.ts`](../../src/bridge/trustedDevice.ts)
 
 这个模块到处都是“失败就记日志并返回”的设计：
 

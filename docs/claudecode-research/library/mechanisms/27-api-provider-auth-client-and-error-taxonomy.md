@@ -6,7 +6,7 @@
 
 ## 1. `getAnthropicClient()` 不是单一构造器，而是 Claude Code 的 provider router
 
-源码镜像：[`../../sources/claude-code/src/services/api/client.ts`](../../sources/claude-code/src/services/api/client.ts)
+源码镜像：[`../../src/services/api/client.ts`](../../src/services/api/client.ts)
 
 `getAnthropicClient()` 最核心的事实是：它并不总返回同一种 client，而是按环境与 provider 走四条分支：
 
@@ -19,7 +19,7 @@
 
 ## 2. 它先统一装配一层“宿主身份 headers”，再进入 provider-specific auth
 
-源码镜像：[`../../sources/claude-code/src/services/api/client.ts`](../../sources/claude-code/src/services/api/client.ts)
+源码镜像：[`../../src/services/api/client.ts`](../../src/services/api/client.ts)
 
 无论最终走哪种 provider，`getAnthropicClient()` 都先构造一组宿主 headers：
 
@@ -35,7 +35,7 @@
 
 ## 3. first-party auth 不是简单二选一，而是 subscriber OAuth、API key、Bearer helper 三路混合
 
-源码镜像：[`../../sources/claude-code/src/services/api/client.ts`](../../sources/claude-code/src/services/api/client.ts)
+源码镜像：[`../../src/services/api/client.ts`](../../src/services/api/client.ts)
 
 first-party 分支里的认证策略并不简单：
 
@@ -52,7 +52,7 @@ first-party 分支里的认证策略并不简单：
 
 ## 4. Bedrock / Foundry / Vertex 不是“同一套代码换 endpoint”，而是三套不同认证模型
 
-源码镜像：[`../../sources/claude-code/src/services/api/client.ts`](../../sources/claude-code/src/services/api/client.ts)
+源码镜像：[`../../src/services/api/client.ts`](../../src/services/api/client.ts)
 
 三条 3P provider 分支差异很明显：
 
@@ -64,7 +64,7 @@ Claude Code 不是试图把这些 provider 强行压成“统一 API key 配置�
 
 ## 5. Vertex 分支里最值得注意的是：它专门防 `metadata server` 超时，而不是只做 happy path
 
-源码镜像：[`../../sources/claude-code/src/services/api/client.ts`](../../sources/claude-code/src/services/api/client.ts)
+源码镜像：[`../../src/services/api/client.ts`](../../src/services/api/client.ts)
 
 Vertex 那段代码最工程化的地方不在“怎么拿 GoogleAuth”，而在它专门处理了 project discovery 的 fallback：
 
@@ -76,7 +76,7 @@ Vertex 那段代码最工程化的地方不在“怎么拿 GoogleAuth”，而�
 
 ## 6. `normalizeAnthropicBaseUrl()` 说明 base URL 不是自由字符串，而是要被标准化进 transport contract
 
-源码镜像：[`../../sources/claude-code/src/services/api/client.ts`](../../sources/claude-code/src/services/api/client.ts)
+源码镜像：[`../../src/services/api/client.ts`](../../src/services/api/client.ts)
 
 `normalizeAnthropicBaseUrl()` 这段虽然短，但意义不小：
 
@@ -88,7 +88,7 @@ Vertex 那段代码最工程化的地方不在“怎么拿 GoogleAuth”，而�
 
 ## 7. `buildFetch()` 不是简单透传 fetch override，而是 first-party request correlation 的注入点
 
-源码镜像：[`../../sources/claude-code/src/services/api/client.ts`](../../sources/claude-code/src/services/api/client.ts)
+源码镜像：[`../../src/services/api/client.ts`](../../src/services/api/client.ts)
 
 `buildFetch()` 这层有两个重要职责：
 
@@ -99,7 +99,7 @@ Vertex 那段代码最工程化的地方不在“怎么拿 GoogleAuth”，而�
 
 ## 8. `errors.ts` 不是单纯文案表，而是“底层错误 -> 用户动作建议”的翻译器
 
-源码镜像：[`../../sources/claude-code/src/services/api/errors.ts`](../../sources/claude-code/src/services/api/errors.ts)
+源码镜像：[`../../src/services/api/errors.ts`](../../src/services/api/errors.ts)
 
 `getAssistantMessageFromError()` 这条函数链的核心价值，是把底层 provider / SDK / validation error 统一翻译成用户可行动的 assistant API error message，例如：
 
@@ -116,7 +116,7 @@ Vertex 那段代码最工程化的地方不在“怎么拿 GoogleAuth”，而�
 
 ## 9. 这层明确区分了“显示给用户的内容”和“给恢复逻辑继续解析的 raw errorDetails”
 
-源码镜像：[`../../sources/claude-code/src/services/api/errors.ts`](../../sources/claude-code/src/services/api/errors.ts)
+源码镜像：[`../../src/services/api/errors.ts`](../../src/services/api/errors.ts)
 
 像 prompt-too-long 和 media-size 这些分支，都会同时做两件事：
 
@@ -130,7 +130,7 @@ Vertex 那段代码最工程化的地方不在“怎么拿 GoogleAuth”，而�
 
 ## 10. `errorUtils.ts` 说明 Claude Code 专门为“代理/企业网络/HTML 错页”这些非标准失败模式做了清洗
 
-源码镜像：[`../../sources/claude-code/src/services/api/errorUtils.ts`](../../sources/claude-code/src/services/api/errorUtils.ts)
+源码镜像：[`../../src/services/api/errorUtils.ts`](../../src/services/api/errorUtils.ts)
 
 `errorUtils.ts` 里至少有三层非常现实的兼容逻辑：
 
@@ -142,7 +142,7 @@ Vertex 那段代码最工程化的地方不在“怎么拿 GoogleAuth”，而�
 
 ## 11. SSL/TLS 错误不只做分类，还会生成企业网络场景下可执行的修复建议
 
-源码镜像：[`../../sources/claude-code/src/services/api/errorUtils.ts`](../../sources/claude-code/src/services/api/errorUtils.ts)
+源码镜像：[`../../src/services/api/errorUtils.ts`](../../src/services/api/errorUtils.ts)
 
 `getSSLErrorHint()` 和 `formatAPIError()` 都体现出一个特点：Claude Code 没有停留在“证书错误”这一级，而是进一步给出动作级提示：
 
@@ -155,7 +155,7 @@ Vertex 那段代码最工程化的地方不在“怎么拿 GoogleAuth”，而�
 
 ## 12. `classifyAPIError()` 和 `categorizeRetryableAPIError()` 说明错误层还在为 retry / control flow 提供结构化标签
 
-源码镜像：[`../../sources/claude-code/src/services/api/errors.ts`](../../sources/claude-code/src/services/api/errors.ts)
+源码镜像：[`../../src/services/api/errors.ts`](../../src/services/api/errors.ts)
 
 这层并不只负责生成一条 message。它还提供了结构化分类结果，供上游控制流使用，例如：
 
@@ -167,7 +167,7 @@ Vertex 那段代码最工程化的地方不在“怎么拿 GoogleAuth”，而�
 
 ## 13. 这条链把 remote/CCR、subscriber、3P provider 三个维度交叉编码进错误 UX
 
-源码镜像：[`../../sources/claude-code/src/services/api/errors.ts`](../../sources/claude-code/src/services/api/errors.ts), [`../../sources/claude-code/src/services/api/client.ts`](../../sources/claude-code/src/services/api/client.ts)
+源码镜像：[`../../src/services/api/errors.ts`](../../src/services/api/errors.ts), [`../../src/services/api/client.ts`](../../src/services/api/client.ts)
 
 最容易被忽略的一点是：同一类 auth 错误，在不同宿主里处理不同。
 

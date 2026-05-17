@@ -22,7 +22,7 @@
 ## Evidence-backed Findings（按项目）
 
 ### Claude Code（CC）
-> 代码根：`research/sources/claude-code/`
+> 代码根：`research/`
 
 - **EVA-CC-001（CODE）**：内置 Verification Agent 的 system prompt 明确要求“对抗式验证”，并点名两类常见失败模式（verification avoidance / first 80% bias）。  
   - 证据：`sources/claude-code/src/tools/AgentTool/built-in/verificationAgent.ts` → `VERIFICATION_SYSTEM_PROMPT`（开头段落）

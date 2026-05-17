@@ -16,7 +16,7 @@
 
 ## 1. 三把工具只是 operator surface，真正的执行宿主在 scheduler 和 storage 层
 
-源码镜像：[`../../sources/claude-code/src/tools/ScheduleCronTool/CronCreateTool.ts`](../../sources/claude-code/src/tools/ScheduleCronTool/CronCreateTool.ts), [`../../sources/claude-code/src/tools/ScheduleCronTool/CronDeleteTool.ts`](../../sources/claude-code/src/tools/ScheduleCronTool/CronDeleteTool.ts), [`../../sources/claude-code/src/tools/ScheduleCronTool/CronListTool.ts`](../../sources/claude-code/src/tools/ScheduleCronTool/CronListTool.ts), [`../../sources/claude-code/src/utils/cronScheduler.ts`](../../sources/claude-code/src/utils/cronScheduler.ts), [`../../sources/claude-code/src/utils/cronTasks.ts`](../../sources/claude-code/src/utils/cronTasks.ts)
+源码镜像：[`../../src/tools/ScheduleCronTool/CronCreateTool.ts`](../../src/tools/ScheduleCronTool/CronCreateTool.ts), [`../../src/tools/ScheduleCronTool/CronDeleteTool.ts`](../../src/tools/ScheduleCronTool/CronDeleteTool.ts), [`../../src/tools/ScheduleCronTool/CronListTool.ts`](../../src/tools/ScheduleCronTool/CronListTool.ts), [`../../src/utils/cronScheduler.ts`](../../src/utils/cronScheduler.ts), [`../../src/utils/cronTasks.ts`](../../src/utils/cronTasks.ts)
 
 `CronCreate/CronDelete/CronList` 做的主要是：
 
@@ -36,7 +36,7 @@
 
 ## 2. 整套能力先过一层总 gate：`isKairosCronEnabled()`
 
-源码镜像：[`../../sources/claude-code/src/tools/ScheduleCronTool/prompt.ts`](../../sources/claude-code/src/tools/ScheduleCronTool/prompt.ts)
+源码镜像：[`../../src/tools/ScheduleCronTool/prompt.ts`](../../src/tools/ScheduleCronTool/prompt.ts)
 
 所有 cron tools 的 `isEnabled()` 都走：
 
@@ -48,7 +48,7 @@
 
 ## 3. durable 还有一层更窄的 gate，和 cron 总开关故意分开
 
-源码镜像：[`../../sources/claude-code/src/tools/ScheduleCronTool/prompt.ts`](../../sources/claude-code/src/tools/ScheduleCronTool/prompt.ts), [`../../sources/claude-code/src/tools/ScheduleCronTool/CronCreateTool.ts`](../../sources/claude-code/src/tools/ScheduleCronTool/CronCreateTool.ts)
+源码镜像：[`../../src/tools/ScheduleCronTool/prompt.ts`](../../src/tools/ScheduleCronTool/prompt.ts), [`../../src/tools/ScheduleCronTool/CronCreateTool.ts`](../../src/tools/ScheduleCronTool/CronCreateTool.ts)
 
 `durable` 走的是：
 
@@ -70,7 +70,7 @@
 
 ## 4. `CronCreate` 的 validate 不只是校验 cron 字符串，还在防 orphaned teammate durability
 
-源码镜像：[`../../sources/claude-code/src/tools/ScheduleCronTool/CronCreateTool.ts`](../../sources/claude-code/src/tools/ScheduleCronTool/CronCreateTool.ts)
+源码镜像：[`../../src/tools/ScheduleCronTool/CronCreateTool.ts`](../../src/tools/ScheduleCronTool/CronCreateTool.ts)
 
 它会校验：
 
@@ -83,7 +83,7 @@
 
 ## 5. `CronCreate` 真正落地时并不直接碰文件，而是先走统一 `addCronTask(...)`
 
-源码镜像：[`../../sources/claude-code/src/tools/ScheduleCronTool/CronCreateTool.ts`](../../sources/claude-code/src/utils/cronTasks.ts), [`../../sources/claude-code/src/utils/cronTasks.ts`](../../sources/claude-code/src/utils/cronTasks.ts)
+源码镜像：[`../../src/tools/ScheduleCronTool/CronCreateTool.ts`](../../src/utils/cronTasks.ts), [`../../src/utils/cronTasks.ts`](../../src/utils/cronTasks.ts)
 
 `addCronTask(...)` 根据 `durable` 分成两路：
 
@@ -101,7 +101,7 @@
 
 ## 6. session-only cron 不是临时 hack，它在 bootstrap state 里有正式宿主
 
-源码镜像：[`../../sources/claude-code/src/bootstrap/state.ts`](../../sources/claude-code/src/bootstrap/state.ts)
+源码镜像：[`../../src/bootstrap/state.ts`](../../src/bootstrap/state.ts)
 
 bootstrap state 里明确保留了两块 cron 状态：
 
@@ -121,7 +121,7 @@ bootstrap state 里明确保留了两块 cron 状态：
 
 ## 7. durable cron 的磁盘真相源非常明确：`<project>/.claude/scheduled_tasks.json`
 
-源码镜像：[`../../sources/claude-code/src/utils/cronTasks.ts`](../../sources/claude-code/src/utils/cronTasks.ts)
+源码镜像：[`../../src/utils/cronTasks.ts`](../../src/utils/cronTasks.ts)
 
 `getCronFilePath()` 固定返回：
 
@@ -146,7 +146,7 @@ bootstrap state 里明确保留了两块 cron 状态：
 
 ## 8. `CronList` 其实就是这两套 store 的统一视图
 
-源码镜像：[`../../sources/claude-code/src/tools/ScheduleCronTool/CronListTool.ts`](../../sources/claude-code/src/utils/cronTasks.ts)
+源码镜像：[`../../src/tools/ScheduleCronTool/CronListTool.ts`](../../src/utils/cronTasks.ts)
 
 `listAllCronTasks()` 会在 REPL 路径下合并：
 
@@ -161,7 +161,7 @@ bootstrap state 里明确保留了两块 cron 状态：
 
 ## 9. `CronDelete` 也故意走统一删除器，因为调用方并不知道 id 属于哪套 store
 
-源码镜像：[`../../sources/claude-code/src/tools/ScheduleCronTool/CronDeleteTool.ts`](../../sources/claude-code/src/utils/cronTasks.ts)
+源码镜像：[`../../src/tools/ScheduleCronTool/CronDeleteTool.ts`](../../src/utils/cronTasks.ts)
 
 `removeCronTasks(ids)` 的顺序是：
 
@@ -173,7 +173,7 @@ bootstrap state 里明确保留了两块 cron 状态：
 
 ## 10. scheduler 并不是默认常驻，它先看 `scheduledTasksEnabled`
 
-源码镜像：[`../../sources/claude-code/src/utils/cronScheduler.ts`](../../sources/claude-code/src/bootstrap/state.ts), [`../../sources/claude-code/src/tools/ScheduleCronTool/CronCreateTool.ts`](../../sources/claude-code/src/tools/ScheduleCronTool/CronCreateTool.ts)
+源码镜像：[`../../src/utils/cronScheduler.ts`](../../src/bootstrap/state.ts), [`../../src/tools/ScheduleCronTool/CronCreateTool.ts`](../../src/tools/ScheduleCronTool/CronCreateTool.ts)
 
 REPL path 下，`createCronScheduler().start()` 的逻辑是：
 
@@ -189,7 +189,7 @@ REPL path 下，`createCronScheduler().start()` 的逻辑是：
 
 ## 11. 这个 flag 很关键，因为 session-only cron 根本不会触发任何文件变更
 
-源码镜像：[`../../sources/claude-code/src/tools/ScheduleCronTool/CronCreateTool.ts`](../../sources/claude-code/src/utils/cronScheduler.ts)
+源码镜像：[`../../src/tools/ScheduleCronTool/CronCreateTool.ts`](../../src/utils/cronScheduler.ts)
 
 `CronCreateTool` 的注释已经把原因说穿了：
 
@@ -204,7 +204,7 @@ REPL path 下，`createCronScheduler().start()` 的逻辑是：
 
 ## 12. file-backed cron 和 session-only cron 共用一个 scheduler，但读入方式故意不同
 
-源码镜像：[`../../sources/claude-code/src/utils/cronScheduler.ts`](../../sources/claude-code/src/bootstrap/state.ts)
+源码镜像：[`../../src/utils/cronScheduler.ts`](../../src/bootstrap/state.ts)
 
 在 `check()` 中：
 
@@ -223,7 +223,7 @@ REPL path 下，`createCronScheduler().start()` 的逻辑是：
 
 ## 13. 多 Claude session 共享同一个项目目录时，不是大家都驱动 scheduler，而是抢一个 lease lock
 
-源码镜像：[`../../sources/claude-code/src/utils/cronTasksLock.ts`](../../sources/claude-code/src/utils/cronScheduler.ts)
+源码镜像：[`../../src/utils/cronTasksLock.ts`](../../src/utils/cronScheduler.ts)
 
 `tryAcquireSchedulerLock()` 使用：
 
@@ -246,7 +246,7 @@ REPL path 下，`createCronScheduler().start()` 的逻辑是：
 
 ## 14. 没抢到锁的会话不是彻底放弃，而是低频 probe takeover
 
-源码镜像：[`../../sources/claude-code/src/utils/cronScheduler.ts`](../../sources/claude-code/src/utils/cronTasksLock.ts)
+源码镜像：[`../../src/utils/cronScheduler.ts`](../../src/utils/cronTasksLock.ts)
 
 非 owner session 会每：
 
@@ -263,7 +263,7 @@ REPL path 下，`createCronScheduler().start()` 的逻辑是：
 
 ## 15. 但这个 lock 只保护 file-backed cron，session-only cron 故意不受它约束
 
-源码镜像：[`../../sources/claude-code/src/utils/cronScheduler.ts`](../../sources/claude-code/src/bootstrap/state.ts)
+源码镜像：[`../../src/utils/cronScheduler.ts`](../../src/bootstrap/state.ts)
 
 `check()` 里可以看到：
 
@@ -280,7 +280,7 @@ REPL path 下，`createCronScheduler().start()` 的逻辑是：
 
 ## 16. fire 也不是“时间到了立即执行”，而是明确受 `isLoading()` 约束
 
-源码镜像：[`../../sources/claude-code/src/utils/cronScheduler.ts`](../../sources/claude-code/src/hooks/useScheduledTasks.ts)
+源码镜像：[`../../src/utils/cronScheduler.ts`](../../src/hooks/useScheduledTasks.ts)
 
 `check()` 的前几个 gate 包括：
 
@@ -295,7 +295,7 @@ REPL path 下，`createCronScheduler().start()` 的逻辑是：
 
 ## 17. assistant mode 不是另一套 scheduler，只是放宽了 loading gate
 
-源码镜像：[`../../sources/claude-code/src/hooks/useScheduledTasks.ts`](../../sources/claude-code/src/utils/cronScheduler.ts)
+源码镜像：[`../../src/hooks/useScheduledTasks.ts`](../../src/utils/cronScheduler.ts)
 
 assistant mode 做的是：
 
@@ -306,7 +306,7 @@ assistant mode 做的是：
 
 ## 18. recurring 与 one-shot 的 next-fire 计算也故意分成两种 jitter 语义
 
-源码镜像：[`../../sources/claude-code/src/utils/cronTasks.ts`](../../sources/claude-code/src/utils/cronJitterConfig.ts)
+源码镜像：[`../../src/utils/cronTasks.ts`](../../src/utils/cronJitterConfig.ts)
 
 recurring 走：
 
@@ -332,7 +332,7 @@ one-shot 走：
 
 ## 19. jitter config 还是 live-tunable 的 incident lever，而不是写死常量
 
-源码镜像：[`../../sources/claude-code/src/utils/cronJitterConfig.ts`](../../sources/claude-code/src/utils/cronTasks.ts)
+源码镜像：[`../../src/utils/cronJitterConfig.ts`](../../src/utils/cronTasks.ts)
 
 REPL path 给 scheduler 注入的是：
 
@@ -346,7 +346,7 @@ REPL path 给 scheduler 注入的是：
 
 ## 20. recurring task 不是永生的，它有明确的 auto-expiry contract
 
-源码镜像：[`../../sources/claude-code/src/utils/cronScheduler.ts`](../../sources/claude-code/src/utils/cronTasks.ts), [`../../sources/claude-code/src/tools/ScheduleCronTool/prompt.ts`](../../sources/claude-code/src/tools/ScheduleCronTool/prompt.ts)
+源码镜像：[`../../src/utils/cronScheduler.ts`](../../src/utils/cronTasks.ts), [`../../src/tools/ScheduleCronTool/prompt.ts`](../../src/tools/ScheduleCronTool/prompt.ts)
 
 `isRecurringTaskAged(...)` 的判定是：
 
@@ -367,7 +367,7 @@ aged recurring task 的语义不是立即静默删除，而是：
 
 ## 21. `permanent` 是系统逃生口，不是普通用户经由 `CronCreate` 可写的字段
 
-源码镜像：[`../../sources/claude-code/src/utils/cronTasks.ts`](../../sources/claude-code/src/tools/ScheduleCronTool/CronCreateTool.ts)
+源码镜像：[`../../src/utils/cronTasks.ts`](../../src/tools/ScheduleCronTool/CronCreateTool.ts)
 
 `CronTask.permanent` 的注释写得很清楚：
 
@@ -378,7 +378,7 @@ aged recurring task 的语义不是立即静默删除，而是：
 
 ## 22. missed-task catch-up 只针对 initial load，而且只问 one-shot durable tasks
 
-源码镜像：[`../../sources/claude-code/src/utils/cronScheduler.ts`](../../sources/claude-code/src/utils/cronTasks.ts)
+源码镜像：[`../../src/utils/cronScheduler.ts`](../../src/utils/cronTasks.ts)
 
 `load(initial: true)` 时会：
 
@@ -397,7 +397,7 @@ aged recurring task 的语义不是立即静默删除，而是：
 
 ## 23. recurring missed task 不走这条 catch-up surface，而是留给正常 `check()` 首 tick 处理
 
-源码镜像：[`../../sources/claude-code/src/utils/cronScheduler.ts`](../../sources/claude-code/src/utils/cronTasks.ts)
+源码镜像：[`../../src/utils/cronScheduler.ts`](../../src/utils/cronTasks.ts)
 
 注释写得非常明确：
 
@@ -408,7 +408,7 @@ aged recurring task 的语义不是立即静默删除，而是：
 
 ## 24. teammate cron 不是回主 REPL，而是路由回对应 teammate 的 pending user queue
 
-源码镜像：[`../../sources/claude-code/src/hooks/useScheduledTasks.ts`](../../sources/claude-code/src/tools/ScheduleCronTool/CronCreateTool.ts), [`../../sources/claude-code/src/bootstrap/state.ts`](../../sources/claude-code/src/bootstrap/state.ts)
+源码镜像：[`../../src/hooks/useScheduledTasks.ts`](../../src/tools/ScheduleCronTool/CronCreateTool.ts), [`../../src/bootstrap/state.ts`](../../src/bootstrap/state.ts)
 
 当 `CronCreate` 在 teammate context 下创建 session-only cron 时，会把：
 
@@ -426,7 +426,7 @@ aged recurring task 的语义不是立即静默删除，而是：
 
 ## 25. team lead 的普通 cron fire 会先插一条系统消息，再排队真正 prompt
 
-源码镜像：[`../../sources/claude-code/src/hooks/useScheduledTasks.ts`](../../sources/claude-code/src/utils/messages.ts)
+源码镜像：[`../../src/hooks/useScheduledTasks.ts`](../../src/utils/messages.ts)
 
 对非 teammate 任务，REPL path 会：
 
@@ -438,7 +438,7 @@ aged recurring task 的语义不是立即静默删除，而是：
 
 ## 26. daemon/SDK path 复用同一 scheduler core，但故意绕开 bootstrap state
 
-源码镜像：[`../../sources/claude-code/src/utils/cronScheduler.ts`](../../sources/claude-code/src/utils/cronTasksLock.ts)
+源码镜像：[`../../src/utils/cronScheduler.ts`](../../src/utils/cronTasksLock.ts)
 
 当 `createCronScheduler({ dir, lockIdentity, ... })` 显式传 `dir` 时：
 
@@ -455,7 +455,7 @@ aged recurring task 的语义不是立即静默删除，而是：
 
 ## 27. `CronList` / `CronDelete` 的 teammate scope 说明 cron 已经进入 team ownership 模型
 
-源码镜像：[`../../sources/claude-code/src/tools/ScheduleCronTool/CronListTool.ts`](../../sources/claude-code/src/tools/ScheduleCronTool/CronDeleteTool.ts)
+源码镜像：[`../../src/tools/ScheduleCronTool/CronListTool.ts`](../../src/tools/ScheduleCronTool/CronDeleteTool.ts)
 
 teammate 看到的不是全局任务表，而是：
 
@@ -466,7 +466,7 @@ teammate 看到的不是全局任务表，而是：
 
 ## 28. 前台 UI 故意极简，真正重要的是 runtime contract，不是 cron transcript 花样
 
-源码镜像：[`../../sources/claude-code/src/tools/ScheduleCronTool/UI.tsx`](../../sources/claude-code/src/tools/ScheduleCronTool/UI.tsx)
+源码镜像：[`../../src/tools/ScheduleCronTool/UI.tsx`](../../src/tools/ScheduleCronTool/UI.tsx)
 
 三把工具的 UI 都只给非常薄的 receipt：
 
@@ -478,7 +478,7 @@ teammate 看到的不是全局任务表，而是：
 
 ## 29. `CronCreate` 的提示词还把负载管理规则直接暴露给模型
 
-源码镜像：[`../../sources/claude-code/src/tools/ScheduleCronTool/prompt.ts`](../../sources/claude-code/src/tools/ScheduleCronTool/prompt.ts)
+源码镜像：[`../../src/tools/ScheduleCronTool/prompt.ts`](../../src/tools/ScheduleCronTool/prompt.ts)
 
 prompt 明确教模型：
 

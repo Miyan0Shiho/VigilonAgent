@@ -18,7 +18,7 @@
 
 ## 1. `BriefTool` 先把 feature gate 拆成 `entitled` 和 `enabled` 两层
 
-源码镜像：[`../../sources/claude-code/src/tools/BriefTool/BriefTool.ts`](../../sources/claude-code/src/tools/BriefTool/BriefTool.ts)
+源码镜像：[`../../src/tools/BriefTool/BriefTool.ts`](../../src/tools/BriefTool/BriefTool.ts)
 
 `BriefTool` 没把“能不能用”压成一个布尔值，而是明确拆成：
 
@@ -34,7 +34,7 @@
 
 ## 2. brief mode 的真实状态源不是 `/brief`，而是统一汇流的 `userMsgOptIn`
 
-源码镜像：[`../../sources/claude-code/src/tools/BriefTool/BriefTool.ts`](../../sources/claude-code/src/tools/BriefTool/BriefTool.ts), [`../../sources/claude-code/src/commands/brief.ts`](../../sources/claude-code/src/commands/brief.ts)
+源码镜像：[`../../src/tools/BriefTool/BriefTool.ts`](../../src/tools/BriefTool/BriefTool.ts), [`../../src/commands/brief.ts`](../../src/commands/brief.ts)
 
 代码里已经把激活来源写死：
 
@@ -55,7 +55,7 @@
 
 ## 3. `/brief` 命令做的不是简单视图切换，而是让工具池和 transcript 协议一起换挡
 
-源码镜像：[`../../sources/claude-code/src/commands/brief.ts`](../../sources/claude-code/src/commands/brief.ts), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/commands/brief.ts`](../../src/commands/brief.ts), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 `/brief` 最关键的动作不是改 `isBriefOnly`，而是同时：
 
@@ -78,7 +78,7 @@
 
 ## 4. `BRIEF_TOOL_PROMPT` 明确把 `SendUserMessage` 定义成“真实答案通道”
 
-源码镜像：[`../../sources/claude-code/src/tools/BriefTool/prompt.ts`](../../sources/claude-code/src/tools/BriefTool/prompt.ts), [`../../sources/claude-code/src/constants/prompts.ts`](../../sources/claude-code/src/constants/prompts.ts)
+源码镜像：[`../../src/tools/BriefTool/prompt.ts`](../../src/tools/BriefTool/prompt.ts), [`../../src/constants/prompts.ts`](../../src/constants/prompts.ts)
 
 `BRIEF_TOOL_PROMPT` 和 `BRIEF_PROACTIVE_SECTION` 说的是同一件事：
 
@@ -89,7 +89,7 @@
 
 ## 5. `BriefTool` 自己是只读工具，但它携带了一条用户可见附件通道
 
-源码镜像：[`../../sources/claude-code/src/tools/BriefTool/BriefTool.ts`](../../sources/claude-code/src/tools/BriefTool/BriefTool.ts), [`../../sources/claude-code/src/tools/BriefTool/attachments.ts`](../../sources/claude-code/src/tools/BriefTool/attachments.ts)
+源码镜像：[`../../src/tools/BriefTool/BriefTool.ts`](../../src/tools/BriefTool/BriefTool.ts), [`../../src/tools/BriefTool/attachments.ts`](../../src/tools/BriefTool/attachments.ts)
 
 `BriefTool` 明确声明：
 
@@ -118,7 +118,7 @@
 
 ## 6. attachment runtime 刻意分成“本地 stat 真相”和“bridge upload 增强”两层
 
-源码镜像：[`../../sources/claude-code/src/tools/BriefTool/attachments.ts`](../../sources/claude-code/src/tools/BriefTool/attachments.ts), [`../../sources/claude-code/src/tools/BriefTool/upload.ts`](../../sources/claude-code/src/tools/BriefTool/upload.ts)
+源码镜像：[`../../src/tools/BriefTool/attachments.ts`](../../src/tools/BriefTool/attachments.ts), [`../../src/tools/BriefTool/upload.ts`](../../src/tools/BriefTool/upload.ts)
 
 `resolveAttachments(...)` 先串行 `stat`，再按需并行上传。分层很明确：
 
@@ -135,7 +135,7 @@
 
 ## 7. `upload.ts` 不是普通文件上传，而是专门给 bridge/web viewer 准备的 sidecar 协议
 
-源码镜像：[`../../sources/claude-code/src/tools/BriefTool/upload.ts`](../../sources/claude-code/src/tools/BriefTool/upload.ts)
+源码镜像：[`../../src/tools/BriefTool/upload.ts`](../../src/tools/BriefTool/upload.ts)
 
 上传层有几条非常明确的边界：
 
@@ -153,7 +153,7 @@
 
 ## 8. `UI.tsx` 明确把同一个结果渲染成三套不同宿主语法
 
-源码镜像：[`../../sources/claude-code/src/tools/BriefTool/UI.tsx`](../../sources/claude-code/src/tools/BriefTool/UI.tsx)
+源码镜像：[`../../src/tools/BriefTool/UI.tsx`](../../src/tools/BriefTool/UI.tsx)
 
 `renderToolResultMessage(...)` 至少分三条路径：
 
@@ -171,7 +171,7 @@
 
 ## 9. `renderToolUseMessage()` 故意返回空，说明 brief 不想把“调用动作”前台化
 
-源码镜像：[`../../sources/claude-code/src/tools/BriefTool/UI.tsx`](../../sources/claude-code/src/tools/BriefTool/UI.tsx)
+源码镜像：[`../../src/tools/BriefTool/UI.tsx`](../../src/tools/BriefTool/UI.tsx)
 
 和大多数工具不同，`renderToolUseMessage()` 这里直接返回空。含义很明确：
 
@@ -182,7 +182,7 @@
 
 ## 10. `Messages.tsx` 的 brief filter 不是美化层，而是 hard visibility contract
 
-源码镜像：[`../../sources/claude-code/src/components/Messages.tsx`](../../sources/claude-code/src/components/Messages.tsx)
+源码镜像：[`../../src/components/Messages.tsx`](../../src/components/Messages.tsx)
 
 `filterForBriefTool(...)` 的规则非常硬：
 
@@ -201,7 +201,7 @@
 
 ## 11. REPL 把 `isBriefOnly` 放进工具列表依赖，是为了避免 mid-session 空白回合
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 `REPL.tsx` 专门把 `isBriefOnly` 加进：
 
@@ -224,7 +224,7 @@
 
 ## 12. `status = proactive` 不是文案标签，而是 brief mode 的产品语义位
 
-源码镜像：[`../../sources/claude-code/src/tools/BriefTool/BriefTool.ts`](../../sources/claude-code/src/tools/BriefTool/BriefTool.ts), [`../../sources/claude-code/src/tools/BriefTool/prompt.ts`](../../sources/claude-code/src/tools/BriefTool/prompt.ts)
+源码镜像：[`../../src/tools/BriefTool/BriefTool.ts`](../../src/tools/BriefTool/BriefTool.ts), [`../../src/tools/BriefTool/prompt.ts`](../../src/tools/BriefTool/prompt.ts)
 
 `status` 只有两个值：
 
@@ -246,7 +246,7 @@
 
 ## 13. 关闭 brief 时，系统会显式提醒模型回到 plain text 通道
 
-源码镜像：[`../../sources/claude-code/src/commands/brief.ts`](../../sources/claude-code/src/commands/brief.ts)
+源码镜像：[`../../src/commands/brief.ts`](../../src/commands/brief.ts)
 
 `/brief` 切换后不会只改状态，还会通过 `metaMessages` 注入明确的 `system-reminder`：
 

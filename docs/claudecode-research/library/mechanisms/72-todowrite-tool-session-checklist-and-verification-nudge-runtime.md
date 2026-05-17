@@ -6,7 +6,7 @@
 
 ## 1. `TodoWriteTool` 不是任务系统的同义词，而是 `Task*Tool` 出现前的 session-scoped checklist runtime
 
-源码镜像：[`../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts`](../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts), [`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/tools/TodoWriteTool/TodoWriteTool.ts`](../../src/tools/TodoWriteTool/TodoWriteTool.ts), [`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 它的最关键 gate 是：
 
@@ -18,7 +18,7 @@
 
 ## 2. 它的状态宿主不是文件任务板，而是 `AppState.todos[todoKey]`
 
-源码镜像：[`../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts`](../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts)
+源码镜像：[`../../src/tools/TodoWriteTool/TodoWriteTool.ts`](../../src/tools/TodoWriteTool/TodoWriteTool.ts)
 
 真正的写入目标是：
 
@@ -34,13 +34,13 @@
 
 ## 3. `shouldDefer: true` 说明它被当成按需发现的工作流工具，而不是永远裸露的小部件
 
-源码镜像：[`../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts`](../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts)
+源码镜像：[`../../src/tools/TodoWriteTool/TodoWriteTool.ts`](../../src/tools/TodoWriteTool/TodoWriteTool.ts)
 
 这点和 `Task*Tool` 一样，表明产品并不想让模型每轮都默认看到一个 checklist writer，而是把它视为“复杂任务时再暴露”的 higher-level control surface。
 
 ## 4. prompt 真正在教模型维护一套严格的一阶任务语法，而不是自由文本列表
 
-源码镜像：[`../../sources/claude-code/src/tools/TodoWriteTool/prompt.ts`](../../sources/claude-code/src/tools/TodoWriteTool/prompt.ts)
+源码镜像：[`../../src/tools/TodoWriteTool/prompt.ts`](../../src/tools/TodoWriteTool/prompt.ts)
 
 prompt 里约束非常重：
 
@@ -57,7 +57,7 @@ prompt 里约束非常重：
 
 ## 5. `activeForm` 出现在 `TodoWriteTool` prompt 里，说明 spinner 叙事回灌链最早就是从 TodoWrite 开始的
 
-源码镜像：[`../../sources/claude-code/src/tools/TodoWriteTool/prompt.ts`](../../sources/claude-code/src/tools/TodoWriteTool/prompt.ts), [`../../sources/claude-code/src/utils/todo/types.ts`](../../sources/claude-code/src/utils/todo/types.ts)
+源码镜像：[`../../src/tools/TodoWriteTool/prompt.ts`](../../src/tools/TodoWriteTool/prompt.ts), [`../../src/utils/todo/types.ts`](../../src/utils/todo/types.ts)
 
 `activeForm` 的约束并不是后来 `TaskCreate/TaskUpdate` 才引入的。`TodoWriteTool` 已经把：
 
@@ -68,7 +68,7 @@ prompt 里约束非常重：
 
 ## 6. `allDone -> []` 揭示了 V1 checklist 的终态不是“全勾完”，而是“直接清空状态宿主”
 
-源码镜像：[`../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts`](../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts)
+源码镜像：[`../../src/tools/TodoWriteTool/TodoWriteTool.ts`](../../src/tools/TodoWriteTool/TodoWriteTool.ts)
 
 关键逻辑：
 
@@ -84,7 +84,7 @@ prompt 里约束非常重：
 
 ## 7. `newTodos` 写进 AppState，但 tool result 返回的却是原始 `todos`，说明“闭环完成”与“工具回执”被故意分离
 
-源码镜像：[`../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts`](../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts)
+源码镜像：[`../../src/tools/TodoWriteTool/TodoWriteTool.ts`](../../src/tools/TodoWriteTool/TodoWriteTool.ts)
 
 返回体里：
 
@@ -97,7 +97,7 @@ prompt 里约束非常重：
 
 ## 8. verifier nudge 不是通用 tips，而是精确绑在“最后一项刚关掉”的 loop-exit 时刻
 
-源码镜像：[`../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts`](../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts)
+源码镜像：[`../../src/tools/TodoWriteTool/TodoWriteTool.ts`](../../src/tools/TodoWriteTool/TodoWriteTool.ts)
 
 触发条件非常具体：
 
@@ -112,7 +112,7 @@ prompt 里约束非常重：
 
 ## 9. 这条 verifier nudge 是通过 `tool_result` 直接回灌给模型的，而不是前台弹窗
 
-源码镜像：[`../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts`](../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts), [`../../sources/claude-code/src/tools/AgentTool/constants.ts`](../../sources/claude-code/src/tools/AgentTool/constants.ts)
+源码镜像：[`../../src/tools/TodoWriteTool/TodoWriteTool.ts`](../../src/tools/TodoWriteTool/TodoWriteTool.ts), [`../../src/tools/AgentTool/constants.ts`](../../src/tools/AgentTool/constants.ts)
 
 `mapToolResultToToolResultBlockParam(...)` 会把提醒直接拼进 tool result：
 
@@ -124,7 +124,7 @@ prompt 里约束非常重：
 
 ## 10. `renderToolUseMessage() => null` 说明 TodoWrite 不想在 transcript 上占普通工具调用位
 
-源码镜像：[`../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts`](../../sources/claude-code/src/Tool.ts)
+源码镜像：[`../../src/tools/TodoWriteTool/TodoWriteTool.ts`](../../src/Tool.ts)
 
 它和 `BriefTool` 一样，显式把普通 tool-use transcript chrome 关掉了。原因很直白：
 
@@ -135,7 +135,7 @@ prompt 里约束非常重：
 
 ## 11. transcript 仍然保留真实 `tool_use`，因为 resume 要靠它反向恢复 checklist
 
-源码镜像：[`../../sources/claude-code/src/utils/sessionRestore.ts`](../../sources/claude-code/src/utils/sessionRestore.ts)
+源码镜像：[`../../src/utils/sessionRestore.ts`](../../src/utils/sessionRestore.ts)
 
 `restoreSessionStateFromLog()` 在 `!isTodoV2Enabled()` 时会：
 
@@ -147,7 +147,7 @@ prompt 里约束非常重：
 
 ## 12. 这条 transcript-restore 只在 V1 宿主启用，说明 TodoWrite 的持久化策略是“日志回放”，不是独立存储
 
-源码镜像：[`../../sources/claude-code/src/utils/sessionRestore.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/sessionRestore.ts`](../../src/utils/tasks.ts)
 
 代码注释已经说得很直接：
 
@@ -161,7 +161,7 @@ prompt 里约束非常重：
 
 ## 13. `RemoteAgentTask` 也会反扫 TodoWrite transcript，说明它还是远端任务摘要的兼容来源
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
 
 `extractTodoListFromLog(log)` 做的事情和 resume 几乎同构：
 
@@ -173,7 +173,7 @@ prompt 里约束非常重：
 
 ## 14. gentle reminder 也分 V1/V2 两条链，TodoWrite 拥有自己的 reminder attachment 协议
 
-源码镜像：[`../../sources/claude-code/src/utils/messages.ts`](../../sources/claude-code/src/utils/attachments.ts)
+源码镜像：[`../../src/utils/messages.ts`](../../src/utils/attachments.ts)
 
 `messages.ts` 里专门有：
 
@@ -184,7 +184,7 @@ prompt 里约束非常重：
 
 ## 15. TodoWrite 的 reminder 不是强制指令，而是一个 system reminder sidecar
 
-源码镜像：[`../../sources/claude-code/src/utils/messages.ts`](../../sources/claude-code/src/utils/messages.ts)
+源码镜像：[`../../src/utils/messages.ts`](../../src/utils/messages.ts)
 
 它会构造一条 meta user message，核心语义是：
 
@@ -197,7 +197,7 @@ prompt 里约束非常重：
 
 ## 16. `searchHint: manage the session task checklist` 说明它的产品定位从来就是“会话清单”，不是工程级任务板
 
-源码镜像：[`../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts`](../../sources/claude-code/src/tools/TodoWriteTool/TodoWriteTool.ts)
+源码镜像：[`../../src/tools/TodoWriteTool/TodoWriteTool.ts`](../../src/tools/TodoWriteTool/TodoWriteTool.ts)
 
 它和 `Task*Tool` 的差异可以压成一句话：
 
@@ -208,7 +208,7 @@ prompt 里约束非常重：
 
 ## 17. `TodoWriteTool` 与 `Task*Tool` 的关系不是替换完成，而是双轨兼容
 
-源码镜像：[`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/utils/tasks.ts), [`../../sources/claude-code/src/utils/sessionRestore.ts`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
+源码镜像：[`../../src/tools.ts`](../../src/utils/tasks.ts), [`../../src/utils/sessionRestore.ts`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
 
 现在真实状态是：
 

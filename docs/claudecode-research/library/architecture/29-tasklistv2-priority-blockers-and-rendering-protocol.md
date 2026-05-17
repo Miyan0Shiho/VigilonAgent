@@ -6,7 +6,7 @@
 
 ## 1. `TaskListV2` 不是通用列表，而是 TodoV2 的专用可视化协议层
 
-源码镜像：[`../../sources/claude-code/src/components/TaskListV2.tsx`](../../sources/claude-code/src/components/TaskListV2.tsx), [`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/Spinner.tsx)
+源码镜像：[`../../src/components/TaskListV2.tsx`](../../src/components/TaskListV2.tsx), [`../../src/utils/tasks.ts`](../../src/utils/tasks.ts), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/components/Spinner.tsx`](../../src/components/Spinner.tsx)
 
 `TaskListV2` 的输入非常克制：
 
@@ -24,7 +24,7 @@
 
 ## 2. `TaskListV2` 先受两个总 gate 约束：功能开关和空列表
 
-源码镜像：[`../../sources/claude-code/src/components/TaskListV2.tsx`](../../sources/claude-code/src/components/TaskListV2.tsx), [`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/components/TaskListV2.tsx`](../../src/components/TaskListV2.tsx), [`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 这层最外面有两个硬门：
 
@@ -42,7 +42,7 @@
 
 ## 3. 最近完成任务会被保留 30 秒，这不是排序细节，而是“短暂 linger”协议
 
-源码镜像：[`../../sources/claude-code/src/components/TaskListV2.tsx`](../../sources/claude-code/src/components/TaskListV2.tsx)
+源码镜像：[`../../src/components/TaskListV2.tsx`](../../src/components/TaskListV2.tsx)
 
 `TaskListV2` 自己维护了一套局部状态：
 
@@ -65,7 +65,7 @@
 
 ## 4. 列表长度过长时，优先级不是简单的 status 排序，而是四段优先级管线
 
-源码镜像：[`../../sources/claude-code/src/components/TaskListV2.tsx`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/components/TaskListV2.tsx`](../../src/utils/tasks.ts)
 
 当 `tasks.length > maxDisplay` 时，`TaskListV2` 不会直接按 status sort，而是拆成四段：
 
@@ -85,7 +85,7 @@
 
 ## 5. pending 里还会再做一次 blocker-aware 重排，说明 blocked 任务不应挤占前排
 
-源码镜像：[`../../sources/claude-code/src/components/TaskListV2.tsx`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/components/TaskListV2.tsx`](../../src/utils/tasks.ts)
 
 在 pending 段内部，排序规则又分成两层：
 
@@ -103,7 +103,7 @@
 
 ## 6. `maxDisplay` 不是固定数，而是终端高度驱动的预算
 
-源码镜像：[`../../sources/claude-code/src/components/TaskListV2.tsx`](../../sources/claude-code/src/components/TaskListV2.tsx), [`../../sources/claude-code/src/hooks/useTerminalSize.ts`](../../sources/claude-code/src/hooks/useTerminalSize.ts)
+源码镜像：[`../../src/components/TaskListV2.tsx`](../../src/components/TaskListV2.tsx), [`../../src/hooks/useTerminalSize.ts`](../../src/hooks/useTerminalSize.ts)
 
 显示预算来自：
 
@@ -120,7 +120,7 @@
 
 ## 7. 超出预算的任务不会直接消失，而是被压缩成 `hiddenSummary`
 
-源码镜像：[`../../sources/claude-code/src/components/TaskListV2.tsx`](../../sources/claude-code/src/components/Spinner.tsx)
+源码镜像：[`../../src/components/TaskListV2.tsx`](../../src/components/Spinner.tsx)
 
 被截掉的任务会被重新统计成：
 
@@ -141,7 +141,7 @@
 
 ## 8. owner 颜色和 activity 文本不是从 task 本身拿，而是从 `AppState.tasks` 回填
 
-源码镜像：[`../../sources/claude-code/src/components/TaskListV2.tsx`](../../sources/claude-code/src/components/TaskListV2.tsx), [`../../sources/claude-code/src/tasks/InProcessTeammateTask/types.ts`](../../sources/claude-code/src/tasks/InProcessTeammateTask/types.ts)
+源码镜像：[`../../src/components/TaskListV2.tsx`](../../src/components/TaskListV2.tsx), [`../../src/tasks/InProcessTeammateTask/types.ts`](../../src/tasks/InProcessTeammateTask/types.ts)
 
 `TaskListV2` 自己会额外读：
 
@@ -162,7 +162,7 @@
 
 ## 9. activity 只在 `in_progress 且未 blocked` 时显示，避免双重语义冲突
 
-源码镜像：[`../../sources/claude-code/src/components/TaskListV2.tsx`](../../sources/claude-code/src/components/TaskListV2.tsx), [`../../sources/claude-code/src/utils/collapseReadSearch.ts`](../../sources/claude-code/src/utils/collapseReadSearch.ts)
+源码镜像：[`../../src/components/TaskListV2.tsx`](../../src/components/TaskListV2.tsx), [`../../src/utils/collapseReadSearch.ts`](../../src/utils/collapseReadSearch.ts)
 
 `TaskItem` 对 activity 的 gate 非常严格：
 
@@ -183,7 +183,7 @@
 
 ## 10. `TaskItem` 的一行主语法其实编码了 status、owner、blockers 三层信息
 
-源码镜像：[`../../sources/claude-code/src/components/TaskListV2.tsx`](../../sources/claude-code/src/components/TaskListV2.tsx), [`../../sources/claude-code/src/utils/theme.ts`](../../sources/claude-code/src/utils/theme.ts)
+源码镜像：[`../../src/components/TaskListV2.tsx`](../../src/components/TaskListV2.tsx), [`../../src/utils/theme.ts`](../../src/utils/theme.ts)
 
 主行元素是：
 
@@ -203,7 +203,7 @@
 
 ## 11. owner 只在宽终端且 owner 仍 active 时显示，说明这是“活体 owner 标签”不是历史归属
 
-源码镜像：[`../../sources/claude-code/src/components/TaskListV2.tsx`](../../sources/claude-code/src/components/design-system/ThemedText.tsx)
+源码镜像：[`../../src/components/TaskListV2.tsx`](../../src/components/design-system/ThemedText.tsx)
 
 owner 显示条件是：
 
@@ -220,7 +220,7 @@ owner 显示条件是：
 
 ## 12. standalone 与 inline 宿主只有一层壳差异，但语义不同
 
-源码镜像：[`../../sources/claude-code/src/components/TaskListV2.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/Spinner.tsx)
+源码镜像：[`../../src/components/TaskListV2.tsx`](../../src/screens/REPL.tsx), [`../../src/components/Spinner.tsx`](../../src/components/Spinner.tsx)
 
 `isStandalone` 为真时：
 
@@ -245,7 +245,7 @@ owner 显示条件是：
 
 ## 13. `TaskListV2` 和 spinner 主文案之间还有一条反向耦合：`activeForm ?? subject`
 
-源码镜像：[`../../sources/claude-code/src/components/Spinner.tsx`](../../sources/claude-code/src/components/TaskListV2.tsx), [`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/components/Spinner.tsx`](../../src/components/TaskListV2.tsx), [`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 Spinner 的 leader 文案优先级是：
 

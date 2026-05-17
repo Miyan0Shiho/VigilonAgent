@@ -18,7 +18,7 @@
 
 ## 1. `FileWriteTool` 的定位不是 patch 编辑，而是“用一份完整内容替换整个文件”
 
-源码镜像：[`../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts`](../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts), [`../../sources/claude-code/src/tools/FileWriteTool/prompt.ts`](../../sources/claude-code/src/tools/FileWriteTool/prompt.ts)
+源码镜像：[`../../src/tools/FileWriteTool/FileWriteTool.ts`](../../src/tools/FileWriteTool/FileWriteTool.ts), [`../../src/tools/FileWriteTool/prompt.ts`](../../src/tools/FileWriteTool/prompt.ts)
 
 它的输入核心只有两项：
 
@@ -40,7 +40,7 @@
 
 ## 2. 它在 prompt 里被明确限定为“新建文件或完整重写”，而不是普通修改首选
 
-源码镜像：[`../../sources/claude-code/src/tools/FileWriteTool/prompt.ts`](../../sources/claude-code/src/tools/FileWriteTool/prompt.ts)
+源码镜像：[`../../src/tools/FileWriteTool/prompt.ts`](../../src/tools/FileWriteTool/prompt.ts)
 
 `getWriteToolDescription()` 直接把几条策略写进工具说明：
 
@@ -58,7 +58,7 @@
 
 ## 3. 它和 `FileEditTool` 共享 read-before-write 哲学，但不共享锚点匹配语义
 
-源码镜像：[`../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts`](../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts)
+源码镜像：[`../../src/tools/FileWriteTool/FileWriteTool.ts`](../../src/tools/FileEditTool/FileEditTool.ts)
 
 `validateInput(...)` 里最核心的判断是：
 
@@ -80,7 +80,7 @@
 
 ## 4. 输入验证更薄，但仍然保留了最关键的安全闸门
 
-源码镜像：[`../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts`](../../sources/claude-code/src/services/teamMemorySync/teamMemSecretGuard.ts)
+源码镜像：[`../../src/tools/FileWriteTool/FileWriteTool.ts`](../../src/services/teamMemorySync/teamMemSecretGuard.ts)
 
 `validateInput(...)` 的前半段仍然先挡掉几类高风险调用：
 
@@ -102,7 +102,7 @@
 
 ## 5. 对 existing file，它的 staleness check 也是 `mtime + full-read content equality` 双层兜底
 
-源码镜像：[`../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileWriteTool/FileWriteTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `call(...)` 进入临界区后会：
 
@@ -126,7 +126,7 @@
 
 ## 6. 真正的临界区围绕的是“读旧文件 -> 确认没变 -> 全量写回”
 
-源码镜像：[`../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts`](../../sources/claude-code/src/utils/fileRead.ts)
+源码镜像：[`../../src/tools/FileWriteTool/FileWriteTool.ts`](../../src/utils/fileRead.ts)
 
 `call(...)` 里也有和 `Edit` 同样明确的注释：
 
@@ -151,7 +151,7 @@
 
 ## 7. 和 `Edit` 不同，`Write` 明确不保留旧文件 line endings，而是把模型给出的内容当真
 
-源码镜像：[`../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts`](../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts)
+源码镜像：[`../../src/tools/FileWriteTool/FileWriteTool.ts`](../../src/tools/FileEditTool/FileEditTool.ts)
 
 `Edit` 会保留：
 
@@ -175,7 +175,7 @@
 
 ## 8. create 和 overwrite 在结果协议里是两条不同产品面
 
-源码镜像：[`../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts`](../../sources/claude-code/src/tools/FileWriteTool/UI.tsx)
+源码镜像：[`../../src/tools/FileWriteTool/FileWriteTool.ts`](../../src/tools/FileWriteTool/UI.tsx)
 
 输出 schema 里最关键的字段是：
 
@@ -196,7 +196,7 @@
 
 ## 9. permission surface 也不是通用确认框，而是整文件 overwrite/create 专用 diff
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/FileWritePermissionRequest/FileWritePermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/FileWritePermissionRequest/FileWriteToolDiff.tsx)
+源码镜像：[`../../src/components/permissions/FileWritePermissionRequest/FileWritePermissionRequest.tsx`](../../src/components/permissions/FileWritePermissionRequest/FileWriteToolDiff.tsx)
 
 `FileWritePermissionRequest` 做了几件和 `Edit` 明显不同的事：
 
@@ -216,7 +216,7 @@
 
 ## 10. rejected surface 也要懒加载旧文件 diff，避免大文件/竞态直接压垮前台
 
-源码镜像：[`../../sources/claude-code/src/tools/FileWriteTool/UI.tsx`](../../sources/claude-code/src/utils/readEditContext.ts)
+源码镜像：[`../../src/tools/FileWriteTool/UI.tsx`](../../src/utils/readEditContext.ts)
 
 `renderToolUseRejectedMessage(...)` 不是同步把旧文件 diff 全算出来，而是：
 
@@ -242,7 +242,7 @@
 
 ## 11. 写后 sidecar 很重：LSP、VSCode、readFileState、history、analytics 都要一起更新
 
-源码镜像：[`../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts`](../../sources/claude-code/src/services/lsp/manager.ts)
+源码镜像：[`../../src/tools/FileWriteTool/FileWriteTool.ts`](../../src/services/lsp/manager.ts)
 
 写盘之后，工具立刻同步几条副作用链：
 
@@ -265,7 +265,7 @@
 
 ## 12. remote 模式下它还会额外计算单文件 git diff，作为 sidecar result
 
-源码镜像：[`../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts`](../../sources/claude-code/src/utils/gitDiff.ts)
+源码镜像：[`../../src/tools/FileWriteTool/FileWriteTool.ts`](../../src/utils/gitDiff.ts)
 
 在：
 
@@ -284,7 +284,7 @@
 
 ## 13. `Write` 的 transcript summary 也比 `Edit` 更偏“文件结果”，不是“编辑动作”
 
-源码镜像：[`../../sources/claude-code/src/tools/FileWriteTool/UI.tsx`](../../sources/claude-code/src/hooks/useTurnDiffs.ts)
+源码镜像：[`../../src/tools/FileWriteTool/UI.tsx`](../../src/hooks/useTurnDiffs.ts)
 
 `renderToolResultMessage(...)` 的分流是：
 
@@ -307,7 +307,7 @@
 
 ## 14. 它和 `Edit` 的真正边界可以压缩成一句话：`Edit` 保护局部意图，`Write` 保护整文件意图
 
-源码镜像：[`../../sources/claude-code/src/tools/FileWriteTool/FileWriteTool.ts`](../../sources/claude-code/src/tools/FileEditTool/FileEditTool.ts)
+源码镜像：[`../../src/tools/FileWriteTool/FileWriteTool.ts`](../../src/tools/FileEditTool/FileEditTool.ts)
 
 如果把两者对照起来看：
 

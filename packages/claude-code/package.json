@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "start": "NODE_OPTIONS='--import tsx --no-warnings' node src/entrypoints/cli.tsx"
+    "start": "NODE_OPTIONS='--import tsx --no-warnings' node src/entrypoints/cli.tsx",
+    "smoke:version": "NODE_OPTIONS='--import tsx --no-warnings' node src/entrypoints/cli.tsx --version"
   },
   "dependencies": {
     "@alcalzone/ansi-tokenize": "^0.1.2",

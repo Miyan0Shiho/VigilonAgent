@@ -16,7 +16,7 @@
 
 ## 1. `LSPTool` 不是默认常驻工具，而是被环境 gate 明确控制
 
-源码镜像：[`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/tools.ts), [`../../sources/claude-code/src/tools/LSPTool/LSPTool.ts`](../../sources/claude-code/src/tools/LSPTool/LSPTool.ts)
+源码镜像：[`../../src/tools.ts`](../../src/tools.ts), [`../../src/tools/LSPTool/LSPTool.ts`](../../src/tools/LSPTool/LSPTool.ts)
 
 工具池里它的装配条件是：
 
@@ -26,7 +26,7 @@
 
 ## 2. 即便工具暴露了，`isEnabled()` 也还要再过一层 runtime 健康检查
 
-源码镜像：[`../../sources/claude-code/src/tools/LSPTool/LSPTool.ts`](../../sources/claude-code/src/tools/LSPTool/LSPTool.ts), [`../../sources/claude-code/src/services/lsp/manager.ts`](../../sources/claude-code/src/services/lsp/manager.ts)
+源码镜像：[`../../src/tools/LSPTool/LSPTool.ts`](../../src/tools/LSPTool/LSPTool.ts), [`../../src/services/lsp/manager.ts`](../../src/services/lsp/manager.ts)
 
 `LSPTool.isEnabled()` 调的是：
 
@@ -43,7 +43,7 @@
 
 ## 3. API 层还单独支持 `defer_loading`，因为 LSP 初始化本来就被允许晚于会话启动
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts)
 
 `shouldDeferLspTool(tool)` 的规则很简单：
 
@@ -55,7 +55,7 @@
 
 ## 4. 这种 deferred surface 不是 UI trick，而是和 API/tool-search 协议绑定的
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts)
 
 `claude.ts` 里明确写着：
 
@@ -66,7 +66,7 @@
 
 ## 5. LSP manager 是全局 singleton，而且初始化状态机比普通 service 更细
 
-源码镜像：[`../../sources/claude-code/src/services/lsp/manager.ts`](../../sources/claude-code/src/services/lsp/manager.ts)
+源码镜像：[`../../src/services/lsp/manager.ts`](../../src/services/lsp/manager.ts)
 
 它维护的不是一个简单布尔值，而是：
 
@@ -85,7 +85,7 @@
 
 ## 6. 初始化本身还是故意异步且不阻塞 startup 的
 
-源码镜像：[`../../sources/claude-code/src/services/lsp/manager.ts`](../../sources/claude-code/src/services/lsp/manager.ts)
+源码镜像：[`../../src/services/lsp/manager.ts`](../../src/services/lsp/manager.ts)
 
 `initializeLspServerManager()` 做的是：
 
@@ -104,7 +104,7 @@
 
 ## 7. `LSPTool.call()` 会主动等待 pending init，但不会等待 not-started 之外的奇迹
 
-源码镜像：[`../../sources/claude-code/src/tools/LSPTool/LSPTool.ts`](../../sources/claude-code/src/tools/LSPTool/LSPTool.ts), [`../../sources/claude-code/src/services/lsp/manager.ts`](../../sources/claude-code/src/services/lsp/manager.ts)
+源码镜像：[`../../src/tools/LSPTool/LSPTool.ts`](../../src/tools/LSPTool/LSPTool.ts), [`../../src/services/lsp/manager.ts`](../../src/services/lsp/manager.ts)
 
 调用时它先看：
 
@@ -122,7 +122,7 @@
 
 ## 8. 输入 schema 看起来统一，真正的类型校验却故意走 discriminated union
 
-源码镜像：[`../../sources/claude-code/src/tools/LSPTool/LSPTool.ts`](../../sources/claude-code/src/tools/LSPTool/LSPTool.ts), [`../../sources/claude-code/src/tools/LSPTool/schemas.ts`](../../sources/claude-code/src/tools/LSPTool/schemas.ts)
+源码镜像：[`../../src/tools/LSPTool/LSPTool.ts`](../../src/tools/LSPTool/LSPTool.ts), [`../../src/tools/LSPTool/schemas.ts`](../../src/tools/LSPTool/schemas.ts)
 
 对外暴露的 tool schema 是普通 strict object，字段统一是：
 
@@ -144,7 +144,7 @@
 
 ## 9. 这把工具是只读且并发安全，但仍然强制走文件读取权限检查
 
-源码镜像：[`../../sources/claude-code/src/tools/LSPTool/LSPTool.ts`](../../sources/claude-code/src/tools/LSPTool/LSPTool.ts)
+源码镜像：[`../../src/tools/LSPTool/LSPTool.ts`](../../src/tools/LSPTool/LSPTool.ts)
 
 它声明了：
 
@@ -159,7 +159,7 @@
 
 ## 10. validate 阶段还专门防了一类和普通 Read/Grep 不完全一样的风险：UNC path
 
-源码镜像：[`../../sources/claude-code/src/tools/LSPTool/LSPTool.ts`](../../sources/claude-code/src/tools/LSPTool/LSPTool.ts)
+源码镜像：[`../../src/tools/LSPTool/LSPTool.ts`](../../src/tools/LSPTool/LSPTool.ts)
 
 它有一段很罕见的分支：
 
@@ -174,7 +174,7 @@
 
 ## 11. 即使路径合法，它也会在真正发 LSP request 前补一条 `didOpen` side effect
 
-源码镜像：[`../../sources/claude-code/src/tools/LSPTool/LSPTool.ts`](../../sources/claude-code/src/tools/LSPTool/LSPTool.ts)
+源码镜像：[`../../src/tools/LSPTool/LSPTool.ts`](../../src/tools/LSPTool/LSPTool.ts)
 
 在 `manager.sendRequest(...)` 之前，它会检查：
 
@@ -190,7 +190,7 @@
 
 ## 12. 这个 open-file 行为还有一个严格预算：10MB 上限
 
-源码镜像：[`../../sources/claude-code/src/tools/LSPTool/LSPTool.ts`](../../sources/claude-code/src/tools/LSPTool/LSPTool.ts)
+源码镜像：[`../../src/tools/LSPTool/LSPTool.ts`](../../src/tools/LSPTool/LSPTool.ts)
 
 如果文件超过：
 
@@ -204,7 +204,7 @@
 
 ## 13. operation 到 LSP method 的映射是显式白名单，不存在任意 method 透传
 
-源码镜像：[`../../sources/claude-code/src/tools/LSPTool/LSPTool.ts`](../../sources/claude-code/src/tools/LSPTool/LSPTool.ts)
+源码镜像：[`../../src/tools/LSPTool/LSPTool.ts`](../../src/tools/LSPTool/LSPTool.ts)
 
 `getMethodAndParams(...)` 只支持固定几类：
 
@@ -222,7 +222,7 @@
 
 ## 14. `incomingCalls` / `outgoingCalls` 不是单 request，而是强制两段式调用
 
-源码镜像：[`../../sources/claude-code/src/tools/LSPTool/LSPTool.ts`](../../sources/claude-code/src/tools/LSPTool/LSPTool.ts)
+源码镜像：[`../../src/tools/LSPTool/LSPTool.ts`](../../src/tools/LSPTool/LSPTool.ts)
 
 这两种操作先跑：
 
@@ -237,7 +237,7 @@
 
 ## 15. “没有可用 server” 不是异常，而是被当成正常降级结果
 
-源码镜像：[`../../sources/claude-code/src/tools/LSPTool/LSPTool.ts`](../../sources/claude-code/src/tools/LSPTool/LSPTool.ts)
+源码镜像：[`../../src/tools/LSPTool/LSPTool.ts`](../../src/tools/LSPTool/LSPTool.ts)
 
 当：
 
@@ -251,7 +251,7 @@
 
 ## 16. location-based 结果还会过一层 `.gitignore` 过滤，说明 LSP 输出不会被原样直通给模型
 
-源码镜像：[`../../sources/claude-code/src/tools/LSPTool/LSPTool.ts`](../../sources/claude-code/src/tools/LSPTool/LSPTool.ts)
+源码镜像：[`../../src/tools/LSPTool/LSPTool.ts`](../../src/tools/LSPTool/LSPTool.ts)
 
 对这些 operation：
 
@@ -270,7 +270,7 @@
 
 ## 17. formatter 层承担了大量 defensive normalization，而不是只做排版
 
-源码镜像：[`../../sources/claude-code/src/tools/LSPTool/formatters.ts`](../../sources/claude-code/src/tools/LSPTool/formatters.ts)
+源码镜像：[`../../src/tools/LSPTool/formatters.ts`](../../src/tools/LSPTool/formatters.ts)
 
 这里干的事不只是美化文本，还包括：
 
@@ -286,7 +286,7 @@
 
 ## 18. UI 层也不是简单回显：tool-use 和 tool-result 走的是两套完全不同的上下文压缩协议
 
-源码镜像：[`../../sources/claude-code/src/tools/LSPTool/UI.tsx`](../../sources/claude-code/src/tools/LSPTool/UI.tsx), [`../../sources/claude-code/src/tools/LSPTool/symbolContext.ts`](../../sources/claude-code/src/tools/LSPTool/symbolContext.ts)
+源码镜像：[`../../src/tools/LSPTool/UI.tsx`](../../src/tools/LSPTool/UI.tsx), [`../../src/tools/LSPTool/symbolContext.ts`](../../src/tools/LSPTool/symbolContext.ts)
 
 tool-use message 会尽量展示：
 
@@ -311,7 +311,7 @@ tool-use message 会尽量展示：
 
 ## 19. LSP 还有一条完全平行的被动诊断 sidecar，不走 `LSPTool.call()`
 
-源码镜像：[`../../sources/claude-code/src/services/lsp/LSPDiagnosticRegistry.ts`](../../sources/claude-code/src/services/lsp/LSPDiagnosticRegistry.ts), [`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts)
+源码镜像：[`../../src/services/lsp/LSPDiagnosticRegistry.ts`](../../src/services/lsp/LSPDiagnosticRegistry.ts), [`../../src/utils/attachments.ts`](../../src/utils/attachments.ts)
 
 被动诊断链是：
 
@@ -325,7 +325,7 @@ tool-use message 会尽量展示：
 
 ## 20. 这条被动通道还刻意要求当前 agent 具备 Bash 能力，否则诊断根本不送
 
-源码镜像：[`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts)
+源码镜像：[`../../src/utils/attachments.ts`](../../src/utils/attachments.ts)
 
 `getLSPDiagnosticAttachments(...)` 第一层 gate 就是：
 
@@ -339,7 +339,7 @@ tool-use message 会尽量展示：
 
 ## 21. 诊断 registry 本身也内建了强 dedup 和体积上限
 
-源码镜像：[`../../sources/claude-code/src/services/lsp/LSPDiagnosticRegistry.ts`](../../sources/claude-code/src/services/lsp/LSPDiagnosticRegistry.ts)
+源码镜像：[`../../src/services/lsp/LSPDiagnosticRegistry.ts`](../../src/services/lsp/LSPDiagnosticRegistry.ts)
 
 它至少有这些限制：
 
@@ -352,7 +352,7 @@ tool-use message 会尽量展示：
 
 ## 22. classifier 和 streamlined output 也把 LSP 视作“安全搜索/读路径”，不是高风险执行工具
 
-源码镜像：[`../../sources/claude-code/src/utils/permissions/classifierDecision.ts`](../../sources/claude-code/src/utils/permissions/classifierDecision.ts), [`../../sources/claude-code/src/utils/streamlinedTransform.ts`](../../sources/claude-code/src/utils/streamlinedTransform.ts)
+源码镜像：[`../../src/utils/permissions/classifierDecision.ts`](../../src/utils/permissions/classifierDecision.ts), [`../../src/utils/streamlinedTransform.ts`](../../src/utils/streamlinedTransform.ts)
 
 两个侧面都能看出来：
 

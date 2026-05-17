@@ -14,7 +14,7 @@
 
 ## 1. `policySettings` 不是普通高优先级 source，而是多条 runtime gate 的专用开关面
 
-源码镜像：[`../../sources/claude-code/src/utils/managedEnv.ts`](../../sources/claude-code/src/utils/managedEnv.ts), [`../../sources/claude-code/src/utils/hooks/hooksConfigSnapshot.ts`](../../sources/claude-code/src/utils/hooks/hooksConfigSnapshot.ts), [`../../sources/claude-code/src/utils/permissions/permissionsLoader.ts`](../../sources/claude-code/src/utils/permissions/permissionsLoader.ts), [`../../sources/claude-code/src/services/mcp/config.ts`](../../sources/claude-code/src/services/mcp/config.ts), [`../../sources/claude-code/src/utils/settings/pluginOnlyPolicy.ts`](../../sources/claude-code/src/utils/settings/pluginOnlyPolicy.ts)
+源码镜像：[`../../src/utils/managedEnv.ts`](../../src/utils/managedEnv.ts), [`../../src/utils/hooks/hooksConfigSnapshot.ts`](../../src/utils/hooks/hooksConfigSnapshot.ts), [`../../src/utils/permissions/permissionsLoader.ts`](../../src/utils/permissions/permissionsLoader.ts), [`../../src/services/mcp/config.ts`](../../src/services/mcp/config.ts), [`../../src/utils/settings/pluginOnlyPolicy.ts`](../../src/utils/settings/pluginOnlyPolicy.ts)
 
 这几条链共同说明一个事实：`policySettings` 在 Claude Code 里不只是 merge-order 最后生效，而是被很多子系统显式单独读取，用来决定：
 
@@ -28,7 +28,7 @@
 
 ## 2. `applySafeConfigEnvironmentVariables()` 先应用 trusted env，再单独延后 `policySettings.env`
 
-源码镜像：[`../../sources/claude-code/src/utils/managedEnv.ts`](../../sources/claude-code/src/utils/managedEnv.ts)
+源码镜像：[`../../src/utils/managedEnv.ts`](../../src/utils/managedEnv.ts)
 
 这里最关键的顺序不是 merge，而是两段式装配：
 
@@ -41,7 +41,7 @@
 
 ## 3. `policySettings.env` 在 safe-path 里拥有“最后写入权”，但 project source 只保留 allowlist
 
-源码镜像：[`../../sources/claude-code/src/utils/managedEnv.ts`](../../sources/claude-code/src/utils/managedEnv.ts), [`../../sources/claude-code/src/utils/managedEnvConstants.ts`](../../sources/claude-code/src/utils/managedEnvConstants.ts)
+源码镜像：[`../../src/utils/managedEnv.ts`](../../src/utils/managedEnv.ts), [`../../src/utils/managedEnvConstants.ts`](../../src/utils/managedEnvConstants.ts)
 
 `applySafeConfigEnvironmentVariables()` 的策略是：
 
@@ -52,7 +52,7 @@
 
 ## 4. host-managed provider strip 说明 managed env 也不能越过宿主控制面
 
-源码镜像：[`../../sources/claude-code/src/utils/managedEnv.ts`](../../sources/claude-code/src/utils/managedEnv.ts), [`../../sources/claude-code/src/utils/managedEnvConstants.ts`](../../sources/claude-code/src/utils/managedEnvConstants.ts)
+源码镜像：[`../../src/utils/managedEnv.ts`](../../src/utils/managedEnv.ts), [`../../src/utils/managedEnvConstants.ts`](../../src/utils/managedEnvConstants.ts)
 
 即使是 settings-sourced env，也都会经过：
 
@@ -71,7 +71,7 @@
 
 ## 5. `onChangeAppState` 把 settings.env 的变化真正落实成进程级 env 重装
 
-源码镜像：[`../../sources/claude-code/src/state/onChangeAppState.ts`](../../sources/claude-code/src/state/onChangeAppState.ts)
+源码镜像：[`../../src/state/onChangeAppState.ts`](../../src/state/onChangeAppState.ts)
 
 当 settings 热更新完成后，不会只停留在 AppState 对象里。`onChangeAppState` 会在：
 
@@ -82,7 +82,7 @@
 
 ## 6. `hooksConfigSnapshot` 明确把 `policySettings` 当成 hooks 运行资格的仲裁者
 
-源码镜像：[`../../sources/claude-code/src/utils/hooks/hooksConfigSnapshot.ts`](../../sources/claude-code/src/utils/hooks/hooksConfigSnapshot.ts)
+源码镜像：[`../../src/utils/hooks/hooksConfigSnapshot.ts`](../../src/utils/hooks/hooksConfigSnapshot.ts)
 
 这个文件不是简单 `mergedSettings.hooks ?? {}`。它先看三层 gate：
 
@@ -96,7 +96,7 @@
 
 ## 7. non-managed `disableAllHooks` 并不能杀掉 managed hooks，它只会把系统推到“managed-only”
 
-源码镜像：[`../../sources/claude-code/src/utils/hooks/hooksConfigSnapshot.ts`](../../sources/claude-code/src/utils/hooks/hooksConfigSnapshot.ts)
+源码镜像：[`../../src/utils/hooks/hooksConfigSnapshot.ts`](../../src/utils/hooks/hooksConfigSnapshot.ts)
 
 这里有个很细但非常重要的分义：
 
@@ -107,7 +107,7 @@
 
 ## 8. `sessionStart` 和 `setup` 的 plugin hook 跳过逻辑直接复用了 managed-hooks gate
 
-源码镜像：[`../../sources/claude-code/src/utils/sessionStart.ts`](../../sources/claude-code/src/utils/sessionStart.ts)
+源码镜像：[`../../src/utils/sessionStart.ts`](../../src/utils/sessionStart.ts)
 
 `processSessionStartHooks()` 和 `processSetupHooks()` 在加载 plugin hooks 之前都会先看：
 
@@ -117,7 +117,7 @@
 
 ## 9. permission rules loader 的 managed-only 模式会同时影响“读取”和“提示用户持久化”
 
-源码镜像：[`../../sources/claude-code/src/utils/permissions/permissionsLoader.ts`](../../sources/claude-code/src/utils/permissions/permissionsLoader.ts)
+源码镜像：[`../../src/utils/permissions/permissionsLoader.ts`](../../src/utils/permissions/permissionsLoader.ts)
 
 `allowManagedPermissionRulesOnly` 命中后会触发两件事：
 
@@ -129,7 +129,7 @@
 
 ## 10. MCP allowlist 是 managed-only 可切换，denylist 则始终允许用户叠加
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/config.ts`](../../sources/claude-code/src/services/mcp/config.ts)
+源码镜像：[`../../src/services/mcp/config.ts`](../../src/services/mcp/config.ts)
 
 MCP 这里的政策分层很明确：
 
@@ -145,7 +145,7 @@ MCP 这里的政策分层很明确：
 
 ## 11. `strictPluginOnlyCustomization` 不是 plugin 开关，而是“surface 级来源封锁器”
 
-源码镜像：[`../../sources/claude-code/src/utils/settings/pluginOnlyPolicy.ts`](../../sources/claude-code/src/utils/settings/pluginOnlyPolicy.ts)
+源码镜像：[`../../src/utils/settings/pluginOnlyPolicy.ts`](../../src/utils/settings/pluginOnlyPolicy.ts)
 
 它不是简单 `enabledPlugins` 的延伸，而是一个 surface gate：
 
@@ -162,7 +162,7 @@ MCP 这里的政策分层很明确：
 
 ## 12. plugin policy 还有一条更硬的 force-disable 线：`enabledPlugins[pluginId] === false`
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginPolicy.ts`](../../sources/claude-code/src/utils/plugins/pluginPolicy.ts)
+源码镜像：[`../../src/utils/plugins/pluginPolicy.ts`](../../src/utils/plugins/pluginPolicy.ts)
 
 `isPluginBlockedByPolicy(pluginId)` 的规则非常直接：
 
@@ -177,7 +177,7 @@ MCP 这里的政策分层很明确：
 
 ## 13. 这几条 gate 组合起来，`policySettings` 实际上在重写“加载图”
 
-源码镜像：[`../../sources/claude-code/src/utils/managedEnv.ts`](../../sources/claude-code/src/utils/managedEnv.ts), [`../../sources/claude-code/src/utils/hooks/hooksConfigSnapshot.ts`](../../sources/claude-code/src/utils/hooks/hooksConfigSnapshot.ts), [`../../sources/claude-code/src/utils/permissions/permissionsLoader.ts`](../../sources/claude-code/src/utils/permissions/permissionsLoader.ts), [`../../sources/claude-code/src/services/mcp/config.ts`](../../sources/claude-code/src/services/mcp/config.ts), [`../../sources/claude-code/src/utils/settings/pluginOnlyPolicy.ts`](../../sources/claude-code/src/utils/settings/pluginOnlyPolicy.ts)
+源码镜像：[`../../src/utils/managedEnv.ts`](../../src/utils/managedEnv.ts), [`../../src/utils/hooks/hooksConfigSnapshot.ts`](../../src/utils/hooks/hooksConfigSnapshot.ts), [`../../src/utils/permissions/permissionsLoader.ts`](../../src/utils/permissions/permissionsLoader.ts), [`../../src/services/mcp/config.ts`](../../src/services/mcp/config.ts), [`../../src/utils/settings/pluginOnlyPolicy.ts`](../../src/utils/settings/pluginOnlyPolicy.ts)
 
 这几条线放在一起看，Claude Code 对 `policySettings` 的处理方式其实是：
 

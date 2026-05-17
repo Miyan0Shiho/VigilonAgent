@@ -12,7 +12,7 @@
 
 ## 1. `BackgroundTasksDialog` 继续按宿主硬分叉，dream/workflow/monitor 都不是“通用 task detail”
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 在 `viewState.mode === 'detail'` 的分支里，当前镜像能直接看见：
 
@@ -24,7 +24,7 @@
 
 ## 2. `WorkflowDetailDialog` 和 `MonitorMcpDetailDialog` 在当前镜像里只有 contract，可见性必须诚实降级
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 当前镜像里能看见：
 
@@ -47,7 +47,7 @@
 
 ## 3. `DreamDetailDialog` 的标题直接暴露了它的产品语义：它不是 dream 聊天窗口，而是 memory consolidation 观察面
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/DreamDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/DreamDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/DreamDetailDialog.tsx`](../../src/components/tasks/DreamDetailDialog.tsx)
 
 这份 dialog 的标题被硬编码成：
 
@@ -63,7 +63,7 @@
 
 ## 4. dream detail 仍共享 detail family 的 modal grammar，但动作更克制
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/DreamDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/DreamDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/DreamDetailDialog.tsx`](../../src/components/tasks/DreamDetailDialog.tsx)
 
 它继续复用 detail family 共有的外壳协议：
 
@@ -85,8 +85,8 @@
 
 源码镜像：
 
-- [`../../sources/claude-code/src/components/tasks/DreamDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/DreamDetailDialog.tsx)
-- [`../../sources/claude-code/src/tasks/DreamTask/DreamTask.ts`](../../sources/claude-code/src/tasks/DreamTask/DreamTask.ts)
+- [`../../src/components/tasks/DreamDetailDialog.tsx`](../../src/components/tasks/DreamDetailDialog.tsx)
+- [`../../src/tasks/DreamTask/DreamTask.ts`](../../src/tasks/DreamTask/DreamTask.ts)
 
 这条链有几层明确裁剪：
 
@@ -100,7 +100,7 @@
 
 ## 6. tool use 在 dream detail 里被折叠成计数，而不是 activity timeline
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/DreamDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/DreamDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/DreamDetailDialog.tsx`](../../src/components/tasks/DreamDetailDialog.tsx)
 
 每条可见 turn 底下最多只会再追加：
 
@@ -110,7 +110,7 @@
 
 ## 7. `DreamTask` 本体明确声明：这是 UI surfacing shell，不是 dream agent 本身
 
-源码镜像：[`../../sources/claude-code/src/tasks/DreamTask/DreamTask.ts`](../../sources/claude-code/src/tasks/DreamTask/DreamTask.ts)
+源码镜像：[`../../src/tasks/DreamTask/DreamTask.ts`](../../src/tasks/DreamTask/DreamTask.ts)
 
 文件头注释已经把边界写死了：
 
@@ -122,7 +122,7 @@
 
 ## 8. dream phase 被故意压缩成两态：`starting -> updating`
 
-源码镜像：[`../../sources/claude-code/src/tasks/DreamTask/DreamTask.ts`](../../sources/claude-code/src/tasks/DreamTask/DreamTask.ts)
+源码镜像：[`../../src/tasks/DreamTask/DreamTask.ts`](../../src/tasks/DreamTask/DreamTask.ts)
 
 `DreamTask` 明确没有去解析 dream prompt 的完整四阶段结构。它只保留：
 
@@ -137,7 +137,7 @@
 
 ## 9. `filesTouched` 是“至少这些文件被碰过”，不是精确改动清单
 
-源码镜像：[`../../sources/claude-code/src/tasks/DreamTask/DreamTask.ts`](../../sources/claude-code/src/tasks/DreamTask/DreamTask.ts)
+源码镜像：[`../../src/tasks/DreamTask/DreamTask.ts`](../../src/tasks/DreamTask/DreamTask.ts)
 
 `filesTouched` 的注释已经明确给出限制：
 
@@ -151,8 +151,8 @@
 
 源码镜像：
 
-- [`../../sources/claude-code/src/components/tasks/BackgroundTask.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTask.tsx)
-- [`../../sources/claude-code/src/components/tasks/DreamDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/DreamDetailDialog.tsx)
+- [`../../src/components/tasks/BackgroundTask.tsx`](../../src/components/tasks/BackgroundTask.tsx)
+- [`../../src/components/tasks/DreamDetailDialog.tsx`](../../src/components/tasks/DreamDetailDialog.tsx)
 
 列表行的 dream 语法是：
 
@@ -172,7 +172,7 @@ detail 页则升级成：
 
 ## 11. dream 的 stop 语义和普通 kill 不同：它还要回滚 consolidation lock
 
-源码镜像：[`../../sources/claude-code/src/tasks/DreamTask/DreamTask.ts`](../../sources/claude-code/src/tasks/DreamTask/DreamTask.ts)
+源码镜像：[`../../src/tasks/DreamTask/DreamTask.ts`](../../src/tasks/DreamTask/DreamTask.ts)
 
 `DreamTask.kill(...)` 做的不是普通终止：
 
@@ -184,7 +184,7 @@ detail 页则升级成：
 
 ## 12. workflow detail 的 contract 明确暴露了“多 agent orchestration”才是它的宿主真相
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 即使主体文件缺失，当前 contract 也已经能说明两件事：
 
@@ -195,7 +195,7 @@ detail 页则升级成：
 
 ## 13. monitor detail 的 contract 明确更窄：它更像 observe/stop surface，而不是 agent orchestration console
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 `MonitorMcpDetailDialog` 当前可见的 contract 只有：
 

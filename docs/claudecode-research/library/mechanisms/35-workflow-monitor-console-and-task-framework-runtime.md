@@ -6,7 +6,7 @@
 
 ## 1. 这条链的起点不是 tool body，而是“任务已经存在时，前台和框架如何接住它”
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx), [`../../sources/claude-code/src/utils/task/framework.ts`](../../sources/claude-code/src/utils/task/framework.ts)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx), [`../../src/utils/task/framework.ts`](../../src/utils/task/framework.ts)
 
 也就是说，这篇不回答：
 
@@ -21,7 +21,7 @@
 
 ## 2. `BackgroundTasksDialog` 明确把 workflow 和 monitor 当作独立 list item 类型，而不是借用 bash/agent 皮肤
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 `ListItem` 联合类型里显式存在：
 
@@ -32,7 +32,7 @@
 
 ## 3. 两条链都走 `feature() + require()` 的惰性接线，说明控制台也遵守 build-time 裁剪策略
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 可见接线包括：
 
@@ -61,7 +61,7 @@
 
 ## 5. 列表分组顺序不是随意排版，而是一个稳定的任务优先级视图
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 排序后会分成：
 
@@ -77,7 +77,7 @@
 
 ## 6. workflow 和 monitor 都有专属 section，不被混进 “Shells” 或 generic background tasks
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 控制台会显式渲染：
 
@@ -88,7 +88,7 @@
 
 ## 7. `toListItem()` 说明两类任务在 label 生成上遵循不同语义
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 映射规则是：
 
@@ -99,7 +99,7 @@
 
 ## 8. `BackgroundTask.tsx` 进一步证明 workflow 和 monitor 的一行显示语法不一样
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTask.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTask.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTask.tsx`](../../src/components/tasks/BackgroundTask.tsx)
 
 对于 `local_workflow`：
 
@@ -118,7 +118,7 @@
 
 ## 9. workflow 行里出现 `agentCount`，说明当前可见外壳已假定 workflow 是多 agent 编排对象
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTask.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTask.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTask.tsx`](../../src/components/tasks/BackgroundTask.tsx)
 
 即使没有主体执行器源码，单从 `task.agentCount` 进入 UI 就能确认：
 
@@ -127,7 +127,7 @@
 
 ## 10. `x` 快捷键对 workflow/monitor 都生效，但 workflow 额外有 `skip/retry agent` 侧路，说明 stop semantics 不对称
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 列表模式下：
 
@@ -143,7 +143,7 @@
 
 ## 11. workflow detail 还有一个特别的完成后宽限: detail view 不会像普通任务那样立刻被踢回列表
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 `useEffect` 里专门写了：
 
@@ -153,7 +153,7 @@
 
 ## 12. `tasks/pillLabel.ts` 和控制台 section 共同构成了 workflow/monitor 的产品词汇表
 
-源码镜像：[`../../sources/claude-code/src/tasks/pillLabel.ts`](../../sources/claude-code/src/tasks/pillLabel.ts)
+源码镜像：[`../../src/tasks/pillLabel.ts`](../../src/tasks/pillLabel.ts)
 
 这里明确规定：
 
@@ -170,7 +170,7 @@
 
 ## 13. shell-monitor 是另一条完全不同的 monitor 语义，不能和 `monitor_mcp` 混为一谈
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalShellTask/guards.ts`](../../sources/claude-code/src/tasks/LocalShellTask/LocalShellTask.tsx), [`../../sources/claude-code/src/tasks/pillLabel.ts`](../../sources/claude-code/src/tasks/pillLabel.ts)
+源码镜像：[`../../src/tasks/LocalShellTask/guards.ts`](../../src/tasks/LocalShellTask/LocalShellTask.tsx), [`../../src/tasks/pillLabel.ts`](../../src/tasks/pillLabel.ts)
 
 `LocalShellTask` 里还有：
 
@@ -188,7 +188,7 @@
 
 ## 14. `LocalShellTask` 的 monitor 通知分支，揭示了 shell-monitor 与 MCP monitor 共名但不同意图
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalShellTask/LocalShellTask.tsx`](../../sources/claude-code/src/tasks/LocalShellTask/LocalShellTask.tsx)
+源码镜像：[`../../src/tasks/LocalShellTask/LocalShellTask.tsx`](../../src/tasks/LocalShellTask/LocalShellTask.tsx)
 
 当 `kind === 'monitor'` 时：
 
@@ -200,7 +200,7 @@
 
 ## 15. `task/framework.ts` 说明 workflow 一进入任务框架，就会获得统一的 `task_started` SDK 书挡
 
-源码镜像：[`../../sources/claude-code/src/utils/task/framework.ts`](../../sources/claude-code/src/utils/task/framework.ts)
+源码镜像：[`../../src/utils/task/framework.ts`](../../src/utils/task/framework.ts)
 
 `registerTask()` 会统一发：
 
@@ -218,7 +218,7 @@
 
 ## 16. `registerTask()` 的 replacement 逻辑说明 workflow/monitor 这类任务支持 resume/re-register，不是纯一次性前台对象
 
-源码镜像：[`../../sources/claude-code/src/utils/task/framework.ts`](../../sources/claude-code/src/utils/task/framework.ts)
+源码镜像：[`../../src/utils/task/framework.ts`](../../src/utils/task/framework.ts)
 
 重新注册时会保留：
 
@@ -232,7 +232,7 @@
 
 ## 17. `evictTerminalTask()` 对所有 terminal task 通用，但 workflow 因为 detail 宽限和 retain/evictAfter 机制，会比普通任务更晚离场
 
-源码镜像：[`../../sources/claude-code/src/utils/task/framework.ts`](../../sources/claude-code/src/utils/task/framework.ts)
+源码镜像：[`../../src/utils/task/framework.ts`](../../src/utils/task/framework.ts)
 
 框架层只看：
 
@@ -244,7 +244,7 @@
 
 ## 18. `emitTaskProgress()` 说明 workflow 并不只发 started/completed，它还有专门的 `workflow_progress` 负载
 
-源码镜像：[`../../sources/claude-code/src/utils/task/sdkProgress.ts`](../../sources/claude-code/src/utils/task/sdkProgress.ts)
+源码镜像：[`../../src/utils/task/sdkProgress.ts`](../../src/utils/task/sdkProgress.ts)
 
 这个 helper 同时服务：
 

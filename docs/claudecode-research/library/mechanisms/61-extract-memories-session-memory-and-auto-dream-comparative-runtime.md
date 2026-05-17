@@ -14,9 +14,9 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/extractMemories/extractMemories.ts`](../../sources/claude-code/src/services/extractMemories/extractMemories.ts)
-- [`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
-- [`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
+- [`../../src/services/extractMemories/extractMemories.ts`](../../src/services/extractMemories/extractMemories.ts)
+- [`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
+- [`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
 
 三者的职责分工在文件头和主流程里都很明确：
 
@@ -36,10 +36,10 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 源码镜像：
 
-- [`../../sources/claude-code/src/utils/forkedAgent.ts`](../../sources/claude-code/src/utils/forkedAgent.ts)
-- [`../../sources/claude-code/src/services/extractMemories/extractMemories.ts`](../../sources/claude-code/src/services/extractMemories/extractMemories.ts)
-- [`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
-- [`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
+- [`../../src/utils/forkedAgent.ts`](../../src/utils/forkedAgent.ts)
+- [`../../src/services/extractMemories/extractMemories.ts`](../../src/services/extractMemories/extractMemories.ts)
+- [`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
+- [`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
 
 共同点是：
 
@@ -65,7 +65,7 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 ## 3. `extractMemories` 是“每轮结束后，尽量便宜地提取 durable facts”
 
-源码镜像：[`../../sources/claude-code/src/services/extractMemories/extractMemories.ts`](../../sources/claude-code/src/services/extractMemories/extractMemories.ts)
+源码镜像：[`../../src/services/extractMemories/extractMemories.ts`](../../src/services/extractMemories/extractMemories.ts)
 
 它的触发位置是：
 
@@ -85,8 +85,8 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
-- [`../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts)
+- [`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
+- [`../../src/services/SessionMemory/sessionMemoryUtils.ts`](../../src/services/SessionMemory/sessionMemoryUtils.ts)
 
 它的触发点不是“每轮都提取”，而是：
 
@@ -106,8 +106,8 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
-- [`../../sources/claude-code/src/services/autoDream/consolidationLock.ts`](../../sources/claude-code/src/services/autoDream/consolidationLock.ts)
+- [`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
+- [`../../src/services/autoDream/consolidationLock.ts`](../../src/services/autoDream/consolidationLock.ts)
 
 它不是按单轮信息量触发，而是按：
 
@@ -125,9 +125,9 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/extractMemories/extractMemories.ts`](../../sources/claude-code/src/services/extractMemories/extractMemories.ts)
-- [`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
-- [`../../sources/claude-code/src/services/autoDream/consolidationPrompt.ts`](../../sources/claude-code/src/services/autoDream/consolidationPrompt.ts)
+- [`../../src/services/extractMemories/extractMemories.ts`](../../src/services/extractMemories/extractMemories.ts)
+- [`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
+- [`../../src/services/autoDream/consolidationPrompt.ts`](../../src/services/autoDream/consolidationPrompt.ts)
 
 写入目标分别是：
 
@@ -144,8 +144,8 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
-- [`../../sources/claude-code/src/services/extractMemories/extractMemories.ts`](../../sources/claude-code/src/services/extractMemories/extractMemories.ts)
+- [`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
+- [`../../src/services/extractMemories/extractMemories.ts`](../../src/services/extractMemories/extractMemories.ts)
 
 `sessionMemory` 的 `createMemoryFileCanUseTool(memoryPath)` 只允许：
 
@@ -165,7 +165,7 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 ## 8. `extractMemories` 有一条明确的互斥原则：主 agent 已经写过 memory，就别再 fork 一次
 
-源码镜像：[`../../sources/claude-code/src/services/extractMemories/extractMemories.ts`](../../sources/claude-code/src/services/extractMemories/extractMemories.ts)
+源码镜像：[`../../src/services/extractMemories/extractMemories.ts`](../../src/services/extractMemories/extractMemories.ts)
 
 `hasMemoryWritesSince(...)` 会先检查：
 
@@ -180,7 +180,7 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 ## 9. `extractMemories` 还有 trailing/coalescing 语义，承认自己会慢
 
-源码镜像：[`../../sources/claude-code/src/services/extractMemories/extractMemories.ts`](../../sources/claude-code/src/services/extractMemories/extractMemories.ts)
+源码镜像：[`../../src/services/extractMemories/extractMemories.ts`](../../src/services/extractMemories/extractMemories.ts)
 
 如果 extraction 已经在进行中：
 
@@ -199,8 +199,8 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
-- [`../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemoryUtils.ts)
+- [`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
+- [`../../src/services/SessionMemory/sessionMemoryUtils.ts`](../../src/services/SessionMemory/sessionMemoryUtils.ts)
 
 `shouldExtractMemory(messages)` 的关键逻辑是：
 
@@ -218,7 +218,7 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 ## 11. `sessionMemory` 还绑定 `auto-compact`，说明它本质上是压缩基础设施的一部分
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
 
 `initSessionMemory()` 里有一条关键判断：
 
@@ -231,8 +231,8 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/extractMemories/extractMemories.ts`](../../sources/claude-code/src/services/extractMemories/extractMemories.ts)
-- [`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
+- [`../../src/services/extractMemories/extractMemories.ts`](../../src/services/extractMemories/extractMemories.ts)
+- [`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
 
 两者都会在成功后走 `appendSystemMessage`，但用法不同：
 
@@ -250,7 +250,7 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 ## 13. `sessionMemory` 默认不会向主 transcript 插这种保存提示
 
-源码镜像：[`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
+源码镜像：[`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
 
 和另外两条线相比，session memory 完成后主要做的是：
 
@@ -264,8 +264,8 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/autoDream/autoDream.ts`](../../sources/claude-code/src/services/autoDream/autoDream.ts)
-- [`../../sources/claude-code/src/tasks.ts`](../../sources/claude-code/src/tasks.ts)
+- [`../../src/services/autoDream/autoDream.ts`](../../src/services/autoDream/autoDream.ts)
+- [`../../src/tasks.ts`](../../src/tasks.ts)
 
 只有 auto-dream 会：
 
@@ -279,9 +279,9 @@ Claude Code 当前并不是“只有一个 memory 后台代理”。在源码里
 
 源码镜像：
 
-- [`../../sources/claude-code/src/services/extractMemories/extractMemories.ts`](../../sources/claude-code/src/services/extractMemories/extractMemories.ts)
-- [`../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts`](../../sources/claude-code/src/services/SessionMemory/sessionMemory.ts)
-- [`../../sources/claude-code/src/services/autoDream/consolidationPrompt.ts`](../../sources/claude-code/src/services/autoDream/consolidationPrompt.ts)
+- [`../../src/services/extractMemories/extractMemories.ts`](../../src/services/extractMemories/extractMemories.ts)
+- [`../../src/services/SessionMemory/sessionMemory.ts`](../../src/services/SessionMemory/sessionMemory.ts)
+- [`../../src/services/autoDream/consolidationPrompt.ts`](../../src/services/autoDream/consolidationPrompt.ts)
 
 可以把它们理解成三种不同粒度的压缩：
 

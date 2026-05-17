@@ -6,7 +6,7 @@
 
 ## 1. 这不是业务 UI，而是所有业务 UI 共享的交互地基
 
-源码镜像：[`../../sources/claude-code/src/context/overlayContext.tsx`](../../sources/claude-code/src/context/overlayContext.tsx), [`../../sources/claude-code/src/context/modalContext.tsx`](../../sources/claude-code/src/context/modalContext.tsx), [`../../sources/claude-code/src/context/promptOverlayContext.tsx`](../../sources/claude-code/src/context/promptOverlayContext.tsx), [`../../sources/claude-code/src/keybindings/KeybindingContext.tsx`](../../sources/claude-code/src/keybindings/KeybindingContext.tsx), [`../../sources/claude-code/src/keybindings/useKeybinding.ts`](../../sources/claude-code/src/keybindings/useKeybinding.ts), [`../../sources/claude-code/src/components/FullscreenLayout.tsx`](../../sources/claude-code/src/components/FullscreenLayout.tsx)
+源码镜像：[`../../src/context/overlayContext.tsx`](../../src/context/overlayContext.tsx), [`../../src/context/modalContext.tsx`](../../src/context/modalContext.tsx), [`../../src/context/promptOverlayContext.tsx`](../../src/context/promptOverlayContext.tsx), [`../../src/keybindings/KeybindingContext.tsx`](../../src/keybindings/KeybindingContext.tsx), [`../../src/keybindings/useKeybinding.ts`](../../src/keybindings/useKeybinding.ts), [`../../src/components/FullscreenLayout.tsx`](../../src/components/FullscreenLayout.tsx)
 
 这一层不直接对应某一个功能按钮，而是给多个子系统同时供血：
 
@@ -22,7 +22,7 @@
 
 ## 2. `overlayContext` 解决的是 Escape 所有权，不只是登记弹窗
 
-源码镜像：[`../../sources/claude-code/src/context/overlayContext.tsx`](../../sources/claude-code/src/context/overlayContext.tsx), [`../../sources/claude-code/src/hooks/useCancelRequest.ts`](../../sources/claude-code/src/hooks/useCancelRequest.ts)
+源码镜像：[`../../src/context/overlayContext.tsx`](../../src/context/overlayContext.tsx), [`../../src/hooks/useCancelRequest.ts`](../../src/hooks/useCancelRequest.ts)
 
 `useRegisterOverlay(id, enabled)` 会在挂载时把 overlay id 写入 `AppState.activeOverlays`，卸载时自动移除。
 
@@ -41,7 +41,7 @@
 
 ## 3. overlay registry 还顺手修复了 Ink 的残影问题
 
-源码镜像：[`../../sources/claude-code/src/context/overlayContext.tsx`](../../sources/claude-code/src/context/overlayContext.tsx)
+源码镜像：[`../../src/context/overlayContext.tsx`](../../src/context/overlayContext.tsx)
 
 `useRegisterOverlay()` 里还有一段更底层的 `useLayoutEffect` cleanup：overlay 卸载时调用 `instances.get(process.stdout)?.invalidatePrevFrame()`。
 
@@ -55,7 +55,7 @@
 
 ## 4. `promptOverlayContext` 解决的是“浮层不能被底部 slot 裁掉”
 
-源码镜像：[`../../sources/claude-code/src/context/promptOverlayContext.tsx`](../../sources/claude-code/src/components/FullscreenLayout.tsx)
+源码镜像：[`../../src/context/promptOverlayContext.tsx`](../../src/components/FullscreenLayout.tsx)
 
 `FullscreenLayout` 的 bottom slot 有 `overflowY:hidden`，这个裁剪本身是负载关键路径，因为 tall paste 会压缩 `ScrollBox`。
 
@@ -75,7 +75,7 @@
 
 ## 5. `modalContext` 解决的是 slash dialog 的内部尺寸协议
 
-源码镜像：[`../../sources/claude-code/src/context/modalContext.tsx`](../../sources/claude-code/src/components/FullscreenLayout.tsx)
+源码镜像：[`../../src/context/modalContext.tsx`](../../src/components/FullscreenLayout.tsx)
 
 `FullscreenLayout` 的 `modal` slot 不是全终端尺寸，而是一个底部锚定 pane：
 
@@ -99,7 +99,7 @@
 
 ## 6. `KeybindingContext` 是动作解析器，不是快捷键常量表
 
-源码镜像：[`../../sources/claude-code/src/keybindings/KeybindingContext.tsx`](../../sources/claude-code/src/keybindings/KeybindingContext.tsx), [`../../sources/claude-code/src/keybindings/resolver.ts`](../../sources/claude-code/src/keybindings/resolver.ts), [`../../sources/claude-code/src/keybindings/defaultBindings.ts`](../../sources/claude-code/src/keybindings/defaultBindings.ts)
+源码镜像：[`../../src/keybindings/KeybindingContext.tsx`](../../src/keybindings/KeybindingContext.tsx), [`../../src/keybindings/resolver.ts`](../../src/keybindings/resolver.ts), [`../../src/keybindings/defaultBindings.ts`](../../src/keybindings/defaultBindings.ts)
 
 这条链至少有四层：
 
@@ -114,7 +114,7 @@
 
 ## 7. 默认键位本身已经是平台与功能旗标耦合的
 
-源码镜像：[`../../sources/claude-code/src/keybindings/defaultBindings.ts`](../../sources/claude-code/src/keybindings/defaultBindings.ts)
+源码镜像：[`../../src/keybindings/defaultBindings.ts`](../../src/keybindings/defaultBindings.ts)
 
 `DEFAULT_BINDINGS` 不是静态 JSON，而是带条件逻辑：
 
@@ -127,7 +127,7 @@
 
 ## 8. chord 不是附加功能，而是解析链的一等状态
 
-源码镜像：[`../../sources/claude-code/src/keybindings/resolver.ts`](../../sources/claude-code/src/keybindings/resolver.ts), [`../../sources/claude-code/src/keybindings/KeybindingContext.tsx`](../../sources/claude-code/src/keybindings/KeybindingContext.tsx)
+源码镜像：[`../../src/keybindings/resolver.ts`](../../src/keybindings/resolver.ts), [`../../src/keybindings/KeybindingContext.tsx`](../../src/keybindings/KeybindingContext.tsx)
 
 `resolveKeyWithChordState()` 明确把结果拆成五类：
 
@@ -148,7 +148,7 @@
 
 ## 9. handler registry 把“谁来执行 action”从解析层里剥离出来
 
-源码镜像：[`../../sources/claude-code/src/keybindings/KeybindingContext.tsx`](../../sources/claude-code/src/keybindings/KeybindingContext.tsx), [`../../sources/claude-code/src/keybindings/useKeybinding.ts`](../../sources/claude-code/src/keybindings/useKeybinding.ts)
+源码镜像：[`../../src/keybindings/KeybindingContext.tsx`](../../src/keybindings/KeybindingContext.tsx), [`../../src/keybindings/useKeybinding.ts`](../../src/keybindings/useKeybinding.ts)
 
 `KeybindingProvider` 内部有一个 `handlerRegistryRef: Map<string, Set<HandlerRegistration>>`，注册项至少包含：
 
@@ -167,7 +167,7 @@
 
 ## 10. `useRegisterKeybindingContext()` 是上下文抢占机制
 
-源码镜像：[`../../sources/claude-code/src/keybindings/KeybindingContext.tsx`](../../sources/claude-code/src/keybindings/KeybindingContext.tsx), [`../../sources/claude-code/src/hooks/useTypeahead.tsx`](../../sources/claude-code/src/hooks/useTypeahead.tsx), [`../../sources/claude-code/src/components/ThemePicker.tsx`](../../sources/claude-code/src/components/ThemePicker.tsx)
+源码镜像：[`../../src/keybindings/KeybindingContext.tsx`](../../src/keybindings/KeybindingContext.tsx), [`../../src/hooks/useTypeahead.tsx`](../../src/hooks/useTypeahead.tsx), [`../../src/components/ThemePicker.tsx`](../../src/components/ThemePicker.tsx)
 
 这个 hook 会在组件挂载时把自己的 context 加入 active set，卸载时移除。
 
@@ -181,7 +181,7 @@
 
 ## 11. `useKeybinding()` 不是简单语法糖，它封装了传播控制
 
-源码镜像：[`../../sources/claude-code/src/keybindings/useKeybinding.ts`](../../sources/claude-code/src/keybindings/useKeybinding.ts)
+源码镜像：[`../../src/keybindings/useKeybinding.ts`](../../src/keybindings/useKeybinding.ts)
 
 这个 hook 干了四件很关键的事：
 
@@ -196,7 +196,7 @@
 
 ## 12. `useCancelRequest` 说明 overlay 和 keybinding 底座已经接到 agent 控制面
 
-源码镜像：[`../../sources/claude-code/src/hooks/useCancelRequest.ts`](../../sources/claude-code/src/hooks/useCancelRequest.ts)
+源码镜像：[`../../src/hooks/useCancelRequest.ts`](../../src/hooks/useCancelRequest.ts)
 
 这份文件把前台交互底座和后台 agent 控制直接接起来了。
 
@@ -219,7 +219,7 @@
 
 ## 13. `FullscreenLayout` 是 Claude Code 前台的真正装配器
 
-源码镜像：[`../../sources/claude-code/src/components/FullscreenLayout.tsx`](../../sources/claude-code/src/components/FullscreenLayout.tsx)
+源码镜像：[`../../src/components/FullscreenLayout.tsx`](../../src/components/FullscreenLayout.tsx)
 
 如果说 `PromptInput` 是输入面总控，那么 `FullscreenLayout` 就是显示面总控。
 
@@ -242,7 +242,7 @@
 
 ## 14. `ScrollChromeContext`、`useUnseenDivider()` 和 pill 组成了滚动态的副控制面
 
-源码镜像：[`../../sources/claude-code/src/components/FullscreenLayout.tsx`](../../sources/claude-code/src/components/FullscreenLayout.tsx)
+源码镜像：[`../../src/components/FullscreenLayout.tsx`](../../src/components/FullscreenLayout.tsx)
 
 这条链单独值得注意，因为它不属于消息内容本身，而属于“消息阅读状态”：
 
@@ -255,7 +255,7 @@
 
 ## 15. `FullscreenLayout` 还负责把终端超链接接回本机动作
 
-源码镜像：[`../../sources/claude-code/src/components/FullscreenLayout.tsx`](../../sources/claude-code/src/components/FullscreenLayout.tsx)
+源码镜像：[`../../src/components/FullscreenLayout.tsx`](../../src/components/FullscreenLayout.tsx)
 
 在全屏环境里，它会把 Ink instance 的 `onHyperlinkClick` 接管掉：
 

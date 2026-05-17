@@ -12,7 +12,7 @@
 
 ## 1. `BackgroundTasksDialog` 在 detail route 上显式分宿主，不存在“统一 detail 模板”
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 进入 `viewState.mode === 'detail'` 后，路由是硬编码分叉的：
 
@@ -27,9 +27,9 @@
 
 源码镜像：
 
-- [`../../sources/claude-code/src/components/tasks/ShellDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/ShellDetailDialog.tsx)
-- [`../../sources/claude-code/src/components/tasks/AsyncAgentDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/AsyncAgentDetailDialog.tsx)
-- [`../../sources/claude-code/src/components/tasks/InProcessTeammateDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/InProcessTeammateDetailDialog.tsx)
+- [`../../src/components/tasks/ShellDetailDialog.tsx`](../../src/components/tasks/ShellDetailDialog.tsx)
+- [`../../src/components/tasks/AsyncAgentDetailDialog.tsx`](../../src/components/tasks/AsyncAgentDetailDialog.tsx)
+- [`../../src/components/tasks/InProcessTeammateDetailDialog.tsx`](../../src/components/tasks/InProcessTeammateDetailDialog.tsx)
 
 三者都复用了同一套外壳协议：
 
@@ -43,7 +43,7 @@
 
 ## 3. `ShellDetailDialog` 的 host truth 是“命令 + 输出文件尾部”，不是 activity timeline
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/ShellDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/ShellDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/ShellDetailDialog.tsx`](../../src/components/tasks/ShellDetailDialog.tsx)
 
 这份 dialog 首先展示的是：
 
@@ -63,7 +63,7 @@
 
 ## 4. shell detail 用 `tailFile()` + `Suspense` + `useDeferredValue` 维持低抖动输出预览
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/ShellDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/ShellDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/ShellDetailDialog.tsx`](../../src/components/tasks/ShellDetailDialog.tsx)
 
 它没有直接把整个输出文件读进内存，而是：
 
@@ -77,7 +77,7 @@
 
 ## 5. shell 输出视图故意只保留最后 10 行，并明确告诉你它是不完整的
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/ShellDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/ShellDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/ShellDetailDialog.tsx`](../../src/components/tasks/ShellDetailDialog.tsx)
 
 `ShellOutputContent` 会：
 
@@ -91,7 +91,7 @@
 
 ## 6. `AsyncAgentDetailDialog` 的 host truth 是“agent 进度摘要”，不是输出文件
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/AsyncAgentDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/AsyncAgentDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/AsyncAgentDetailDialog.tsx`](../../src/components/tasks/AsyncAgentDetailDialog.tsx)
 
 local async agent 的 detail 重点变成了：
 
@@ -105,7 +105,7 @@ local async agent 的 detail 重点变成了：
 
 ## 7. async agent detail 先把 prompt 解释成“计划对象”，再退回普通文本
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/AsyncAgentDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/AsyncAgentDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/AsyncAgentDetailDialog.tsx`](../../src/components/tasks/AsyncAgentDetailDialog.tsx)
 
 这份 dialog 不会无脑展示 `prompt` 原文，而是先：
 
@@ -119,8 +119,8 @@ local async agent 的 detail 重点变成了：
 
 源码镜像：
 
-- [`../../sources/claude-code/src/components/tasks/AsyncAgentDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/AsyncAgentDetailDialog.tsx)
-- [`../../sources/claude-code/src/components/tasks/renderToolActivity.tsx`](../../sources/claude-code/src/components/tasks/renderToolActivity.tsx)
+- [`../../src/components/tasks/AsyncAgentDetailDialog.tsx`](../../src/components/tasks/AsyncAgentDetailDialog.tsx)
+- [`../../src/components/tasks/renderToolActivity.tsx`](../../src/components/tasks/renderToolActivity.tsx)
 
 running 时它会读取：
 
@@ -131,7 +131,7 @@ running 时它会读取：
 
 ## 9. `InProcessTeammateDetailDialog` 继承 agent 摘要骨架，但把 swarm 身份和前台切换做成一级动作
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/InProcessTeammateDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/InProcessTeammateDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/InProcessTeammateDetailDialog.tsx`](../../src/components/tasks/InProcessTeammateDetailDialog.tsx)
 
 teammate detail 和 async agent detail 有明显同构：
 
@@ -151,8 +151,8 @@ teammate detail 和 async agent detail 有明显同构：
 
 源码镜像：
 
-- [`../../sources/claude-code/src/components/tasks/InProcessTeammateDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/InProcessTeammateDetailDialog.tsx)
-- [`../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx`](../../sources/claude-code/src/components/tasks/taskStatusUtils.tsx)
+- [`../../src/components/tasks/InProcessTeammateDetailDialog.tsx`](../../src/components/tasks/InProcessTeammateDetailDialog.tsx)
+- [`../../src/components/tasks/taskStatusUtils.tsx`](../../src/components/tasks/taskStatusUtils.tsx)
 
 标题行除了 `@agentName` 之外，还会补：
 
@@ -164,8 +164,8 @@ teammate detail 和 async agent detail 有明显同构：
 
 源码镜像：
 
-- [`../../sources/claude-code/src/components/tasks/InProcessTeammateDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/InProcessTeammateDetailDialog.tsx)
-- [`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+- [`../../src/components/tasks/InProcessTeammateDetailDialog.tsx`](../../src/components/tasks/InProcessTeammateDetailDialog.tsx)
+- [`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 当 teammate 仍在 running 时：
 
@@ -176,7 +176,7 @@ teammate detail 和 async agent detail 有明显同构：
 
 ## 12. 三类 detail 的 stop 语义也不同
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 三类 detail 都会在 running 时显示 `x`，但真正接的 kill path 不一样：
 

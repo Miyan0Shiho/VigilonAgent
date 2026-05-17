@@ -18,7 +18,7 @@
 
 ## 1. `LocalAgentTaskState` 不是普通后台任务，而是 agent transcript 的本地宿主对象
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 `LocalAgentTaskState` 除了常见 task 字段，还额外挂了一组只属于 agent 的运行时状态：
 
@@ -43,7 +43,7 @@
 
 ## 2. `local_agent` 被故意切成两类：`main-session` 之外的才进入 panel 生态
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 `isPanelAgentTask()` 的定义非常硬：
 
@@ -54,7 +54,7 @@
 
 ## 3. `retain` 不是“正在看”，而是“UI 正在持有这个 task”
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx), [`../../sources/claude-code/src/state/teammateViewHelpers.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx), [`../../src/state/teammateViewHelpers.ts`](../../src/state/teammateViewHelpers.ts)
 
 注释直接区分了两件事：
 
@@ -81,7 +81,7 @@
 
 ## 4. transcript 保留协议是 “disk prefix + live suffix” 的双源拼接
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts`](../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/tools/AgentTool/agentToolUtils.ts`](../../src/tools/AgentTool/agentToolUtils.ts)
 
 保留后的 viewed transcript 不是每次整盘重读，而是：
 
@@ -97,7 +97,7 @@
 
 ## 5. `pendingMessages` 和 `appendMessageToLocalAgent()` 被故意拆成“输入投递”和“显示投递”两条线
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 两条路径职责不同：
 
@@ -112,7 +112,7 @@
 
 ## 6. `evictAfter` 才是 panel row 生命周期的真时钟
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx), [`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx), [`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/CoordinatorAgentStatus.tsx)
 
 `evictAfter` 有三种关键语义：
 
@@ -129,7 +129,7 @@
 
 ## 7. `x` 键的语义是状态敏感的：running 是 stop，terminal 是 clear
 
-源码镜像：[`../../sources/claude-code/src/state/teammateViewHelpers.ts`](../../sources/claude-code/src/state/teammateViewHelpers.ts)
+源码镜像：[`../../src/state/teammateViewHelpers.ts`](../../src/state/teammateViewHelpers.ts)
 
 `stopOrDismissAgent()` 的分支是：
 
@@ -141,7 +141,7 @@
 
 ## 8. `agentNameRegistry` 是 direct-message 和 panel 命名共用的身份表
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx), [`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts), [`../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx), [`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts), [`../../src/components/CoordinatorAgentStatus.tsx`](../../src/components/CoordinatorAgentStatus.tsx)
 
 async agent spawn 成功后，如果提供了 `name`，`AgentTool.tsx` 会登记：
 
@@ -155,7 +155,7 @@ async agent spawn 成功后，如果提供了 `name`，`AgentTool.tsx` 会登记
 
 ## 9. `getActiveAgentForInput()` 正式把 local agent 纳入输入路由
 
-源码镜像：[`../../sources/claude-code/src/state/selectors.ts`](../../sources/claude-code/src/state/selectors.ts)
+源码镜像：[`../../src/state/selectors.ts`](../../src/state/selectors.ts)
 
 输入路由不是二元的，而是三态：
 
@@ -171,7 +171,7 @@ async agent spawn 成功后，如果提供了 `name`，`AgentTool.tsx` 会登记
 
 ## 10. `isBackgrounded` 管执行宿主，`retain` 管 transcript host
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 注册时刻就故意分成两类：
 
@@ -189,7 +189,7 @@ async agent spawn 成功后，如果提供了 `name`，`AgentTool.tsx` 会登记
 
 ## 11. 通知协议不是自然语言 toast，而是 XML task-notification 契约
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 `enqueueAgentNotification()` 发出去的是结构化 XML，包含：
 
@@ -206,7 +206,7 @@ async agent spawn 成功后，如果提供了 `name`，`AgentTool.tsx` 会登记
 
 ## 12. 本地 agent 生命周期被故意拆成“先切 status，再慢补通知”
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts`](../../sources/claude-code/src/tools/AgentTool/agentToolUtils.ts), [`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx)
+源码镜像：[`../../src/tools/AgentTool/agentToolUtils.ts`](../../src/tools/AgentTool/agentToolUtils.ts), [`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx)
 
 `runAsyncAgentLifecycle()` 的顺序是：
 
@@ -222,7 +222,7 @@ async agent spawn 成功后，如果提供了 `name`，`AgentTool.tsx` 会登记
 
 ## 13. panel row 的叙述依赖 agent 自己的活动语义，而不是 generic task status
 
-源码镜像：[`../../sources/claude-code/src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../sources/claude-code/src/components/CoordinatorAgentStatus.tsx)
+源码镜像：[`../../src/tasks/LocalAgentTask/LocalAgentTask.tsx`](../../src/components/CoordinatorAgentStatus.tsx)
 
 `AgentProgress` 记录的不只是百分比，而是：
 
@@ -241,7 +241,7 @@ async agent spawn 成功后，如果提供了 `name`，`AgentTool.tsx` 会登记
 
 ## 14. `agentColorManager` 给 specialist agent 稳定身份色，但默认 general-purpose 故意无色
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentColorManager.ts`](../../sources/claude-code/src/tools/AgentTool/agentColorManager.ts)
+源码镜像：[`../../src/tools/AgentTool/agentColorManager.ts`](../../src/tools/AgentTool/agentColorManager.ts)
 
 这层只做一件事：
 

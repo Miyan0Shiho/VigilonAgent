@@ -6,7 +6,7 @@
 
 ## 1. 入口函数
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processUserInput.ts`](../../sources/claude-code/src/utils/processUserInput/processUserInput.ts)
+源码镜像：[`../../src/utils/processUserInput/processUserInput.ts`](../../src/utils/processUserInput/processUserInput.ts)
 
 `processUserInput()` 的位置很关键：它不在 REPL 里，也不在 `query.ts` 里，而是夹在“输入”与“模型循环”之间的标准入口。
 

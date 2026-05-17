@@ -6,7 +6,7 @@
 
 ## 1. `useRemoteSession` 和 `useDirectConnect/useSSHSession` 不是同一类 remote
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts), [`../../sources/claude-code/src/hooks/useDirectConnect.ts`](../../sources/claude-code/src/hooks/useDirectConnect.ts), [`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts), [`../../src/hooks/useDirectConnect.ts`](../../src/hooks/useDirectConnect.ts), [`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts)
 
 三条 hook 对 REPL 暴露的是同一组返回值：
 
@@ -25,7 +25,7 @@
 
 ## 2. 真正共享的是 transcript/permission 适配协议，而不是 transport 生命周期
 
-源码镜像：[`../../sources/claude-code/src/remote/sdkMessageAdapter.ts`](../../sources/claude-code/src/remote/sdkMessageAdapter.ts), [`../../sources/claude-code/src/remote/remotePermissionBridge.ts`](../../sources/claude-code/src/remote/remotePermissionBridge.ts)
+源码镜像：[`../../src/remote/sdkMessageAdapter.ts`](../../src/remote/sdkMessageAdapter.ts), [`../../src/remote/remotePermissionBridge.ts`](../../src/remote/remotePermissionBridge.ts)
 
 三条链都复用两块核心协议：
 
@@ -41,7 +41,7 @@
 
 ## 3. `remotePermissionBridge` 本质上是在“伪造一个足够像本地 tool_use 的壳”
 
-源码镜像：[`../../sources/claude-code/src/remote/remotePermissionBridge.ts`](../../sources/claude-code/src/remote/remotePermissionBridge.ts)
+源码镜像：[`../../src/remote/remotePermissionBridge.ts`](../../src/remote/remotePermissionBridge.ts)
 
 `createSyntheticAssistantMessage()` 做的不是普通 wrapper，而是专门补一个最小的 assistant message：
 
@@ -54,7 +54,7 @@
 
 ## 4. `createToolStub()` 说明本地 permission UI 不要求“本地真的装了该工具”
 
-源码镜像：[`../../sources/claude-code/src/remote/remotePermissionBridge.ts`](../../sources/claude-code/src/remote/remotePermissionBridge.ts)
+源码镜像：[`../../src/remote/remotePermissionBridge.ts`](../../src/remote/remotePermissionBridge.ts)
 
 当远端请求的工具本地找不到时，Claude Code 不会放弃渲染，而是生成 stub：
 
@@ -67,7 +67,7 @@
 
 ## 5. `useDirectConnect` 和 `useSSHSession` 的 onMessage 基本同构，说明 interactive remote 有一套稳定最小契约
 
-源码镜像：[`../../sources/claude-code/src/hooks/useDirectConnect.ts`](../../sources/claude-code/src/hooks/useDirectConnect.ts), [`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts)
+源码镜像：[`../../src/hooks/useDirectConnect.ts`](../../src/hooks/useDirectConnect.ts), [`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts)
 
 这两条 hook 的 `onMessage` 路线几乎一模一样：
 
@@ -85,7 +85,7 @@
 
 ## 6. 它们都没有 viewer-mode 的 user-echo 去重，因为 interactive remote 的本地写入路径不同
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts), [`../../sources/claude-code/src/hooks/useDirectConnect.ts`](../../sources/claude-code/src/hooks/useDirectConnect.ts), [`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts), [`../../src/hooks/useDirectConnect.ts`](../../src/hooks/useDirectConnect.ts), [`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts)
 
 `useRemoteSession` 需要 `BoundedUUIDSet` 去挡掉 WS 回来的 user echo，因为：
 
@@ -102,7 +102,7 @@
 
 ## 7. `useRemoteSession` 会维护 response timeout，而 direct/SSH 不会
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 CCR viewer/controller 这条链有完整的超时治理：
 
@@ -117,7 +117,7 @@ CCR viewer/controller 这条链有完整的超时治理：
 
 ## 8. interactive remote 的 permission queue 是 paused loading，而不是 viewer reconnect 流程
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts), [`../../sources/claude-code/src/hooks/useDirectConnect.ts`](../../sources/claude-code/src/hooks/useDirectConnect.ts), [`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts), [`../../src/hooks/useDirectConnect.ts`](../../src/hooks/useDirectConnect.ts), [`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts)
 
 三条 hook 在 permission ask 上都采用同一条本地 UX：
 
@@ -140,7 +140,7 @@ CCR viewer/controller 这条链有完整的超时治理：
 
 ## 9. `useRemoteSession` 比 direct/SSH 多了 `onPermissionCancelled`
 
-源码镜像：[`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 只有 CCR session viewer 这条链显式处理：
 
@@ -155,7 +155,7 @@ CCR viewer/controller 这条链有完整的超时治理：
 
 ## 10. `useDirectConnect` 的 disconnect 是硬退出，`useSSHSession` 的 disconnect 会带 stderr 解释，`useRemoteSession` 则只是连接状态切换
 
-源码镜像：[`../../sources/claude-code/src/hooks/useDirectConnect.ts`](../../sources/claude-code/src/hooks/useDirectConnect.ts), [`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts), [`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/hooks/useDirectConnect.ts`](../../src/hooks/useDirectConnect.ts), [`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts), [`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 三条断开语义差异非常大：
 
@@ -179,7 +179,7 @@ CCR viewer/controller 这条链有完整的超时治理：
 
 ## 11. SSH 比 direct connect 多一个显式的 `onReconnecting` transcript side effect
 
-源码镜像：[`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts)
+源码镜像：[`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts)
 
 `useSSHSession` 在掉线重连时会主动 append 一条系统消息：
 
@@ -193,7 +193,7 @@ CCR viewer/controller 这条链有完整的超时治理：
 
 ## 12. direct connect manager 额外承担了 transport-level 帧过滤，不只是 socket 包装器
 
-源码镜像：[`../../sources/claude-code/src/server/directConnectManager.ts`](../../sources/claude-code/src/server/directConnectManager.ts)
+源码镜像：[`../../src/server/directConnectManager.ts`](../../src/server/directConnectManager.ts)
 
 `DirectConnectSessionManager` 做的不只是：
 
@@ -214,7 +214,7 @@ CCR viewer/controller 这条链有完整的超时治理：
 
 ## 13. direct connect 和 SSH 的 interrupt 语义比 CCR 更原始
 
-源码镜像：[`../../sources/claude-code/src/server/directConnectManager.ts`](../../sources/claude-code/src/server/directConnectManager.ts), [`../../sources/claude-code/src/hooks/useDirectConnect.ts`](../../sources/claude-code/src/hooks/useDirectConnect.ts), [`../../sources/claude-code/src/hooks/useSSHSession.ts`](../../sources/claude-code/src/hooks/useSSHSession.ts), [`../../sources/claude-code/src/hooks/useRemoteSession.ts`](../../sources/claude-code/src/hooks/useRemoteSession.ts)
+源码镜像：[`../../src/server/directConnectManager.ts`](../../src/server/directConnectManager.ts), [`../../src/hooks/useDirectConnect.ts`](../../src/hooks/useDirectConnect.ts), [`../../src/hooks/useSSHSession.ts`](../../src/hooks/useSSHSession.ts), [`../../src/hooks/useRemoteSession.ts`](../../src/hooks/useRemoteSession.ts)
 
 三条取消链路都是“发一个远端中断”：
 
@@ -230,7 +230,7 @@ CCR viewer/controller 这条链有完整的超时治理：
 
 ## 14. `handleRemoteInit()` 和 `activeRemote` 一起说明：真正统一的是 REPL 控制面，不是底层故障模型
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 REPL 对三条宿主只做两件统一操作：
 

@@ -6,7 +6,7 @@
 
 ## 1. 这是一组“后台工作面”，不是单一工具实现
 
-源码镜像：[`../../sources/claude-code/src/commands/review/reviewRemote.ts`](../../sources/claude-code/src/commands/review/reviewRemote.ts), [`../../sources/claude-code/src/commands/review/ultrareviewCommand.tsx`](../../sources/claude-code/src/commands/review/ultrareviewCommand.tsx), [`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx), [`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx), [`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/PermissionRequest.tsx)
+源码镜像：[`../../src/commands/review/reviewRemote.ts`](../../src/commands/review/reviewRemote.ts), [`../../src/commands/review/ultrareviewCommand.tsx`](../../src/commands/review/ultrareviewCommand.tsx), [`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx), [`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx), [`../../src/components/permissions/PermissionRequest.tsx`](../../src/components/permissions/PermissionRequest.tsx)
 
 这条链跨了三个层次：
 
@@ -18,7 +18,7 @@
 
 ## 2. `/review` 和 `/ultrareview` 在产品上相近，在实现上是两条链
 
-源码镜像：[`../../sources/claude-code/src/commands/review.ts`](../../sources/claude-code/src/commands/review.ts), [`../../sources/claude-code/src/commands/review/reviewRemote.ts`](../../sources/claude-code/src/commands/review/reviewRemote.ts)
+源码镜像：[`../../src/commands/review.ts`](../../src/commands/review.ts), [`../../src/commands/review/reviewRemote.ts`](../../src/commands/review/reviewRemote.ts)
 
 此前命令卷已经说明：
 
@@ -36,7 +36,7 @@
 
 ## 3. `checkOverageGate()` 说明远端 review 首先是 billing-gated 功能
 
-源码镜像：[`../../sources/claude-code/src/commands/review/reviewRemote.ts`](../../sources/claude-code/src/commands/review/reviewRemote.ts)
+源码镜像：[`../../src/commands/review/reviewRemote.ts`](../../src/commands/review/reviewRemote.ts)
 
 `checkOverageGate()` 先于 launch 执行，并明确分成四种结果：
 
@@ -56,7 +56,7 @@
 
 ## 4. `UltrareviewOverageDialog` 不是普通确认框，而是可中断的 launch gate
 
-源码镜像：[`../../sources/claude-code/src/commands/review/UltrareviewOverageDialog.tsx`](../../sources/claude-code/src/commands/review/UltrareviewOverageDialog.tsx), [`../../sources/claude-code/src/components/CustomSelect/select.tsx`](../../sources/claude-code/src/components/CustomSelect/select.tsx)
+源码镜像：[`../../src/commands/review/UltrareviewOverageDialog.tsx`](../../src/commands/review/UltrareviewOverageDialog.tsx), [`../../src/components/CustomSelect/select.tsx`](../../src/components/CustomSelect/select.tsx)
 
 这个 dialog 用的是 `CustomSelect`，但它不是简单问一句 yes/no。
 
@@ -70,7 +70,7 @@
 
 ## 5. `launchRemoteReview()` 把 PR 模式和 branch 模式明确分流
 
-源码镜像：[`../../sources/claude-code/src/commands/review/reviewRemote.ts`](../../sources/claude-code/src/commands/review/reviewRemote.ts)
+源码镜像：[`../../src/commands/review/reviewRemote.ts`](../../src/commands/review/reviewRemote.ts)
 
 这条函数最核心的分支是：
 
@@ -95,7 +95,7 @@ branch mode：
 
 ## 6. 远端环境变量不是装饰，而是 bughunter 行为控制面
 
-源码镜像：[`../../sources/claude-code/src/commands/review/reviewRemote.ts`](../../sources/claude-code/src/commands/review/reviewRemote.ts)
+源码镜像：[`../../src/commands/review/reviewRemote.ts`](../../src/commands/review/reviewRemote.ts)
 
 `commonEnvVars` 明确带了：
 
@@ -116,7 +116,7 @@ branch mode：
 
 ## 7. 远端 launch 成功后，并不会立刻“把 review 文本返回给当前 turn”
 
-源码镜像：[`../../sources/claude-code/src/commands/review/reviewRemote.ts`](../../sources/claude-code/src/commands/review/ultrareviewCommand.tsx)
+源码镜像：[`../../src/commands/review/reviewRemote.ts`](../../src/commands/review/ultrareviewCommand.tsx)
 
 远端 review 的首轮成功返回，实际上只是：
 
@@ -133,7 +133,7 @@ branch mode：
 
 ## 8. `registerRemoteAgentTask()` 是远端任务接回本地的统一入口
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
 
 无论是 remote-agent、ultraplan 还是 ultrareview，最终都要收敛到 `registerRemoteAgentTask()`。
 
@@ -150,7 +150,7 @@ branch mode：
 
 ## 9. `RemoteAgentTask` 的 polling 逻辑已经特化到 remote-review
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
 
 远端 review 不是 generic remote task 的薄封装，它有一套专门逻辑：
 
@@ -170,7 +170,7 @@ branch mode：
 
 ## 10. review 结果回流不是写文件让模型自己找，而是直接注入 task-notification
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
 
 当 review 成功完成时，`enqueueRemoteReviewNotification()` 会直接向消息队列塞一条 task-notification：
 
@@ -189,7 +189,7 @@ branch mode：
 
 ## 11. `BackgroundTasksDialog` 把 workflow、monitor、remote review 放进同一任务浏览面
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 这个列表不是只看 agent / bash task。它的 `ListItem` 已经覆盖：
 
@@ -214,7 +214,7 @@ branch mode：
 
 ## 12. Background Tasks 的排序和分组已经体现了产品层级
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 它不是无脑按启动时间列一个列表，而是：
 
@@ -231,7 +231,7 @@ branch mode：
 
 ## 13. workflow / monitor 的“工具主体”在当前镜像里仍然不是完全可见
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx), 源码入口：`packages/claude-code/src/tools/WorkflowTool/WorkflowTool.ts`, `packages/claude-code/src/tools/MonitorTool/MonitorTool.ts`
+源码镜像：[`../../src/components/permissions/PermissionRequest.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx), 源码入口：`packages/claude-code/src/tools/WorkflowTool/WorkflowTool.ts`, `packages/claude-code/src/tools/MonitorTool/MonitorTool.ts`
 
 这里要明确一个边界：当前工作区镜像里，workflow 和 monitor 最完整可见的是：
 
@@ -251,7 +251,7 @@ branch mode：
 
 ## 14. `PermissionRequest` 证明 workflow 和 monitor 不是脚本私货，而是一等受控工具
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/PermissionRequest.tsx)
+源码镜像：[`../../src/components/permissions/PermissionRequest.tsx`](../../src/components/permissions/PermissionRequest.tsx)
 
 `permissionComponentForTool()` 里直接做了：
 

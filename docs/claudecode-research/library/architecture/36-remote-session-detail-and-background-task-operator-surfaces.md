@@ -19,7 +19,7 @@
 
 ## 1. `BackgroundTasksDialog` 不是“任务列表”，而是后台执行对象的目录路由器
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 这份组件先做的不是渲染 task row，而是把统一 `tasks` 数据面路由成多种 operator surface：
 
@@ -42,7 +42,7 @@
 
 ## 2. remote session 在目录页里和 shell、local agent、workflow 是平级族，不是 review 专属例外
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 `remote_agent` 会和其他后台任务一起被：
 
@@ -55,7 +55,7 @@
 
 ## 3. 这个目录页编码了“哪个远端任务能停、哪个要走专用停止路径”
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 在 list 模式下，按 `x` 并不是统一 `kill(taskId)`：
 
@@ -77,7 +77,7 @@
 
 ## 4. `BackgroundTasksDialog` 的 detail route 才是 remote session 真正从 task shell 进入 operator UI 的桥
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx`](../../sources/claude-code/src/components/tasks/BackgroundTasksDialog.tsx)
+源码镜像：[`../../src/components/tasks/BackgroundTasksDialog.tsx`](../../src/components/tasks/BackgroundTasksDialog.tsx)
 
 一旦 `viewState.mode === 'detail'`，remote task 会被直接路由到：
 
@@ -92,7 +92,7 @@
 
 ## 5. `RemoteSessionDetailDialog` 不是 transcript viewer，而是远端任务的产品摘要台
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/RemoteSessionDetailDialog.tsx`](../../src/components/tasks/RemoteSessionDetailDialog.tsx)
 
 这份组件最关键的分支不是“渲染消息列表”，而是先按任务语义拆成三条模式：
 
@@ -104,7 +104,7 @@
 
 ## 6. 普通 remote session detail 只给最小 operator 摘要，不给完整远端 transcript
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/RemoteSessionDetailDialog.tsx`](../../src/components/tasks/RemoteSessionDetailDialog.tsx)
 
 对普通 remote session，这个 dialog 重点显示的是：
 
@@ -124,7 +124,7 @@
 
 ## 7. `t` 键和 teleport 行为把本地 detail 变成了一个 handoff console
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/RemoteSessionDetailDialog.tsx`](../../src/components/tasks/RemoteSessionDetailDialog.tsx)
 
 普通 remote session detail 里有一条非常明确的动作线：
 
@@ -140,7 +140,7 @@
 
 ## 8. `RemoteSessionProgress` 是 detail、list、footer 共享的状态词表内核
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx)
+源码镜像：[`../../src/components/tasks/RemoteSessionProgress.tsx`](../../src/components/tasks/RemoteSessionProgress.tsx)
 
 这个组件不是某个 dialog 的私有小部件。它定义的是整条 remote 任务前台链共享的状态语义：
 
@@ -154,7 +154,7 @@
 
 ## 9. ultrareview 的彩虹状态条不是装饰，而是专用进度协议的前台落点
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionProgress.tsx)
+源码镜像：[`../../src/components/tasks/RemoteSessionProgress.tsx`](../../src/components/tasks/RemoteSessionProgress.tsx)
 
 `RemoteSessionProgress` 对 review 分支单独做了：
 
@@ -168,7 +168,7 @@
 
 ## 10. `RemoteSessionDetailDialog` 把 `ultraplan` 和 `ultrareview` 再拆成两套专用 operator surface
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/RemoteSessionDetailDialog.tsx`](../../src/components/tasks/RemoteSessionDetailDialog.tsx)
 
 `UltraplanSessionDetail` 的重点是：
 
@@ -188,7 +188,7 @@
 
 ## 11. `formatToolUseSummary()` 说明 detail dialog 想提供的是“最近一次有意义动作”，不是原始 tool payload
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/RemoteSessionDetailDialog.tsx`](../../src/components/tasks/RemoteSessionDetailDialog.tsx)
 
 这个 helper 会：
 

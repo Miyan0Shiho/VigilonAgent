@@ -6,7 +6,7 @@
 
 ## 1. `TaskListTool` 只是入口，真正的状态在 `utils/tasks.ts`
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskListTool/TaskListTool.ts`](../../sources/claude-code/src/tools/TaskListTool/TaskListTool.ts), [`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/tools/TaskListTool/TaskListTool.ts`](../../src/tools/TaskListTool/TaskListTool.ts), [`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 `TaskListTool.call()` 自己做的事情很少：
 
@@ -19,7 +19,7 @@
 
 ## 2. `getTaskListId()` 决定谁在共享同一套任务
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 这个函数的优先级很重要：
 
@@ -44,7 +44,7 @@
 
 ## 4. 高水位与锁机制说明它默认面向并发 swarm
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 这里至少有三层并发设计：
 
@@ -56,7 +56,7 @@
 
 ## 5. `TaskGetTool` 与 `TaskUpdateTool` 分别扮演读路径和写路径
 
-源码镜像：[`../../sources/claude-code/src/tools/TaskGetTool/TaskGetTool.ts`](../../sources/claude-code/src/tools/TaskGetTool/TaskGetTool.ts), [`../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../sources/claude-code/src/tools/TaskUpdateTool/TaskUpdateTool.ts)
+源码镜像：[`../../src/tools/TaskGetTool/TaskGetTool.ts`](../../src/tools/TaskGetTool/TaskGetTool.ts), [`../../src/tools/TaskUpdateTool/TaskUpdateTool.ts`](../../src/tools/TaskUpdateTool/TaskUpdateTool.ts)
 
 `TaskGetTool` 的职责很纯：
 
@@ -76,7 +76,7 @@
 
 ## 6. `claimTask()` 暴露了所有权协议
 
-源码镜像：[`../../sources/claude-code/src/utils/tasks.ts`](../../sources/claude-code/src/utils/tasks.ts)
+源码镜像：[`../../src/utils/tasks.ts`](../../src/utils/tasks.ts)
 
 任务认领时至少会判断：
 
@@ -98,7 +98,7 @@
 
 ## 7. `useTaskListWatcher` 让“任务模式”变成自动拾取器
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTaskListWatcher.ts`](../../sources/claude-code/src/hooks/useTaskListWatcher.ts)
+源码镜像：[`../../src/hooks/useTaskListWatcher.ts`](../../src/hooks/useTaskListWatcher.ts)
 
 这个 hook 做的不是简单文件监听，而是一个最小调度器：
 

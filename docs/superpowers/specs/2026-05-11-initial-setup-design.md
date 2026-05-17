@@ -4,6 +4,8 @@
 - **状态**: 草案 (Draft)
 - **定位**: 核心基础设施与 Monorepo 初始化
 
+> 2026-05-17 更新：本文件保留为初始基础设施草案。最新产品定位已扩展为“任务优先的超级个人助手，Phase 1 以 Claude Code Core Parity for Solo Runtime 为硬目标”，见 `docs/product/2026-05-17-product-positioning-and-boundary.md` 与 `docs/product/2026-05-17-phase-1-solo-runtime-parity-checklist.md`。
+
 ## 1. 愿景与目标
 
 构建一个以 **DeepSeek V4** 为推理引擎，采用 **Claude Code** 工程秩序，并具备 **Codex** 级交互体验的 Coding Agent。

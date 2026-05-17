@@ -13,7 +13,7 @@
 
 ## 1. compaction 前台不是一个按钮，而是一条完整反馈链
 
-源码镜像：[`../../sources/claude-code/src/components/TokenWarning.tsx`](../../sources/claude-code/src/components/TokenWarning.tsx), [`../../sources/claude-code/src/components/messages/CompactBoundaryMessage.tsx`](../../sources/claude-code/src/components/messages/CompactBoundaryMessage.tsx), [`../../sources/claude-code/src/components/FeedbackSurvey/usePostCompactSurvey.tsx`](../../sources/claude-code/src/components/FeedbackSurvey/usePostCompactSurvey.tsx), [`../../sources/claude-code/src/utils/contextSuggestions.ts`](../../sources/claude-code/src/utils/contextSuggestions.ts)
+源码镜像：[`../../src/components/TokenWarning.tsx`](../../src/components/TokenWarning.tsx), [`../../src/components/messages/CompactBoundaryMessage.tsx`](../../src/components/messages/CompactBoundaryMessage.tsx), [`../../src/components/FeedbackSurvey/usePostCompactSurvey.tsx`](../../src/components/FeedbackSurvey/usePostCompactSurvey.tsx), [`../../src/utils/contextSuggestions.ts`](../../src/utils/contextSuggestions.ts)
 
 用户在前台真正经历的顺序是：
 
@@ -26,7 +26,7 @@
 
 ## 2. `TokenWarning` 不是单纯显示 token 数，而是 mode-aware 的风险面
 
-源码镜像：[`../../sources/claude-code/src/components/TokenWarning.tsx`](../../sources/claude-code/src/components/TokenWarning.tsx)
+源码镜像：[`../../src/components/TokenWarning.tsx`](../../src/components/TokenWarning.tsx)
 
 `TokenWarning` 关心的不只是当前 token 比例，还关心当前环境到底支持哪种压缩路线。它会根据：
 
@@ -39,7 +39,7 @@
 
 ## 3. compact warning 有自己的短时 suppress 协议，不会在刚压完后立刻反复吵用户
 
-源码镜像：[`../../sources/claude-code/src/services/compact/compactWarningHook.ts`](../../sources/claude-code/src/services/compact/compactWarningHook.ts), [`../../sources/claude-code/src/services/compact/compactWarningState.ts`](../../sources/claude-code/src/services/compact/compactWarningState.ts)
+源码镜像：[`../../src/services/compact/compactWarningHook.ts`](../../src/services/compact/compactWarningHook.ts), [`../../src/services/compact/compactWarningState.ts`](../../src/services/compact/compactWarningState.ts)
 
 `useCompactWarningSuppression()` 和 `compactWarningState` 共同提供了一层前台抑制语义：
 
@@ -51,7 +51,7 @@
 
 ## 4. `Notifications.tsx` 说明 compact warning 的宿主是 prompt/footer，而不是消息流
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/Notifications.tsx`](../../sources/claude-code/src/components/PromptInput/Notifications.tsx), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/components/PromptInput/Notifications.tsx`](../../src/components/PromptInput/Notifications.tsx), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 compact warning 并不进入 transcript block，而是挂在 `PromptInput` 周围的 notification surface。这个选择很关键：
 
@@ -63,7 +63,7 @@ compact warning 并不进入 transcript block，而是挂在 `PromptInput` 周�
 
 ## 5. `CompactBoundaryMessage` 是 transcript 里的历史锚点，不是再次解释 compact 原理
 
-源码镜像：[`../../sources/claude-code/src/components/messages/CompactBoundaryMessage.tsx`](../../sources/claude-code/src/components/messages/CompactBoundaryMessage.tsx)
+源码镜像：[`../../src/components/messages/CompactBoundaryMessage.tsx`](../../src/components/messages/CompactBoundaryMessage.tsx)
 
 压缩完成后，前台不会把全过程刷成大量系统消息，而是插入一个边界块。它的职责不是教学，而是：
 
@@ -75,7 +75,7 @@ compact warning 并不进入 transcript block，而是挂在 `PromptInput` 周�
 
 ## 6. `usePostCompactSurvey` 不会一压完就追问，它要等边界后的真实会话继续发生
 
-源码镜像：[`../../sources/claude-code/src/components/FeedbackSurvey/usePostCompactSurvey.tsx`](../../sources/claude-code/src/components/FeedbackSurvey/usePostCompactSurvey.tsx)
+源码镜像：[`../../src/components/FeedbackSurvey/usePostCompactSurvey.tsx`](../../src/components/FeedbackSurvey/usePostCompactSurvey.tsx)
 
 survey 的触发条件不是“compact 成功”本身，而是：
 
@@ -87,7 +87,7 @@ survey 的触发条件不是“compact 成功”本身，而是：
 
 ## 7. survey 还带主动避让协议：输入中、不稳定时、不该打断时不会插入
 
-源码镜像：[`../../sources/claude-code/src/components/FeedbackSurvey/usePostCompactSurvey.tsx`](../../sources/claude-code/src/components/FeedbackSurvey/usePostCompactSurvey.tsx)
+源码镜像：[`../../src/components/FeedbackSurvey/usePostCompactSurvey.tsx`](../../src/components/FeedbackSurvey/usePostCompactSurvey.tsx)
 
 这条链还明确体现了几种 operator hygiene：
 
@@ -99,7 +99,7 @@ survey 的触发条件不是“compact 成功”本身，而是：
 
 ## 8. survey 采的不只是满意度，还顺手记录了使用的是哪种 compact 路线
 
-源码镜像：[`../../sources/claude-code/src/components/FeedbackSurvey/usePostCompactSurvey.tsx`](../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts), [`../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts`](../../sources/claude-code/src/services/compact/sessionMemoryCompact.ts)
+源码镜像：[`../../src/components/FeedbackSurvey/usePostCompactSurvey.tsx`](../../src/services/compact/sessionMemoryCompact.ts), [`../../src/services/compact/sessionMemoryCompact.ts`](../../src/services/compact/sessionMemoryCompact.ts)
 
 survey 侧会结合 `shouldUseSessionMemoryCompaction()` 这类运行时判断，把“这次是否走了 session-memory 路线”带进埋点上下文。也就是说，Claude Code 在评估的不是抽象的“compact 满不满意”，而是更具体的：
 
@@ -110,7 +110,7 @@ survey 侧会结合 `shouldUseSessionMemoryCompaction()` 这类运行时判断�
 
 ## 9. `contextSuggestions` 说明 compact 被放进了日常 context hygiene，而不是只当 emergency escape hatch
 
-源码镜像：[`../../sources/claude-code/src/utils/contextSuggestions.ts`](../../sources/claude-code/src/utils/contextSuggestions.ts)
+源码镜像：[`../../src/utils/contextSuggestions.ts`](../../src/utils/contextSuggestions.ts)
 
 `contextSuggestions` 会把 compact 和其他上下文治理建议并列给出。这意味着 Claude Code 想表达的是：
 
@@ -122,7 +122,7 @@ survey 侧会结合 `shouldUseSessionMemoryCompaction()` 这类运行时判断�
 
 ## 10. `REPL.tsx` 是这几条前台链的总装配点
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 `REPL.tsx` 负责把这些看似分散的表面挂回同一条会话主轴：
 

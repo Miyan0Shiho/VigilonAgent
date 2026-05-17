@@ -11,7 +11,7 @@
 
 ## 1. 这两条链的共同点是“不是能力本身，而是能力前面的最终决策面”
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx), [`../../sources/claude-code/src/components/WorkflowMultiselectDialog.tsx`](../../sources/claude-code/src/components/WorkflowMultiselectDialog.tsx), [`../../sources/claude-code/src/commands/review/UltrareviewOverageDialog.tsx`](../../sources/claude-code/src/commands/review/UltrareviewOverageDialog.tsx)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx), [`../../src/components/WorkflowMultiselectDialog.tsx`](../../src/components/WorkflowMultiselectDialog.tsx), [`../../src/commands/review/UltrareviewOverageDialog.tsx`](../../src/commands/review/UltrareviewOverageDialog.tsx)
 
 前者的职责是把：
 
@@ -38,7 +38,7 @@
 
 ## 2. `install-github-app` 在前台上是一个显式 step 状态机，不是单个大对话框
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx)
 
 `INITIAL_STATE` 和最终 `switch(state.step)` 已经把状态图暴露得很清楚：
 
@@ -59,7 +59,7 @@
 
 ## 3. `check-gh` 和 `warnings` 把环境问题做成了“可继续但不隐身”的前置层
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx), [`../../sources/claude-code/src/commands/install-github-app/CheckGitHubStep.tsx`](../../sources/claude-code/src/commands/install-github-app/CheckGitHubStep.tsx), [`../../sources/claude-code/src/commands/install-github-app/WarningsStep.tsx`](../../sources/claude-code/src/commands/install-github-app/WarningsStep.tsx)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx), [`../../src/commands/install-github-app/CheckGitHubStep.tsx`](../../src/commands/install-github-app/CheckGitHubStep.tsx), [`../../src/commands/install-github-app/WarningsStep.tsx`](../../src/commands/install-github-app/WarningsStep.tsx)
 
 这两步的设计不是简单报错：
 
@@ -77,7 +77,7 @@
 
 ## 4. `ChooseRepoStep` 不是文本框，而是“当前仓库 vs 手输仓库”二选一模式机
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/ChooseRepoStep.tsx`](../../sources/claude-code/src/commands/install-github-app/ChooseRepoStep.tsx)
+源码镜像：[`../../src/commands/install-github-app/ChooseRepoStep.tsx`](../../src/commands/install-github-app/ChooseRepoStep.tsx)
 
 这一步明确把 repo 选择分成两条路径：
 
@@ -93,7 +93,7 @@
 
 ## 5. repo 选择后的规范化和权限预审仍然留在主状态机，而不是塞给 UI
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx)
 
 `ChooseRepoStep` 只负责表达选择；真正的 repo 处理发生在 `handleSubmit()`：
 
@@ -112,7 +112,7 @@
 
 ## 6. `install-app` 是故意拆出来的中间站，而不是浏览器 side effect 的隐式副产物
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/InstallAppStep.tsx)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/InstallAppStep.tsx)
 
 在 `choose-repo` 之后，不是立即进入 workflow/secret 配置，而是单独进入 `install-app`：
 
@@ -124,7 +124,7 @@
 
 ## 7. `ExistingWorkflowStep` 说明已有 `.github/workflows/claude.yml` 时，系统不是报冲突，而是给策略分支
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/ExistingWorkflowStep.tsx`](../../sources/claude-code/src/commands/install-github-app/ExistingWorkflowStep.tsx)
+源码镜像：[`../../src/commands/install-github-app/ExistingWorkflowStep.tsx`](../../src/commands/install-github-app/ExistingWorkflowStep.tsx)
 
 这一步给出的不是 yes/no，而是三种策略：
 
@@ -142,7 +142,7 @@
 
 ## 8. `WorkflowMultiselectDialog` 说明 GitHub 安装面已经开始把自动化能力拆成多个产品面
 
-源码镜像：[`../../sources/claude-code/src/components/WorkflowMultiselectDialog.tsx`](../../sources/claude-code/src/components/WorkflowMultiselectDialog.tsx)
+源码镜像：[`../../src/components/WorkflowMultiselectDialog.tsx`](../../src/components/WorkflowMultiselectDialog.tsx)
 
 这个组件把 workflow 选择做成了一个正式的多选对话框，而不是两三个布尔开关。当前内建选项是：
 
@@ -158,7 +158,7 @@
 
 ## 9. `CheckExistingSecretStep` 把 secret 冲突处理成“复用 vs 旁路新 secret”决策面
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/CheckExistingSecretStep.tsx`](../../sources/claude-code/src/commands/install-github-app/CheckExistingSecretStep.tsx)
+源码镜像：[`../../src/commands/install-github-app/CheckExistingSecretStep.tsx`](../../src/commands/install-github-app/CheckExistingSecretStep.tsx)
 
 当发现 `ANTHROPIC_API_KEY` 已存在时，它不是直接失败，而是给两条路径：
 
@@ -174,7 +174,7 @@
 
 ## 10. `ApiKeyStep` 把 credential 策略做成了三态选择，而不是只有粘贴 key
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/ApiKeyStep.tsx`](../../sources/claude-code/src/commands/install-github-app/ApiKeyStep.tsx)
+源码镜像：[`../../src/commands/install-github-app/ApiKeyStep.tsx`](../../src/commands/install-github-app/ApiKeyStep.tsx)
 
 这个步骤当前实际上支持三种 credential path：
 
@@ -192,7 +192,7 @@
 
 ## 11. `OAuthFlowStep` 是整个向导里最像独立微应用的一步
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/OAuthFlowStep.tsx`](../../sources/claude-code/src/commands/install-github-app/OAuthFlowStep.tsx)
+源码镜像：[`../../src/commands/install-github-app/OAuthFlowStep.tsx`](../../src/commands/install-github-app/OAuthFlowStep.tsx)
 
 它自己维护了一套小状态机：
 
@@ -215,7 +215,7 @@
 
 ## 12. `creating` / `success` / `error` 三步把“repo mutation pipeline”的结果重新产品化
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/CreatingStep.tsx`](../../sources/claude-code/src/commands/install-github-app/CreatingStep.tsx), [`../../sources/claude-code/src/commands/install-github-app/SuccessStep.tsx`](../../sources/claude-code/src/commands/install-github-app/SuccessStep.tsx), [`../../sources/claude-code/src/commands/install-github-app/ErrorStep.tsx`](../../sources/claude-code/src/commands/install-github-app/ErrorStep.tsx)
+源码镜像：[`../../src/commands/install-github-app/CreatingStep.tsx`](../../src/commands/install-github-app/CreatingStep.tsx), [`../../src/commands/install-github-app/SuccessStep.tsx`](../../src/commands/install-github-app/SuccessStep.tsx), [`../../src/commands/install-github-app/ErrorStep.tsx`](../../src/commands/install-github-app/ErrorStep.tsx)
 
 最后三步不是简单 toast：
 
@@ -227,7 +227,7 @@
 
 ## 13. 整个安装向导最重要的结构特征是“主状态机控流，step 组件控交互”
 
-源码镜像：[`../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx`](../../sources/claude-code/src/commands/install-github-app/install-github-app.tsx)
+源码镜像：[`../../src/commands/install-github-app/install-github-app.tsx`](../../src/commands/install-github-app/install-github-app.tsx)
 
 可以把它压成两层：
 
@@ -248,7 +248,7 @@
 
 ## 14. `UltrareviewOverageDialog` 是另一种极小但极关键的 review gate
 
-源码镜像：[`../../sources/claude-code/src/commands/review/UltrareviewOverageDialog.tsx`](../../sources/claude-code/src/commands/review/UltrareviewOverageDialog.tsx)
+源码镜像：[`../../src/commands/review/UltrareviewOverageDialog.tsx`](../../src/commands/review/UltrareviewOverageDialog.tsx)
 
 和安装向导相反，这个组件非常小，但门很重。它只处理一个问题：
 
@@ -263,7 +263,7 @@
 
 ## 15. `UltrareviewOverageDialog` 的重点不是选择器，而是“取消必须能撤回 in-flight launch”
 
-源码镜像：[`../../sources/claude-code/src/commands/review/UltrareviewOverageDialog.tsx`](../../sources/claude-code/src/commands/review/UltrareviewOverageDialog.tsx)
+源码镜像：[`../../src/commands/review/UltrareviewOverageDialog.tsx`](../../src/commands/review/UltrareviewOverageDialog.tsx)
 
 它内部显式创建 `AbortController`，并在 `handleCancel()` 里：
 

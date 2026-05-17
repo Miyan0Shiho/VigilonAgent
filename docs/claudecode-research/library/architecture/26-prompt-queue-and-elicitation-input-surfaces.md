@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是“Claude 现在需要你给结构化输入”如何被产品化，而不是 tool allow/deny
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/components/hooks/PromptDialog.tsx`](../../sources/claude-code/src/components/hooks/PromptDialog.tsx), [`../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx`](../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx), [`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts), [`../../sources/claude-code/src/services/mcp/elicitationHandler.ts`](../../sources/claude-code/src/services/mcp/elicitationHandler.ts), [`../../sources/claude-code/src/utils/mcp/elicitationValidation.ts`](../../sources/claude-code/src/utils/mcp/elicitationValidation.ts), [`../../sources/claude-code/src/types/hooks.ts`](../../sources/claude-code/src/types/hooks.ts)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/components/hooks/PromptDialog.tsx`](../../src/components/hooks/PromptDialog.tsx), [`../../src/components/mcp/ElicitationDialog.tsx`](../../src/components/mcp/ElicitationDialog.tsx), [`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts), [`../../src/services/mcp/elicitationHandler.ts`](../../src/services/mcp/elicitationHandler.ts), [`../../src/utils/mcp/elicitationValidation.ts`](../../src/utils/mcp/elicitationValidation.ts), [`../../src/types/hooks.ts`](../../src/types/hooks.ts)
 
 上一卷已经把 tool permission 讲清了，这一卷回答的是另一组问题：
 
@@ -19,7 +19,7 @@
 
 ## 2. `promptQueue` 和 `elicitation.queue` 说明 REPL 把“要用户输入”建模成两类显式队列
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 REPL 里至少有两条和输入需求直接相关的等待源：
 
@@ -32,7 +32,7 @@ REPL 里至少有两条和输入需求直接相关的等待源：
 
 ## 3. `waitingFor = input needed` 说明这类 ask 会直接抬升成会话级等待态
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 REPL 里：
 
@@ -44,7 +44,7 @@ REPL 里：
 
 ## 4. `getFocusedInputDialog()` 里 `prompt` 和 `elicitation` 被放在同一条 interactive dialog 优先级带
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 在 REPL 的 dialog scheduler 里：
 
@@ -64,7 +64,7 @@ REPL 里：
 
 ## 5. `requestPrompt()` 说明 hook prompt 的运行时协议极轻，但被 REPL 包成了真实队列
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/types/hooks.ts`](../../sources/claude-code/src/types/hooks.ts)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/types/hooks.ts`](../../src/types/hooks.ts)
 
 `requestPrompt()` 的核心只是把一个 `PromptRequest` 压进 `promptQueue`：
 
@@ -89,7 +89,7 @@ REPL 里：
 
 ## 6. `PromptDialog` 说明 hook prompt 被刻意做成“PermissionDialog 风格的选择面”，而不是独立视觉语言
 
-源码镜像：[`../../sources/claude-code/src/components/hooks/PromptDialog.tsx`](../../sources/claude-code/src/components/hooks/PromptDialog.tsx)
+源码镜像：[`../../src/components/hooks/PromptDialog.tsx`](../../src/components/hooks/PromptDialog.tsx)
 
 `PromptDialog` 几乎没有自己的复杂状态机，它只做几件事：
 
@@ -102,7 +102,7 @@ REPL 里：
 
 ## 7. `PromptDialog` 的响应模型是单阶段的：选中即 resolve，取消即 reject
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/components/hooks/PromptDialog.tsx`](../../sources/claude-code/src/components/hooks/PromptDialog.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/components/hooks/PromptDialog.tsx`](../../src/components/hooks/PromptDialog.tsx)
 
 REPL 对 `focusedInputDialog === 'prompt'` 的处理非常直接：
 
@@ -115,7 +115,7 @@ REPL 对 `focusedInputDialog === 'prompt'` 的处理非常直接：
 
 ## 8. `promptQueueUseCount` 说明 prompt queue 还是一个被显式统计的产品行为
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/utils/config.ts`](../../sources/claude-code/src/utils/config.ts)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/utils/config.ts`](../../src/utils/config.ts)
 
 REPL 会在 queued commands 从空变非空时做一次：
 
@@ -130,7 +130,7 @@ REPL 会在 queued commands 从空变非空时做一次：
 
 ## 9. `ElicitationDialog` 先按 `mode` 把请求分裂成 `form` 和 `url` 两套前台协议
 
-源码镜像：[`../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx`](../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx), [`../../sources/claude-code/src/services/mcp/elicitationHandler.ts`](../../sources/claude-code/src/services/mcp/elicitationHandler.ts)
+源码镜像：[`../../src/components/mcp/ElicitationDialog.tsx`](../../src/components/mcp/ElicitationDialog.tsx), [`../../src/services/mcp/elicitationHandler.ts`](../../src/services/mcp/elicitationHandler.ts)
 
 `ElicitationDialog` 的第一层分流不是字段类型，而是整个交互模式：
 
@@ -144,7 +144,7 @@ REPL 会在 queued commands 从空变非空时做一次：
 
 ## 10. `registerElicitationHandler()` 说明 REPL 模式下的 elicitation 本质是服务端请求被排进前台队列
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/elicitationHandler.ts`](../../sources/claude-code/src/services/mcp/elicitationHandler.ts)
+源码镜像：[`../../src/services/mcp/elicitationHandler.ts`](../../src/services/mcp/elicitationHandler.ts)
 
 MCP 客户端注册 `ElicitRequestSchema` 后，REPL 路径会：
 
@@ -168,7 +168,7 @@ MCP 客户端注册 `ElicitRequestSchema` 后，REPL 路径会：
 
 ## 11. URL elicitation 是双阶段协议：phase 1 同意打开，phase 2 等服务器确认或用户重试/取消
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts), [`../../sources/claude-code/src/services/mcp/elicitationHandler.ts`](../../sources/claude-code/src/services/mcp/elicitationHandler.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts), [`../../src/services/mcp/elicitationHandler.ts`](../../src/services/mcp/elicitationHandler.ts)
 
 URL elicitation 有一条关键特殊逻辑：
 
@@ -191,7 +191,7 @@ URL elicitation 有一条关键特殊逻辑：
 
 ## 12. `ElicitationFormDialog` 不是简易表单，而是带 schema-aware 导航、异步解析和 overlay 管理的重型工作面
 
-源码镜像：[`../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx`](../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx)
+源码镜像：[`../../src/components/mcp/ElicitationDialog.tsx`](../../src/components/mcp/ElicitationDialog.tsx)
 
 `ElicitationFormDialog` 自己管了大量状态：
 
@@ -216,7 +216,7 @@ URL elicitation 有一条关键特殊逻辑：
 
 ## 13. schema-aware field runtime 说明 Claude Code 真在 REPL 里实现了一层通用 JSON-schema-ish 表单系统
 
-源码镜像：[`../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx`](../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx), [`../../sources/claude-code/src/utils/mcp/elicitationValidation.ts`](../../sources/claude-code/src/utils/mcp/elicitationValidation.ts)
+源码镜像：[`../../src/components/mcp/ElicitationDialog.tsx`](../../src/components/mcp/ElicitationDialog.tsx), [`../../src/utils/mcp/elicitationValidation.ts`](../../src/utils/mcp/elicitationValidation.ts)
 
 当前可见的字段能力至少包括：
 
@@ -239,7 +239,7 @@ URL elicitation 有一条关键特殊逻辑：
 
 ## 14. `elicitationValidation.ts` 说明 MCP 字段校验不是组件内散逻辑，而是独立验证层
 
-源码镜像：[`../../sources/claude-code/src/utils/mcp/elicitationValidation.ts`](../../sources/claude-code/src/utils/mcp/elicitationValidation.ts)
+源码镜像：[`../../src/utils/mcp/elicitationValidation.ts`](../../src/utils/mcp/elicitationValidation.ts)
 
 这层至少抽出了：
 
@@ -255,7 +255,7 @@ URL elicitation 有一条关键特殊逻辑：
 
 ## 15. `onWaitingDismiss` 和 completion notification 说明 URL elicitation 是“前台 waiting state”和“服务器确认”双边都可结束的协议
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/elicitationHandler.ts`](../../sources/claude-code/src/services/mcp/elicitationHandler.ts), [`../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx`](../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/services/mcp/elicitationHandler.ts`](../../src/services/mcp/elicitationHandler.ts), [`../../src/components/mcp/ElicitationDialog.tsx`](../../src/components/mcp/ElicitationDialog.tsx), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 URL 模式里，结束 queue 项至少有三种来源：
 

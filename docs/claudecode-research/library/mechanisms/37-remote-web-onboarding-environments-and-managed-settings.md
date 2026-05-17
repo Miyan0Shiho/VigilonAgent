@@ -13,7 +13,7 @@
 
 ## 1. `/web-setup` 不是“开个网页”，而是一条本地凭据搬运链
 
-源码镜像：[`../../sources/claude-code/src/commands/remote-setup/remote-setup.tsx`](../../sources/claude-code/src/commands/remote-setup/remote-setup.tsx), [`../../sources/claude-code/src/commands/remote-setup/api.ts`](../../sources/claude-code/src/commands/remote-setup/api.ts)
+源码镜像：[`../../src/commands/remote-setup/remote-setup.tsx`](../../src/commands/remote-setup/remote-setup.tsx), [`../../src/commands/remote-setup/api.ts`](../../src/commands/remote-setup/api.ts)
 
 `/web-setup` 的真正职责不是简单跳到 claude.ai/code，而是：
 
@@ -27,7 +27,7 @@
 
 ## 2. `checkLoginState()` 把 `/web-setup` 分成四类前置状态，而不是一刀切失败
 
-源码镜像：[`../../sources/claude-code/src/commands/remote-setup/remote-setup.tsx`](../../sources/claude-code/src/commands/remote-setup/remote-setup.tsx)
+源码镜像：[`../../src/commands/remote-setup/remote-setup.tsx`](../../src/commands/remote-setup/remote-setup.tsx)
 
 这个命令在真正显示确认框前，先把用户分到四类：
 
@@ -45,7 +45,7 @@
 
 ## 3. `gh auth token` 被单独再 spawn 一次，是 telemetry-safe 设计，不是重复劳动
 
-源码镜像：[`../../sources/claude-code/src/commands/remote-setup/remote-setup.tsx`](../../sources/claude-code/src/commands/remote-setup/remote-setup.tsx)
+源码镜像：[`../../src/commands/remote-setup/remote-setup.tsx`](../../src/commands/remote-setup/remote-setup.tsx)
 
 代码先调用 `getGhAuthStatus()`，再单独执行：
 
@@ -60,7 +60,7 @@
 
 ## 4. `RedactedGithubToken` 不是装饰类，而是防日志泄露的安全边界
 
-源码镜像：[`../../sources/claude-code/src/commands/remote-setup/api.ts`](../../sources/claude-code/src/commands/remote-setup/api.ts)
+源码镜像：[`../../src/commands/remote-setup/api.ts`](../../src/commands/remote-setup/api.ts)
 
 `RedactedGithubToken` 做了几件很关键的事：
 
@@ -73,7 +73,7 @@
 
 ## 5. token import 和环境创建是两段不同成功标准
 
-源码镜像：[`../../sources/claude-code/src/commands/remote-setup/api.ts`](../../sources/claude-code/src/commands/remote-setup/remote-setup.tsx)
+源码镜像：[`../../src/commands/remote-setup/api.ts`](../../src/commands/remote-setup/remote-setup.tsx)
 
 `handleConfirm()` 的成功链是：
 
@@ -91,7 +91,7 @@
 
 ## 6. `importGithubToken()` 的后端语义是“把本地 GitHub token 存进 CCR token store”
 
-源码镜像：[`../../sources/claude-code/src/commands/remote-setup/api.ts`](../../sources/claude-code/src/commands/remote-setup/api.ts)
+源码镜像：[`../../src/commands/remote-setup/api.ts`](../../src/commands/remote-setup/api.ts)
 
 这条 API call：
 
@@ -104,7 +104,7 @@
 
 ## 7. 默认环境创建的目标不是 BYOC，而是先给每个新用户一个可落地的 `anthropic_cloud`
 
-源码镜像：[`../../sources/claude-code/src/commands/remote-setup/api.ts`](../../sources/claude-code/src/utils/teleport/environments.ts)
+源码镜像：[`../../src/commands/remote-setup/api.ts`](../../src/utils/teleport/environments.ts)
 
 默认环境创建固定写死了一套最小配置：
 
@@ -118,7 +118,7 @@
 
 ## 8. `/remote-env` 只是薄命令壳，真正的环境选择逻辑都在 `RemoteEnvironmentDialog`
 
-源码镜像：[`../../sources/claude-code/src/commands/remote-env/remote-env.tsx`](../../sources/claude-code/src/components/RemoteEnvironmentDialog.tsx)
+源码镜像：[`../../src/commands/remote-env/remote-env.tsx`](../../src/components/RemoteEnvironmentDialog.tsx)
 
 `/remote-env` 本身只做：
 
@@ -135,7 +135,7 @@
 
 ## 9. `getEnvironmentSelectionInfo()` 说明“当前远端环境”是 settings merge 的产物，不是单独 remote state
 
-源码镜像：[`../../sources/claude-code/src/utils/teleport/environmentSelection.ts`](../../sources/claude-code/src/utils/teleport/environmentSelection.ts)
+源码镜像：[`../../src/utils/teleport/environmentSelection.ts`](../../src/utils/teleport/environmentSelection.ts)
 
 环境选择逻辑不是“API 返回一个 current environment”，而是本地自己推导：
 
@@ -148,7 +148,7 @@
 
 ## 10. 默认环境选择有一个很具体的产品偏置：优先非 `bridge`
 
-源码镜像：[`../../sources/claude-code/src/utils/teleport/environmentSelection.ts`](../../sources/claude-code/src/utils/teleport/environmentSelection.ts)
+源码镜像：[`../../src/utils/teleport/environmentSelection.ts`](../../src/utils/teleport/environmentSelection.ts)
 
 当没有显式 `defaultEnvironmentId` 时，默认选的是：
 
@@ -159,7 +159,7 @@
 
 ## 11. `RemoteEnvironmentDialog` 的多环境模式其实是在做本地 settings source 的可解释切换
 
-源码镜像：[`../../sources/claude-code/src/components/RemoteEnvironmentDialog.tsx`](../../sources/claude-code/src/components/RemoteEnvironmentDialog.tsx)
+源码镜像：[`../../src/components/RemoteEnvironmentDialog.tsx`](../../src/components/RemoteEnvironmentDialog.tsx)
 
 这个 dialog 不只显示 environment list，还会把当前选中来源显示出来：
 
@@ -174,7 +174,7 @@
 
 ## 12. remote environments API 明确只接受 Claude.ai OAuth，不接受 API key
 
-源码镜像：[`../../sources/claude-code/src/utils/teleport/environments.ts`](../../sources/claude-code/src/utils/teleport/environments.ts)
+源码镜像：[`../../src/utils/teleport/environments.ts`](../../src/utils/teleport/environments.ts)
 
 `fetchEnvironments()` 的前置判断非常硬：
 
@@ -185,7 +185,7 @@
 
 ## 13. remote managed settings 的 eligibility 不只是“是否登录”，还会排除 provider/base-url/entrypoint
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/syncCache.ts`](../../sources/claude-code/src/services/remoteManagedSettings/syncCache.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/syncCache.ts`](../../src/services/remoteManagedSettings/syncCache.ts)
 
 `isRemoteManagedSettingsEligible()` 的 gate 很细：
 
@@ -200,7 +200,7 @@
 
 ## 14. `syncCacheState.ts` 的 leaf split 是为了解循环依赖，不是代码洁癖
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/syncCacheState.ts`](../../sources/claude-code/src/services/remoteManagedSettings/syncCacheState.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/syncCacheState.ts`](../../src/services/remoteManagedSettings/syncCacheState.ts)
 
 这个文件被刻意拆成 leaf module，原因写得很直白：
 
@@ -210,7 +210,7 @@
 
 ## 15. 远端 managed settings 缓存有两层：session cache + disk cache
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/syncCacheState.ts`](../../sources/claude-code/src/services/remoteManagedSettings/syncCacheState.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/syncCacheState.ts`](../../src/services/remoteManagedSettings/syncCacheState.ts)
 
 这里有两层缓存：
 
@@ -228,7 +228,7 @@
 
 ## 16. checksum 语义是和 Python 服务端强对齐的，不是前端随便 hash 一下
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/services/remoteManagedSettings/index.ts)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/services/remoteManagedSettings/index.ts)
 
 `computeChecksumFromSettings()` 明确模拟服务端：
 
@@ -240,7 +240,7 @@
 
 ## 17. remote managed settings API 是 fail-open，而安全检查是 fail-closed
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/index.ts`](../../sources/claude-code/src/services/remoteManagedSettings/securityCheck.tsx)
+源码镜像：[`../../src/services/remoteManagedSettings/index.ts`](../../src/services/remoteManagedSettings/securityCheck.tsx)
 
 这是整条链最重要的治理结论：
 
@@ -258,7 +258,7 @@
 
 ## 18. 危险设置审批不是 toast，而是阻塞式前台安全对话框
 
-源码镜像：[`../../sources/claude-code/src/services/remoteManagedSettings/securityCheck.tsx`](../../sources/claude-code/src/services/remoteManagedSettings/securityCheck.tsx)
+源码镜像：[`../../src/services/remoteManagedSettings/securityCheck.tsx`](../../src/services/remoteManagedSettings/securityCheck.tsx)
 
 安全检查链会：
 
@@ -271,7 +271,7 @@
 
 ## 19. `RemoteTriggerTool` 把 scheduled remote agents 接成了一个 first-party OAuth tool，而不是 shell wrapper
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../sources/claude-code/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
+源码镜像：[`../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts`](../../src/tools/RemoteTriggerTool/RemoteTriggerTool.ts)
 
 `RemoteTriggerTool` 支持：
 
@@ -294,7 +294,7 @@
 
 ## 20. `RemoteTriggerTool` 的 UI 也故意保持原始 HTTP surface
 
-源码镜像：[`../../sources/claude-code/src/tools/RemoteTriggerTool/UI.tsx`](../../sources/claude-code/src/tools/RemoteTriggerTool/UI.tsx)
+源码镜像：[`../../src/tools/RemoteTriggerTool/UI.tsx`](../../src/tools/RemoteTriggerTool/UI.tsx)
 
 它的渲染层非常克制：
 

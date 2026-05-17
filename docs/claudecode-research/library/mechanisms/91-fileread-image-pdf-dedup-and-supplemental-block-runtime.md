@@ -17,7 +17,7 @@
 
 ## 1. `FileReadTool` 的输出协议从一开始就不是单一文本，而是六态 discriminated union
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `outputSchema` 里把读取结果明确分成：
 
@@ -32,7 +32,7 @@
 
 ## 2. image 分支不是“把原图 base64 化”，而是先走 token-budget-aware 压缩链
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts), [`../../sources/claude-code/src/tools/FileReadTool/imageProcessor.ts`](../../sources/claude-code/src/tools/FileReadTool/imageProcessor.ts), [`../../sources/claude-code/src/tools/FileReadTool/limits.ts`](../../sources/claude-code/src/tools/FileReadTool/limits.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts), [`../../src/tools/FileReadTool/imageProcessor.ts`](../../src/tools/FileReadTool/imageProcessor.ts), [`../../src/tools/FileReadTool/limits.ts`](../../src/tools/FileReadTool/limits.ts)
 
 image 路径在 `callInner(...)` 里是：
 
@@ -49,7 +49,7 @@ image 路径在 `callInner(...)` 里是：
 
 ## 3. `readImageWithTokenBudget(...)` 的第一原则是“只读磁盘一次，再在内存里反复压”
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/imageProcessor.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/imageProcessor.ts)
 
 函数开头就写明了：
 
@@ -72,7 +72,7 @@ image 路径在 `callInner(...)` 里是：
 
 ## 4. image processor 的运行时其实有 bundled/native 与 `sharp` 两级装载策略
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/imageProcessor.ts`](../../sources/claude-code/src/tools/FileReadTool/imageProcessor.ts)
+源码镜像：[`../../src/tools/FileReadTool/imageProcessor.ts`](../../src/tools/FileReadTool/imageProcessor.ts)
 
 `getImageProcessor()` 的装载顺序是：
 
@@ -91,7 +91,7 @@ image 路径在 `callInner(...)` 里是：
 
 ## 5. image tool-result 不只是一张图，还可能额外外挂一条 metadata sidecar
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 image 分支成功后还会算：
 
@@ -110,7 +110,7 @@ image 分支成功后还会算：
 
 ## 6. `mapToolResultToToolResultBlockParam(...)` 对 image 的正式输出就是单个 image block
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/UI.tsx)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/UI.tsx)
 
 image 分支的 mapper 很薄：
 
@@ -124,7 +124,7 @@ image 分支的 mapper 很薄：
 
 ## 7. PDF 不是一条读法，而是 `pages` 提取轨和 full-document 轨两套完全不同协议
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/UI.tsx)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/UI.tsx)
 
 PDF 分支先看：
 
@@ -151,7 +151,7 @@ PDF 分支先看：
 
 ## 8. `parts` 路径真正回给模型的是抽页后生成的 image blocks，而不是“页码文字摘要”
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 带 `pages` 的分支里，`extractPDFPages(...)` 成功后会：
 
@@ -170,7 +170,7 @@ PDF 分支先看：
 
 ## 9. full PDF 路径也不是把 PDF 文本提出来，而是把原始文档挂成 `document` block
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 full-document 分支在 `readPDF(...)` 成功后会返回：
 
@@ -191,7 +191,7 @@ full-document 分支在 `readPDF(...)` 成功后会返回：
 
 ## 10. PDF 有三道不同层级的闸门，而不是单一 size check
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/limits.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/limits.ts)
 
 PDF 路径至少有三种不同的提前分流：
 
@@ -215,7 +215,7 @@ PDF 路径至少有三种不同的提前分流：
 
 ## 11. `file_unchanged` 不是普通缓存命中，而是“同一范围且磁盘没变”的 read-state 去重 stub
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/UI.tsx)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/UI.tsx)
 
 dedup 逻辑有几条硬前提：
 
@@ -241,7 +241,7 @@ dedup 逻辑有几条硬前提：
 
 ## 12. `file_unchanged` 的产品目标不是省 I/O，而是省后续 turns 的 cache-creation tokens
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/UI.tsx)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/UI.tsx)
 
 注释写得很明确：
 
@@ -265,7 +265,7 @@ UI 也刻意把它压成：
 
 ## 13. text 路径的主结果也不是裸文件内容，而是三层 sidecar 拼起来的字符串
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/limits.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/limits.ts)
 
 `text` mapper 真正拼的是：
 
@@ -287,7 +287,7 @@ UI 也刻意把它压成：
 
 ## 14. `memoryFileFreshnessPrefix(...)` 是 presentation-only side channel，不污染 schema
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 auto-memory 文件在 text 路径里会：
 
@@ -312,7 +312,7 @@ auto-memory 文件在 text 路径里会：
 
 ## 15. 文本读取默认还会强插一段 cyber-risk mitigation reminder，而且它不是 UI 文案
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/UI.tsx)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/UI.tsx)
 
 `CYBER_RISK_MITIGATION_REMINDER` 是直接拼进 model-facing `tool_result` 的：
 
@@ -326,7 +326,7 @@ auto-memory 文件在 text 路径里会：
 
 ## 16. 这条 mitigation 也不是绝对开启，而是按主模型 canonical name 做 runtime 豁免
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/limits.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/limits.ts)
 
 gate 很直接：
 
@@ -342,7 +342,7 @@ gate 很直接：
 
 ## 17. `limits.ts` 里的双上限模型解释了为什么 text 和 image/PDF 读法会明显分岔
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/limits.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/limits.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `limits.ts` 明确区分两种 cap：
 
@@ -364,7 +364,7 @@ gate 很直接：
 
 ## 18. `newMessages` 才是这条工具链最关键的隐藏骨架：主结果做 receipt，sidecar 才承载富内容
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/UI.tsx)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/UI.tsx)
 
 把 image、PDF、parts 三条路径放在一起看，会看到同一个结构：
 
@@ -388,7 +388,7 @@ gate 很直接：
 
 ## 19. 前台 UI 刻意把这整套多媒体复杂度压扁成“单行读取摘要”
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/UI.tsx`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/UI.tsx`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `UI.tsx` 对五种非-notebook 类型统一采取摘要式渲染：
 

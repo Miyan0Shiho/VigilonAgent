@@ -6,7 +6,7 @@
 
 ## 1. `RemoteAgentTask` 不是一个任务类型名，而是 Claude Code 把 claude.ai session 收编进本地任务框架的适配层
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx), [`../../sources/claude-code/src/utils/task/framework.ts`](../../sources/claude-code/src/utils/task/framework.ts)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx), [`../../src/utils/task/framework.ts`](../../src/utils/task/framework.ts)
 
 remote session 原生只知道：
 
@@ -26,7 +26,7 @@ remote session 原生只知道：
 
 ## 2. `registerRemoteAgentTask()` 不是简单 `registerTask()` 包装，而是一次“本地 task 壳 + 远端 session identity”双写
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx), [`../../sources/claude-code/src/utils/task/framework.ts`](../../sources/claude-code/src/utils/task/framework.ts), [`../../sources/claude-code/src/utils/task/diskOutput.ts`](../../sources/claude-code/src/utils/task/diskOutput.ts)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx), [`../../src/utils/task/framework.ts`](../../src/utils/task/framework.ts), [`../../src/utils/task/diskOutput.ts`](../../src/utils/task/diskOutput.ts)
 
 注册远端任务时会同时发生三件事：
 
@@ -42,7 +42,7 @@ remote session 原生只知道：
 
 ## 3. sidecar 持久化保存的是“如何找回任务”，不是“任务最终状态快照”
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/utils/sessionStorage.ts), [`../../sources/claude-code/src/utils/sessionStorage.ts`](../../sources/claude-code/src/utils/sessionStorage.ts)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/utils/sessionStorage.ts), [`../../src/utils/sessionStorage.ts`](../../src/utils/sessionStorage.ts)
 
 `persistRemoteAgentMetadata()` 存的核心字段是：
 
@@ -61,7 +61,7 @@ remote session 原生只知道：
 
 ## 4. `restoreRemoteAgentTasks()` 只在远端还活着时重建本地任务；404 和 archived 会被主动清 sidecar
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/utils/sessionStorage.ts), [`../../sources/claude-code/src/utils/teleport/api.ts`](../../sources/claude-code/src/utils/teleport/api.ts)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/utils/sessionStorage.ts), [`../../src/utils/teleport/api.ts`](../../src/utils/teleport/api.ts)
 
 恢复流程不是“看见 sidecar 就复活”：
 
@@ -75,7 +75,7 @@ remote session 原生只知道：
 
 ## 5. `fetchSession()` 把 404 和 401 语义化成可分支错误，这就是 restore 层能做细判断的基础
 
-源码镜像：[`../../sources/claude-code/src/utils/teleport/api.ts`](../../sources/claude-code/src/utils/teleport/api.ts)
+源码镜像：[`../../src/utils/teleport/api.ts`](../../src/utils/teleport/api.ts)
 
 `fetchSession()` 对远端状态读不是一把梭：
 
@@ -90,7 +90,7 @@ remote session 原生只知道：
 
 ## 6. `startRemoteSessionPolling()` 是这套 runtime 的核心，不是普通 setInterval，而是状态机驱动的自调度循环
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/utils/teleport/api.ts)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/utils/teleport/api.ts)
 
 poller 的结构是：
 
@@ -104,7 +104,7 @@ poller 的结构是：
 
 ## 7. 远端事件轮询依赖 `after_id` 增量翻页，而不是每秒全量扫历史
 
-源码镜像：[`../../sources/claude-code/src/utils/teleport/api.ts`](../../sources/claude-code/src/utils/teleport/api.ts)；相关实现入口：`packages/claude-code/src/utils/teleport.tsx`
+源码镜像：[`../../src/utils/teleport/api.ts`](../../src/utils/teleport/api.ts)；相关实现入口：`packages/claude-code/src/utils/teleport.tsx`
 
 `pollRemoteSessionEvents()` 的真实 contract 是：
 
@@ -117,7 +117,7 @@ poller 的结构是：
 
 ## 8. 它会主动过滤 `env_manager_log` 和 `control_response`，说明 remote task log 不等于原始 events feed
 
-源码镜像：[`../../sources/claude-code/src/utils/teleport/api.ts`](../../sources/claude-code/src/utils/teleport/api.ts)；相关实现入口：`packages/claude-code/src/utils/teleport.tsx`
+源码镜像：[`../../src/utils/teleport/api.ts`](../../src/utils/teleport/api.ts)；相关实现入口：`packages/claude-code/src/utils/teleport.tsx`
 
 `pollRemoteSessionEvents()` 不是把服务端 events 原样塞给任务。它明确跳过：
 
@@ -128,7 +128,7 @@ poller 的结构是：
 
 ## 9. output file 不是附属品，而是 task framework 对 remote task 的正式外显接口
 
-源码镜像：[`../../sources/claude-code/src/utils/task/diskOutput.ts`](../../sources/claude-code/src/utils/task/diskOutput.ts), [`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
+源码镜像：[`../../src/utils/task/diskOutput.ts`](../../src/utils/task/diskOutput.ts), [`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
 
 每次 log 增长时，poller 会把 delta 文本 append 到 task output file。这样做的目的不是备份，而是让：
 
@@ -140,7 +140,7 @@ poller 的结构是：
 
 ## 10. `stable idle` 去抖是 remote task 里最关键的完成判定保护，不然每次 tool turn 间隙都会被误判结束
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)；相关实现入口：`packages/claude-code/src/utils/teleport.tsx`
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)；相关实现入口：`packages/claude-code/src/utils/teleport.tsx`
 
 远端 session 会在 tool turn 间短暂变成 `idle`。所以这里用了：
 
@@ -151,7 +151,7 @@ poller 的结构是：
 
 ## 11. remote-review 不能靠普通 `result` 判定完成，因为 bughunter path 可能零 assistant turn，只靠 hook stdout 收尾
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/utils/task/framework.ts)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/utils/task/framework.ts)
 
 remote-review 的完成条件被单独拆出来，是因为它有两条生产路径：
 
@@ -168,7 +168,7 @@ remote-review 的完成条件被单独拆出来，是因为它有两条生产路
 
 ## 12. review 进度条不是从 task status 推出来的，而是从 hook stdout 里解析 `<remote-review-progress>` 标签
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
 
 `reviewProgress` 的来源很具体：
 
@@ -180,7 +180,7 @@ remote-review 的完成条件被单独拆出来，是因为它有两条生产路
 
 ## 13. `isUltraplan` 和 `isLongRunning` 都会阻止普通 `result` 直接宣告任务结束
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx)
 
 这里有个很重要的分流：
 
@@ -192,7 +192,7 @@ remote-review 的完成条件被单独拆出来，是因为它有两条生产路
 
 ## 14. task 完成时，本地先更新 AppState，再决定走哪种 notification path
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/utils/messageQueueManager.ts), [`../../sources/claude-code/src/utils/task/framework.ts`](../../sources/claude-code/src/utils/task/framework.ts)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/utils/messageQueueManager.ts), [`../../src/utils/task/framework.ts`](../../src/utils/task/framework.ts)
 
 完成后并不是统一发一句消息：
 
@@ -205,7 +205,7 @@ remote-review 的完成条件被单独拆出来，是因为它有两条生产路
 
 ## 15. `markTaskNotified()` 是原子门闩，防止 poll loop 和 stop/kill 路径重复发通知
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/utils/task/framework.ts)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/utils/task/framework.ts)
 
 通知函数都会先过 `markTaskNotified()`。它的作用是：
 
@@ -222,7 +222,7 @@ remote-review 的完成条件被单独拆出来，是因为它有两条生产路
 
 ## 16. kill 不是只改本地状态，还会补 `task_terminated` SDK bookend 并尝试 archive 远端 session
 
-源码镜像：[`../../sources/claude-code/src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../sources/claude-code/src/utils/sdkEventQueue.ts)
+源码镜像：[`../../src/tasks/RemoteAgentTask/RemoteAgentTask.tsx`](../../src/utils/sdkEventQueue.ts)
 
 `RemoteAgentTask.kill()` 做了三件正式收尾动作：
 
@@ -234,7 +234,7 @@ remote-review 的完成条件被单独拆出来，是因为它有两条生产路
 
 ## 17. 归档用的是 best-effort `POST /archive`，因为它比 delete 更适合 mid-run 停止
 
-源码镜像：[`../../sources/claude-code/src/utils/teleport/api.ts`](../../sources/claude-code/src/utils/teleport/api.ts)；相关实现入口：`packages/claude-code/src/utils/teleport.tsx`
+源码镜像：[`../../src/utils/teleport/api.ts`](../../src/utils/teleport/api.ts)；相关实现入口：`packages/claude-code/src/utils/teleport.tsx`
 
 `archiveRemoteSession()` 的注释已经把设计原因说透了：
 

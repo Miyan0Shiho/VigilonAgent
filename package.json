@@ -4,9 +4,12 @@
   "packageManager": "pnpm@10.0.0",
   "type": "module",
   "scripts": {
-    "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
-    "start": "pnpm --filter @vigilon/claude-code start"
+    "build": "pnpm --filter @vigilon/runtime build",
+    "typecheck": "pnpm --filter @vigilon/runtime typecheck",
+    "start": "pnpm --filter @vigilon/runtime start",
+    "smoke:version": "pnpm --filter @vigilon/runtime smoke:version",
+    "phase1:baseline": "pnpm typecheck && pnpm smoke:version",
+    "reference:claude-version": "pnpm --filter @vigilon/claude-code smoke:version"
   },
   "devDependencies": {
     "@types/node": "^24.10.0",

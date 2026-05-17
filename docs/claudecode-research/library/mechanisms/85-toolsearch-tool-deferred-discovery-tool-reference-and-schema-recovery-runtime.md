@@ -27,7 +27,7 @@
 
 ## 1. `ToolSearchTool` 的职责不是“搜索所有工具”，而是“把 deferred tools 正式加载进当前 prompt”
 
-源码镜像：[`../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts`](../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts), [`../../sources/claude-code/src/tools/ToolSearchTool/prompt.ts`](../../sources/claude-code/src/tools/ToolSearchTool/prompt.ts)
+源码镜像：[`../../src/tools/ToolSearchTool/ToolSearchTool.ts`](../../src/tools/ToolSearchTool/ToolSearchTool.ts), [`../../src/tools/ToolSearchTool/prompt.ts`](../../src/tools/ToolSearchTool/prompt.ts)
 
 `prompt.ts` 开头就把目的说死了：
 
@@ -43,7 +43,7 @@
 
 ## 2. 它本身也是 gating 过的工具，只有“tool search 可能开启”时才进工具池
 
-源码镜像：[`../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts`](../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts), [`../../sources/claude-code/src/utils/toolSearch.ts`](../../sources/claude-code/src/utils/toolSearch.ts), [`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/tools.ts)
+源码镜像：[`../../src/tools/ToolSearchTool/ToolSearchTool.ts`](../../src/tools/ToolSearchTool/ToolSearchTool.ts), [`../../src/utils/toolSearch.ts`](../../src/utils/toolSearch.ts), [`../../src/tools.ts`](../../src/tools.ts)
 
 `ToolSearchTool.isEnabled()` 只看：
 
@@ -66,7 +66,7 @@
 
 ## 3. `isDeferredTool(...)` 才是它的真正上游边界，ToolSearchTool 自己永远不能被 defer
 
-源码镜像：[`../../sources/claude-code/src/tools/ToolSearchTool/prompt.ts`](../../sources/claude-code/src/tools/ToolSearchTool/prompt.ts)
+源码镜像：[`../../src/tools/ToolSearchTool/prompt.ts`](../../src/tools/ToolSearchTool/prompt.ts)
 
 `prompt.ts` 里的 `isDeferredTool(tool)` 先做几条关键判断：
 
@@ -85,7 +85,7 @@
 
 ## 4. 这把工具是只读且可并发的，说明它被当成低风险 prompt-shaping primitive，而不是 side-effect 工具
 
-源码镜像：[`../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts`](../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts)
+源码镜像：[`../../src/tools/ToolSearchTool/ToolSearchTool.ts`](../../src/tools/ToolSearchTool/ToolSearchTool.ts)
 
 工具声明是：
 
@@ -106,7 +106,7 @@
 
 ## 5. 输入面非常小，但其实编码了两种完全不同的模式：`select:` 和 keyword search
 
-源码镜像：[`../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts`](../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts)
+源码镜像：[`../../src/tools/ToolSearchTool/ToolSearchTool.ts`](../../src/tools/ToolSearchTool/ToolSearchTool.ts)
 
 输入 schema 只有两个字段：
 
@@ -138,7 +138,7 @@
 
 ## 6. `select:` 路线即使工具已经 loaded 也会返回它，这不是 bug，而是故意的 no-op 兼容
 
-源码镜像：[`../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts`](../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts)
+源码镜像：[`../../src/tools/ToolSearchTool/ToolSearchTool.ts`](../../src/tools/ToolSearchTool/ToolSearchTool.ts)
 
 `select:` 分支查找顺序是：
 
@@ -160,7 +160,7 @@
 
 ## 7. keyword search 的核心不是全文语义检索，而是围绕工具名和 `searchHint` 的轻量高精度排序器
 
-源码镜像：[`../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts`](../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts)
+源码镜像：[`../../src/tools/ToolSearchTool/ToolSearchTool.ts`](../../src/tools/ToolSearchTool/ToolSearchTool.ts)
 
 `searchToolsWithKeywords(...)` 的主要打分来源有：
 
@@ -182,7 +182,7 @@
 
 ## 8. `searchHint` 在这里是高信号补充，但又被严格限制成单行 capability phrase
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts), [`../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts`](../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts), [`../../src/tools/ToolSearchTool/ToolSearchTool.ts`](../../src/tools/ToolSearchTool/ToolSearchTool.ts)
 
 动态 MCP tool 合成时会把：
 
@@ -200,7 +200,7 @@
 
 ## 9. description 搜索是带 word-boundary 的，说明它刻意规避 prompt 长文本里的偶然误命中
 
-源码镜像：[`../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts`](../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts)
+源码镜像：[`../../src/tools/ToolSearchTool/ToolSearchTool.ts`](../../src/tools/ToolSearchTool/ToolSearchTool.ts)
 
 description 命中用的是：
 
@@ -218,7 +218,7 @@ description 命中用的是：
 
 ## 10. `getToolDescriptionMemoized(...)` 和 `maybeInvalidateCache(...)` 说明这把工具对 deferred pool 变化是显式有缓存意识的
 
-源码镜像：[`../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts`](../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts)
+源码镜像：[`../../src/tools/ToolSearchTool/ToolSearchTool.ts`](../../src/tools/ToolSearchTool/ToolSearchTool.ts)
 
 `ToolSearchTool` 会 memoize：
 
@@ -247,7 +247,7 @@ description 命中用的是：
 
 ## 11. no-match 时会把 `pending_mcp_servers` 一起带回去，这不是附带信息，而是重要恢复提示
 
-源码镜像：[`../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts`](../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts)
+源码镜像：[`../../src/tools/ToolSearchTool/ToolSearchTool.ts`](../../src/tools/ToolSearchTool/ToolSearchTool.ts)
 
 当搜索结果为空时，工具会额外看：
 
@@ -269,7 +269,7 @@ description 命中用的是：
 
 ## 12. 它真正返回给模型的不是字符串化 schema，而是 `tool_reference` blocks
 
-源码镜像：[`../../sources/claude-code/src/tools/ToolSearchTool/ToolSearchTool.ts`](../../sources/claude-code/src/utils/toolSearch.ts)
+源码镜像：[`../../src/tools/ToolSearchTool/ToolSearchTool.ts`](../../src/utils/toolSearch.ts)
 
 只要 `content.matches.length > 0`，`mapToolResultToToolResultBlockParam(...)` 就会返回：
 
@@ -285,7 +285,7 @@ description 命中用的是：
 
 ## 13. `tool_reference` 的成立依赖模型能力、beta wire format 和 ToolSearchTool 自身可见性三重 gate
 
-源码镜像：[`../../sources/claude-code/src/utils/toolSearch.ts`](../../sources/claude-code/src/utils/toolSearch.ts)
+源码镜像：[`../../src/utils/toolSearch.ts`](../../src/utils/toolSearch.ts)
 
 真正的 `isToolSearchEnabled(...)` 会同时检查：
 
@@ -303,7 +303,7 @@ description 命中用的是：
 
 ## 14. `tst-auto` 不是 UX 花活，而是 context-budget guard：deferred tool 过重时才正式延迟加载
 
-源码镜像：[`../../sources/claude-code/src/utils/toolSearch.ts`](../../sources/claude-code/src/utils/toolSearch.ts)
+源码镜像：[`../../src/utils/toolSearch.ts`](../../src/utils/toolSearch.ts)
 
 `ToolSearchMode` 有三种：
 
@@ -324,7 +324,7 @@ description 命中用的是：
 
 ## 15. ToolSearchTool 结果和 `deferred_tools_delta` attachment 是两层不同协议
 
-源码镜像：[`../../sources/claude-code/src/tools/ToolSearchTool/prompt.ts`](../../sources/claude-code/src/utils/toolSearch.ts)
+源码镜像：[`../../src/tools/ToolSearchTool/prompt.ts`](../../src/utils/toolSearch.ts)
 
 `prompt.ts` 里明确说：
 
@@ -344,7 +344,7 @@ description 命中用的是：
 
 ## 16. compaction 之后为什么 tool search 还能继续工作，关键在 discovered set 恢复，而不是工具自己有状态
 
-源码镜像：[`../../sources/claude-code/src/utils/toolSearch.ts`](../../sources/claude-code/src/utils/attachments.ts)
+源码镜像：[`../../src/utils/toolSearch.ts`](../../src/utils/attachments.ts)
 
 `extractDiscoveredToolNames(messages)` 会从两处恢复已发现工具：
 
@@ -369,7 +369,7 @@ description 命中用的是：
 
 ## 17. 这条 `schema not sent` 恢复链非常关键，它把“Zod 类型错了”重新解释成“你没先加载 schema”
 
-源码镜像：[`../../sources/claude-code/src/services/tools/toolExecution.ts`](../../sources/claude-code/src/utils/toolSearch.ts)
+源码镜像：[`../../src/services/tools/toolExecution.ts`](../../src/utils/toolSearch.ts)
 
 在 `toolExecution.ts` 里，如果工具输入先被：
 

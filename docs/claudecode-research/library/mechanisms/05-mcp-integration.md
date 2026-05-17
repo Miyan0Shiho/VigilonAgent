@@ -6,7 +6,7 @@
 
 ## 1. MCP 不只是“多几个工具”
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 单看 `client.ts` 的结构就能看出 MCP 至少涵盖：
 

@@ -6,7 +6,7 @@
 
 ## 1. 这层才是 Claude Code bridge 变成“长期在线 worker”的核心
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMain.ts`](../../sources/claude-code/src/bridge/bridgeMain.ts), [`../../sources/claude-code/src/bridge/bridgeApi.ts`](../../sources/claude-code/src/bridge/bridgeApi.ts), [`../../sources/claude-code/src/bridge/replBridge.ts`](../../sources/claude-code/src/bridge/replBridge.ts), [`../../sources/claude-code/src/bridge/bridgeMessaging.ts`](../../sources/claude-code/src/bridge/bridgeMessaging.ts)
+源码镜像：[`../../src/bridge/bridgeMain.ts`](../../src/bridge/bridgeMain.ts), [`../../src/bridge/bridgeApi.ts`](../../src/bridge/bridgeApi.ts), [`../../src/bridge/replBridge.ts`](../../src/bridge/replBridge.ts), [`../../src/bridge/bridgeMessaging.ts`](../../src/bridge/bridgeMessaging.ts)
 
 前面的 bridge UI 卷册解决的是“怎么接入”和“怎么操作”，这一层解决的是更难的问题：
 
@@ -20,7 +20,7 @@
 
 ## 2. `runBridgeLoop()` 是 bridge 的长期 worker 主循环
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMain.ts`](../../sources/claude-code/src/bridge/bridgeMain.ts)
+源码镜像：[`../../src/bridge/bridgeMain.ts`](../../src/bridge/bridgeMain.ts)
 
 `runBridgeLoop()` 接受：
 
@@ -39,7 +39,7 @@
 
 ## 3. `runBridgeLoop()` 内部已经是多 session orchestration，而不是单连接壳
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMain.ts`](../../sources/claude-code/src/bridge/bridgeMain.ts)
+源码镜像：[`../../src/bridge/bridgeMain.ts`](../../src/bridge/bridgeMain.ts)
 
 这层内部维护的核心状态包括：
 
@@ -66,7 +66,7 @@
 
 ## 4. `SPAWN_SESSIONS_DEFAULT` 和 `isMultiSessionSpawnEnabled()` 说明多会话是正式能力，不是后门
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMain.ts`](../../sources/claude-code/src/bridge/bridgeMain.ts)
+源码镜像：[`../../src/bridge/bridgeMain.ts`](../../src/bridge/bridgeMain.ts)
 
 这里显式定义了：
 
@@ -83,7 +83,7 @@
 
 ## 5. `createSessionSpawner()` 和 `spawnScriptArgs()` 说明本地 worker 拉起也有构建形态兼容层
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMain.ts`](../../sources/claude-code/src/bridge/sessionRunner.ts)
+源码镜像：[`../../src/bridge/bridgeMain.ts`](../../src/bridge/sessionRunner.ts)
 
 这一层没有假设所有本地 bridge worker 都能直接运行 `claude`。`spawnScriptArgs()` 明确区分：
 
@@ -94,7 +94,7 @@
 
 ## 6. `heartbeatActiveWorkItems()` 说明 bridge 保活的是 work lease，不只是 transport 活性
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMain.ts`](../../sources/claude-code/src/bridge/bridgeApi.ts)
+源码镜像：[`../../src/bridge/bridgeMain.ts`](../../src/bridge/bridgeApi.ts)
 
 这段逻辑的关键不是“session 还活着吗”，而是“server 上的 work lease 还活着吗”。它会：
 
@@ -113,7 +113,7 @@
 
 ## 7. 401/403 heartbeat 失败会走 `reconnectSession()`，因为核心问题是“工作需要重新派发”
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMain.ts`](../../sources/claude-code/src/bridge/bridgeApi.ts)
+源码镜像：[`../../src/bridge/bridgeMain.ts`](../../src/bridge/bridgeApi.ts)
 
 `heartbeatActiveWorkItems()` 遇到 `BridgeFatalError` 且状态为 `401/403` 时，不是直接杀本地 session，而是把 `sessionId` 加进 `authFailedSessions`，然后调用：
 
@@ -123,7 +123,7 @@
 
 ## 8. `BackoffConfig` 把连接错误和一般错误分成两套预算
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMain.ts`](../../sources/claude-code/src/bridge/replBridge.ts)
+源码镜像：[`../../src/bridge/bridgeMain.ts`](../../src/bridge/replBridge.ts)
 
 `BackoffConfig` 不是单一指数退避，它分成：
 
@@ -144,7 +144,7 @@
 
 ## 9. `pollSleepDetectionThresholdMs()` 说明 bridge 专门防系统睡眠把错误预算无限重置
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMain.ts`](../../sources/claude-code/src/bridge/replBridge.ts)
+源码镜像：[`../../src/bridge/bridgeMain.ts`](../../src/bridge/replBridge.ts)
 
 这一层把 sleep/wake detection 阈值定义成 `connCapMs * 2`，注释直接指出目的：
 
@@ -156,7 +156,7 @@
 
 ## 10. `createBridgeApiClient()` 把 OAuth、trusted device 和 URL path safety 包在同一 HTTP 边界里
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeApi.ts`](../../sources/claude-code/src/bridge/bridgeApi.ts)
+源码镜像：[`../../src/bridge/bridgeApi.ts`](../../src/bridge/bridgeApi.ts)
 
 `createBridgeApiClient()` 里有三个关键边界：
 
@@ -172,7 +172,7 @@
 
 ## 11. `registerBridgeEnvironment()` 的 payload 已经暴露出 web 端环境调度所需的最小模型
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeApi.ts`](../../sources/claude-code/src/bridge/types.ts)
+源码镜像：[`../../src/bridge/bridgeApi.ts`](../../src/bridge/types.ts)
 
 注册环境时会发送：
 
@@ -195,7 +195,7 @@
 
 ## 12. `pollForWork()` 的“空轮询计数”说明 bridge 把 no-work 视作正常稳定态
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeApi.ts`](../../sources/claude-code/src/bridge/pollConfig.ts)
+源码镜像：[`../../src/bridge/bridgeApi.ts`](../../src/bridge/pollConfig.ts)
 
 `pollForWork()` 会维护：
 
@@ -215,7 +215,7 @@
 
 ## 13. `initBridgeCore()` 是 bootstrap-free core，`replBridge.ts` 只是 REPL wrapper
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridge.ts`](../../sources/claude-code/src/bridge/bridgeMain.ts)
+源码镜像：[`../../src/bridge/replBridge.ts`](../../src/bridge/bridgeMain.ts)
 
 `replBridge.ts` 里对 `BridgeCoreParams` 的注释说得很明确：这是一套 bootstrap-free core 输入。它要求调用方显式提供：
 
@@ -237,7 +237,7 @@
 
 ## 14. `initBridgeCore()` 真正管理的是 environment registration -> session creation -> poll loop -> ingress transport 的整条链
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridge.ts`](../../sources/claude-code/src/bridge/bridgeApi.ts)
+源码镜像：[`../../src/bridge/replBridge.ts`](../../src/bridge/bridgeApi.ts)
 
 `initBridgeCore()` 的职责不是单点：
 
@@ -252,7 +252,7 @@
 
 ## 15. `lastTransportSequenceNum` 和 `recentInboundUUIDs` 说明 bridge 把 replay 问题当一等公民处理
 
-源码镜像：[`../../sources/claude-code/src/bridge/replBridge.ts`](../../sources/claude-code/src/bridge/bridgeMessaging.ts)
+源码镜像：[`../../src/bridge/replBridge.ts`](../../src/bridge/bridgeMessaging.ts)
 
 这层有两套去重 / 恢复机制：
 
@@ -265,7 +265,7 @@
 
 ## 16. `handleIngressMessage()` 把 server 输入拆成三条路：control response、control request、SDK message
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMessaging.ts`](../../sources/claude-code/src/bridge/bridgeMessaging.ts), [`../../sources/claude-code/src/entrypoints/agentSdkTypes.ts`](../../sources/claude-code/src/entrypoints/agentSdkTypes.ts), [`../../sources/claude-code/src/bridge/replBridge.ts`](../../sources/claude-code/src/bridge/replBridge.ts)
+源码镜像：[`../../src/bridge/bridgeMessaging.ts`](../../src/bridge/bridgeMessaging.ts), [`../../src/entrypoints/agentSdkTypes.ts`](../../src/entrypoints/agentSdkTypes.ts), [`../../src/bridge/replBridge.ts`](../../src/bridge/replBridge.ts)
 
 `handleIngressMessage()` 的路由顺序是：
 
@@ -282,7 +282,7 @@
 
 ## 17. `BoundedUUIDSet` + `recentPostedUUIDs` 解决的是 echo 问题，而不是一般缓存问题
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMessaging.ts`](../../sources/claude-code/src/bridge/replBridge.ts)
+源码镜像：[`../../src/bridge/bridgeMessaging.ts`](../../src/bridge/replBridge.ts)
 
 这套 UUID 集合的产品语义非常明确：
 
@@ -297,7 +297,7 @@
 
 ## 18. `isEligibleBridgeMessage()` 说明并非所有本地 transcript 都会上送远端
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMessaging.ts`](../../sources/claude-code/src/bridge/bridgeMessaging.ts), [`../../sources/claude-code/src/bridge/replBridge.ts`](../../sources/claude-code/src/bridge/replBridge.ts)
+源码镜像：[`../../src/bridge/bridgeMessaging.ts`](../../src/bridge/bridgeMessaging.ts), [`../../src/bridge/replBridge.ts`](../../src/bridge/replBridge.ts)
 
 这一层明确过滤：
 
@@ -316,7 +316,7 @@
 
 ## 19. `extractTitleText()` 说明 session title 只从“真人文本输入”里提炼
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMessaging.ts`](../../sources/claude-code/src/bridge/replBridge.ts)
+源码镜像：[`../../src/bridge/bridgeMessaging.ts`](../../src/bridge/replBridge.ts)
 
 `extractTitleText()` 会排除：
 
@@ -331,7 +331,7 @@
 
 ## 20. `handleServerControlRequest()` 把 inbound remote control 做成了受策略约束的本地能力桥
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMessaging.ts`](../../sources/claude-code/src/bridge/replBridge.ts)
+源码镜像：[`../../src/bridge/bridgeMessaging.ts`](../../src/bridge/replBridge.ts)
 
 server 发来的 control request 可能要求：
 
@@ -356,7 +356,7 @@ server 发来的 control request 可能要求：
 
 ## 21. outbound-only 模式下，mutable control request 会返回显式错误而不是假成功
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMessaging.ts`](../../sources/claude-code/src/bridge/replBridge.ts)
+源码镜像：[`../../src/bridge/bridgeMessaging.ts`](../../src/bridge/replBridge.ts)
 
 `ServerControlRequestHandlers` 里有：
 
@@ -376,7 +376,7 @@ server 发来的 control request 可能要求：
 
 ## 22. bridge runtime 的消息和控制设计，本质上是在给 claude.ai/code 提供“可恢复、可调度、可受控”的本地执行器
 
-源码镜像：[`../../sources/claude-code/src/bridge/bridgeMain.ts`](../../sources/claude-code/src/bridge/bridgeApi.ts), [`../../sources/claude-code/src/bridge/replBridge.ts`](../../sources/claude-code/src/bridge/replBridge.ts), [`../../sources/claude-code/src/bridge/bridgeMessaging.ts`](../../sources/claude-code/src/bridge/bridgeMessaging.ts)
+源码镜像：[`../../src/bridge/bridgeMain.ts`](../../src/bridge/bridgeApi.ts), [`../../src/bridge/replBridge.ts`](../../src/bridge/replBridge.ts), [`../../src/bridge/bridgeMessaging.ts`](../../src/bridge/bridgeMessaging.ts)
 
 把这几层放在一起看，Claude Code bridge runtime 的真实形态已经很清楚：
 

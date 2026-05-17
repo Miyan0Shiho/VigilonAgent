@@ -6,7 +6,7 @@
 
 ## 1. `PromptInput` 是导航入口总控，不只是文本输入
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 这条链最重要的事实是：Help、Quick Open、Global Search、History Picker 都不是从 REPL 外壳任意弹出的，而是由 `PromptInput` 统一调度。
 
@@ -28,7 +28,7 @@
 
 ## 2. overlay 不是普通弹窗，而是 REPL 输入面的模式切换
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/QuickOpenDialog.tsx), [`../../sources/claude-code/src/components/GlobalSearchDialog.tsx`](../../sources/claude-code/src/components/HelpV2/HelpV2.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/QuickOpenDialog.tsx), [`../../src/components/GlobalSearchDialog.tsx`](../../src/components/HelpV2/HelpV2.tsx)
 
 `PromptInput` 在早返回分支里直接切换渲染目标：
 
@@ -43,7 +43,7 @@
 
 ## 3. `QuickOpenDialog` 是文件导航器，不是全文搜索器
 
-源码镜像：[`../../sources/claude-code/src/components/QuickOpenDialog.tsx`](../../sources/claude-code/src/components/QuickOpenDialog.tsx)
+源码镜像：[`../../src/components/QuickOpenDialog.tsx`](../../src/components/QuickOpenDialog.tsx)
 
 它的职责边界很干净：
 
@@ -58,7 +58,7 @@
 
 ## 4. Quick Open 的细节是“读少量、看一段、避免阻塞”
 
-源码镜像：[`../../sources/claude-code/src/components/QuickOpenDialog.tsx`](../../sources/claude-code/src/components/QuickOpenDialog.tsx), [`../../sources/claude-code/src/utils/readFileInRange.ts`](../../sources/claude-code/src/utils/readFileInRange.ts)
+源码镜像：[`../../src/components/QuickOpenDialog.tsx`](../../src/components/QuickOpenDialog.tsx), [`../../src/utils/readFileInRange.ts`](../../src/utils/readFileInRange.ts)
 
 这里有三层很明显的交互优化：
 
@@ -70,7 +70,7 @@
 
 ## 5. `GlobalSearchDialog` 走的是 ripgrep 流，不是复用文件 suggestion
 
-源码镜像：[`../../sources/claude-code/src/components/GlobalSearchDialog.tsx`](../../sources/claude-code/src/components/GlobalSearchDialog.tsx), [`../../sources/claude-code/src/utils/ripgrep.ts`](../../sources/claude-code/src/utils/ripgrep.ts)
+源码镜像：[`../../src/components/GlobalSearchDialog.tsx`](../../src/components/GlobalSearchDialog.tsx), [`../../src/utils/ripgrep.ts`](../../src/utils/ripgrep.ts)
 
 Global Search 和 Quick Open 看起来相似，但底层完全不同：
 
@@ -88,7 +88,7 @@ Global Search 和 Quick Open 看起来相似，但底层完全不同：
 
 ## 6. Global Search 的真正结果对象是“文件 + 行号 + 命中文本”
 
-源码镜像：[`../../sources/claude-code/src/components/GlobalSearchDialog.tsx`](../../sources/claude-code/src/components/GlobalSearchDialog.tsx)
+源码镜像：[`../../src/components/GlobalSearchDialog.tsx`](../../src/components/GlobalSearchDialog.tsx)
 
 `Match` 结构直接固定成：
 
@@ -107,7 +107,7 @@ Global Search 和 Quick Open 看起来相似，但底层完全不同：
 
 ## 7. `SearchBox` 是统一的终端搜索输入基元
 
-源码镜像：[`../../sources/claude-code/src/components/SearchBox.tsx`](../../sources/claude-code/src/components/SearchBox.tsx)
+源码镜像：[`../../src/components/SearchBox.tsx`](../../src/components/SearchBox.tsx)
 
 `SearchBox` 自己很小，但它的重要性在于复用面很广：
 
@@ -127,7 +127,7 @@ Global Search 和 Quick Open 看起来相似，但底层完全不同：
 
 ## 8. `FuzzyPicker` 是 Quick Open 和 Global Search 的公共壳
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/FuzzyPicker.tsx`](../../sources/claude-code/src/components/design-system/FuzzyPicker.tsx), [`../../sources/claude-code/src/components/QuickOpenDialog.tsx`](../../sources/claude-code/src/components/QuickOpenDialog.tsx), [`../../sources/claude-code/src/components/GlobalSearchDialog.tsx`](../../sources/claude-code/src/components/GlobalSearchDialog.tsx)
+源码镜像：[`../../src/components/design-system/FuzzyPicker.tsx`](../../src/components/design-system/FuzzyPicker.tsx), [`../../src/components/QuickOpenDialog.tsx`](../../src/components/QuickOpenDialog.tsx), [`../../src/components/GlobalSearchDialog.tsx`](../../src/components/GlobalSearchDialog.tsx)
 
 两类搜索对话框虽然查的对象不同，但都复用 `FuzzyPicker`：
 
@@ -142,7 +142,7 @@ Global Search 和 Quick Open 看起来相似，但底层完全不同：
 
 ## 9. `HelpV2` 是命令目录和快捷键目录的统一入口
 
-源码镜像：[`../../sources/claude-code/src/components/HelpV2/HelpV2.tsx`](../../sources/claude-code/src/components/HelpV2/General.tsx), [`../../sources/claude-code/src/components/PromptInput/PromptInputHelpMenu.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputHelpMenu.tsx)
+源码镜像：[`../../src/components/HelpV2/HelpV2.tsx`](../../src/components/HelpV2/General.tsx), [`../../src/components/PromptInput/PromptInputHelpMenu.tsx`](../../src/components/PromptInput/PromptInputHelpMenu.tsx)
 
 `HelpV2` 并不是一页静态帮助文本，而是一个 tabs 化目录：
 
@@ -159,7 +159,7 @@ Global Search 和 Quick Open 看起来相似，但底层完全不同：
 
 ## 10. `PromptInputHelpMenu` 说明帮助内容本身也是动态运行时视图
 
-源码镜像：[`../../sources/claude-code/src/components/PromptInput/PromptInputHelpMenu.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInputHelpMenu.tsx)
+源码镜像：[`../../src/components/PromptInput/PromptInputHelpMenu.tsx`](../../src/components/PromptInput/PromptInputHelpMenu.tsx)
 
 这个组件最值得注意的是它并不硬编码快捷键文本，而是通过 `useShortcutDisplay()` 读运行时绑定结果。
 
@@ -175,7 +175,7 @@ Global Search 和 Quick Open 看起来相似，但底层完全不同：
 
 ## 11. `LogSelector` 不是简单 session picker，而是恢复/漫游入口
 
-源码镜像：[`../../sources/claude-code/src/components/LogSelector.tsx`](../../sources/claude-code/src/components/LogSelector.tsx), [`../../sources/claude-code/src/screens/ResumeConversation.tsx`](../../sources/claude-code/src/screens/ResumeConversation.tsx)
+源码镜像：[`../../src/components/LogSelector.tsx`](../../src/components/LogSelector.tsx), [`../../src/screens/ResumeConversation.tsx`](../../src/screens/ResumeConversation.tsx)
 
 `LogSelector` 的复杂度明显高于普通列表：
 

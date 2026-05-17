@@ -23,7 +23,7 @@
 ## Evidence-backed Findings（按项目）
 
 ### Claude Code（CC）
-> 代码根：`research/sources/claude-code/`
+> 代码根：`research/`
 
 #### AuthZ / 执行面控制
 - **SEC-CC-001**：权限上下文把“模式 + 规则集合 + 目录范围 + 自动化策略”建模为强类型对象，作为工具执行的统一输入。  

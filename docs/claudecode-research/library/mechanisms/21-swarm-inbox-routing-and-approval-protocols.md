@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是 swarm mailbox 怎么从“消息文件”升级成“协议总线”
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/hooks/useSwarmPermissionPoller.ts`](../../sources/claude-code/src/hooks/useSwarmPermissionPoller.ts), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts), [`../../sources/claude-code/src/utils/swarm/permissionSync.ts`](../../sources/claude-code/src/utils/swarm/permissionSync.ts), [`../../sources/claude-code/src/utils/inProcessTeammateHelpers.ts`](../../sources/claude-code/src/utils/inProcessTeammateHelpers.ts)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/hooks/useSwarmPermissionPoller.ts`](../../src/hooks/useSwarmPermissionPoller.ts), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts), [`../../src/utils/swarm/permissionSync.ts`](../../src/utils/swarm/permissionSync.ts), [`../../src/utils/inProcessTeammateHelpers.ts`](../../src/utils/inProcessTeammateHelpers.ts)
 
 前几卷已经把这些讲清了：
 
@@ -24,7 +24,7 @@
 
 ## 2. `getAgentNameToPoll()` 说明 inbox poller 的第一原则不是“谁有邮箱就轮询谁”，而是“谁的接收模型允许文件轮询”
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/utils/teammate.ts`](../../sources/claude-code/src/utils/teammate.ts), [`../../sources/claude-code/src/utils/teammateContext.ts`](../../sources/claude-code/src/utils/teammateContext.ts)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/utils/teammate.ts`](../../src/utils/teammate.ts), [`../../src/utils/teammateContext.ts`](../../src/utils/teammateContext.ts)
 
 它先把 poll 资格分成三类：
 
@@ -36,7 +36,7 @@
 
 ## 3. poller 的核心输入不是一条消息，而是一批未读消息上的多协议分类
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts)
 
 每轮 poll 拿到 `readUnreadMessages(...)` 之后，不会直接拼成 transcript，而是先分类成：
 
@@ -55,7 +55,7 @@
 
 ## 4. `isStructuredProtocolMessage()` 说明 Claude Code 已经明确列出了“禁止当原始模型上下文消费”的消息类型
 
-源码镜像：[`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts), [`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts)
+源码镜像：[`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts), [`../../src/utils/attachments.ts`](../../src/utils/attachments.ts)
 
 被视为 structured protocol 的消息包括：
 
@@ -74,7 +74,7 @@
 
 ## 5. leader 侧的 tool permission 请求不是自定义弹窗，而是被重新包装成标准 `ToolUseConfirm` 队列项
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/Tool.ts`](../../sources/claude-code/src/Tool.ts), [`../../sources/claude-code/src/utils/swarm/permissionSync.ts`](../../sources/claude-code/src/utils/swarm/permissionSync.ts)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/Tool.ts`](../../src/Tool.ts), [`../../src/utils/swarm/permissionSync.ts`](../../src/utils/swarm/permissionSync.ts)
 
 当 leader 收到 `permission_request` 时，poller 会：
 
@@ -91,7 +91,7 @@
 
 ## 6. `sendPermissionResponseViaMailbox()` 说明 leader 给 worker 的 allow/reject 仍然走 mailbox，而不是 React 内存捷径
 
-源码镜像：[`../../sources/claude-code/src/utils/swarm/permissionSync.ts`](../../sources/claude-code/src/utils/swarm/permissionSync.ts), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/utils/swarm/permissionSync.ts`](../../src/utils/swarm/permissionSync.ts), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts)
 
 这条回执协议会：
 
@@ -106,7 +106,7 @@
 
 ## 7. worker 侧不是盲等文件变化，而是通过 callback registry 把协议响应回接到原始 tool 调用
 
-源码镜像：[`../../sources/claude-code/src/hooks/useSwarmPermissionPoller.ts`](../../sources/claude-code/src/hooks/useSwarmPermissionPoller.ts), [`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts)
+源码镜像：[`../../src/hooks/useSwarmPermissionPoller.ts`](../../src/hooks/useSwarmPermissionPoller.ts), [`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts)
 
 `useSwarmPermissionPoller.ts` 维护两套模块级 registry：
 
@@ -124,7 +124,7 @@ worker 发起请求时会先注册 callback；之后无论响应来自：
 
 ## 8. `parsePermissionUpdates()` 说明外部 swarm 响应被当成“不可信输入”处理，而不是直接灌回 permission context
 
-源码镜像：[`../../sources/claude-code/src/hooks/useSwarmPermissionPoller.ts`](../../sources/claude-code/src/hooks/useSwarmPermissionPoller.ts), [`../../sources/claude-code/src/utils/permissions/PermissionUpdateSchema.ts`](../../sources/claude-code/src/utils/permissions/PermissionUpdateSchema.ts)
+源码镜像：[`../../src/hooks/useSwarmPermissionPoller.ts`](../../src/hooks/useSwarmPermissionPoller.ts), [`../../src/utils/permissions/PermissionUpdateSchema.ts`](../../src/utils/permissions/PermissionUpdateSchema.ts)
 
 当 mailbox 响应里带 `permissionUpdates` 时，系统不会直接相信，而是：
 
@@ -136,7 +136,7 @@ worker 发起请求时会先注册 callback；之后无论响应来自：
 
 ## 9. sandbox host approval 不是 tool permission 的特例，而是第二条并行协议
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/hooks/useSwarmPermissionPoller.ts`](../../sources/claude-code/src/hooks/useSwarmPermissionPoller.ts), [`../../sources/claude-code/src/utils/swarm/permissionSync.ts`](../../sources/claude-code/src/utils/swarm/permissionSync.ts), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/hooks/useSwarmPermissionPoller.ts`](../../src/hooks/useSwarmPermissionPoller.ts), [`../../src/utils/swarm/permissionSync.ts`](../../src/utils/swarm/permissionSync.ts), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts)
 
 sandbox 路径有自己独立的：
 
@@ -159,7 +159,7 @@ leader 收到请求后，不会进普通 `ToolUseConfirm`，而是把：
 
 ## 10. team permission update 说明 leader 还能主动把 session allow rules 下发给 teammate，而不仅仅是一次性批准某个 tool use
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/utils/permissions/PermissionUpdate.ts`](../../sources/claude-code/src/utils/permissions/PermissionUpdate.ts)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/utils/permissions/PermissionUpdate.ts`](../../src/utils/permissions/PermissionUpdate.ts)
 
 当 teammate 收到 `team_permission_update` 时，poller 会：
 
@@ -171,7 +171,7 @@ leader 收到请求后，不会进普通 `ToolUseConfirm`，而是把：
 
 ## 11. `mode_set_request` 说明 leader 可以远程改 teammate 的 permission mode，而且会同步回 team file
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/utils/swarm/teamHelpers.ts`](../../sources/claude-code/src/utils/swarm/teamHelpers.ts)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/utils/swarm/teamHelpers.ts`](../../src/utils/swarm/teamHelpers.ts)
 
 这条协议有两个硬约束：
 
@@ -187,7 +187,7 @@ leader 收到请求后，不会进普通 `ToolUseConfirm`，而是把：
 
 ## 12. plan approval 其实是 swarm 里专门的“先批准、再让模型继续看到上下文”的双通道协议
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/utils/inProcessTeammateHelpers.ts`](../../sources/claude-code/src/utils/inProcessTeammateHelpers.ts), [`../../sources/claude-code/src/components/messages/PlanApprovalMessage.tsx`](../../sources/claude-code/src/components/messages/PlanApprovalMessage.tsx)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/utils/inProcessTeammateHelpers.ts`](../../src/utils/inProcessTeammateHelpers.ts), [`../../src/components/messages/PlanApprovalMessage.tsx`](../../src/components/messages/PlanApprovalMessage.tsx)
 
 leader 侧收到 `plan_approval_request` 时会：
 
@@ -207,7 +207,7 @@ leader 侧收到 `plan_approval_request` 时会：
 
 ## 13. `handlePlanApprovalResponse()` 只负责清掉 `awaitingPlanApproval`，说明 in-process teammate 的 UI 状态和 agent loop 权限模式故意解耦
 
-源码镜像：[`../../sources/claude-code/src/utils/inProcessTeammateHelpers.ts`](../../sources/claude-code/src/utils/inProcessTeammateHelpers.ts), [`../../sources/claude-code/src/tasks/InProcessTeammateTask/types.ts`](../../sources/claude-code/src/tasks/InProcessTeammateTask/types.ts)
+源码镜像：[`../../src/utils/inProcessTeammateHelpers.ts`](../../src/utils/inProcessTeammateHelpers.ts), [`../../src/tasks/InProcessTeammateTask/types.ts`](../../src/tasks/InProcessTeammateTask/types.ts)
 
 这个 helper 很克制：
 
@@ -220,7 +220,7 @@ leader 侧收到 `plan_approval_request` 时会：
 
 ## 14. shutdown 在 swarm 里被拆成“请求保留给 UI、批准驱动资源清理”两段
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/components/messages/ShutdownMessage.tsx`](../../sources/claude-code/src/components/messages/ShutdownMessage.tsx)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/components/messages/ShutdownMessage.tsx`](../../src/components/messages/ShutdownMessage.tsx)
 
 收到 `shutdown_request` 时，teammate 侧不会立刻吞掉，而是直接转成 `regularMessages`，因为：
 
@@ -240,7 +240,7 @@ leader 侧收到 `plan_approval_request` 时会：
 
 ## 15. `regularMessages` + XML wrapper 说明经过分流后，剩下的 swarm 消息仍然会被重新封装成模型可消费输入
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/constants/xml.ts`](../../sources/claude-code/src/constants/xml.ts)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/constants/xml.ts`](../../src/constants/xml.ts)
 
 所有 surviving regular messages 最终都会被编码成：
 
@@ -255,7 +255,7 @@ leader 侧收到 `plan_approval_request` 时会：
 
 ## 16. pending / processed inbox 状态说明 mid-turn mailbox delivery 不是 fire-and-forget，而是带二阶段清理协议
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/utils/attachments.ts`](../../src/utils/attachments.ts)
 
 `AppState.inbox.messages` 至少有三种状态语义：
 
@@ -273,7 +273,7 @@ leader 侧收到 `plan_approval_request` 时会：
 
 ## 17. `markRead()` 的调用位置说明 Claude Code 优先保证“不丢协议效果”，而不是尽快清空 inbox
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/utils/attachments.ts`](../../src/utils/attachments.ts)
 
 在 poller 里，只有当下面两种条件之一满足时才 `markRead()`：
 
@@ -288,7 +288,7 @@ leader 侧收到 `plan_approval_request` 时会：
 
 ## 18. 这条机制最终说明 swarm inbox runtime 实际上由五段协议拼起来
 
-源码镜像：[`../../sources/claude-code/src/hooks/useInboxPoller.ts`](../../sources/claude-code/src/hooks/useInboxPoller.ts), [`../../sources/claude-code/src/hooks/useSwarmPermissionPoller.ts`](../../sources/claude-code/src/hooks/useSwarmPermissionPoller.ts), [`../../sources/claude-code/src/utils/teammateMailbox.ts`](../../sources/claude-code/src/utils/teammateMailbox.ts), [`../../sources/claude-code/src/utils/swarm/permissionSync.ts`](../../sources/claude-code/src/utils/swarm/permissionSync.ts), [`../../sources/claude-code/src/utils/inProcessTeammateHelpers.ts`](../../sources/claude-code/src/utils/inProcessTeammateHelpers.ts)
+源码镜像：[`../../src/hooks/useInboxPoller.ts`](../../src/hooks/useInboxPoller.ts), [`../../src/hooks/useSwarmPermissionPoller.ts`](../../src/hooks/useSwarmPermissionPoller.ts), [`../../src/utils/teammateMailbox.ts`](../../src/utils/teammateMailbox.ts), [`../../src/utils/swarm/permissionSync.ts`](../../src/utils/swarm/permissionSync.ts), [`../../src/utils/inProcessTeammateHelpers.ts`](../../src/utils/inProcessTeammateHelpers.ts)
 
 真正叠在一起工作的是这五段：
 

@@ -6,7 +6,7 @@
 
 ## 1. `ConfigTool` 不是通用 settings editor，而是一个只在 ant 宿主暴露的受限配置控制面
 
-源码镜像：[`../../sources/claude-code/src/tools.ts`](../../sources/claude-code/src/tools.ts), [`../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts`](../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts)
+源码镜像：[`../../src/tools.ts`](../../src/tools.ts), [`../../src/tools/ConfigTool/ConfigTool.ts`](../../src/tools/ConfigTool/ConfigTool.ts)
 
 它在工具池里的注册条件是：
 
@@ -16,7 +16,7 @@
 
 ## 2. `ConfigTool` 的真实配置面不是“所有 settings”，而是 `SUPPORTED_SETTINGS` 注册表
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/supportedSettings.ts`](../../sources/claude-code/src/tools/ConfigTool/supportedSettings.ts)
+源码镜像：[`../../src/tools/ConfigTool/supportedSettings.ts`](../../src/tools/ConfigTool/supportedSettings.ts)
 
 它支持的 setting 不是动态遍历整个 settings schema，而是人工登记在：
 
@@ -36,7 +36,7 @@
 
 ## 3. prompt 不是手写静态文案，而是从注册表和动态 model options 即时生成
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/prompt.ts`](../../sources/claude-code/src/tools/ConfigTool/prompt.ts), [`../../sources/claude-code/src/tools/ConfigTool/supportedSettings.ts`](../../sources/claude-code/src/tools/ConfigTool/supportedSettings.ts)
+源码镜像：[`../../src/tools/ConfigTool/prompt.ts`](../../src/tools/ConfigTool/prompt.ts), [`../../src/tools/ConfigTool/supportedSettings.ts`](../../src/tools/ConfigTool/supportedSettings.ts)
 
 `generatePrompt()` 会：
 
@@ -49,7 +49,7 @@
 
 ## 4. voice setting 虽然编进了注册表，但仍然会在 prompt 生成和运行时入口双重隐藏
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/prompt.ts`](../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts), [`../../sources/claude-code/src/voice/voiceModeEnabled.ts`](../../sources/claude-code/src/voice/voiceModeEnabled.ts)
+源码镜像：[`../../src/tools/ConfigTool/prompt.ts`](../../src/tools/ConfigTool/ConfigTool.ts), [`../../src/voice/voiceModeEnabled.ts`](../../src/voice/voiceModeEnabled.ts)
 
 这条链有两层 gate：
 
@@ -63,7 +63,7 @@
 
 ## 5. `ConfigTool` 的 schema 极小，说明它故意只暴露“单键 get/set”而不是批量 patch
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts`](../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts)
+源码镜像：[`../../src/tools/ConfigTool/ConfigTool.ts`](../../src/tools/ConfigTool/ConfigTool.ts)
 
 input 只有：
 
@@ -76,7 +76,7 @@ input 只有：
 
 ## 6. read-only 判定直接取决于有没有 `value`，所以同一个工具同时承担读和写两种权限语义
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts`](../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts)
+源码镜像：[`../../src/tools/ConfigTool/ConfigTool.ts`](../../src/tools/ConfigTool/ConfigTool.ts)
 
 关键行为：
 
@@ -88,7 +88,7 @@ input 只有：
 
 ## 7. 权限层并不按 setting 白名单再细分，写操作统一进入 “ask once” 模式
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts`](../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts)
+源码镜像：[`../../src/tools/ConfigTool/ConfigTool.ts`](../../src/tools/ConfigTool/ConfigTool.ts)
 
 它的权限策略很朴素：
 
@@ -100,7 +100,7 @@ input 只有：
 
 ## 8. 首先经过的不是写盘，而是 `isSupported(setting)` 的显式白名单判定
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts`](../../sources/claude-code/src/tools/ConfigTool/supportedSettings.ts)
+源码镜像：[`../../src/tools/ConfigTool/ConfigTool.ts`](../../src/tools/ConfigTool/supportedSettings.ts)
 
 运行时第一关就是：
 
@@ -110,7 +110,7 @@ input 只有：
 
 ## 9. setting key 到真实配置位置的映射由 `getPath()` 决定，不依赖工具调用方自己拼嵌套对象
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/supportedSettings.ts`](../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts)
+源码镜像：[`../../src/tools/ConfigTool/supportedSettings.ts`](../../src/tools/ConfigTool/ConfigTool.ts)
 
 路径解析规则是：
 
@@ -125,7 +125,7 @@ input 只有：
 
 ## 10. GET 操作不是盲读磁盘，而是按 source 走两套不同读链
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts`](../../sources/claude-code/src/utils/config.ts), [`../../sources/claude-code/src/utils/settings/settings.ts`](../../sources/claude-code/src/utils/settings/settings.ts)
+源码镜像：[`../../src/tools/ConfigTool/ConfigTool.ts`](../../src/utils/config.ts), [`../../src/utils/settings/settings.ts`](../../src/utils/settings/settings.ts)
 
 `getValue(source, path)` 分成：
 
@@ -143,7 +143,7 @@ input 只有：
 
 ## 11. `formatOnRead` 说明 “读到的值” 也允许是衍生态，而不是原始存储值
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/supportedSettings.ts`](../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts)
+源码镜像：[`../../src/tools/ConfigTool/supportedSettings.ts`](../../src/tools/ConfigTool/ConfigTool.ts)
 
 两个最典型例子：
 
@@ -156,7 +156,7 @@ input 只有：
 
 ## 12. `remoteControlAtStartup = "default"` 是一个专门的 unset 分支，不走普通 set 路线
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts`](../../sources/claude-code/src/utils/config.ts)
+源码镜像：[`../../src/tools/ConfigTool/ConfigTool.ts`](../../src/utils/config.ts)
 
 这条特例非常关键：
 
@@ -178,7 +178,7 @@ input 只有：
 
 ## 13. boolean coercion 是工具层自己做的，说明它允许模型用字符串布尔值交互
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts`](../../sources/claude-code/src/tools/ConfigTool/supportedSettings.ts)
+源码镜像：[`../../src/tools/ConfigTool/ConfigTool.ts`](../../src/tools/ConfigTool/supportedSettings.ts)
 
 如果某项被声明成 `type === 'boolean'`，工具会接受：
 
@@ -189,7 +189,7 @@ input 只有：
 
 ## 14. 枚举值校验统一走 `getOptionsForSetting(...)`，而不是每个 setting 自己单写 if/else
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/supportedSettings.ts`](../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts)
+源码镜像：[`../../src/tools/ConfigTool/supportedSettings.ts`](../../src/tools/ConfigTool/ConfigTool.ts)
 
 对于：
 
@@ -208,7 +208,7 @@ input 只有：
 
 ## 15. `model` 的 options 和校验都是动态的，ConfigTool 本身不硬编码模型表
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/supportedSettings.ts`](../../sources/claude-code/src/tools/ConfigTool/prompt.ts)
+源码镜像：[`../../src/tools/ConfigTool/supportedSettings.ts`](../../src/tools/ConfigTool/prompt.ts)
 
 `model` 这个 setting：
 
@@ -220,7 +220,7 @@ input 只有：
 
 ## 16. `voiceEnabled` 的 set 路线是整篇里最重的 preflight，说明它其实更像 capability enrollment
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts`](../../sources/claude-code/src/voice/voiceModeEnabled.ts)
+源码镜像：[`../../src/tools/ConfigTool/ConfigTool.ts`](../../src/voice/voiceModeEnabled.ts)
 
 当尝试：
 
@@ -238,7 +238,7 @@ input 只有：
 
 ## 17. 真正写盘时，`global` 和 `settings` 走的是两套不同写后端
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts`](../../sources/claude-code/src/utils/config.ts), [`../../sources/claude-code/src/utils/settings/settings.ts`](../../sources/claude-code/src/utils/settings/settings.ts)
+源码镜像：[`../../src/tools/ConfigTool/ConfigTool.ts`](../../src/utils/config.ts), [`../../src/utils/settings/settings.ts`](../../src/utils/settings/settings.ts)
 
 写入阶段分成：
 
@@ -254,7 +254,7 @@ input 只有：
 
 ## 18. `buildNestedObject(path, value)` 说明嵌套 settings 写入是“最小更新对象”而不是全量重写
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts`](../../sources/claude-code/src/tools/ConfigTool/supportedSettings.ts)
+源码镜像：[`../../src/tools/ConfigTool/ConfigTool.ts`](../../src/tools/ConfigTool/supportedSettings.ts)
 
 例如：
 
@@ -270,7 +270,7 @@ input 只有：
 
 ## 19. 部分 setting 写完以后必须立即回流 AppState，否则前台行为不会立刻变
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/supportedSettings.ts`](../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts)
+源码镜像：[`../../src/tools/ConfigTool/supportedSettings.ts`](../../src/tools/ConfigTool/ConfigTool.ts)
 
 注册表里有：
 
@@ -284,7 +284,7 @@ input 只有：
 
 ## 20. `remoteControlAtStartup` 又是另一条专门的即时生效支路，会直接改 bridge 相关 AppState
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts`](../../sources/claude-code/src/hooks/useReplBridge.tsx)
+源码镜像：[`../../src/tools/ConfigTool/ConfigTool.ts`](../../src/hooks/useReplBridge.tsx)
 
 这个 setting 写完后不会只等 settings 热更新，而是直接：
 
@@ -297,7 +297,7 @@ input 只有：
 
 ## 21. `voiceEnabled` 则走第三种即时生效路径：主动 `notifyChange('userSettings')`
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts`](../../sources/claude-code/src/utils/settings/changeDetector.ts), [`../../sources/claude-code/src/voice/voiceModeEnabled.ts`](../../sources/claude-code/src/voice/voiceModeEnabled.ts)
+源码镜像：[`../../src/tools/ConfigTool/ConfigTool.ts`](../../src/utils/settings/changeDetector.ts), [`../../src/voice/voiceModeEnabled.ts`](../../src/voice/voiceModeEnabled.ts)
 
 它不是直接改 AppState 某个字段，而是：
 
@@ -312,7 +312,7 @@ input 只有：
 
 ## 22. 前台 UI 故意极简，说明它的重点不是交互，而是把配置变更结果压成一句可继续推理的状态语句
 
-源码镜像：[`../../sources/claude-code/src/tools/ConfigTool/UI.tsx`](../../sources/claude-code/src/tools/ConfigTool/ConfigTool.ts)
+源码镜像：[`../../src/tools/ConfigTool/UI.tsx`](../../src/tools/ConfigTool/ConfigTool.ts)
 
 UI 协议只有三种：
 

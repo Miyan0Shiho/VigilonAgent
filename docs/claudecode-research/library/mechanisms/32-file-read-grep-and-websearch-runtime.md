@@ -6,7 +6,7 @@
 
 ## 1. `FileReadTool` 不是 `readFile()`，而是统一内容摄取层
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts), [`../../sources/claude-code/src/tools/FileReadTool/limits.ts`](../../sources/claude-code/src/tools/FileReadTool/limits.ts), [`../../sources/claude-code/src/tools/FileReadTool/imageProcessor.ts`](../../sources/claude-code/src/tools/FileReadTool/imageProcessor.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts), [`../../src/tools/FileReadTool/limits.ts`](../../src/tools/FileReadTool/limits.ts), [`../../src/tools/FileReadTool/imageProcessor.ts`](../../src/tools/FileReadTool/imageProcessor.ts)
 
 从 `searchHint` 就能看出来它的范围不是“读文本文件”，而是：
 
@@ -20,7 +20,7 @@
 
 ## 2. 它的第一职责不是读取，而是先把路径、权限和危险路径约束干净
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `FileReadTool` 在真正碰文件前先做了几层治理：
 
@@ -35,7 +35,7 @@
 
 ## 3. PDF 页范围不是装饰参数，而是正式预算控制面
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `pages` 不是任意字符串拼接，它会经过：
 
@@ -46,7 +46,7 @@
 
 ## 4. 二进制拒绝逻辑说明它不是“什么都能读”，而是只对被定义过的媒体类型开口
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `FileReadTool` 会明确拒绝多数二进制扩展，只给几类特判：
 
@@ -58,7 +58,7 @@
 
 ## 5. `file_unchanged` 分支暴露出它带有读去重语义，不是每次都返回实体内容
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 如果当前读请求命中已有 read state，它可以直接返回：
 
@@ -69,7 +69,7 @@
 
 ## 6. 读文件还会触发技能发现和条件激活，说明读取本身就是 capability discovery 入口
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 这条链里最容易被忽略的是：
 
@@ -81,7 +81,7 @@
 
 ## 7. `limits.ts` 说明 FileRead 有双预算模型: bytes cap 和 token cap 并存
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/limits.ts`](../../sources/claude-code/src/tools/FileReadTool/limits.ts)
+源码镜像：[`../../src/tools/FileReadTool/limits.ts`](../../src/tools/FileReadTool/limits.ts)
 
 默认限制不是一个数，而是两层：
 
@@ -98,13 +98,13 @@
 
 ## 8. `includeMaxSizeInPrompt` 和 `targetedRangeNudge` 说明预算不只影响执行，还会反过来塑造模型行为
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/limits.ts`](../../sources/claude-code/src/tools/FileReadTool/limits.ts)
+源码镜像：[`../../src/tools/FileReadTool/limits.ts`](../../src/tools/FileReadTool/limits.ts)
 
 这些 flag 的存在说明，FileRead 的限制不是纯后端截断。Claude Code 还会把“该精确缩小读取范围”这种意图反馈给模型，尽量把粗暴大读改造成更有目标的局部读取。
 
 ## 9. 输出类型是多分支协议，不是统一文本
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 `FileReadTool` 的输出至少覆盖：
 
@@ -119,7 +119,7 @@
 
 ## 10. 图片和 PDF 分支说明它带着专门的媒体压缩与提取子运行时
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/imageProcessor.ts`](../../sources/claude-code/src/tools/FileReadTool/imageProcessor.ts), [`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/imageProcessor.ts`](../../src/tools/FileReadTool/imageProcessor.ts), [`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 图片分支会走：
 
@@ -135,7 +135,7 @@ PDF 分支会走：
 
 ## 11. notebook、line number、memory freshness prefix 说明文本输出也不是原样透传
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 即使最后落成文本，它也还会继续加工：
 
@@ -147,13 +147,13 @@ PDF 分支会走：
 
 ## 12. 它还会在特定模型下附带 cyber-risk mitigation reminder，说明读取层也知道模型治理语义
 
-源码镜像：[`../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts`](../../sources/claude-code/src/tools/FileReadTool/FileReadTool.ts)
+源码镜像：[`../../src/tools/FileReadTool/FileReadTool.ts`](../../src/tools/FileReadTool/FileReadTool.ts)
 
 这类提醒不是 query loop 后补，而是直接嵌在 FileRead 结果整形阶段。含义很明确：文件内容本身就可能需要带策略提示，读取 runtime 不是中立字节泵。
 
 ## 13. `GrepTool` 的定位不是 shell 透传，而是 permission-aware 的结构化内容搜索器
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts), [`../../sources/claude-code/src/tools/GrepTool/UI.tsx`](../../sources/claude-code/src/tools/GrepTool/UI.tsx)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts), [`../../src/tools/GrepTool/UI.tsx`](../../src/tools/GrepTool/UI.tsx)
 
 `searchHint` 已经把它定义成：
 
@@ -163,7 +163,7 @@ PDF 分支会走：
 
 ## 14. Grep 的路径约束和 UNC 特判，说明“搜索”也被视为可能泄漏环境信息的动作
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 它会先做：
 
@@ -175,7 +175,7 @@ PDF 分支会走：
 
 ## 15. 它的噪音治理不是几条硬编码，而是三层忽略源合流
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 GrepTool 至少会合并三类忽略来源：
 
@@ -187,7 +187,7 @@ GrepTool 至少会合并三类忽略来源：
 
 ## 16. `content / files_with_matches / count` 三模式说明它输出的不是一份结果，而是三种不同认知粒度
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 GrepTool 的模式不是 cosmetic：
 
@@ -199,7 +199,7 @@ GrepTool 的模式不是 cosmetic：
 
 ## 17. `DEFAULT_HEAD_LIMIT`、`offset` 和 `applyHeadLimit()` 表明 grep 是可分页的搜索协议
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 关键机制包括：
 
@@ -212,7 +212,7 @@ GrepTool 的模式不是 cosmetic：
 
 ## 18. ripgrep 参数合成层说明 Claude Code 真正在维护的是“受控 rg DSL”
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/GrepTool.ts`](../../sources/claude-code/src/tools/GrepTool/GrepTool.ts)
+源码镜像：[`../../src/tools/GrepTool/GrepTool.ts`](../../src/tools/GrepTool/GrepTool.ts)
 
 它会主动控制：
 
@@ -227,7 +227,7 @@ GrepTool 的模式不是 cosmetic：
 
 ## 19. `UI.tsx` 说明 Grep 有意把“给模型的内容”和“给人看的摘要 chrome”拆开
 
-源码镜像：[`../../sources/claude-code/src/tools/GrepTool/UI.tsx`](../../sources/claude-code/src/tools/GrepTool/UI.tsx)
+源码镜像：[`../../src/tools/GrepTool/UI.tsx`](../../src/tools/GrepTool/UI.tsx)
 
 UI 里走的是：
 
@@ -238,7 +238,7 @@ UI 里走的是：
 
 ## 20. `WebSearchTool` 不是直接调搜索 API，而是“用模型去调用 server tool”的二级封装
 
-源码镜像：[`../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts`](../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts), [`../../sources/claude-code/src/tools/WebSearchTool/UI.tsx`](../../sources/claude-code/src/tools/WebSearchTool/UI.tsx)
+源码镜像：[`../../src/tools/WebSearchTool/WebSearchTool.ts`](../../src/tools/WebSearchTool/WebSearchTool.ts), [`../../src/tools/WebSearchTool/UI.tsx`](../../src/tools/WebSearchTool/UI.tsx)
 
 它最不直观的一点是: 本地工具实现自己还会再次调用 `queryModelWithStreaming()`，再让那个模型去使用：
 
@@ -248,7 +248,7 @@ UI 里走的是：
 
 ## 21. provider gate 说明 web search 首先是模型/供应商协议能力，不是通用工具能力
 
-源码镜像：[`../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts`](../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts)
+源码镜像：[`../../src/tools/WebSearchTool/WebSearchTool.ts`](../../src/tools/WebSearchTool/WebSearchTool.ts)
 
 `isEnabled()` 的判断很明确：
 
@@ -260,7 +260,7 @@ UI 里走的是：
 
 ## 22. 它的权限语义是 `passthrough`，说明重点不在文件边界，而在显式工具同意与来源可追溯
 
-源码镜像：[`../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts`](../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts)
+源码镜像：[`../../src/tools/WebSearchTool/WebSearchTool.ts`](../../src/tools/WebSearchTool/WebSearchTool.ts)
 
 `checkPermissions()` 返回的是：
 
@@ -270,7 +270,7 @@ UI 里走的是：
 
 ## 23. `allowed_domains` 和 `blocked_domains` 互斥，说明域名过滤是正式输入协议，而不是附加建议
 
-源码镜像：[`../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts`](../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts)
+源码镜像：[`../../src/tools/WebSearchTool/WebSearchTool.ts`](../../src/tools/WebSearchTool/WebSearchTool.ts)
 
 它会明确拒绝：
 
@@ -281,7 +281,7 @@ UI 里走的是：
 
 ## 24. WebSearch 的 streaming progress 暴露出一个少见模式: 工具内部还有自己的工具调用进度
 
-源码镜像：[`../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts`](../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts)
+源码镜像：[`../../src/tools/WebSearchTool/WebSearchTool.ts`](../../src/tools/WebSearchTool/WebSearchTool.ts)
 
 它会解析内部 streaming 事件，抽出：
 
@@ -292,7 +292,7 @@ UI 里走的是：
 
 ## 25. 最终结果不是纯文本，而是“解释文本 + 结构化 hits”混合块
 
-源码镜像：[`../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts`](../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts)
+源码镜像：[`../../src/tools/WebSearchTool/WebSearchTool.ts`](../../src/tools/WebSearchTool/WebSearchTool.ts)
 
 `makeOutputFromSearchResponse()` 会把内容拆成两类：
 
@@ -303,13 +303,13 @@ UI 里走的是：
 
 ## 26. 它在 tool result 里强制追加 source reminder，说明“给用户带链接”是运行时契约，不是提示词好习惯
 
-源码镜像：[`../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts`](../../sources/claude-code/src/tools/WebSearchTool/WebSearchTool.ts)
+源码镜像：[`../../src/tools/WebSearchTool/WebSearchTool.ts`](../../src/tools/WebSearchTool/WebSearchTool.ts)
 
 `mapToolResultToToolResultBlockParam()` 会额外塞一句强提醒，要求最终回答必须带 markdown hyperlinks。也就是说，Claude Code 把“搜索结果必须可追源”写成了工具输出 contract。
 
 ## 27. `UI.tsx` 刻意不展示全文搜索内容，只展示搜索次数和耗时
 
-源码镜像：[`../../sources/claude-code/src/tools/WebSearchTool/UI.tsx`](../../sources/claude-code/src/tools/WebSearchTool/UI.tsx)
+源码镜像：[`../../src/tools/WebSearchTool/UI.tsx`](../../src/tools/WebSearchTool/UI.tsx)
 
 UI 层真正展示的是：
 

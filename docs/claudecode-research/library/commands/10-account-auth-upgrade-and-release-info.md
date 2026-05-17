@@ -12,7 +12,7 @@
 
 ## 1. 这三条链共同管理的不是代码能力，而是“谁在用、用的是什么身份、最近更新了什么”
 
-源码镜像：[`../../sources/claude-code/src/commands/login/index.ts`](../../sources/claude-code/src/commands/login/index.ts), [`../../sources/claude-code/src/commands/login/login.tsx`](../../sources/claude-code/src/commands/login/login.tsx), [`../../sources/claude-code/src/commands/upgrade/upgrade.tsx`](../../sources/claude-code/src/commands/upgrade/upgrade.tsx), [`../../sources/claude-code/src/commands/release-notes/release-notes.ts`](../../sources/claude-code/src/commands/release-notes/release-notes.ts)
+源码镜像：[`../../src/commands/login/index.ts`](../../src/commands/login/index.ts), [`../../src/commands/login/login.tsx`](../../src/commands/login/login.tsx), [`../../src/commands/upgrade/upgrade.tsx`](../../src/commands/upgrade/upgrade.tsx), [`../../src/commands/release-notes/release-notes.ts`](../../src/commands/release-notes/release-notes.ts)
 
 它们分别覆盖三种不同产品面：
 
@@ -24,7 +24,7 @@
 
 ## 2. `/login` 在命令注册层就是一个受环境控制的本地 JSX 工作面
 
-源码镜像：[`../../sources/claude-code/src/commands/login/index.ts`](../../sources/claude-code/src/commands/login/index.ts), [`../../sources/claude-code/src/utils/auth.ts`](../../sources/claude-code/src/utils/auth.ts)
+源码镜像：[`../../src/commands/login/index.ts`](../../src/commands/login/index.ts), [`../../src/utils/auth.ts`](../../src/utils/auth.ts)
 
 `login/index.ts` 很薄，但已经暴露出两条关键产品语义：
 
@@ -43,7 +43,7 @@
 
 ## 3. `/login` 命令真正重的地方不在 OAuth，而在登录成功后的 runtime reset
 
-源码镜像：[`../../sources/claude-code/src/commands/login/login.tsx`](../../sources/claude-code/src/commands/login/login.tsx)
+源码镜像：[`../../src/commands/login/login.tsx`](../../src/commands/login/login.tsx)
 
 `call()` 在成功后不是只 `onDone("Login successful")`，而是串了一整套登录后刷新逻辑：
 
@@ -63,7 +63,7 @@
 
 ## 4. `stripSignatureBlocks` 暴露了一个很关键的身份切换约束
 
-源码镜像：[`../../sources/claude-code/src/commands/login/login.tsx`](../../sources/claude-code/src/commands/login/login.tsx)
+源码镜像：[`../../src/commands/login/login.tsx`](../../src/commands/login/login.tsx)
 
 登录后立即执行：
 
@@ -78,7 +78,7 @@
 
 ## 5. `Login` 组件本身不是浏览器跳转壳，而是一个标准 dialog shell
 
-源码镜像：[`../../sources/claude-code/src/commands/login/login.tsx`](../../sources/claude-code/src/commands/login/login.tsx), [`../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx`](../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx)
+源码镜像：[`../../src/commands/login/login.tsx`](../../src/commands/login/login.tsx), [`../../src/components/ConsoleOAuthFlow.tsx`](../../src/components/ConsoleOAuthFlow.tsx)
 
 `Login` 组件做了三件明确的 UI 组织工作：
 
@@ -90,7 +90,7 @@
 
 ## 6. `ConsoleOAuthFlow` 是真正的登录状态机，不是普通“打开浏览器然后等”
 
-源码镜像：[`../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx`](../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx)
+源码镜像：[`../../src/components/ConsoleOAuthFlow.tsx`](../../src/components/ConsoleOAuthFlow.tsx)
 
 它自己维护了一整套 OAuthStatus：
 
@@ -117,7 +117,7 @@
 
 ## 7. `ConsoleOAuthFlow` 里真正被产品化的是“自动浏览器 + 手动粘贴码”双通道
 
-源码镜像：[`../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx`](../../sources/claude-code/src/components/ConsoleOAuthFlow.tsx), [`../../sources/claude-code/src/services/oauth/client.ts`](../../sources/claude-code/src/services/oauth/client.ts)
+源码镜像：[`../../src/components/ConsoleOAuthFlow.tsx`](../../src/components/ConsoleOAuthFlow.tsx), [`../../src/services/oauth/client.ts`](../../src/services/oauth/client.ts)
 
 这条流不是假设浏览器总能自动完成，而是显式支持双通道：
 
@@ -135,7 +135,7 @@
 
 ## 8. `services/oauth/client.ts` 说明登录并不只绑定 Claude.ai，也能在 authorize URL 层分流
 
-源码镜像：[`../../sources/claude-code/src/services/oauth/client.ts`](../../sources/claude-code/src/services/oauth/client.ts)
+源码镜像：[`../../src/services/oauth/client.ts`](../../src/services/oauth/client.ts)
 
 `buildAuthUrl()` 会根据参数分流：
 
@@ -148,7 +148,7 @@
 
 ## 9. `/upgrade` 不是独立工作面，而是“升级后立刻重进登录”
 
-源码镜像：[`../../sources/claude-code/src/commands/upgrade/upgrade.tsx`](../../sources/claude-code/src/commands/upgrade/upgrade.tsx), [`../../sources/claude-code/src/services/oauth/getOauthProfile.ts`](../../sources/claude-code/src/services/oauth/getOauthProfile.ts)
+源码镜像：[`../../src/commands/upgrade/upgrade.tsx`](../../src/commands/upgrade/upgrade.tsx), [`../../src/services/oauth/getOauthProfile.ts`](../../src/services/oauth/getOauthProfile.ts)
 
 `/upgrade` 的关键不是打开 `https://claude.ai/upgrade/max`，而是它怎么处理升级前后的身份状态：
 
@@ -162,7 +162,7 @@
 
 ## 10. `/release-notes` 真正重要的不是 500ms，而是“文件缓存 + 下次启动即读”
 
-源码镜像：[`../../sources/claude-code/src/commands/release-notes/release-notes.ts`](../../sources/claude-code/src/commands/release-notes/release-notes.ts), [`../../sources/claude-code/src/utils/releaseNotes.ts`](../../sources/claude-code/src/utils/releaseNotes.ts)
+源码镜像：[`../../src/commands/release-notes/release-notes.ts`](../../src/commands/release-notes/release-notes.ts), [`../../src/utils/releaseNotes.ts`](../../src/utils/releaseNotes.ts)
 
 `release-notes.ts` 本身只暴露了表层策略：
 
@@ -182,7 +182,7 @@
 
 ## 11. `parseChangelog()` 和 `getRecentReleaseNotes()` 把 changelog 变成了版本感知的数据层
 
-源码镜像：[`../../sources/claude-code/src/utils/releaseNotes.ts`](../../sources/claude-code/src/utils/releaseNotes.ts)
+源码镜像：[`../../src/utils/releaseNotes.ts`](../../src/utils/releaseNotes.ts)
 
 这套工具链不只是缓存原文，还会：
 

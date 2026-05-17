@@ -6,7 +6,7 @@
 
 ## 1. AgentTool 是委派入口，不是普通工具
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx`](../../sources/claude-code/src/tools/AgentTool/AgentTool.tsx)
+源码镜像：[`../../src/tools/AgentTool/AgentTool.tsx`](../../src/tools/AgentTool/AgentTool.tsx)
 
 从 imports 和 schema 可以看出，AgentTool 同时接入：
 

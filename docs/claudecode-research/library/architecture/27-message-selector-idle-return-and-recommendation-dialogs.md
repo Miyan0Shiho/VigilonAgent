@@ -6,7 +6,7 @@
 
 ## 1. 这一层解决的是“对话生命周期与产品引导面”，不是工具执行或权限决策
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/components/MessageSelector.tsx`](../../sources/claude-code/src/components/MessageSelector.tsx), [`../../sources/claude-code/src/components/IdleReturnDialog.tsx`](../../sources/claude-code/src/components/IdleReturnDialog.tsx), [`../../sources/claude-code/src/components/LspRecommendation/LspRecommendationMenu.tsx`](../../sources/claude-code/src/components/LspRecommendation/LspRecommendationMenu.tsx), [`../../sources/claude-code/src/components/ClaudeCodeHint/PluginHintMenu.tsx`](../../sources/claude-code/src/components/ClaudeCodeHint/PluginHintMenu.tsx), [`../../sources/claude-code/src/components/EffortCallout.tsx`](../../sources/claude-code/src/components/EffortCallout.tsx), [`../../sources/claude-code/src/components/RemoteCallout.tsx`](../../sources/claude-code/src/components/RemoteCallout.tsx), [`../../sources/claude-code/src/components/IdeOnboardingDialog.tsx`](../../sources/claude-code/src/components/IdeOnboardingDialog.tsx), [`../../sources/claude-code/src/components/DesktopUpsell/DesktopUpsellStartup.tsx`](../../sources/claude-code/src/components/DesktopUpsell/DesktopUpsellStartup.tsx), [`../../sources/claude-code/src/components/DesktopHandoff.tsx`](../../sources/claude-code/src/components/DesktopHandoff.tsx), [`../../sources/claude-code/src/hooks/useLspPluginRecommendation.tsx`](../../sources/claude-code/src/hooks/useLspPluginRecommendation.tsx), [`../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx`](../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx), [`../../sources/claude-code/src/hooks/usePluginRecommendationBase.tsx`](../../sources/claude-code/src/hooks/usePluginRecommendationBase.tsx), [`../../sources/claude-code/src/projectOnboardingState.ts`](../../sources/claude-code/src/projectOnboardingState.ts)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/components/MessageSelector.tsx`](../../src/components/MessageSelector.tsx), [`../../src/components/IdleReturnDialog.tsx`](../../src/components/IdleReturnDialog.tsx), [`../../src/components/LspRecommendation/LspRecommendationMenu.tsx`](../../src/components/LspRecommendation/LspRecommendationMenu.tsx), [`../../src/components/ClaudeCodeHint/PluginHintMenu.tsx`](../../src/components/ClaudeCodeHint/PluginHintMenu.tsx), [`../../src/components/EffortCallout.tsx`](../../src/components/EffortCallout.tsx), [`../../src/components/RemoteCallout.tsx`](../../src/components/RemoteCallout.tsx), [`../../src/components/IdeOnboardingDialog.tsx`](../../src/components/IdeOnboardingDialog.tsx), [`../../src/components/DesktopUpsell/DesktopUpsellStartup.tsx`](../../src/components/DesktopUpsell/DesktopUpsellStartup.tsx), [`../../src/components/DesktopHandoff.tsx`](../../src/components/DesktopHandoff.tsx), [`../../src/hooks/useLspPluginRecommendation.tsx`](../../src/hooks/useLspPluginRecommendation.tsx), [`../../src/hooks/useClaudeCodeHintRecommendation.tsx`](../../src/hooks/useClaudeCodeHintRecommendation.tsx), [`../../src/hooks/usePluginRecommendationBase.tsx`](../../src/hooks/usePluginRecommendationBase.tsx), [`../../src/projectOnboardingState.ts`](../../src/projectOnboardingState.ts)
 
 这些表面共同回答的是：
 
@@ -18,7 +18,7 @@
 
 ## 2. `getFocusedInputDialog()` 把这些表面放在 permission/prompt 之后，说明它们是次级交互带
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 在当前可见顺序里，这些分支出现在：
 
@@ -44,7 +44,7 @@
 
 ## 3. `message-selector` 不是简单历史列表，而是“恢复、回滚、局部总结”的多动作恢复控制台
 
-源码镜像：[`../../sources/claude-code/src/components/MessageSelector.tsx`](../../sources/claude-code/src/components/MessageSelector.tsx), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/components/MessageSelector.tsx`](../../src/components/MessageSelector.tsx), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 `MessageSelector` 至少做四件事：
 
@@ -63,7 +63,7 @@
 
 ## 4. `MessageSelector` 明确把 file history 作为代码恢复后端，而把 compact pipeline 作为总结后端
 
-源码镜像：[`../../sources/claude-code/src/components/MessageSelector.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/components/MessageSelector.tsx`](../../src/screens/REPL.tsx)
 
 两条最关键的后端支路是：
 
@@ -80,7 +80,7 @@
 
 ## 5. `preselectedMessage` 说明 message selector 还承担了“直接落到确认页”的次级协议
 
-源码镜像：[`../../sources/claude-code/src/components/MessageSelector.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/components/MessageSelector.tsx`](../../src/screens/REPL.tsx)
 
 它支持：
 
@@ -96,7 +96,7 @@
 
 ## 6. `IdleReturnDialog` 把“长对话 + 长时间 idle”重写成新会话建议，而不是只发一条提示
 
-源码镜像：[`../../sources/claude-code/src/components/IdleReturnDialog.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/components/IdleReturnDialog.tsx`](../../src/screens/REPL.tsx)
 
 `IdleReturnDialog` 的输入只有：
 
@@ -119,7 +119,7 @@
 
 ## 7. idle-return 在 REPL 里有“hint 通知”和“dialog 决策”两层，而不是只有一个弹框
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/components/IdleReturnDialog.tsx)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/components/IdleReturnDialog.tsx)
 
 当前能看到两层面：
 
@@ -137,7 +137,7 @@ hint 层还有这些 gate：
 
 ## 8. recommendation hooks 不是组件里的本地判断，而是共享的“候选生成 -> 前台占位 -> 安装/禁用”状态机
 
-源码镜像：[`../../sources/claude-code/src/hooks/usePluginRecommendationBase.tsx`](../../sources/claude-code/src/hooks/useLspPluginRecommendation.tsx), [`../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx`](../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx)
+源码镜像：[`../../src/hooks/usePluginRecommendationBase.tsx`](../../src/hooks/useLspPluginRecommendation.tsx), [`../../src/hooks/useClaudeCodeHintRecommendation.tsx`](../../src/hooks/useClaudeCodeHintRecommendation.tsx)
 
 `usePluginRecommendationBase()` 统一抽出了：
 
@@ -151,7 +151,7 @@ hint 层还有这些 gate：
 
 ## 9. LSP recommendation 是“文件编辑驱动的能力补全”，不是静态提示
 
-源码镜像：[`../../sources/claude-code/src/hooks/useLspPluginRecommendation.tsx`](../../sources/claude-code/src/components/LspRecommendation/LspRecommendationMenu.tsx)
+源码镜像：[`../../src/hooks/useLspPluginRecommendation.tsx`](../../src/components/LspRecommendation/LspRecommendationMenu.tsx)
 
 它的来源链是：
 
@@ -171,7 +171,7 @@ hint 层还有这些 gate：
 
 ## 10. `LspRecommendationMenu` 和 `PluginHintMenu` 都复用 PermissionDialog，但语义不同
 
-源码镜像：[`../../sources/claude-code/src/components/LspRecommendation/LspRecommendationMenu.tsx`](../../sources/claude-code/src/components/ClaudeCodeHint/PluginHintMenu.tsx)
+源码镜像：[`../../src/components/LspRecommendation/LspRecommendationMenu.tsx`](../../src/components/ClaudeCodeHint/PluginHintMenu.tsx)
 
 共同点：
 
@@ -190,7 +190,7 @@ hint 层还有这些 gate：
 
 ## 11. plugin-hint 是 stderr 协议驱动的前台，而不是文件编辑驱动
 
-源码镜像：[`../../sources/claude-code/src/hooks/useClaudeCodeHintRecommendation.tsx`](../../sources/claude-code/src/components/ClaudeCodeHint/PluginHintMenu.tsx)
+源码镜像：[`../../src/hooks/useClaudeCodeHintRecommendation.tsx`](../../src/components/ClaudeCodeHint/PluginHintMenu.tsx)
 
 这条链的触发源是：
 
@@ -208,7 +208,7 @@ hint 层还有这些 gate：
 
 ## 12. `EffortCallout` 是订阅与模型切换共同驱动的设置迁移面
 
-源码镜像：[`../../sources/claude-code/src/components/EffortCallout.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/components/EffortCallout.tsx`](../../src/screens/REPL.tsx)
 
 它不是通用设置页，而是专门围绕：
 
@@ -229,7 +229,7 @@ hint 层还有这些 gate：
 
 ## 13. `RemoteCallout` 是 bridge enable 之前的一次性安全 handoff，而不是 remote-control 主控制面
 
-源码镜像：[`../../sources/claude-code/src/components/RemoteCallout.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/components/RemoteCallout.tsx`](../../src/screens/REPL.tsx)
 
 `shouldShowRemoteCallout()` 要求：
 
@@ -252,7 +252,7 @@ REPL 对 `enable` 的后续效果是直接改 AppState：
 
 ## 14. `IdeOnboardingDialog` 和 `projectOnboardingState` 说明 onboarding 在 Claude Code 里并不只是一种表面
 
-源码镜像：[`../../sources/claude-code/src/components/IdeOnboardingDialog.tsx`](../../sources/claude-code/src/projectOnboardingState.ts)
+源码镜像：[`../../src/components/IdeOnboardingDialog.tsx`](../../src/projectOnboardingState.ts)
 
 当前至少能看到两种 onboarding：
 
@@ -268,7 +268,7 @@ REPL 对 `enable` 的后续效果是直接改 AppState：
 
 ## 15. `ClaudeInChromeOnboarding` 是另一条独立 onboarding 支线，不属于当前 REPL scheduler 主带
 
-源码镜像：[`../../sources/claude-code/src/components/ClaudeInChromeOnboarding.tsx`](../../sources/claude-code/src/components/ClaudeInChromeOnboarding.tsx)
+源码镜像：[`../../src/components/ClaudeInChromeOnboarding.tsx`](../../src/components/ClaudeInChromeOnboarding.tsx)
 
 这条组件做的是：
 
@@ -280,7 +280,7 @@ REPL 对 `enable` 的后续效果是直接改 AppState：
 
 ## 16. `DesktopUpsellStartup -> DesktopHandoff` 是一条真正有后续执行流的增长面，不只是广告弹层
 
-源码镜像：[`../../sources/claude-code/src/components/DesktopUpsell/DesktopUpsellStartup.tsx`](../../sources/claude-code/src/components/DesktopHandoff.tsx)
+源码镜像：[`../../src/components/DesktopUpsell/DesktopUpsellStartup.tsx`](../../src/components/DesktopHandoff.tsx)
 
 `DesktopUpsellStartup` 的 gate 很明确：
 
@@ -314,7 +314,7 @@ REPL 对 `enable` 的后续效果是直接改 AppState：
 
 ## 17. `ultraplan-choice / ultraplan-launch` 当前只有挂点和状态协议可见，属于“部分可见工作面”
 
-源码镜像：[`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/commands/ultraplan.tsx`](../../sources/claude-code/src/commands/ultraplan.tsx), [`../../sources/claude-code/src/state/AppStateStore.ts`](../../sources/claude-code/src/state/AppStateStore.ts)
+源码镜像：[`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/commands/ultraplan.tsx`](../../src/commands/ultraplan.tsx), [`../../src/state/AppStateStore.ts`](../../src/state/AppStateStore.ts)
 
 当前镜像里可以确认：
 

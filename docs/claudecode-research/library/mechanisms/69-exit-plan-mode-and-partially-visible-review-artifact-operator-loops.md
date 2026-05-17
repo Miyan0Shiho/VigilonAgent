@@ -11,7 +11,7 @@
 
 ## 1. `ExitPlanMode` 的产品定位不是“确认一下”，而是把整个会话从 planning 切到 execution
 
-源码镜像：[`../../sources/claude-code/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`](../../sources/claude-code/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
+源码镜像：[`../../src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`](../../src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
 
 这条工具最关键的定义不是 prompt 文案，而是这些运行时声明：
 
@@ -31,7 +31,7 @@
 
 ## 2. 这条工具从一开始就被设计成“宿主敏感”的 operator loop
 
-源码镜像：[`../../sources/claude-code/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`](../../sources/claude-code/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
+源码镜像：[`../../src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`](../../src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
 
 `isEnabled()` 里有 channels gate：
 
@@ -47,7 +47,7 @@
 
 ## 3. `requiresUserInteraction()` 在这里不是简单布尔值，而是 leader-approval / local-confirmation 的分叉开关
 
-源码镜像：[`../../sources/claude-code/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`](../../sources/claude-code/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
+源码镜像：[`../../src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`](../../src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
 
 它的规则是：
 
@@ -63,7 +63,7 @@
 
 ## 4. teammate 分支的真实宿主不是 permission dialog，而是 mailbox-based leader approval
 
-源码镜像：[`../../sources/claude-code/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`](../../sources/claude-code/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
+源码镜像：[`../../src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`](../../src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
 
 当同时满足：
 
@@ -82,7 +82,7 @@
 
 ## 5. `mapToolResultToToolResultBlockParam()` 暴露了这条工具的三种完全不同 continuation 语义
 
-源码镜像：[`../../sources/claude-code/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`](../../sources/claude-code/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
+源码镜像：[`../../src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`](../../src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts)
 
 它至少分出四类结果：
 
@@ -102,7 +102,7 @@
 
 ## 6. 本地结果 UI 也不是一个模板，而是显式区分 empty / awaiting-leader / approved / rejected
 
-源码镜像：[`../../sources/claude-code/src/tools/ExitPlanModeTool/UI.tsx`](../../sources/claude-code/src/tools/ExitPlanModeTool/UI.tsx)
+源码镜像：[`../../src/tools/ExitPlanModeTool/UI.tsx`](../../src/tools/ExitPlanModeTool/UI.tsx)
 
 `renderToolResultMessage(...)` 和 `renderToolUseRejectedMessage(...)` 清楚分出：
 
@@ -120,7 +120,7 @@
 
 ## 7. 本地 permission dialog 不是单个 yes/no 选择，而是一整套 plan handoff 控制台
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx)
+源码镜像：[`../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx)
 
 这条 dialog 真正管理的是：
 
@@ -136,7 +136,7 @@
 
 ## 8. `Ctrl+G` 外部编辑不是附加功能，而是这条 operator loop 的正式输入通道
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx), [`../../sources/claude-code/src/utils/promptEditor.ts`](../../sources/claude-code/src/utils/promptEditor.ts)
+源码镜像：[`../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx), [`../../src/utils/promptEditor.ts`](../../src/utils/promptEditor.ts)
 
 `handleKeyDown(...)` 里，`Ctrl+G` 会走两条不同路径：
 
@@ -153,7 +153,7 @@
 
 ## 9. `Shift+Tab` 和 `No + feedback` 让它具备了“快速放行”与“计划返工”两条并列反馈路径
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx)
+源码镜像：[`../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx)
 
 这里至少有两种典型操作：
 
@@ -164,7 +164,7 @@
 
 ## 10. `ultraplan` 不是普通 option，而是一个“本地 reject + 远端 refinement launch”的旁路
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx), [`../../sources/claude-code/src/commands/ultraplan.tsx`](../../sources/claude-code/src/commands/ultraplan.tsx)
+源码镜像：[`../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx), [`../../src/commands/ultraplan.tsx`](../../src/commands/ultraplan.tsx)
 
 当用户选 `ultraplan`：
 
@@ -183,7 +183,7 @@
 
 ## 11. clear-context acceptance 与 keep-context acceptance 是两条不同执行协议
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../sources/claude-code/src/bootstrap/state.ts)
+源码镜像：[`../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../src/bootstrap/state.ts)
 
 `handleResponse(...)` 里，最关键的分叉不是按钮文案，而是：
 
@@ -207,7 +207,7 @@
 
 ## 12. `buildPermissionUpdates(...)` 说明这条工具还承担 classifier permission rule materialization
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx), [`../../sources/claude-code/src/utils/permissions/bashClassifier.ts`](../../sources/claude-code/src/utils/permissions/bashClassifier.ts)
+源码镜像：[`../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx), [`../../src/utils/permissions/bashClassifier.ts`](../../src/utils/permissions/bashClassifier.ts)
 
 如果 classifier permission 开启，且 plan 带了 `allowedPrompts`：
 
@@ -218,7 +218,7 @@
 
 ## 13. empty-plan 分支是特判，不共享完整版 plan approval console
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../sources/claude-code/src/tools/ExitPlanModeTool/UI.tsx)
+源码镜像：[`../../src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`](../../src/tools/ExitPlanModeTool/UI.tsx)
 
 当 plan 为空时：
 
@@ -230,7 +230,7 @@
 
 ## 14. `ReviewArtifact` 在当前镜像里只能确认到 permission 接缝，不能伪装成完整实现
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/PermissionRequest.tsx), [`../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts)
+源码镜像：[`../../src/components/permissions/PermissionRequest.tsx`](../../src/components/permissions/PermissionRequest.tsx), [`../../src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../src/hooks/toolPermission/handlers/interactiveHandler.ts)
 
 当前镜像里，`ReviewArtifact` 可见的事实只有：
 
@@ -251,7 +251,7 @@
 
 ## 15. `interactiveHandler` 明确把 `ExitPlanMode / AskUserQuestion / ReviewArtifact` 视为同一类工具
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts)
+源码镜像：[`../../src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../src/hooks/toolPermission/handlers/interactiveHandler.ts)
 
 注释里有一条很关键的说明：
 

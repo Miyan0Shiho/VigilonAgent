@@ -13,7 +13,7 @@
 
 ## 1. `AskUserQuestion` 的真实产品定位不是普通 tool call，而是“让主会话停下来等待用户回答”
 
-源码镜像：[`../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
+源码镜像：[`../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
 
 这条工具有三个非常关键的声明：
 
@@ -31,7 +31,7 @@
 
 ## 2. 它的输入 schema 本质上是一个小型问卷 DSL
 
-源码镜像：[`../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
+源码镜像：[`../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
 
 核心结构是：
 
@@ -51,7 +51,7 @@
 
 ## 3. 工具在 schema 层就强制了一批 UI 友好的约束
 
-源码镜像：[`../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
+源码镜像：[`../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
 
 它在 schema 里直接卡住：
 
@@ -65,7 +65,7 @@
 
 ## 4. `preview` 不是永远可用字段，它受宿主 preview format gate 控制
 
-源码镜像：[`../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../sources/claude-code/src/bootstrap/state.ts)
+源码镜像：[`../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../src/bootstrap/state.ts)
 
 `description()` / `prompt()` 会先看：
 
@@ -84,7 +84,7 @@
 
 ## 5. HTML preview 还带一层意图验证，不接受 full document、script、style
 
-源码镜像：[`../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
+源码镜像：[`../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
 
 `validateHtmlPreview(...)` 明确拒绝：
 
@@ -98,7 +98,7 @@
 
 ## 6. `isEnabled()` 里的 channels gate 说明它的关键宿主前提是“有人在键盘前”
 
-源码镜像：[`../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../sources/claude-code/src/bootstrap/state.ts)
+源码镜像：[`../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../src/bootstrap/state.ts)
 
 当：
 
@@ -114,7 +114,7 @@
 
 ## 7. 工具结果的最终语义不是“用户点了哪个 option”，而是“模型现在可以继续，且带着这些结构化回答”
 
-源码镜像：[`../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../sources/claude-code/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
+源码镜像：[`../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx`](../../src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx)
 
 `mapToolResultToToolResultBlockParam(...)` 会把返回结果转换成一段明确的 continuation signal：
 
@@ -130,7 +130,7 @@
 
 ## 8. 本地 permission UI 并不是简单列表，而是完整的多题状态机
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/AskUserQuestionPermissionRequest/QuestionView.tsx), [`../../sources/claude-code/src/components/permissions/AskUserQuestionPermissionRequest/SubmitQuestionsView.tsx`](../../sources/claude-code/src/components/permissions/AskUserQuestionPermissionRequest/QuestionNavigationBar.tsx)
+源码镜像：[`../../src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx`](../../src/components/permissions/AskUserQuestionPermissionRequest/QuestionView.tsx), [`../../src/components/permissions/AskUserQuestionPermissionRequest/SubmitQuestionsView.tsx`](../../src/components/permissions/AskUserQuestionPermissionRequest/QuestionNavigationBar.tsx)
 
 `AskUserQuestionPermissionRequestBody` 里维护的不只是一个当前选择，而是：
 
@@ -144,7 +144,7 @@
 
 ## 9. preview 会反向影响布局计算，说明它不是附加字段，而是主 UI 模式分叉点
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx`](../../sources/claude-code/src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx)
+源码镜像：[`../../src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx`](../../src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx)
 
 本地对话框会先扫描：
 
@@ -160,7 +160,7 @@
 
 ## 10. AskUserQuestion 还支持图像粘贴与 annotation，说明它已经超出纯文本 multiple choice
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx`](../../sources/claude-code/src/utils/imageStore.ts)
+源码镜像：[`../../src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx`](../../src/utils/imageStore.ts)
 
 本地实现里能看到：
 
@@ -179,7 +179,7 @@
 
 ## 11. 远端 detail 不会复刻整套表单，只显示成一条 CTA 摘要
 
-源码镜像：[`../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx)
+源码镜像：[`../../src/components/tasks/RemoteSessionDetailDialog.tsx`](../../src/components/tasks/RemoteSessionDetailDialog.tsx)
 
 在远端会话详情里，`formatToolUseSummary(...)` 对 AskUserQuestion 有专门特判：
 
@@ -192,7 +192,7 @@
 
 ## 12. 本地 full dialog 与远端 CTA 摘要是同一工具的两种宿主实现
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx`](../../sources/claude-code/src/components/tasks/RemoteSessionDetailDialog.tsx)
+源码镜像：[`../../src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx`](../../src/components/tasks/RemoteSessionDetailDialog.tsx)
 
 同样是 AskUserQuestion：
 
@@ -203,7 +203,7 @@
 
 ## 13. `requiresUserInteraction()` 还会影响更上层的 permission / channel / bridge 调度逻辑
 
-源码镜像：[`../../sources/claude-code/src/services/tools/toolHooks.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts)
+源码镜像：[`../../src/services/tools/toolHooks.ts`](../../src/hooks/toolPermission/handlers/interactiveHandler.ts)
 
 当前源码里可以看到多处逻辑都在检查：
 

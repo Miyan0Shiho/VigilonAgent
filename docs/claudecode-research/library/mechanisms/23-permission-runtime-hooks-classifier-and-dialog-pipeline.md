@@ -6,7 +6,7 @@
 
 ## 1. 这层解决的是“同一个 ask”为什么会长成三条运行时路径，而不是“哪些规则允许某个工具”
 
-源码镜像：[`../../sources/claude-code/src/hooks/useCanUseTool.tsx`](../../sources/claude-code/src/hooks/useCanUseTool.tsx), [`../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts`](../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts), [`../../sources/claude-code/src/hooks/toolPermission/handlers/coordinatorHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/coordinatorHandler.ts), [`../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts), [`../../sources/claude-code/src/tools/AgentTool/runAgent.ts`](../../sources/claude-code/src/tools/AgentTool/runAgent.ts), [`../../sources/claude-code/src/cli/print.ts`](../../sources/claude-code/src/cli/print.ts)
+源码镜像：[`../../src/hooks/useCanUseTool.tsx`](../../src/hooks/useCanUseTool.tsx), [`../../src/hooks/toolPermission/PermissionContext.ts`](../../src/hooks/toolPermission/PermissionContext.ts), [`../../src/hooks/toolPermission/handlers/coordinatorHandler.ts`](../../src/hooks/toolPermission/handlers/coordinatorHandler.ts), [`../../src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../src/hooks/toolPermission/handlers/interactiveHandler.ts), [`../../src/tools/AgentTool/runAgent.ts`](../../src/tools/AgentTool/runAgent.ts), [`../../src/cli/print.ts`](../../src/cli/print.ts)
 
 前几卷已经分别讲过：
 
@@ -25,7 +25,7 @@
 
 ## 2. `useCanUseTool()` 是权限运行时的总闸，不是单纯的“弹窗前检查”
 
-源码镜像：[`../../sources/claude-code/src/hooks/useCanUseTool.tsx`](../../sources/claude-code/src/hooks/useCanUseTool.tsx)
+源码镜像：[`../../src/hooks/useCanUseTool.tsx`](../../src/hooks/useCanUseTool.tsx)
 
 它先统一做四件事：
 
@@ -45,7 +45,7 @@
 
 ## 3. `PermissionContext` 不是工具函数集合，而是整条权限流水线共享的运行时契约
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts`](../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts)
+源码镜像：[`../../src/hooks/toolPermission/PermissionContext.ts`](../../src/hooks/toolPermission/PermissionContext.ts)
 
 它统一封装了几类核心能力：
 
@@ -60,7 +60,7 @@
 
 ## 4. `createResolveOnce()` 说明权限流水线真正先防的不是 UI 复杂，而是多异步来源的双重 resolve
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts`](../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts)
+源码镜像：[`../../src/hooks/toolPermission/PermissionContext.ts`](../../src/hooks/toolPermission/PermissionContext.ts)
 
 这层暴露三个动作：
 
@@ -88,7 +88,7 @@
 
 ## 5. `runHooks()` 说明 hook 在运行时里不是附属建议，而是 ask 流水线的第一类正式裁决者
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts`](../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts)
+源码镜像：[`../../src/hooks/toolPermission/PermissionContext.ts`](../../src/hooks/toolPermission/PermissionContext.ts)
 
 `runHooks()` 会流式消费 `executePermissionRequestHooks(...)` 的结果，并把 hook 结果分成两类：
 
@@ -101,7 +101,7 @@
 
 ## 6. `handleHookAllow()` 和 `handleUserAllow()` 的分离，说明“谁批准的”会改变持久化与审计语义
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts`](../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts)
+源码镜像：[`../../src/hooks/toolPermission/PermissionContext.ts`](../../src/hooks/toolPermission/PermissionContext.ts)
 
 两条路径都会：
 
@@ -123,7 +123,7 @@
 
 ## 7. `handleCoordinatorPermission()` 不是第二套权限系统，而是“先等自动化检查”的 ask 子路径
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/handlers/coordinatorHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/coordinatorHandler.ts)
+源码镜像：[`../../src/hooks/toolPermission/handlers/coordinatorHandler.ts`](../../src/hooks/toolPermission/handlers/coordinatorHandler.ts)
 
 这条路径非常克制，只做两件事：
 
@@ -141,7 +141,7 @@
 
 ## 8. `awaitAutomatedChecksBeforeDialog` 才是 ask 是否走 coordinator 路的真正策略开关
 
-源码镜像：[`../../sources/claude-code/src/hooks/useCanUseTool.tsx`](../../sources/claude-code/src/hooks/useCanUseTool.tsx), [`../../sources/claude-code/src/tools/AgentTool/runAgent.ts`](../../sources/claude-code/src/tools/AgentTool/runAgent.ts)
+源码镜像：[`../../src/hooks/useCanUseTool.tsx`](../../src/hooks/useCanUseTool.tsx), [`../../src/tools/AgentTool/runAgent.ts`](../../src/tools/AgentTool/runAgent.ts)
 
 `useCanUseTool()` 里只有当：
 
@@ -162,7 +162,7 @@
 
 ## 9. `handleInteractivePermission()` 说明主 REPL 权限表面本质上是一个多路竞争协调器
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts)
+源码镜像：[`../../src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../src/hooks/toolPermission/handlers/interactiveHandler.ts)
 
 这层先做的是：
 
@@ -184,7 +184,7 @@
 
 ## 10. `onUserInteraction()` 的 200ms grace period，说明 classifier 并不是一碰键盘就立即失效
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts)
+源码镜像：[`../../src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../src/hooks/toolPermission/handlers/interactiveHandler.ts)
 
 用户一开始交互时，它不会立刻把 classifier 自动批准资格清掉，而是：
 
@@ -202,7 +202,7 @@
 
 ## 11. interactive path 里 bridge 与 channel 不是后处理，而是和本地对话框并列竞速的远端审批面
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts)
+源码镜像：[`../../src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../src/hooks/toolPermission/handlers/interactiveHandler.ts)
 
 当 bridge 可用时，handler 会：
 
@@ -225,7 +225,7 @@
 
 ## 12. `recheckPermission()` 说明 dialog 不是静态快照，而是会在运行中响应 permission mode 变化
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../sources/claude-code/src/hooks/useCanUseTool.tsx)
+源码镜像：[`../../src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../src/hooks/useCanUseTool.tsx)
 
 这条回调会重新跑：
 
@@ -242,7 +242,7 @@
 
 ## 13. speculative bash classifier 2 秒宽限，说明主 REPL ask 路还有一层“尽量不弹”的前置缓冲
 
-源码镜像：[`../../sources/claude-code/src/hooks/useCanUseTool.tsx`](../../sources/claude-code/src/hooks/useCanUseTool.tsx)
+源码镜像：[`../../src/hooks/useCanUseTool.tsx`](../../src/hooks/useCanUseTool.tsx)
 
 在普通 interactive path 里，如果：
 
@@ -260,7 +260,7 @@
 
 ## 14. `resolveIfAborted()` 说明 abort 检查不是异常处理尾声，而是每个关键阶段之间都要重做的硬边界
 
-源码镜像：[`../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts`](../../sources/claude-code/src/hooks/useCanUseTool.tsx)
+源码镜像：[`../../src/hooks/toolPermission/PermissionContext.ts`](../../src/hooks/useCanUseTool.tsx)
 
 这条 helper 会：
 
@@ -280,7 +280,7 @@
 
 ## 15. `print.ts` 明确说明 SDK/print 路不走 `handleInteractivePermission()`，所以交互 REPL 不是权限系统的唯一宿主
 
-源码镜像：[`../../sources/claude-code/src/cli/print.ts`](../../sources/claude-code/src/cli/print.ts)
+源码镜像：[`../../src/cli/print.ts`](../../src/cli/print.ts)
 
 `handleChannelEnable(...)` 里的注释把这个边界说得很直白：
 
@@ -297,7 +297,7 @@
 
 ## 16. `runAgent.ts` 和 `print.ts` 合起来说明 permission runtime 不是“一个 handler 到处复用”，而是“共享内核 + 宿主特化”
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/runAgent.ts`](../../sources/claude-code/src/tools/AgentTool/runAgent.ts), [`../../sources/claude-code/src/cli/print.ts`](../../sources/claude-code/src/cli/print.ts), [`../../sources/claude-code/src/hooks/useCanUseTool.tsx`](../../sources/claude-code/src/hooks/useCanUseTool.tsx)
+源码镜像：[`../../src/tools/AgentTool/runAgent.ts`](../../src/tools/AgentTool/runAgent.ts), [`../../src/cli/print.ts`](../../src/cli/print.ts), [`../../src/hooks/useCanUseTool.tsx`](../../src/hooks/useCanUseTool.tsx)
 
 `runAgent.ts` 做的是：
 
@@ -318,7 +318,7 @@
 
 ## 17. 这条机制最终说明 ask-permission 真正由六段拼起来
 
-源码镜像：[`../../sources/claude-code/src/hooks/useCanUseTool.tsx`](../../sources/claude-code/src/hooks/useCanUseTool.tsx), [`../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts`](../../sources/claude-code/src/hooks/toolPermission/PermissionContext.ts), [`../../sources/claude-code/src/hooks/toolPermission/handlers/coordinatorHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/coordinatorHandler.ts), [`../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../sources/claude-code/src/hooks/toolPermission/handlers/interactiveHandler.ts), [`../../sources/claude-code/src/tools/AgentTool/runAgent.ts`](../../sources/claude-code/src/tools/AgentTool/runAgent.ts), [`../../sources/claude-code/src/cli/print.ts`](../../sources/claude-code/src/cli/print.ts)
+源码镜像：[`../../src/hooks/useCanUseTool.tsx`](../../src/hooks/useCanUseTool.tsx), [`../../src/hooks/toolPermission/PermissionContext.ts`](../../src/hooks/toolPermission/PermissionContext.ts), [`../../src/hooks/toolPermission/handlers/coordinatorHandler.ts`](../../src/hooks/toolPermission/handlers/coordinatorHandler.ts), [`../../src/hooks/toolPermission/handlers/interactiveHandler.ts`](../../src/hooks/toolPermission/handlers/interactiveHandler.ts), [`../../src/tools/AgentTool/runAgent.ts`](../../src/tools/AgentTool/runAgent.ts), [`../../src/cli/print.ts`](../../src/cli/print.ts)
 
 真正叠在一起工作的是：
 

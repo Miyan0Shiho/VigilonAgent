@@ -12,7 +12,7 @@
 
 ## 1. 这三块 UI 共同管理的是 remote-control 会话的可视化控制面
 
-源码镜像：[`../../sources/claude-code/src/components/BridgeDialog.tsx`](../../sources/claude-code/src/components/BridgeDialog.tsx), [`../../sources/claude-code/src/components/TeleportRepoMismatchDialog.tsx`](../../sources/claude-code/src/components/TeleportRepoMismatchDialog.tsx), [`../../sources/claude-code/src/commands/bridge/bridge.tsx`](../../sources/claude-code/src/commands/bridge/bridge.tsx)
+源码镜像：[`../../src/components/BridgeDialog.tsx`](../../src/components/BridgeDialog.tsx), [`../../src/components/TeleportRepoMismatchDialog.tsx`](../../src/components/TeleportRepoMismatchDialog.tsx), [`../../src/commands/bridge/bridge.tsx`](../../src/commands/bridge/bridge.tsx)
 
 它们分别处在 bridge 生命周期的不同位置：
 
@@ -24,7 +24,7 @@
 
 ## 2. `BridgeDialog` 不是静态状态页，而是一个持续反映 bridge 会话健康度的 operator 面板
 
-源码镜像：[`../../sources/claude-code/src/components/BridgeDialog.tsx`](../../sources/claude-code/src/components/BridgeDialog.tsx)
+源码镜像：[`../../src/components/BridgeDialog.tsx`](../../src/components/BridgeDialog.tsx)
 
 这份组件会直接读取多项 AppState：
 
@@ -43,7 +43,7 @@
 
 ## 3. `BridgeDialog` 的一层重要信息是“当前远端会话到底绑定的是哪个 repo/branch/session”
 
-源码镜像：[`../../sources/claude-code/src/components/BridgeDialog.tsx`](../../sources/claude-code/src/components/BridgeDialog.tsx)
+源码镜像：[`../../src/components/BridgeDialog.tsx`](../../src/components/BridgeDialog.tsx)
 
 这个面板不会只显示“connected”：
 
@@ -59,7 +59,7 @@
 
 ## 4. `BridgeDialog` 把 QR code 当成一等 handoff surface，而不是附属工具
 
-源码镜像：[`../../sources/claude-code/src/components/BridgeDialog.tsx`](../../sources/claude-code/src/components/BridgeDialog.tsx)
+源码镜像：[`../../src/components/BridgeDialog.tsx`](../../src/components/BridgeDialog.tsx)
 
 这份组件会在：
 
@@ -72,7 +72,7 @@
 
 ## 5. `BridgeDialog` 的输入模型也是 operator-first，而不是表单式
 
-源码镜像：[`../../sources/claude-code/src/components/BridgeDialog.tsx`](../../sources/claude-code/src/components/BridgeDialog.tsx)
+源码镜像：[`../../src/components/BridgeDialog.tsx`](../../src/components/BridgeDialog.tsx)
 
 它同时用了两套输入体系：
 
@@ -88,7 +88,7 @@
 
 ## 6. `BridgeDialog` 里的 disconnect 不是局部 UI 状态，而是会直接改写全局 bridge 配置
 
-源码镜像：[`../../sources/claude-code/src/components/BridgeDialog.tsx`](../../sources/claude-code/src/components/BridgeDialog.tsx)
+源码镜像：[`../../src/components/BridgeDialog.tsx`](../../src/components/BridgeDialog.tsx)
 
 当用户按 `d`：
 
@@ -100,7 +100,7 @@
 
 ## 7. `/remote-control` 已连接时真正落地的不是 `BridgeDialog`，而是更窄的 `BridgeDisconnectDialog`
 
-源码镜像：[`../../sources/claude-code/src/commands/bridge/bridge.tsx`](../../sources/claude-code/src/commands/bridge/bridge.tsx)
+源码镜像：[`../../src/commands/bridge/bridge.tsx`](../../src/commands/bridge/bridge.tsx)
 
 `BridgeToggle` 的逻辑很清楚：
 
@@ -115,7 +115,7 @@
 
 ## 8. `BridgeDisconnectDialog` 是“重复调用 remote-control”时的最小 operator 决策面
 
-源码镜像：[`../../sources/claude-code/src/commands/bridge/bridge.tsx`](../../sources/claude-code/src/commands/bridge/bridge.tsx)
+源码镜像：[`../../src/commands/bridge/bridge.tsx`](../../src/commands/bridge/bridge.tsx)
 
 这份 dialog 提供三条路径：
 
@@ -134,7 +134,7 @@
 
 ## 9. `BridgeDisconnectDialog` 的 continue 分支非常克制，它明确选择“不向 transcript 注入说明文字”
 
-源码镜像：[`../../sources/claude-code/src/commands/bridge/bridge.tsx`](../../sources/claude-code/src/commands/bridge/bridge.tsx)
+源码镜像：[`../../src/commands/bridge/bridge.tsx`](../../src/commands/bridge/bridge.tsx)
 
 `handleContinue()` 会：
 
@@ -144,7 +144,7 @@
 
 ## 10. `TeleportRepoMismatchDialog` 解决的是另一类 bridge/remote 问题：本地 checkout 不再匹配远端目标 repo
 
-源码镜像：[`../../sources/claude-code/src/components/TeleportRepoMismatchDialog.tsx`](../../sources/claude-code/src/components/TeleportRepoMismatchDialog.tsx)
+源码镜像：[`../../src/components/TeleportRepoMismatchDialog.tsx`](../../src/components/TeleportRepoMismatchDialog.tsx)
 
 这份组件的核心语义不是登录或连接，而是 repo path remapping：
 
@@ -157,7 +157,7 @@
 
 ## 11. `TeleportRepoMismatchDialog` 的关键不是列表，而是“边选边清理失效 repo-path 映射”
 
-源码镜像：[`../../sources/claude-code/src/components/TeleportRepoMismatchDialog.tsx`](../../sources/claude-code/src/components/TeleportRepoMismatchDialog.tsx)
+源码镜像：[`../../src/components/TeleportRepoMismatchDialog.tsx`](../../src/components/TeleportRepoMismatchDialog.tsx)
 
 选择某个 path 后，它会：
 
@@ -170,7 +170,7 @@
 
 ## 12. `TeleportRepoMismatchDialog` 的空态语义也很明确：不是卡死，而是指导用户从正确 checkout 重启 teleport
 
-源码镜像：[`../../sources/claude-code/src/components/TeleportRepoMismatchDialog.tsx`](../../sources/claude-code/src/components/TeleportRepoMismatchDialog.tsx)
+源码镜像：[`../../src/components/TeleportRepoMismatchDialog.tsx`](../../src/components/TeleportRepoMismatchDialog.tsx)
 
 当 `availablePaths.length === 0` 时，它不会留下一个空选择器，而是直接提示：
 

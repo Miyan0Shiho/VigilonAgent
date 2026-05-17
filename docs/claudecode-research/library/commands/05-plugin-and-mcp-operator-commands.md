@@ -6,7 +6,7 @@
 
 ## 1. `/plugin` 本身几乎只是入口壳
 
-源码镜像：[`../../sources/claude-code/src/commands/plugin/plugin.tsx`](../../sources/claude-code/src/commands/plugin/plugin.tsx), [`../../sources/claude-code/src/commands/plugin/PluginSettings.tsx`](../../sources/claude-code/src/commands/plugin/PluginSettings.tsx)
+源码镜像：[`../../src/commands/plugin/plugin.tsx`](../../src/commands/plugin/plugin.tsx), [`../../src/commands/plugin/PluginSettings.tsx`](../../src/commands/plugin/PluginSettings.tsx)
 
 `plugin.tsx` 的 `call()` 几乎不做业务逻辑，只把 `args` 交给 `PluginSettings`。真正重要的是它把插件系统定义成一个显式产品控制台，而不是隐藏在配置文件里的旁路功能。
 
@@ -18,7 +18,7 @@
 
 ## 2. `/mcp` 是“连接运营面”，不是静态设置页
 
-源码镜像：[`../../sources/claude-code/src/commands/mcp/mcp.tsx`](../../sources/claude-code/src/commands/mcp/mcp.tsx), [`../../sources/claude-code/src/components/mcp/MCPSettings.tsx`](../../sources/claude-code/src/components/mcp/MCPSettings.tsx)
+源码镜像：[`../../src/commands/mcp/mcp.tsx`](../../src/commands/mcp/mcp.tsx), [`../../src/components/mcp/MCPSettings.tsx`](../../src/components/mcp/MCPSettings.tsx)
 
 `mcp.tsx` 暴露了几个很关键的语义分支：
 
@@ -37,7 +37,7 @@
 
 ## 3. `MCPSettings` 在重建一张服务拓扑图
 
-源码镜像：[`../../sources/claude-code/src/components/mcp/MCPSettings.tsx`](../../sources/claude-code/src/components/mcp/MCPSettings.tsx)
+源码镜像：[`../../src/components/mcp/MCPSettings.tsx`](../../src/components/mcp/MCPSettings.tsx)
 
 这个组件至少在做四件事：
 
@@ -50,7 +50,7 @@
 
 ## 4. `claude mcp add` 是配置写入器，不是 UI 命令包装
 
-源码镜像：[`../../sources/claude-code/src/commands/mcp/addCommand.ts`](../../sources/claude-code/src/commands/mcp/addCommand.ts)
+源码镜像：[`../../src/commands/mcp/addCommand.ts`](../../src/commands/mcp/addCommand.ts)
 
 `registerMcpAddCommand()` 直接展示了 CLI 子命令层的真实复杂度：
 
@@ -64,7 +64,7 @@
 
 ## 5. `/doctor` 负责把“为什么不能用”讲清楚
 
-源码镜像：[`../../sources/claude-code/src/commands/doctor/doctor.tsx`](../../sources/claude-code/src/commands/doctor/doctor.tsx), [`../../sources/claude-code/src/screens/Doctor.tsx`](../../sources/claude-code/src/screens/Doctor.tsx)
+源码镜像：[`../../src/commands/doctor/doctor.tsx`](../../src/commands/doctor/doctor.tsx), [`../../src/screens/Doctor.tsx`](../../src/screens/Doctor.tsx)
 
 `/doctor` 并不只做环境探测，它还会合并：
 

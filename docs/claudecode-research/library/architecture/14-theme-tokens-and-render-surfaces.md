@@ -6,7 +6,7 @@
 
 ## 1. appearance runtime 之下还有一层更底的“token 到表面”的适配层
 
-源码镜像：[`../../sources/claude-code/src/utils/theme.ts`](../../sources/claude-code/src/utils/theme.ts), [`../../sources/claude-code/src/components/design-system/ThemedBox.tsx`](../../sources/claude-code/src/components/design-system/ThemedBox.tsx), [`../../sources/claude-code/src/components/design-system/ThemedText.tsx`](../../sources/claude-code/src/components/design-system/ThemedText.tsx), [`../../sources/claude-code/src/components/design-system/color.ts`](../../sources/claude-code/src/components/design-system/color.ts)
+源码镜像：[`../../src/utils/theme.ts`](../../src/utils/theme.ts), [`../../src/components/design-system/ThemedBox.tsx`](../../src/components/design-system/ThemedBox.tsx), [`../../src/components/design-system/ThemedText.tsx`](../../src/components/design-system/ThemedText.tsx), [`../../src/components/design-system/color.ts`](../../src/components/design-system/color.ts)
 
 如果上一卷解决的是：
 
@@ -24,7 +24,7 @@
 
 ## 2. `utils/theme.ts` 不是调色板文件，而是跨全产品面的语义 token 契约
 
-源码镜像：[`../../sources/claude-code/src/utils/theme.ts`](../../sources/claude-code/src/utils/theme.ts)
+源码镜像：[`../../src/utils/theme.ts`](../../src/utils/theme.ts)
 
 `Theme` 类型里定义的并不是抽象的 `primary/secondary`，而是直接对产品语义命名：
 
@@ -39,7 +39,7 @@
 
 ## 3. `ThemeName` 和 `ThemeSetting` 明确把“可渲染值”和“用户偏好值”分开
 
-源码镜像：[`../../sources/claude-code/src/utils/theme.ts`](../../sources/claude-code/src/utils/theme.ts), [`../../sources/claude-code/src/utils/systemTheme.ts`](../../sources/claude-code/src/utils/systemTheme.ts)
+源码镜像：[`../../src/utils/theme.ts`](../../src/utils/theme.ts), [`../../src/utils/systemTheme.ts`](../../src/utils/systemTheme.ts)
 
 这层分离很关键：
 
@@ -50,7 +50,7 @@
 
 ## 4. 主题集合本身体现了 Claude Code 的终端适配策略
 
-源码镜像：[`../../sources/claude-code/src/utils/theme.ts`](../../sources/claude-code/src/utils/theme.ts)
+源码镜像：[`../../src/utils/theme.ts`](../../src/utils/theme.ts)
 
 当前主题集合不是一套 light/dark 而已，而是三条并行策略：
 
@@ -62,7 +62,7 @@
 
 ## 5. `ThemedBox` 的职责是“把 theme key 延迟解析到 Ink Box”
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/ThemedBox.tsx`](../../sources/claude-code/src/components/design-system/ThemedBox.tsx)
+源码镜像：[`../../src/components/design-system/ThemedBox.tsx`](../../src/components/design-system/ThemedBox.tsx)
 
 `ThemedBox` 并没有发明新的布局语义，它做的是一层非常明确的转换：
 
@@ -76,7 +76,7 @@
 
 ## 6. `ThemedBox` 明确支持 raw color bypass，这让 token 和特例可以共存
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/ThemedBox.tsx`](../../sources/claude-code/src/components/design-system/ThemedBox.tsx)
+源码镜像：[`../../src/components/design-system/ThemedBox.tsx`](../../src/components/design-system/ThemedBox.tsx)
 
 `resolveColor()` 会先检查字符串是否以这些前缀开头：
 
@@ -94,7 +94,7 @@
 
 ## 7. `ThemedText` 解决的是 Ink 文本着色和状态语义传播
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/ThemedText.tsx`](../../sources/claude-code/src/components/design-system/ThemedText.tsx)
+源码镜像：[`../../src/components/design-system/ThemedText.tsx`](../../src/components/design-system/ThemedText.tsx)
 
 `ThemedText` 在 `Text` 之上多做了三层事情：
 
@@ -106,7 +106,7 @@
 
 ## 8. `dimColor` 映射到 `theme.inactive`，本质上是在重定义 terminal dim
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/ThemedText.tsx`](../../sources/claude-code/src/components/design-system/ThemedText.tsx)
+源码镜像：[`../../src/components/design-system/ThemedText.tsx`](../../src/components/design-system/ThemedText.tsx)
 
 源码注释直接说了：这种做法和 `bold` 兼容，而 ANSI dim 不一定兼容。也就是说 Claude Code 对 dim 的理解不是“让终端自己变暗”，而是：
 
@@ -117,7 +117,7 @@
 
 ## 9. `TextHoverColorContext` 说明 Ink 自带样式级联不够，Claude Code 自己补了一层
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/ThemedText.tsx`](../../sources/claude-code/src/components/design-system/ThemedText.tsx), [`../../sources/claude-code/src/components/VirtualMessageList.tsx`](../../sources/claude-code/src/components/VirtualMessageList.tsx)
+源码镜像：[`../../src/components/design-system/ThemedText.tsx`](../../src/components/design-system/ThemedText.tsx), [`../../src/components/VirtualMessageList.tsx`](../../src/components/VirtualMessageList.tsx)
 
 `TextHoverColorContext` 的注释点得很清楚：它用于给未显式着色的 `ThemedText` 子树上 hover 颜色，而且能跨 `Box` 边界传播，因为 Ink 自带的 style cascade 做不到这一点。
 
@@ -131,7 +131,7 @@
 
 ## 10. `backgroundColor + color="inverseText"` 是一条反复复用的选中态协议
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/Tabs.tsx`](../../sources/claude-code/src/components/design-system/Tabs.tsx), [`../../sources/claude-code/src/components/permissions/AskUserQuestionPermissionRequest/QuestionNavigationBar.tsx`](../../sources/claude-code/src/components/permissions/AskUserQuestionPermissionRequest/QuestionNavigationBar.tsx)
+源码镜像：[`../../src/components/design-system/Tabs.tsx`](../../src/components/design-system/Tabs.tsx), [`../../src/components/permissions/AskUserQuestionPermissionRequest/QuestionNavigationBar.tsx`](../../src/components/permissions/AskUserQuestionPermissionRequest/QuestionNavigationBar.tsx)
 
 在多个表面里都能看到同一种组合：
 
@@ -145,7 +145,7 @@
 
 ## 11. `color()` 把同一套主题 token 带到了纯字符串输出世界
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/color.ts`](../../sources/claude-code/src/components/design-system/color.ts)
+源码镜像：[`../../src/components/design-system/color.ts`](../../src/components/design-system/color.ts)
 
 `color(c, theme, type)` 返回的是一个 curried formatter：
 
@@ -164,7 +164,7 @@
 
 ## 12. `FastIcon` 和 `LogoV2` 证明字符串侧也在消费同一套 token
 
-源码镜像：[`../../sources/claude-code/src/components/FastIcon.tsx`](../../sources/claude-code/src/components/FastIcon.tsx), [`../../sources/claude-code/src/components/LogoV2/LogoV2.tsx`](../../sources/claude-code/src/components/LogoV2/LogoV2.tsx)
+源码镜像：[`../../src/components/FastIcon.tsx`](../../src/components/FastIcon.tsx), [`../../src/components/LogoV2/LogoV2.tsx`](../../src/components/LogoV2/LogoV2.tsx)
 
 `FastIcon` 有两条路径：
 
@@ -186,7 +186,7 @@
 
 ## 13. syntax color 是 appearance 系统里一条“外部模块接缝”
 
-源码镜像：[`../../sources/claude-code/src/components/StructuredDiff/colorDiff.ts`](../../sources/claude-code/src/components/StructuredDiff/colorDiff.ts), [`../../sources/claude-code/src/components/ThemePicker.tsx`](../../sources/claude-code/src/components/ThemePicker.tsx)
+源码镜像：[`../../src/components/StructuredDiff/colorDiff.ts`](../../src/components/StructuredDiff/colorDiff.ts), [`../../src/components/ThemePicker.tsx`](../../src/components/ThemePicker.tsx)
 
 `StructuredDiff/colorDiff.ts` 并不自己定义主题 token，而是：
 
@@ -198,7 +198,7 @@
 
 ## 14. appearance token 层的真实分工可以这样理解
 
-源码镜像：[`../../sources/claude-code/src/utils/theme.ts`](../../sources/claude-code/src/utils/theme.ts), [`../../sources/claude-code/src/components/design-system/ThemedBox.tsx`](../../sources/claude-code/src/components/design-system/ThemedBox.tsx), [`../../sources/claude-code/src/components/design-system/ThemedText.tsx`](../../sources/claude-code/src/components/design-system/ThemedText.tsx), [`../../sources/claude-code/src/components/design-system/color.ts`](../../sources/claude-code/src/components/design-system/color.ts)
+源码镜像：[`../../src/utils/theme.ts`](../../src/utils/theme.ts), [`../../src/components/design-system/ThemedBox.tsx`](../../src/components/design-system/ThemedBox.tsx), [`../../src/components/design-system/ThemedText.tsx`](../../src/components/design-system/ThemedText.tsx), [`../../src/components/design-system/color.ts`](../../src/components/design-system/color.ts)
 
 可以压成四层：
 

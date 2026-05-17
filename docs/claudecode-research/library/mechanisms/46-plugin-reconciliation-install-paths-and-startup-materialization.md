@@ -13,7 +13,7 @@
 
 ## 1. marketplace reconciler 不是 refresh，而是“声明意图到账面状态”的对账器
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/reconciler.ts`](../../sources/claude-code/src/utils/plugins/reconciler.ts)
+源码镜像：[`../../src/utils/plugins/reconciler.ts`](../../src/utils/plugins/reconciler.ts)
 
 `reconciler.ts` 一开头就把职责切成两层：
 
@@ -28,7 +28,7 @@
 
 ## 2. `diffMarketplaces()` 比的是“声明源”和“已物化源”，不是是否能联网
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/reconciler.ts`](../../sources/claude-code/src/utils/plugins/reconciler.ts)
+源码镜像：[`../../src/utils/plugins/reconciler.ts`](../../src/utils/plugins/reconciler.ts)
 
 `MarketplaceDiff` 只分三类：
 
@@ -45,7 +45,7 @@
 
 ## 3. fallback marketplace 的语义是“存在即可”，不是“必须和当前 declared source 一致”
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/reconciler.ts`](../../sources/claude-code/src/utils/plugins/reconciler.ts)
+源码镜像：[`../../src/utils/plugins/reconciler.ts`](../../src/utils/plugins/reconciler.ts)
 
 `intent.sourceIsFallback` 这一分支很关键：
 
@@ -61,7 +61,7 @@
 
 ## 4. `normalizeSource()` 的工作重点是 worktree canonicalization，不只是补绝对路径
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/reconciler.ts`](../../sources/claude-code/src/utils/plugins/reconciler.ts)
+源码镜像：[`../../src/utils/plugins/reconciler.ts`](../../src/utils/plugins/reconciler.ts)
 
 这里不是简单 `resolve("./foo")`，而是：
 
@@ -79,7 +79,7 @@
 
 ## 5. `reconcileMarketplaces()` 是 additive-only，对账成功不代表会做删除
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/reconciler.ts`](../../sources/claude-code/src/utils/plugins/reconciler.ts)
+源码镜像：[`../../src/utils/plugins/reconciler.ts`](../../src/utils/plugins/reconciler.ts)
 
 `reconcileMarketplaces()` 的 contract 写得很死：
 
@@ -97,7 +97,7 @@
 
 ## 6. sourceChanged 的本地路径更新还有一层“死路径保护”
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/reconciler.ts`](../../sources/claude-code/src/utils/plugins/reconciler.ts)
+源码镜像：[`../../src/utils/plugins/reconciler.ts`](../../src/utils/plugins/reconciler.ts)
 
 `toProcess` 过滤时有个很重要的 guard：
 
@@ -119,7 +119,7 @@ reconciler 选择“保工作条目，不制造噪音失败”。
 
 ## 7. plugin install core 是严格的 settings-first，不是先下载再写 intent
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts`](../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts)
+源码镜像：[`../../src/utils/plugins/pluginInstallationHelpers.ts`](../../src/utils/plugins/pluginInstallationHelpers.ts)
 
 `installResolvedPlugin()` 的顺序非常明确：
 
@@ -142,7 +142,7 @@ reconciler 选择“保工作条目，不制造噪音失败”。
 
 ## 8. 本地源插件如果拿不到 marketplace install location，会被 install core 直接拒绝
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts`](../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts)
+源码镜像：[`../../src/utils/plugins/pluginInstallationHelpers.ts`](../../src/utils/plugins/pluginInstallationHelpers.ts)
 
 这条 guard 不是多余防御，而是在补一个真实 silent-noop 坑：
 
@@ -159,7 +159,7 @@ reconciler 选择“保工作条目，不制造噪音失败”。
 
 ## 9. dependency closure 的解析和落盘是“整包原子写意图，逐个物化文件”
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts`](../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts), [`../../sources/claude-code/src/utils/plugins/dependencyResolver.ts`](../../sources/claude-code/src/utils/plugins/dependencyResolver.ts)
+源码镜像：[`../../src/utils/plugins/pluginInstallationHelpers.ts`](../../src/utils/plugins/pluginInstallationHelpers.ts), [`../../src/utils/plugins/dependencyResolver.ts`](../../src/utils/plugins/dependencyResolver.ts)
 
 `installResolvedPlugin()` 先构造：
 
@@ -183,7 +183,7 @@ reconciler 选择“保工作条目，不制造噪音失败”。
 
 ## 10. `cacheAndRegisterPlugin()` 真正做的是“算版本号 -> 搬到 versioned path -> 选配 zip 化 -> 记双注册表”
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts`](../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts), [`../../sources/claude-code/src/utils/plugins/pluginLoader.ts`](../../sources/claude-code/src/utils/plugins/pluginLoader.ts)
+源码镜像：[`../../src/utils/plugins/pluginInstallationHelpers.ts`](../../src/utils/plugins/pluginInstallationHelpers.ts), [`../../src/utils/plugins/pluginLoader.ts`](../../src/utils/plugins/pluginLoader.ts)
 
 这不是单纯的“复制到 cache 目录”。真实链条是：
 
@@ -202,7 +202,7 @@ reconciler 选择“保工作条目，不制造噪音失败”。
 
 ## 11. versioned move 里专门处理了“目标路径是源路径子目录”的自嵌套坑
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts`](../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts), [`../../sources/claude-code/src/utils/plugins/pluginLoader.ts`](../../sources/claude-code/src/utils/plugins/pluginLoader.ts)
+源码镜像：[`../../src/utils/plugins/pluginInstallationHelpers.ts`](../../src/utils/plugins/pluginInstallationHelpers.ts), [`../../src/utils/plugins/pluginLoader.ts`](../../src/utils/plugins/pluginLoader.ts)
 
 注释里点名了这种情况：
 
@@ -218,7 +218,7 @@ reconciler 选择“保工作条目，不制造噪音失败”。
 
 ## 12. CLI/UI 只是 wrapper，真正的安装/启停/卸载语义都汇到 `pluginOperations.ts`
 
-源码镜像：[`../../sources/claude-code/src/services/plugins/pluginOperations.ts`](../../sources/claude-code/src/services/plugins/pluginOperations.ts), [`../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts`](../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts)
+源码镜像：[`../../src/services/plugins/pluginOperations.ts`](../../src/services/plugins/pluginOperations.ts), [`../../src/utils/plugins/pluginInstallationHelpers.ts`](../../src/utils/plugins/pluginInstallationHelpers.ts)
 
 `pluginOperations.ts` 的角色不是另起一套逻辑，而是：
 
@@ -238,7 +238,7 @@ reconciler 选择“保工作条目，不制造噪音失败”。
 
 ## 13. 卸载不是简单删 settings，它还要处理 orphan version、plugin options 和 data dir
 
-源码镜像：[`../../sources/claude-code/src/services/plugins/pluginOperations.ts`](../../sources/claude-code/src/services/plugins/pluginOperations.ts)
+源码镜像：[`../../src/services/plugins/pluginOperations.ts`](../../src/services/plugins/pluginOperations.ts)
 
 `uninstallPluginOp()` 做完 settings 删除和 `removePluginInstallation(...)` 之后，还会：
 
@@ -257,7 +257,7 @@ reconciler 选择“保工作条目，不制造噪音失败”。
 
 ## 14. enable/disable 也是 settings-first，而且允许“高优先级 scope 覆盖低优先级 scope”
 
-源码镜像：[`../../sources/claude-code/src/services/plugins/pluginOperations.ts`](../../sources/claude-code/src/services/plugins/pluginOperations.ts), [`../../sources/claude-code/src/utils/settings/settings.ts`](../../sources/claude-code/src/utils/settings/settings.ts)
+源码镜像：[`../../src/services/plugins/pluginOperations.ts`](../../src/services/plugins/pluginOperations.ts), [`../../src/utils/settings/settings.ts`](../../src/utils/settings/settings.ts)
 
 `setPluginEnabledOp()` 有两个容易被误读的设计：
 
@@ -273,7 +273,7 @@ reconciler 选择“保工作条目，不制造噪音失败”。
 
 ## 15. headless 安装路径的核心不是“自己再装插件”，而是“先 reconcile marketplace，再让后续 loader 发现插件”
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/headlessPluginInstall.ts`](../../sources/claude-code/src/utils/plugins/headlessPluginInstall.ts), [`../../sources/claude-code/src/utils/plugins/reconciler.ts`](../../sources/claude-code/src/utils/plugins/reconciler.ts)
+源码镜像：[`../../src/utils/plugins/headlessPluginInstall.ts`](../../src/utils/plugins/headlessPluginInstall.ts), [`../../src/utils/plugins/reconciler.ts`](../../src/utils/plugins/reconciler.ts)
 
 `installPluginsForHeadless()` 这条链刻意没有直接 materialize 每个 plugin，而是：
 
@@ -290,7 +290,7 @@ reconciler 选择“保工作条目，不制造噪音失败”。
 
 ## 16. seed marketplace 在 headless 里是第一公民，不是 reconcile 前的小优化
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/headlessPluginInstall.ts`](../../sources/claude-code/src/utils/plugins/headlessPluginInstall.ts), [`../../sources/claude-code/src/utils/plugins/marketplaceManager.ts`](../../sources/claude-code/src/utils/plugins/marketplaceManager.ts)
+源码镜像：[`../../src/utils/plugins/headlessPluginInstall.ts`](../../src/utils/plugins/headlessPluginInstall.ts), [`../../src/utils/plugins/marketplaceManager.ts`](../../src/utils/plugins/marketplaceManager.ts)
 
 `registerSeedMarketplaces()` 发生在 reconcile 之前，而且一旦 `seedChanged`：
 
@@ -307,7 +307,7 @@ reconciler 选择“保工作条目，不制造噪音失败”。
 
 ## 17. headless zip-cache 模式下，reconcile 还带 source-type 过滤
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/headlessPluginInstall.ts`](../../sources/claude-code/src/utils/plugins/headlessPluginInstall.ts), [`../../sources/claude-code/src/utils/plugins/zipCache.ts`](../../sources/claude-code/src/utils/plugins/zipCache.ts)
+源码镜像：[`../../src/utils/plugins/headlessPluginInstall.ts`](../../src/utils/plugins/headlessPluginInstall.ts), [`../../src/utils/plugins/zipCache.ts`](../../src/utils/plugins/zipCache.ts)
 
 zip cache 模式传给 `reconcileMarketplaces()` 一个 `skip(...)`：
 
@@ -317,7 +317,7 @@ zip cache 模式传给 `reconcileMarketplaces()` 一个 `skip(...)`：
 
 ## 18. `officialMarketplaceStartupCheck` 的重点是 retryable materialization，而不是 UI 推荐
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/officialMarketplaceStartupCheck.ts`](../../sources/claude-code/src/utils/plugins/officialMarketplaceStartupCheck.ts), [`../../sources/claude-code/src/utils/plugins/marketplaceManager.ts`](../../sources/claude-code/src/utils/plugins/marketplaceManager.ts)
+源码镜像：[`../../src/utils/plugins/officialMarketplaceStartupCheck.ts`](../../src/utils/plugins/officialMarketplaceStartupCheck.ts), [`../../src/utils/plugins/marketplaceManager.ts`](../../src/utils/plugins/marketplaceManager.ts)
 
 这条启动链做的是：
 
@@ -336,7 +336,7 @@ zip cache 模式传给 `reconcileMarketplaces()` 一个 `skip(...)`：
 
 ## 19. 官方 marketplace auto-install 的状态语义是“尝试历史 + 回退计划”，不只是成功/失败布尔值
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/officialMarketplaceStartupCheck.ts`](../../sources/claude-code/src/utils/plugins/officialMarketplaceStartupCheck.ts), [`../../sources/claude-code/src/utils/plugins/officialMarketplaceGcs.ts`](../../sources/claude-code/src/utils/plugins/officialMarketplaceGcs.ts)
+源码镜像：[`../../src/utils/plugins/officialMarketplaceStartupCheck.ts`](../../src/utils/plugins/officialMarketplaceStartupCheck.ts), [`../../src/utils/plugins/officialMarketplaceGcs.ts`](../../src/utils/plugins/officialMarketplaceGcs.ts)
 
 `GlobalConfig` 里存的不只是：
 
@@ -358,7 +358,7 @@ zip cache 模式传给 `reconcileMarketplaces()` 一个 `skip(...)`：
 
 ## 20. macOS `xcrun` 假 git 被当成“git_unavailable”，而不是普通 install error
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/officialMarketplaceStartupCheck.ts`](../../sources/claude-code/src/utils/plugins/officialMarketplaceStartupCheck.ts), [`../../sources/claude-code/src/utils/plugins/gitAvailability.ts`](../../sources/claude-code/src/utils/plugins/gitAvailability.ts)
+源码镜像：[`../../src/utils/plugins/officialMarketplaceStartupCheck.ts`](../../src/utils/plugins/officialMarketplaceStartupCheck.ts), [`../../src/utils/plugins/gitAvailability.ts`](../../src/utils/plugins/gitAvailability.ts)
 
 这里专门捕了：
 
@@ -379,7 +379,7 @@ zip cache 模式传给 `reconcileMarketplaces()` 一个 `skip(...)`：
 
 ## 21. 这条链的总装配关系
 
-源码镜像：[`../../sources/claude-code/src/utils/plugins/reconciler.ts`](../../sources/claude-code/src/utils/plugins/reconciler.ts), [`../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts`](../../sources/claude-code/src/utils/plugins/pluginInstallationHelpers.ts), [`../../sources/claude-code/src/services/plugins/pluginOperations.ts`](../../sources/claude-code/src/services/plugins/pluginOperations.ts), [`../../sources/claude-code/src/utils/plugins/headlessPluginInstall.ts`](../../sources/claude-code/src/utils/plugins/headlessPluginInstall.ts), [`../../sources/claude-code/src/utils/plugins/officialMarketplaceStartupCheck.ts`](../../sources/claude-code/src/utils/plugins/officialMarketplaceStartupCheck.ts)
+源码镜像：[`../../src/utils/plugins/reconciler.ts`](../../src/utils/plugins/reconciler.ts), [`../../src/utils/plugins/pluginInstallationHelpers.ts`](../../src/utils/plugins/pluginInstallationHelpers.ts), [`../../src/services/plugins/pluginOperations.ts`](../../src/services/plugins/pluginOperations.ts), [`../../src/utils/plugins/headlessPluginInstall.ts`](../../src/utils/plugins/headlessPluginInstall.ts), [`../../src/utils/plugins/officialMarketplaceStartupCheck.ts`](../../src/utils/plugins/officialMarketplaceStartupCheck.ts)
 
 可以把这半套插件系统收成 5 层：
 

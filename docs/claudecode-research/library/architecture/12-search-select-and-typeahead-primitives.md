@@ -6,7 +6,7 @@
 
 ## 1. 这层不是功能面，而是“功能面之下的交互发动机”
 
-源码镜像：[`../../sources/claude-code/src/components/SearchBox.tsx`](../../sources/claude-code/src/components/SearchBox.tsx), [`../../sources/claude-code/src/hooks/useSearchInput.ts`](../../sources/claude-code/src/hooks/useSearchInput.ts), [`../../sources/claude-code/src/components/design-system/FuzzyPicker.tsx`](../../sources/claude-code/src/components/design-system/FuzzyPicker.tsx), [`../../sources/claude-code/src/hooks/useTypeahead.tsx`](../../sources/claude-code/src/hooks/useTypeahead.tsx), [`../../sources/claude-code/src/components/CustomSelect/select.tsx`](../../sources/claude-code/src/components/CustomSelect/select.tsx)
+源码镜像：[`../../src/components/SearchBox.tsx`](../../src/components/SearchBox.tsx), [`../../src/hooks/useSearchInput.ts`](../../src/hooks/useSearchInput.ts), [`../../src/components/design-system/FuzzyPicker.tsx`](../../src/components/design-system/FuzzyPicker.tsx), [`../../src/hooks/useTypeahead.tsx`](../../src/hooks/useTypeahead.tsx), [`../../src/components/CustomSelect/select.tsx`](../../src/components/CustomSelect/select.tsx)
 
 如果上一卷解决的是 overlay、fullscreen、keybinding 这些“容器级底座”，那么这一卷解决的是更贴近输入本身的五个问题：
 
@@ -20,7 +20,7 @@
 
 ## 2. `SearchBox` 是最小视觉协议，不是“一个输入框组件”
 
-源码镜像：[`../../sources/claude-code/src/components/SearchBox.tsx`](../../sources/claude-code/src/components/SearchBox.tsx)
+源码镜像：[`../../src/components/SearchBox.tsx`](../../src/components/SearchBox.tsx)
 
 `SearchBox` 的职责很小，但非常基础。它不处理任何输入事件，只负责把下面几种状态转成终端可视表现：
 
@@ -43,7 +43,7 @@
 
 ## 3. `useSearchInput` 才是真正的搜索编辑内核
 
-源码镜像：[`../../sources/claude-code/src/hooks/useSearchInput.ts`](../../sources/claude-code/src/hooks/useSearchInput.ts)
+源码镜像：[`../../src/hooks/useSearchInput.ts`](../../src/hooks/useSearchInput.ts)
 
 搜索栏的编辑逻辑并不写在 `SearchBox` 里，而是全部收在 `useSearchInput()`：
 
@@ -64,7 +64,7 @@
 
 ## 4. `useSearchInput` 明确区分了 `onExit` 和 `onCancel`
 
-源码镜像：[`../../sources/claude-code/src/hooks/useSearchInput.ts`](../../sources/claude-code/src/hooks/useSearchInput.ts)
+源码镜像：[`../../src/hooks/useSearchInput.ts`](../../src/hooks/useSearchInput.ts)
 
 这个点很关键，因为很多终端搜索 UI 会把两者混在一起。这里则明确拆分：
 
@@ -80,7 +80,7 @@
 
 ## 5. `FuzzyPicker` 不是业务对话框，而是“搜索+列表+preview”的通用骨架
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/FuzzyPicker.tsx`](../../sources/claude-code/src/components/design-system/FuzzyPicker.tsx)
+源码镜像：[`../../src/components/design-system/FuzzyPicker.tsx`](../../src/components/design-system/FuzzyPicker.tsx)
 
 `FuzzyPicker` 统一了大多数终端选择器的共同骨架：
 
@@ -102,7 +102,7 @@
 
 ## 6. `FuzzyPicker` 的高度、hint 和布局稳定性是第一原则
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/FuzzyPicker.tsx`](../../sources/claude-code/src/components/design-system/FuzzyPicker.tsx)
+源码镜像：[`../../src/components/design-system/FuzzyPicker.tsx`](../../src/components/design-system/FuzzyPicker.tsx)
 
 这份实现里最值得注意的不是列表本身，而是为了防止终端抖动做的大量稳定化处理：
 
@@ -115,7 +115,7 @@
 
 ## 7. `FuzzyPicker` 把选择器操作分成 primary action 和 alternate actions
 
-源码镜像：[`../../sources/claude-code/src/components/design-system/FuzzyPicker.tsx`](../../sources/claude-code/src/components/design-system/FuzzyPicker.tsx)
+源码镜像：[`../../src/components/design-system/FuzzyPicker.tsx`](../../src/components/design-system/FuzzyPicker.tsx)
 
 它不是只支持一个“选中”动作，而是天然支持：
 
@@ -133,7 +133,7 @@
 
 ## 8. `useTypeahead` 是 PromptInput 的异构建议汇流器
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTypeahead.tsx`](../../sources/claude-code/src/hooks/useTypeahead.tsx), [`../../sources/claude-code/src/components/PromptInput/PromptInput.tsx`](../../sources/claude-code/src/components/PromptInput/PromptInput.tsx)
+源码镜像：[`../../src/hooks/useTypeahead.tsx`](../../src/hooks/useTypeahead.tsx), [`../../src/components/PromptInput/PromptInput.tsx`](../../src/components/PromptInput/PromptInput.tsx)
 
 如果说 `FuzzyPicker` 处理的是“进入一个搜索对话框之后”，那么 `useTypeahead` 处理的是“用户还没离开 PromptInput，本地补全已经开始工作”。
 
@@ -159,7 +159,7 @@
 
 ## 9. `useTypeahead` 不是单一补全器，而是一个 suggestion router
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTypeahead.tsx`](../../sources/claude-code/src/hooks/useTypeahead.tsx)
+源码镜像：[`../../src/hooks/useTypeahead.tsx`](../../src/hooks/useTypeahead.tsx)
 
 从 imports 就能看出它在汇流很多类型的建议：
 
@@ -185,7 +185,7 @@
 
 ## 10. path / mention completion 已经做到了 Unicode 与 quoted token 级别
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTypeahead.tsx`](../../sources/claude-code/src/hooks/useTypeahead.tsx)
+源码镜像：[`../../src/hooks/useTypeahead.tsx`](../../src/hooks/useTypeahead.tsx)
 
 这里不是简单 `\w+` 正则，而是显式考虑：
 
@@ -204,7 +204,7 @@
 
 ## 11. `useTypeahead` 同时接了 overlay 与 keybinding context
 
-源码镜像：[`../../sources/claude-code/src/hooks/useTypeahead.tsx`](../../sources/claude-code/src/hooks/useTypeahead.tsx), [`../../sources/claude-code/src/context/overlayContext.tsx`](../../sources/claude-code/src/context/overlayContext.tsx), [`../../sources/claude-code/src/keybindings/KeybindingContext.tsx`](../../sources/claude-code/src/keybindings/KeybindingContext.tsx)
+源码镜像：[`../../src/hooks/useTypeahead.tsx`](../../src/hooks/useTypeahead.tsx), [`../../src/context/overlayContext.tsx`](../../src/context/overlayContext.tsx), [`../../src/keybindings/KeybindingContext.tsx`](../../src/keybindings/KeybindingContext.tsx)
 
 它会在 autocomplete 活跃时：
 
@@ -220,7 +220,7 @@
 
 ## 12. `CustomSelect` 不是一个组件，而是一套状态机族谱
 
-源码镜像：[`../../sources/claude-code/src/components/CustomSelect/select.tsx`](../../sources/claude-code/src/components/CustomSelect/select.tsx), [`../../sources/claude-code/src/components/CustomSelect/use-select-navigation.ts`](../../sources/claude-code/src/components/CustomSelect/use-select-navigation.ts), [`../../sources/claude-code/src/components/CustomSelect/use-select-input.ts`](../../sources/claude-code/src/components/CustomSelect/use-select-input.ts), [`../../sources/claude-code/src/components/CustomSelect/use-multi-select-state.ts`](../../sources/claude-code/src/components/CustomSelect/use-multi-select-state.ts)
+源码镜像：[`../../src/components/CustomSelect/select.tsx`](../../src/components/CustomSelect/select.tsx), [`../../src/components/CustomSelect/use-select-navigation.ts`](../../src/components/CustomSelect/use-select-navigation.ts), [`../../src/components/CustomSelect/use-select-input.ts`](../../src/components/CustomSelect/use-select-input.ts), [`../../src/components/CustomSelect/use-multi-select-state.ts`](../../src/components/CustomSelect/use-multi-select-state.ts)
 
 这套系统至少拆成四层：
 
@@ -233,7 +233,7 @@
 
 ## 13. `useSelectNavigation` 维护的是 viewport-aware 焦点，不只是 index++
 
-源码镜像：[`../../sources/claude-code/src/components/CustomSelect/use-select-navigation.ts`](../../sources/claude-code/src/components/CustomSelect/use-select-navigation.ts)
+源码镜像：[`../../src/components/CustomSelect/use-select-navigation.ts`](../../src/components/CustomSelect/use-select-navigation.ts)
 
 这份 reducer 不是简单的“上一个 / 下一个”，而是同步维护：
 
@@ -253,7 +253,7 @@
 
 ## 14. `useSelectInput` 把 single-select 拆成 keybinding 层和 raw input 层
 
-源码镜像：[`../../sources/claude-code/src/components/CustomSelect/use-select-input.ts`](../../sources/claude-code/src/components/CustomSelect/use-select-input.ts)
+源码镜像：[`../../src/components/CustomSelect/use-select-input.ts`](../../src/components/CustomSelect/use-select-input.ts)
 
 它的策略非常明确：
 
@@ -271,7 +271,7 @@
 
 ## 15. `Select` 已经不是纯文本列表，而是支持 input option / pasted image / editor hook 的复合控件
 
-源码镜像：[`../../sources/claude-code/src/components/CustomSelect/select.tsx`](../../sources/claude-code/src/components/CustomSelect/select.tsx)
+源码镜像：[`../../src/components/CustomSelect/select.tsx`](../../src/components/CustomSelect/select.tsx)
 
 `OptionWithDescription` 这套类型已经暴露出很多非普通列表特性：
 
@@ -291,7 +291,7 @@
 
 ## 16. `useMultiSelectState` 说明 multi-select 不是 single-select 的微调版
 
-源码镜像：[`../../sources/claude-code/src/components/CustomSelect/use-multi-select-state.ts`](../../sources/claude-code/src/components/CustomSelect/use-multi-select-state.ts)
+源码镜像：[`../../src/components/CustomSelect/use-multi-select-state.ts`](../../src/components/CustomSelect/use-multi-select-state.ts)
 
 这份状态机要额外维护：
 

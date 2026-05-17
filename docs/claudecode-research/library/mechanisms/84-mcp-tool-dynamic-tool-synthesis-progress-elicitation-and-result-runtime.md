@@ -18,11 +18,11 @@
 - 会话过期 / auth 过期恢复
 - 结果裁剪、富渲染、special-server override
 
-先说明边界：当前仓库镜像里 `MCPTool.ts` 本体是薄壳，真正逻辑集中在 [`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)。所以这里讲的是“动态 tool runtime”，不是静态类定义。
+先说明边界：当前仓库镜像里 `MCPTool.ts` 本体是薄壳，真正逻辑集中在 [`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)。所以这里讲的是“动态 tool runtime”，不是静态类定义。
 
 ## 1. `MCPTool.ts` 只是占位模板，真正的可执行工具是运行时合成出来的
 
-源码镜像：[`../../sources/claude-code/src/tools/MCPTool/MCPTool.ts`](../../sources/claude-code/src/tools/MCPTool/MCPTool.ts), [`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/tools/MCPTool/MCPTool.ts`](../../src/tools/MCPTool/MCPTool.ts), [`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 `MCPTool.ts` 自己只声明了这些默认值：
 
@@ -44,7 +44,7 @@
 
 ## 2. 真正的 `Tool[]` 是在 `fetchToolsForClient(...)` 里按 server tool catalog 现做的
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 `fetchToolsForClient(client)` 的主流程是：
 
@@ -65,7 +65,7 @@
 
 ## 3. server tool 名字不会原样暴露；默认会被组装成 fully-qualified `mcp__...` 风格工具名
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts), [`../../sources/claude-code/src/services/mcp/mcpStringUtils.ts`](../../sources/claude-code/src/services/mcp/mcpStringUtils.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts), [`../../src/services/mcp/mcpStringUtils.ts`](../../src/services/mcp/mcpStringUtils.ts)
 
 默认流程里，每个工具都先构造：
 
@@ -89,7 +89,7 @@
 
 ## 4. `_meta` 和 annotations 不只是附属信息，而是会直接改写工具语义
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 `fetchToolsForClient(...)` 会把 MCP 返回里的 metadata/annotation 编译进本地 `Tool`：
 
@@ -113,7 +113,7 @@
 
 ## 5. `isSearchOrReadCommand()` 不是从 annotation 推出来的，而是走本地 allowlist 分类器
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts), [`../../sources/claude-code/src/tools/MCPTool/classifyForCollapse.ts`](../../sources/claude-code/src/tools/MCPTool/classifyForCollapse.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts), [`../../src/tools/MCPTool/classifyForCollapse.ts`](../../src/tools/MCPTool/classifyForCollapse.ts)
 
 动态 tool 上的：
 
@@ -139,7 +139,7 @@
 
 ## 6. 权限建议不是 generic MCP allow，而是精确到 fully-qualified tool name 的本地规则建议
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 动态 tool 的 `checkPermissions()` 会返回：
 
@@ -160,7 +160,7 @@
 
 ## 7. `userFacingName()` 明确把 server 名字带进来，说明同名工具冲突是被预期的
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 动态 tool 的展示名不是单独的 `tool.name`，而是：
 
@@ -175,7 +175,7 @@
 
 ## 8. 真正的 call path 会先抽取 `toolUseId`，把它重新穿进 MCP `_meta`
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 动态 `call(...)` 一开始会：
 
@@ -194,7 +194,7 @@
 
 ## 9. `mcp_progress` 不是内部日志，而是正式 progress 协议
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/tools/MCPTool/UI.tsx)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/tools/MCPTool/UI.tsx)
 
 动态 tool 在 call lifecycle 上会显式发三类 outer progress：
 
@@ -220,7 +220,7 @@
 
 ## 10. 真正执行前还会再走一层 `ensureConnectedClient(...)`，动态 tool 自己不持有连接真相
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 动态 `call(...)` 即便拿到的是 `clientConnection`，真正执行前仍然会：
 
@@ -236,7 +236,7 @@
 
 ## 11. `callMCPToolWithUrlElicitationRetry(...)` 说明 MCP tool call 不是单段 RPC，而是可中途暂停的人机循环
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 真实执行不会直接调用 `callMCPTool(...)`，而是先进入：
 
@@ -257,7 +257,7 @@
 
 ## 12. URL elicitation 有三层处理器：hooks、structured handler、REPL queue
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/elicitationHandler.ts), [`../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx`](../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/elicitationHandler.ts), [`../../src/components/mcp/ElicitationDialog.tsx`](../../src/components/mcp/ElicitationDialog.tsx)
 
 `callMCPToolWithUrlElicitationRetry(...)` 的处理顺序是：
 
@@ -279,7 +279,7 @@
 
 ## 13. REPL 模式下的 URL elicitation 明确是两阶段：先 accept，再 waiting，再 retry/cancel
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/components/mcp/ElicitationDialog.tsx)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/components/mcp/ElicitationDialog.tsx)
 
 REPL fallback path 里，排队项会带：
 
@@ -300,7 +300,7 @@ REPL fallback path 里，排队项会带：
 
 ## 14. 这层 retry 不是无限的，最多 3 次 URL elicitation 循环
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 `callMCPToolWithUrlElicitationRetry(...)` 里硬编码：
 
@@ -315,7 +315,7 @@ REPL fallback path 里，排队项会带：
 
 ## 15. 真正的 `callMCPTool(...)` 还包了一层自己的 timeout race，因为 SDK timeout 不足以兜底
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 `callMCPTool(...)` 里并不只信 `client.callTool(..., { timeout })`，还额外自己做了：
 
@@ -337,7 +337,7 @@ REPL fallback path 里，排队项会带：
 
 ## 16. `result.isError` 不会被静默转成文本，而是提升成专门的 `McpToolCallError`
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 如果 MCP result 带：
 
@@ -360,7 +360,7 @@ REPL fallback path 里，排队项会带：
 
 ## 17. 会话过期和 auth 过期是两种不同恢复模型
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 ### auth 过期
 
@@ -398,7 +398,7 @@ REPL fallback path 里，排队项会带：
 
 ## 18. 返回值不是只有 `content`，还保留 `_meta` 和 `structuredContent`
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/services/mcp/client.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/services/mcp/client.ts)
 
 成功路径最终返回：
 
@@ -415,7 +415,7 @@ REPL fallback path 里，排队项会带：
 
 ## 19. 结果在进入 transcript 之前会先走 `processMCPResult(...)` 与 `truncateMcpContentIfNeeded(...)`
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/utils/mcpValidation.ts), [`../../sources/claude-code/src/utils/mcpOutputStorage.ts`](../../sources/claude-code/src/utils/mcpOutputStorage.ts)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/utils/mcpValidation.ts), [`../../src/utils/mcpOutputStorage.ts`](../../src/utils/mcpOutputStorage.ts)
 
 `callMCPTool(...)` 并不会把原始 SDK result 直接回给模型，而是先：
 
@@ -440,7 +440,7 @@ REPL fallback path 里，排队项会带：
 
 ## 20. 默认 UI 已经不把 MCP 结果当纯字符串，而是有一套专门的“富结果压缩器”
 
-源码镜像：[`../../sources/claude-code/src/tools/MCPTool/UI.tsx`](../../sources/claude-code/src/tools/MCPTool/UI.tsx)
+源码镜像：[`../../src/tools/MCPTool/UI.tsx`](../../src/tools/MCPTool/UI.tsx)
 
 `renderToolResultMessage(...)` 的处理顺序大致是：
 
@@ -460,7 +460,7 @@ REPL fallback path 里，排队项会带：
 
 ## 21. 但默认渲染并不是最终答案，Chrome / Computer Use 两类 MCP server 还能替换工具行为和渲染
 
-源码镜像：[`../../sources/claude-code/src/services/mcp/client.ts`](../../sources/claude-code/src/utils/claudeInChrome/toolRendering.tsx), [`../../sources/claude-code/src/utils/computerUse/wrapper.tsx`](../../sources/claude-code/src/utils/computerUse/wrapper.tsx)
+源码镜像：[`../../src/services/mcp/client.ts`](../../src/utils/claudeInChrome/toolRendering.tsx), [`../../src/utils/computerUse/wrapper.tsx`](../../src/utils/computerUse/wrapper.tsx)
 
 `client.ts` 会按 server 类型走 lazy override：
 

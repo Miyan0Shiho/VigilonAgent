@@ -339,5 +339,5 @@
 
 - 一页看不懂时，先回 [`master-index.md`](./master-index.md)，不要盲目全库搜索。
 - 想确认一条结论是否够硬，直接跳 [`evidence/evidence-ledger.md`](./evidence/evidence-ledger.md)。
-- 想从正文跳源码，优先走 `../sources/claude-code/` 镜像路径，不依赖工作区绝对路径。
+- 想从正文跳源码，优先走 `../` 镜像路径，不依赖工作区绝对路径。
 - 当前工作区未挂载旧版拆卷目录；如果后续恢复，也只把它当归档，不再当主入口。

@@ -14,7 +14,7 @@
 
 ## 1. managed agents 不是“额外分类”，而是 agent precedence 链中的正式来源
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts`](../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts), [`../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts`](../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts)
+源码镜像：[`../../src/tools/AgentTool/loadAgentsDir.ts`](../../src/tools/AgentTool/loadAgentsDir.ts), [`../../src/tools/AgentTool/agentDisplay.ts`](../../src/tools/AgentTool/agentDisplay.ts)
 
 `getActiveAgentsFromList()` 会先分组：
 
@@ -34,7 +34,7 @@
 
 ## 2. `agentDisplay` 把 managed agents 明确建成一等显示组，说明 `/agents` 也承认这层治理来源
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts`](../../sources/claude-code/src/tools/AgentTool/agentDisplay.ts)
+源码镜像：[`../../src/tools/AgentTool/agentDisplay.ts`](../../src/tools/AgentTool/agentDisplay.ts)
 
 `AGENT_SOURCE_GROUPS` 里显式有：
 
@@ -49,7 +49,7 @@
 
 ## 3. `strictPluginOnlyCustomization('mcp')` 会在 agent-specific MCP 装配时再次仲裁来源
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/runAgent.ts`](../../sources/claude-code/src/tools/AgentTool/runAgent.ts), [`../../sources/claude-code/src/utils/settings/pluginOnlyPolicy.ts`](../../sources/claude-code/src/utils/settings/pluginOnlyPolicy.ts)
+源码镜像：[`../../src/tools/AgentTool/runAgent.ts`](../../src/tools/AgentTool/runAgent.ts), [`../../src/utils/settings/pluginOnlyPolicy.ts`](../../src/utils/settings/pluginOnlyPolicy.ts)
 
 agent frontmatter 里的 `mcpServers` 不是只靠 loader 决定。运行到 `runAgent.ts` 真正装配 agent-specific MCP client 时，还会再判断：
 
@@ -65,7 +65,7 @@ agent frontmatter 里的 `mcpServers` 不是只靠 loader 决定。运行到 `ru
 
 ## 4. managed skills 不走普通 `~/.claude/skills`，而是走 managed file tree 的专门路径
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 `getSkillsPath('policySettings', dir)` 返回的不是用户目录，而是：
 
@@ -75,7 +75,7 @@ agent frontmatter 里的 `mcpServers` 不是只靠 loader 决定。运行到 `ru
 
 ## 5. skills loader 会在正常 skills 加载阶段正式插入 managed skills，而不是事后 merge 补进去
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 `loadAllSkills` 主链里，managed skills 是跟 user/project/legacy commands 一起并行加载的一个正式分支：
 
@@ -89,7 +89,7 @@ agent frontmatter 里的 `mcpServers` 不是只靠 loader 决定。运行到 `ru
 
 ## 6. `strictPluginOnlyCustomization` 也会切断 user/project skills 的目录发现，而 managed skills 不受影响
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts), [`../../sources/claude-code/src/utils/settings/pluginOnlyPolicy.ts`](../../sources/claude-code/src/utils/settings/pluginOnlyPolicy.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts), [`../../src/utils/settings/pluginOnlyPolicy.ts`](../../src/utils/settings/pluginOnlyPolicy.ts)
 
 loader 里会先算：
 
@@ -105,7 +105,7 @@ loader 里会先算：
 
 ## 7. `/skills` 前台把 managed skills 单独成组，说明当前会话能力目录会直接暴露这层治理来源
 
-源码镜像：[`../../sources/claude-code/src/components/skills/SkillsMenu.tsx`](../../sources/claude-code/src/components/skills/SkillsMenu.tsx)
+源码镜像：[`../../src/components/skills/SkillsMenu.tsx`](../../src/components/skills/SkillsMenu.tsx)
 
 `SkillsMenu` 分组时显式保留：
 
@@ -120,7 +120,7 @@ loader 里会先算：
 
 ## 8. output styles 也有 managed source，但它们的优先级不是注释里那句口号，而是实际 group 顺序
 
-源码镜像：[`../../sources/claude-code/src/constants/outputStyles.ts`](../../sources/claude-code/src/constants/outputStyles.ts)
+源码镜像：[`../../src/constants/outputStyles.ts`](../../src/constants/outputStyles.ts)
 
 `getAllOutputStyles()` 会把 custom styles 分成：
 
@@ -139,7 +139,7 @@ loader 里会先算：
 
 ## 9. `statusLine` 和 `fileSuggestion` 不是 generic hook；它们走的是受 managed hook policy 约束的命令面
 
-源码镜像：[`../../sources/claude-code/src/utils/hooks.ts`](../../sources/claude-code/src/utils/hooks.ts), [`../../sources/claude-code/src/utils/hooks/hooksConfigSnapshot.ts`](../../sources/claude-code/src/utils/hooks/hooksConfigSnapshot.ts)
+源码镜像：[`../../src/utils/hooks.ts`](../../src/utils/hooks.ts), [`../../src/utils/hooks/hooksConfigSnapshot.ts`](../../src/utils/hooks/hooksConfigSnapshot.ts)
 
 执行逻辑里先看两层 gate：
 
@@ -153,7 +153,7 @@ loader 里会先算：
 
 ## 10. `statusLine` 和 `fileSuggestion` 说明 managed hook policy 会渗透到“非显式 hooks UI”的交互面
 
-源码镜像：[`../../sources/claude-code/src/utils/hooks.ts`](../../sources/claude-code/src/utils/hooks.ts)
+源码镜像：[`../../src/utils/hooks.ts`](../../src/utils/hooks.ts)
 
 这两条命令面本来更像 UI 能力：
 
@@ -164,7 +164,7 @@ loader 里会先算：
 
 ## 11. tips 系统把 `policySettings.effortLevel` 当成 suppression gate，而不是推荐文案来源
 
-源码镜像：[`../../sources/claude-code/src/services/tips/tipRegistry.ts`](../../sources/claude-code/src/services/tips/tipRegistry.ts)
+源码镜像：[`../../src/services/tips/tipRegistry.ts`](../../src/services/tips/tipRegistry.ts)
 
 `effort-high-nudge` 的 relevance 判断里非常明确：
 
@@ -175,7 +175,7 @@ loader 里会先算：
 
 ## 12. `statusLine` 的 tips relevance 也在绕开已配置状态，managed settings 可以间接改变 tips 表面
 
-源码镜像：[`../../sources/claude-code/src/services/tips/tipRegistry.ts`](../../sources/claude-code/src/services/tips/tipRegistry.ts)
+源码镜像：[`../../src/services/tips/tipRegistry.ts`](../../src/services/tips/tipRegistry.ts)
 
 虽然这里直接判断的是：
 
@@ -185,7 +185,7 @@ loader 里会先算：
 
 ## 13. 这组 consumer 共同说明：`policySettings` 还在重写“默认产品提示与目录可见性”
 
-源码镜像：[`../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts`](../../sources/claude-code/src/tools/AgentTool/loadAgentsDir.ts), [`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts), [`../../sources/claude-code/src/components/skills/SkillsMenu.tsx`](../../sources/claude-code/src/components/skills/SkillsMenu.tsx), [`../../sources/claude-code/src/constants/outputStyles.ts`](../../sources/claude-code/src/constants/outputStyles.ts), [`../../sources/claude-code/src/utils/hooks.ts`](../../sources/claude-code/src/utils/hooks.ts), [`../../sources/claude-code/src/services/tips/tipRegistry.ts`](../../sources/claude-code/src/services/tips/tipRegistry.ts)
+源码镜像：[`../../src/tools/AgentTool/loadAgentsDir.ts`](../../src/tools/AgentTool/loadAgentsDir.ts), [`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts), [`../../src/components/skills/SkillsMenu.tsx`](../../src/components/skills/SkillsMenu.tsx), [`../../src/constants/outputStyles.ts`](../../src/constants/outputStyles.ts), [`../../src/utils/hooks.ts`](../../src/utils/hooks.ts), [`../../src/services/tips/tipRegistry.ts`](../../src/services/tips/tipRegistry.ts)
 
 和上一卷相比，这一组 consumer 更偏“产品面”：
 

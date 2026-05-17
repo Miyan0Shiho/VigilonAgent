@@ -6,7 +6,7 @@
 
 ## 1. 物理入口：`entrypoints/cli.tsx`
 
-源码镜像：[`../../sources/claude-code/src/entrypoints/cli.tsx`](../../sources/claude-code/src/entrypoints/cli.tsx)
+源码镜像：[`../../src/entrypoints/cli.tsx`](../../src/entrypoints/cli.tsx)
 
 这里不是“简单调用 `main.tsx`”，而是一层强分流器：
 
@@ -39,7 +39,7 @@
 
 ## 3. 完整主程序：`main.tsx`
 
-源码镜像：[`../../sources/claude-code/src/main.tsx`](../../sources/claude-code/src/main.tsx)
+源码镜像：[`../../src/main.tsx`](../../src/main.tsx)
 
 `main.tsx` 负责完整环境装配，典型内容包括：
 

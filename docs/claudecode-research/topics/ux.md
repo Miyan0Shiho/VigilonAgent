@@ -22,7 +22,7 @@
 ## Evidence-backed Findings（按项目）
 
 ### Claude Code（CC）
-> 代码根：`research/sources/claude-code/`
+> 代码根：`research/`
 
 - **UX-CC-001**：终端 UI 采用 React + Ink 组件体系，并把对话列表、输入、状态条、进度等拆为大量可组合组件。  
   - 定义/入口：`sources/claude-code/src/main.tsx`  

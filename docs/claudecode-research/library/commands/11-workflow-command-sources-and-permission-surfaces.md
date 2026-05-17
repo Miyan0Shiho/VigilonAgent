@@ -6,7 +6,7 @@
 
 ## 1. workflow command 不是普通 builtin command，而是 `skills / plugins / workflows` 三类动态来源之一
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts)
 
 `commands.ts` 里有两层和 workflow 直接相关的 gate：
 
@@ -29,7 +29,7 @@
 
 ## 2. `loadAllCommands()` 的合并顺序说明 workflow commands 在命令目录里比 plugin commands 更靠前，但比 bundled skill 更晚
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts)
 
 命令合并顺序是：
 
@@ -51,7 +51,7 @@
 
 ## 3. `loadAllCommands(cwd)` 以 cwd 为 memoization key，说明 workflow command source 至少部分依赖当前工作区
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts)
 
 `loadAllCommands` 是 `memoize(async (cwd: string) => ...)`。而 workflow commands 通过：
 
@@ -69,7 +69,7 @@
 
 ## 4. `CommandBase.kind = 'workflow'` 是 workflow command 在命令系统里的正式类型标记，不是 UI 小技巧
 
-源码镜像：[`../../sources/claude-code/src/types/command.ts`](../../sources/claude-code/src/types/command.ts), [`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/types/command.ts`](../../src/types/command.ts), [`../../src/commands.ts`](../../src/commands.ts)
 
 `types/command.ts` 把：
 
@@ -88,7 +88,7 @@
 
 ## 5. `commandSuggestions.ts` 说明 workflow command 在 slash 输入里有专门 badge 和描述格式
 
-源码镜像：[`../../sources/claude-code/src/utils/suggestions/commandSuggestions.ts`](../../sources/claude-code/src/utils/suggestions/commandSuggestions.ts), [`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/utils/suggestions/commandSuggestions.ts`](../../src/utils/suggestions/commandSuggestions.ts), [`../../src/commands.ts`](../../src/commands.ts)
 
 `createCommandSuggestionItem()` 里如果：
 
@@ -109,7 +109,7 @@
 
 ## 6. workflow command 不是 local-jsx 命令的别名，而是更偏 prompt-command 的产品形态
 
-源码镜像：[`../../sources/claude-code/src/types/command.ts`](../../sources/claude-code/src/types/command.ts), [`../../sources/claude-code/src/utils/suggestions/commandSuggestions.ts`](../../sources/claude-code/src/utils/suggestions/commandSuggestions.ts)
+源码镜像：[`../../src/types/command.ts`](../../src/types/command.ts), [`../../src/utils/suggestions/commandSuggestions.ts`](../../src/utils/suggestions/commandSuggestions.ts)
 
 `createCommandSuggestionItem()` 只在：
 
@@ -128,7 +128,7 @@
 
 ## 7. `PermissionRequest.tsx` 说明 workflow invocation 拥有专用审批表面，不和 generic fallback 混用
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/tools.ts)
+源码镜像：[`../../src/components/permissions/PermissionRequest.tsx`](../../src/tools.ts)
 
 权限表面对 workflow 有两条专门的 conditional require：
 
@@ -146,7 +146,7 @@
 
 ## 8. monitor invocation 也走完全对称的专用审批面，说明 workflow / monitor 在权限 UI 上是并列家族
 
-源码镜像：[`../../sources/claude-code/src/components/permissions/PermissionRequest.tsx`](../../sources/claude-code/src/tools.ts)
+源码镜像：[`../../src/components/permissions/PermissionRequest.tsx`](../../src/tools.ts)
 
 同样的接线还存在于：
 

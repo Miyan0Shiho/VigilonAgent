@@ -6,7 +6,7 @@
 
 ## 1. 这不是缓存实现本身，而是“缓存断裂原因解释器”
 
-源码镜像：[`../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts`](../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts), [`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts)
+源码镜像：[`../../src/services/api/promptCacheBreakDetection.ts`](../../src/services/api/promptCacheBreakDetection.ts), [`../../src/services/api/claude.ts`](../../src/services/api/claude.ts)
 
 这层最重要的边界是：
 
@@ -18,7 +18,7 @@
 
 ## 2. 它跟踪的不是单一全局状态，而是按 `querySource/agentId` 分桶的 request lineage
 
-源码镜像：[`../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts`](../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts)
+源码镜像：[`../../src/services/api/promptCacheBreakDetection.ts`](../../src/services/api/promptCacheBreakDetection.ts)
 
 `getTrackingKey()` 暴露了这层的第一原则：cache break 不能按全局进程状态追，否则 main thread、subagent、teammate 会互相污染。
 
@@ -33,7 +33,7 @@
 
 ## 3. `recordPromptState()` 是第一阶段，只记录“可能导致断裂的变化”，并不立即判定 break
 
-源码镜像：[`../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts`](../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts)
+源码镜像：[`../../src/services/api/promptCacheBreakDetection.ts`](../../src/services/api/promptCacheBreakDetection.ts)
 
 `recordPromptState()` 的作用不是告警，而是做 snapshot diff。它会先把当前请求的关键维度抽出来：
 
@@ -57,7 +57,7 @@
 
 ## 4. 它会同时保留 stripped hash 和 `cache_control` hash，说明“文本没变但 TTL/scope 变了”是第一类公民问题
 
-源码镜像：[`../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts`](../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts)
+源码镜像：[`../../src/services/api/promptCacheBreakDetection.ts`](../../src/services/api/promptCacheBreakDetection.ts)
 
 这层有个很关键的设计：
 
@@ -73,7 +73,7 @@
 
 ## 5. 工具变化不只看工具数量，还会追到“同名工具 schema 变了”
 
-源码镜像：[`../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts`](../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts)
+源码镜像：[`../../src/services/api/promptCacheBreakDetection.ts`](../../src/services/api/promptCacheBreakDetection.ts)
 
 另一处做得很细的是 tool diff：
 
@@ -90,7 +90,7 @@
 
 ## 6. 第二阶段 `checkResponseForCacheBreak()` 只在看到真实 cache read token 掉幅后才认定 break
 
-源码镜像：[`../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts`](../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts)
+源码镜像：[`../../src/services/api/promptCacheBreakDetection.ts`](../../src/services/api/promptCacheBreakDetection.ts)
 
 真正的 break 判定在 `checkResponseForCacheBreak()`，而且条件并不激进：
 
@@ -102,7 +102,7 @@
 
 ## 7. 它能区分“客户端确实改坏了 key”和“看起来更像服务端驱逐/TTL 过期”
 
-源码镜像：[`../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts`](../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts)
+源码镜像：[`../../src/services/api/promptCacheBreakDetection.ts`](../../src/services/api/promptCacheBreakDetection.ts)
 
 `checkResponseForCacheBreak()` 的 reason 组装有三层：
 
@@ -114,7 +114,7 @@
 
 ## 8. cached microcompact 和 compaction 都被当成“预期性 cache read 下降”，不是 break
 
-源码镜像：[`../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts`](../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts)
+源码镜像：[`../../src/services/api/promptCacheBreakDetection.ts`](../../src/services/api/promptCacheBreakDetection.ts)
 
 这里有两条专门的豁免路径：
 
@@ -130,7 +130,7 @@
 
 ## 9. 它不是只发埋点，还会生成可读 diff 文件给开发者追根因
 
-源码镜像：[`../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts`](../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts)
+源码镜像：[`../../src/services/api/promptCacheBreakDetection.ts`](../../src/services/api/promptCacheBreakDetection.ts)
 
 当 break 被认定后，这层不仅会打 `tengu_prompt_cache_break`，还会：
 
@@ -148,7 +148,7 @@
 
 ## 10. 它跟 `claude.ts` 的关系不是 loose coupling，而是“请求前埋快照、请求后读 usage”的双向闭环
 
-源码镜像：[`../../sources/claude-code/src/services/api/claude.ts`](../../sources/claude-code/src/services/api/claude.ts), [`../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts`](../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts)
+源码镜像：[`../../src/services/api/claude.ts`](../../src/services/api/claude.ts), [`../../src/services/api/promptCacheBreakDetection.ts`](../../src/services/api/promptCacheBreakDetection.ts)
 
 这条链要成立，必须满足两个条件：
 
@@ -159,7 +159,7 @@
 
 ## 11. 它追踪的很多 flag 本身就是为了验证此前修过的“session-stable latch”是否真的不再打爆 cache
 
-源码镜像：[`../../sources/claude-code/src/services/api/promptCacheBreakDetection.ts`](../../sources/claude-code/src/services/api/claude.ts)
+源码镜像：[`../../src/services/api/promptCacheBreakDetection.ts`](../../src/services/api/claude.ts)
 
 像这些字段：
 

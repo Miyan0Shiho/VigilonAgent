@@ -14,7 +14,7 @@
 
 ## 1. 技能 frontmatter 在进入运行时之前，就已经决定了三种不同“可见性”
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts), [`../../sources/claude-code/src/types/command.ts`](../../sources/claude-code/src/types/command.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts), [`../../src/types/command.ts`](../../src/types/command.ts)
 
 `parseSkillFrontmatterFields()` 和 `createSkillCommand()` 共同决定的，不只是 skill 内容本身，还包括：
 
@@ -35,7 +35,7 @@
 
 ## 2. `userInvocable` 控制的是“用户入口”，不是 skill 是否存在
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts), [`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts), [`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx)
 
 `createSkillCommand()` 会把：
 
@@ -56,7 +56,7 @@
 
 ## 3. `disableModelInvocation` 控制的是“模型入口”，不是用户 slash 能力
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts), [`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts), [`../../src/commands.ts`](../../src/commands.ts)
 
 `disableModelInvocation` 进入 command 对象后，主要影响的是两个投影：
 
@@ -78,7 +78,7 @@
 
 ## 4. dynamic skills 不是全量重扫命令树，而是会话内增量插片
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts), [`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts), [`../../src/commands.ts`](../../src/commands.ts)
 
 `loadSkillsDir.ts` 里维护了三组状态：
 
@@ -103,7 +103,7 @@
 
 ## 5. conditional skills 不是 discovery 的别名，而是另一条延迟激活链
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts)
 
 带 `paths` frontmatter 的 skill 不会直接进 `dynamicSkills`，而是先留在：
 
@@ -120,7 +120,7 @@
 
 ## 6. 命令缓存和技能缓存被故意拆成两层，不然动态技能会把自己清掉
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts), [`../../sources/claude-code/src/utils/skills/skillChangeDetector.ts`](../../sources/claude-code/src/utils/skills/skillChangeDetector.ts), [`../../sources/claude-code/src/hooks/useSkillsChange.ts`](../../sources/claude-code/src/hooks/useSkillsChange.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts), [`../../src/utils/skills/skillChangeDetector.ts`](../../src/utils/skills/skillChangeDetector.ts), [`../../src/hooks/useSkillsChange.ts`](../../src/hooks/useSkillsChange.ts)
 
 这里有两种清缓存：
 
@@ -142,7 +142,7 @@
 
 ## 7. `useSkillsChange()` 说明“命令表刷新”有两个触发源，不只是技能文件改动
 
-源码镜像：[`../../sources/claude-code/src/hooks/useSkillsChange.ts`](../../sources/claude-code/src/hooks/useSkillsChange.ts), [`../../sources/claude-code/src/utils/skills/skillChangeDetector.ts`](../../sources/claude-code/src/utils/skills/skillChangeDetector.ts)
+源码镜像：[`../../src/hooks/useSkillsChange.ts`](../../src/hooks/useSkillsChange.ts), [`../../src/utils/skills/skillChangeDetector.ts`](../../src/utils/skills/skillChangeDetector.ts)
 
 `useSkillsChange()` 监听两类变化：
 
@@ -168,7 +168,7 @@
 
 ## 8. `getSkillToolCommands()`、`getSlashCommandToolSkills()`、`buildSystemInitMessage()` 看的不是同一张命令脸
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts), [`../../sources/claude-code/src/tools/SkillTool/prompt.ts`](../../sources/claude-code/src/tools/SkillTool/prompt.ts), [`../../sources/claude-code/src/utils/messages/systemInit.ts`](../../sources/claude-code/src/utils/messages/systemInit.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts), [`../../src/tools/SkillTool/prompt.ts`](../../src/tools/SkillTool/prompt.ts), [`../../src/utils/messages/systemInit.ts`](../../src/utils/messages/systemInit.ts)
 
 三条投影链分别是：
 
@@ -189,7 +189,7 @@
 
 ## 9. subagent turn-0 的技能面还会再被缩一层，只留 bundled + MCP
 
-源码镜像：[`../../sources/claude-code/src/utils/attachments.ts`](../../sources/claude-code/src/utils/attachments.ts), [`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/utils/attachments.ts`](../../src/utils/attachments.ts), [`../../src/commands.ts`](../../src/commands.ts)
 
 `getSkillListingAttachments()` 在 `EXPERIMENTAL_SKILL_SEARCH` 打开时，不会把全量 `getSkillToolCommands()` 都塞给 agent，而会走：
 
@@ -208,7 +208,7 @@
 
 ## 10. remote mode 的命令裁剪是静态白名单，不靠运行时报错兜底
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts), [`../../sources/claude-code/src/main.tsx`](../../sources/claude-code/src/main.tsx), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts), [`../../src/main.tsx`](../../src/main.tsx), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx)
 
 `commands.ts` 维护了：
 
@@ -235,7 +235,7 @@
 
 ## 11. bridge mode 的 gate 更细，因为它允许一部分 slash 指令穿透本地 REPL
 
-源码镜像：[`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts), [`../../sources/claude-code/src/utils/processUserInput/processUserInput.ts`](../../sources/claude-code/src/utils/processUserInput/processUserInput.ts), [`../../sources/claude-code/src/hooks/useReplBridge.tsx`](../../sources/claude-code/src/hooks/useReplBridge.tsx), [`../../sources/claude-code/src/utils/messages/systemInit.ts`](../../sources/claude-code/src/utils/messages/systemInit.ts)
+源码镜像：[`../../src/commands.ts`](../../src/commands.ts), [`../../src/utils/processUserInput/processUserInput.ts`](../../src/utils/processUserInput/processUserInput.ts), [`../../src/hooks/useReplBridge.tsx`](../../src/hooks/useReplBridge.tsx), [`../../src/utils/messages/systemInit.ts`](../../src/utils/messages/systemInit.ts)
 
 bridge 侧有三层筛选：
 
@@ -257,7 +257,7 @@ bridge 侧有三层筛选：
 
 ## 12. bridge inbound slash 的 `skipSlashCommands` 并不真的跳过 slash，只是先走一层宿主安全仲裁
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processUserInput.ts`](../../sources/claude-code/src/utils/processUserInput/processUserInput.ts), [`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts)
+源码镜像：[`../../src/utils/processUserInput/processUserInput.ts`](../../src/utils/processUserInput/processUserInput.ts), [`../../src/commands.ts`](../../src/commands.ts)
 
 bridge 注入消息时会保留：
 
@@ -279,7 +279,7 @@ bridge 注入消息时会保留：
 
 ## 13. `system/init` 还会继续过滤 `userInvocable === false`，所以 model-only skills 不会泄露到远端 pickers
 
-源码镜像：[`../../sources/claude-code/src/utils/messages/systemInit.ts`](../../sources/claude-code/src/utils/messages/systemInit.ts), [`../../sources/claude-code/src/hooks/useReplBridge.tsx`](../../sources/claude-code/src/hooks/useReplBridge.tsx)
+源码镜像：[`../../src/utils/messages/systemInit.ts`](../../src/utils/messages/systemInit.ts), [`../../src/hooks/useReplBridge.tsx`](../../src/hooks/useReplBridge.tsx)
 
 `buildSystemInitMessage()` 组装：
 
@@ -299,7 +299,7 @@ bridge 注入消息时会保留：
 
 ## 14. `command_permissions` 这类 attachment 在 transcript 里故意不渲染，避免把运行时 gate 误显示成用户消息
 
-源码镜像：[`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx), [`../../sources/claude-code/src/components/messages/AttachmentMessage.tsx`](../../sources/claude-code/src/components/messages/AttachmentMessage.tsx)
+源码镜像：[`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx), [`../../src/components/messages/AttachmentMessage.tsx`](../../src/components/messages/AttachmentMessage.tsx)
 
 `getMessagesForPromptSlashCommand()` 会把 skill 的额外工具权限装进：
 
@@ -318,7 +318,7 @@ bridge 注入消息时会保留：
 
 ## 15. 这一整组 gate 共同说明：Claude Code 的 skill/command 面从来不是单一真相源
 
-源码镜像：[`../../sources/claude-code/src/skills/loadSkillsDir.ts`](../../sources/claude-code/src/skills/loadSkillsDir.ts), [`../../sources/claude-code/src/commands.ts`](../../sources/claude-code/src/commands.ts), [`../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx`](../../sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx), [`../../sources/claude-code/src/utils/processUserInput/processUserInput.ts`](../../sources/claude-code/src/utils/processUserInput/processUserInput.ts), [`../../sources/claude-code/src/hooks/useReplBridge.tsx`](../../sources/claude-code/src/hooks/useReplBridge.tsx), [`../../sources/claude-code/src/utils/messages/systemInit.ts`](../../sources/claude-code/src/utils/messages/systemInit.ts), [`../../sources/claude-code/src/screens/REPL.tsx`](../../sources/claude-code/src/screens/REPL.tsx), [`../../sources/claude-code/src/main.tsx`](../../sources/claude-code/src/main.tsx)
+源码镜像：[`../../src/skills/loadSkillsDir.ts`](../../src/skills/loadSkillsDir.ts), [`../../src/commands.ts`](../../src/commands.ts), [`../../src/utils/processUserInput/processSlashCommand.tsx`](../../src/utils/processUserInput/processSlashCommand.tsx), [`../../src/utils/processUserInput/processUserInput.ts`](../../src/utils/processUserInput/processUserInput.ts), [`../../src/hooks/useReplBridge.tsx`](../../src/hooks/useReplBridge.tsx), [`../../src/utils/messages/systemInit.ts`](../../src/utils/messages/systemInit.ts), [`../../src/screens/REPL.tsx`](../../src/screens/REPL.tsx), [`../../src/main.tsx`](../../src/main.tsx)
 
 同一个 skill/command 会同时经过：
 
