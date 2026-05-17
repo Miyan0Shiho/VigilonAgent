@@ -1,0 +1,12 @@
+# Master Catalog（兼容入口）
+
+旧版 `catalog.solo.md` 依赖带会话 ID 的 `computer:///` 链接，换机器、换会话或换预览器后会整体失效，因此不再作为独立导航库维护。
+
+请改用以下稳定入口：
+
+- 总目录：[`catalog.md`](./catalog.md)
+- 总报告：[`../report.md`](../report.md)
+- 对比矩阵：[`../comparison-matrix.md`](../comparison-matrix.md)
+- Claude Code 主馆藏：[`../claude-code-library-v2/README.md`](../claude-code-library-v2/README.md)
+
+如果某个渲染器无法正确处理相对链接，应修复渲染器或补充通用预览适配，而不是继续把会话私有 URI 写进馆藏正文。
