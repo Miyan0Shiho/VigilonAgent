@@ -34,6 +34,7 @@ describe('execution tools', () => {
       'LSP',
       'TaskStop',
       'Agent',
+      'Config',
       'WebFetch',
       'AskUserQuestion',
       'TodoWrite',

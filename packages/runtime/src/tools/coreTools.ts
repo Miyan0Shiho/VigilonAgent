@@ -3,6 +3,7 @@ import { createToolRegistry, ToolRegistry } from '../runtime/tools.js'
 import { BashTool } from './bashTool.js'
 import { AgentTool } from './agentTool.js'
 import { AskUserQuestionTool } from './askUserQuestionTool.js'
+import { ConfigTool } from './configTool.js'
 import { EditTool } from './editTool.js'
 import { GlobTool } from './globTool.js'
 import { GrepTool } from './grepTool.js'
@@ -26,6 +27,7 @@ export const CORE_TOOLS = [
   LspTool,
   TaskStopTool,
   AgentTool,
+  ConfigTool,
   WebFetchTool,
   AskUserQuestionTool,
   TodoWriteTool,
