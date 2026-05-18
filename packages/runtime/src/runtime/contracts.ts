@@ -83,6 +83,9 @@ export type TodoItem = {
 export type CompactTrigger = 'manual' | 'auto'
 
 export type CompactMetadata = {
+  phase?: RuntimePhase
+  permissionMode?: PermissionMode
+  prePlanPermissionMode?: PermissionMode
   trigger: CompactTrigger
   preEventCount: number
   messagesSummarized: number
@@ -90,7 +93,10 @@ export type CompactMetadata = {
   discoveredToolNames?: string[]
   todos?: TodoItem[]
   approvedPlan?: string
+  pendingPlan?: string
   verificationNotes?: string[]
+  mcpInstructions?: string[]
+  memoryFreshness?: 'fresh' | 'stale'
 }
 
 export type ContentReplacementRecord = {
@@ -186,10 +192,33 @@ export type WebFetchRuntimeOptions = {
   maxRedirects?: number
 }
 
+export type LocalAgentDefinition = {
+  name: string
+  description: string
+  systemPrompt: string
+  allowedTools: string[]
+  maxTurns: number
+}
+
+export type SubagentRunRequest = {
+  definition: LocalAgentDefinition
+  task: string
+  cwd: string
+}
+
+export type SubagentRunResult = {
+  status: 'completed'
+  agentName: string
+  transcriptPath: string
+  finalMessage: string
+  report: ResultReport
+}
+
 export type TaskManager = {
   readonly activeTasks: BackgroundTask[]
   startBashTask(command: string, cwd: string): Promise<string>
   killTask(taskId: string): Promise<boolean>
+  shutdown(): Promise<void>
 }
 
 export type ToolUseContext = {
@@ -212,6 +241,7 @@ export type ToolUseContext = {
   webFetch?: WebFetchRuntimeOptions
   lspServerManager: LSPServerManager
   taskManager: TaskManager
+  runSubagent?: (request: SubagentRunRequest) => Promise<SubagentRunResult>
   tools: {
     list(): Tool[]
     find(name: string): Tool | undefined
@@ -237,6 +267,8 @@ export type RuntimeSessionState = {
   verificationNotes: string[]
   backgroundTasks: BackgroundTask[]
   discoveredToolNames: string[]
+  mcpInstructions: string[]
+  memoryFreshness?: 'fresh' | 'stale'
 }
 
 export type ResultHandoffReport = {
@@ -319,6 +351,8 @@ export type TranscriptEvent =
       verificationNotes?: string[]
       backgroundTasks?: BackgroundTask[]
       discoveredToolNames?: string[]
+      mcpInstructions?: string[]
+      memoryFreshness?: 'fresh' | 'stale' | null
       timestamp: string
     }
   | {

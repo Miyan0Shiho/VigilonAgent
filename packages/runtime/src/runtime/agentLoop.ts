@@ -22,6 +22,7 @@ import type {
   SubagentRunRequest,
   SubagentRunResult,
   TaskManager,
+  TranscriptEvent,
 } from './contracts.js'
 import { buildModelContextWindow } from './context.js'
 import { runPreToolUseHooks } from './hooks.js'
@@ -103,6 +104,8 @@ export function createVigilonAgentRuntime(
       options.resume?.events ?? [],
       options.permissionMode ?? 'ask',
     )
+  sessionState.discoveredToolNames = sessionState.discoveredToolNames ?? []
+  sessionState.mcpInstructions = sessionState.mcpInstructions ?? []
   sessionState.permissionMode =
     sessionState.permissionMode ?? options.permissionMode ?? 'ask'
   const mutablePermissionGate = createMutablePermissionGate({
@@ -200,13 +203,20 @@ export function createVigilonAgentRuntime(
           sessionId: options.resume?.sessionId ?? transcript.sessionId,
           eventCount: transcriptEvents.length,
         })
+        if (sessionMemory) {
+          sessionState.memoryFreshness = sessionMemory.fresh ? 'fresh' : 'stale'
+        }
         const visibleEvents = filterModelVisibleEvents(
           injectProjectConfig(
             injectSkillListing(
-              injectSessionMemory(
-                contextWindow.events,
-                sessionMemory?.record,
-                sessionMemory?.fresh ?? false,
+              injectCapabilityReplay(
+                injectSessionMemory(
+                  contextWindow.events,
+                  sessionMemory?.record,
+                  sessionMemory?.fresh ?? false,
+                  Boolean(options.resume),
+                ),
+                sessionState,
                 Boolean(options.resume),
               ),
               options.skills ?? [],
@@ -550,6 +560,53 @@ function injectSessionMemory(
     buildSessionMemoryInjection(memory, fresh ? 'fresh' : 'stale'),
     ...events,
   ]
+}
+
+function injectCapabilityReplay(
+  events: Awaited<ReturnType<TranscriptStore['readAll']>>,
+  sessionState: RuntimeSessionState,
+  shouldInject: boolean,
+): Awaited<ReturnType<TranscriptStore['readAll']>> {
+  if (!shouldInject) return events
+
+  const replayLines: string[] = []
+  if (sessionState.discoveredToolNames.length > 0) {
+    replayLines.push(`discovered_tools="${sessionState.discoveredToolNames.join(', ')}"`)
+  }
+  if (sessionState.mcpInstructions.length > 0) {
+    replayLines.push(...sessionState.mcpInstructions.map(line => `mcp_instruction="${line}"`))
+  }
+  if (sessionState.approvedPlan) {
+    replayLines.push(`approved_plan="${sessionState.approvedPlan}"`)
+  }
+  if (sessionState.pendingPlan) {
+    replayLines.push(`pending_plan="${sessionState.pendingPlan}"`)
+  }
+  if (sessionState.memoryFreshness) {
+    replayLines.push(`memory_freshness="${sessionState.memoryFreshness}"`)
+  }
+  if (sessionState.verificationNotes.length > 0) {
+    replayLines.push(...sessionState.verificationNotes.map(note => `verification_note="${note}"`))
+  }
+  if (replayLines.length === 0) return events
+
+  const replayEvent: Extract<TranscriptEvent, { type: 'user' }> = {
+    type: 'user',
+    content: [
+      '<vigilon_capability_replay>',
+      ...replayLines,
+      '</vigilon_capability_replay>',
+    ].join('\n'),
+    timestamp: createTimestamp(),
+  }
+  const firstEvent = events[0]
+  if (
+    firstEvent?.type === 'user' &&
+    firstEvent.content.includes('<vigilon_session_memory')
+  ) {
+    return [firstEvent, replayEvent, ...events.slice(1)]
+  }
+  return [replayEvent, ...events]
 }
 
 async function loadSessionMemory(options: {

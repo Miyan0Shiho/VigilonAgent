@@ -286,6 +286,88 @@ describe('createVigilonAgentRuntime', () => {
     expect(observedToolResults[0]).toContain('scheduleTask')
   })
 
+  it('replays compact-restored capabilities into the first resumed request', async () => {
+    const observedRequests: Array<{ tools: string[]; contents: string[] }> = []
+    const modelClient: ModelClient = {
+      id: 'fake-model',
+      async createMessage(request) {
+        observedRequests.push({
+          tools: request.tools.map(tool => tool.name),
+          contents: request.messages
+            .filter(
+              (message): message is Extract<typeof message, { type: 'user' | 'assistant' }> =>
+                'content' in message,
+            )
+            .map(message => message.content),
+        })
+        return {
+          content: 'done',
+          toolCalls: [],
+          stopReason: 'end_turn',
+        }
+      },
+    }
+    const runtime = createVigilonAgentRuntime({
+      modelClient,
+      tools: createCoreToolRegistry(),
+      permissionMode: 'bypass-local',
+      resume: {
+        sessionId: 'resume-capability-replay',
+        events: [
+          {
+            type: 'compact-boundary',
+            summary: 'Previous work was compacted.',
+            metadata: {
+              trigger: 'manual',
+              preEventCount: 6,
+              messagesSummarized: 6,
+              discoveredToolNames: ['LSP'],
+              approvedPlan: 'Restore compact state',
+              pendingPlan: 'Investigate compact replay',
+              verificationNotes: ['Ran focused checks'],
+              mcpInstructions: ['Use the filesystem MCP server for descriptors.'],
+              memoryFreshness: 'stale',
+            } as any,
+            timestamp: '2026-05-18T00:00:00Z',
+          },
+        ] as any,
+        sessionState: {
+          phase: 'plan',
+          permissionMode: 'read-only',
+          prePlanPermissionMode: 'ask',
+          todos: [],
+          approvedPlan: 'Restore compact state',
+          pendingPlan: 'Investigate compact replay',
+          handoffReport: undefined,
+          verificationNotes: ['Ran focused checks'],
+          backgroundTasks: [],
+          discoveredToolNames: ['LSP'],
+          mcpInstructions: ['Use the filesystem MCP server for descriptors.'],
+          memoryFreshness: 'stale',
+        } as any,
+      },
+    })
+
+    for await (const _event of runtime.runTurn({
+      prompt: 'continue with restored capabilities',
+      cwd: '/tmp/project',
+      abortSignal: new AbortController().signal,
+    })) {
+      // Drain the runtime stream.
+    }
+
+    expect(observedRequests[0]?.tools).toContain('LSP')
+    expect(
+      observedRequests[0]?.contents.some(
+        content =>
+          content.includes('<vigilon_capability_replay') &&
+          content.includes('Investigate compact replay') &&
+          content.includes('filesystem MCP server') &&
+          content.includes('memory_freshness="stale"'),
+      ),
+    ).toBe(true)
+  })
+
   it('runs a local subagent with filtered tools and an isolated transcript', async () => {
     const cwd = await mkdtemp(path.join(tmpdir(), 'vigilon-subagent-'))
     const sessionsDir = path.join(cwd, '.sessions')

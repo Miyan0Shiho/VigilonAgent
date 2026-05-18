@@ -37,6 +37,9 @@ export async function compactTranscript(
     type: 'compact-boundary',
     summary: options.summary,
     metadata: {
+      phase: options.sessionState?.phase,
+      permissionMode: options.sessionState?.permissionMode,
+      prePlanPermissionMode: options.sessionState?.prePlanPermissionMode,
       trigger: options.trigger ?? 'manual',
       preEventCount: allEvents.length,
       messagesSummarized,
@@ -44,7 +47,10 @@ export async function compactTranscript(
       discoveredToolNames: options.sessionState?.discoveredToolNames,
       todos: options.sessionState?.todos,
       approvedPlan: options.sessionState?.approvedPlan,
+      pendingPlan: options.sessionState?.pendingPlan,
       verificationNotes: options.sessionState?.verificationNotes,
+      mcpInstructions: options.sessionState?.mcpInstructions,
+      memoryFreshness: options.sessionState?.memoryFreshness,
     },
     timestamp: createTimestamp(),
   }

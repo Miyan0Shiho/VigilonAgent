@@ -197,10 +197,21 @@ export function restoreSessionStateFromEvents(
     verificationNotes: [],
     backgroundTasks: [],
     discoveredToolNames: [],
+    mcpInstructions: [],
+    memoryFreshness: undefined,
   }
 
   for (const event of events) {
     if (event.type === 'compact-boundary') {
+      if (event.metadata.phase) {
+        state.phase = event.metadata.phase
+      }
+      if (event.metadata.permissionMode) {
+        state.permissionMode = event.metadata.permissionMode
+      }
+      if (event.metadata.prePlanPermissionMode) {
+        state.prePlanPermissionMode = event.metadata.prePlanPermissionMode
+      }
       if (event.metadata.discoveredToolNames) {
         state.discoveredToolNames = [...event.metadata.discoveredToolNames]
       }
@@ -210,8 +221,17 @@ export function restoreSessionStateFromEvents(
       if (event.metadata.approvedPlan) {
         state.approvedPlan = event.metadata.approvedPlan
       }
+      if (event.metadata.pendingPlan) {
+        state.pendingPlan = event.metadata.pendingPlan
+      }
       if (event.metadata.verificationNotes) {
         state.verificationNotes = [...event.metadata.verificationNotes]
+      }
+      if (event.metadata.mcpInstructions) {
+        state.mcpInstructions = [...event.metadata.mcpInstructions]
+      }
+      if (event.metadata.memoryFreshness) {
+        state.memoryFreshness = event.metadata.memoryFreshness
       }
       continue
     }
@@ -248,6 +268,13 @@ export function restoreSessionStateFromEvents(
       }
       if (event.discoveredToolNames) {
         state.discoveredToolNames = [...event.discoveredToolNames]
+      }
+      if (event.mcpInstructions) {
+        state.mcpInstructions = [...event.mcpInstructions]
+      }
+      if (event.memoryFreshness !== undefined) {
+        state.memoryFreshness =
+          event.memoryFreshness === null ? undefined : event.memoryFreshness
       }
       continue
     }
