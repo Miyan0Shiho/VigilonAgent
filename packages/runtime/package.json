@@ -9,8 +9,14 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
     "start": "tsx src/cli.ts",
     "smoke:version": "tsx src/cli.ts --version",
     "doctor": "tsx src/cli.ts doctor"
+  },
+  "dependencies": {
+    "vscode-jsonrpc": "^8.2.1",
+    "vscode-languageserver-protocol": "^3.17.5",
+    "vscode-languageserver-types": "^3.17.5"
   }
 }
