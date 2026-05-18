@@ -34,6 +34,8 @@ describe('session tools', () => {
       'Glob',
       'Grep',
       'LSP',
+      'TaskStop',
+      'Agent',
       'WebFetch',
       'AskUserQuestion',
       'TodoWrite',

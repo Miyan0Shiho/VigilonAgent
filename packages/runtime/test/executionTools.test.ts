@@ -33,6 +33,7 @@ describe('execution tools', () => {
       'Grep',
       'LSP',
       'TaskStop',
+      'Agent',
       'WebFetch',
       'AskUserQuestion',
       'TodoWrite',

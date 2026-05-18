@@ -10,6 +10,14 @@ export { buildModelContextWindow } from './runtime/context.js'
 export { createVigilonAgentRuntime } from './runtime/agentLoop.js'
 export { runPreToolUseHooks } from './runtime/hooks.js'
 export {
+  buildSessionMemoryInjection,
+  generateSessionMemoryFromSnapshot,
+  getSessionMemoryPath,
+  isSessionMemoryFresh,
+  readSessionMemory,
+  writeSessionMemory,
+} from './runtime/sessionMemory.js'
+export {
   buildLlmRequestEvent,
   buildLlmResponseEvent,
   buildRequestStabilityEvent,
@@ -56,6 +64,7 @@ export {
 export type { ModelContextWindow } from './runtime/context.js'
 export { CORE_TOOLS, createCoreToolRegistry } from './tools/coreTools.js'
 export { BashTool } from './tools/bashTool.js'
+export { AgentTool } from './tools/agentTool.js'
 export { AskUserQuestionTool } from './tools/askUserQuestionTool.js'
 export { EditTool } from './tools/editTool.js'
 export { GlobTool } from './tools/globTool.js'

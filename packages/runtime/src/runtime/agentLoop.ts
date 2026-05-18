@@ -1,3 +1,4 @@
+import path from 'node:path'
 import type {
   AgentRuntime,
   AgentRuntimeEvent,
@@ -18,6 +19,9 @@ import type {
   RuntimeSessionSnapshot,
   RuntimeSkill,
   RuntimeOperator,
+  SubagentRunRequest,
+  SubagentRunResult,
+  TaskManager,
 } from './contracts.js'
 import { buildModelContextWindow } from './context.js'
 import { runPreToolUseHooks } from './hooks.js'
@@ -32,15 +36,25 @@ import { injectSkillListing } from './skills.js'
 import { ToolRegistry } from './tools.js'
 import {
   InMemoryTranscriptStore,
+  JsonlTranscriptStore,
+  createSessionId,
   createTimestamp,
+  getProjectSessionDir,
   restoreSessionStateFromEvents,
 } from './transcript.js'
+import {
+  buildSessionMemoryInjection,
+  getSessionMemoryPath,
+  isSessionMemoryFresh,
+  readSessionMemory,
+} from './sessionMemory.js'
 
 import { createLSPServerManager, type LSPServerManager } from '../services/lsp/LSPServerManager.js'
 import { DEFAULT_LSP_CONFIGS } from '../services/lsp/config.js'
 import { checkForLSPDiagnostics } from '../services/lsp/LSPDiagnosticRegistry.js'
 import { createTaskManager } from './taskManager.js'
 import { compactTranscript } from './compact.js'
+import { createToolRegistry } from './tools.js'
 
 const AUTO_COMPACT_THRESHOLD = 30
 const REACTIVE_EVENT_COUNT = 10
@@ -99,6 +113,20 @@ export function createVigilonAgentRuntime(
   const maxTurns = options.maxTurns ?? 16
   const readFileState = new Map()
   syncPermissionModeFromSession(sessionState, permissionGate)
+  const runSubagent = createSubagentRunner({
+    modelClient: options.modelClient,
+    tools,
+    parentTranscript: transcript,
+    permissionGate,
+    preToolUseHooks: options.preToolUseHooks,
+    fileReadingLimits: options.fileReadingLimits,
+    globLimits: options.globLimits,
+    bashLimits: options.bashLimits,
+    projectConfig: options.projectConfig,
+    operator: options.operator,
+    skills: options.skills,
+    toolResultReplacementLimit: options.toolResultReplacementLimit,
+  })
 
   return {
     async *runTurn(
@@ -134,9 +162,17 @@ export function createVigilonAgentRuntime(
         // Auto-compaction check
         const allEvents = await transcript.readAll()
         if (allEvents.length > AUTO_COMPACT_THRESHOLD) {
+          const memory = await loadSessionMemory({
+            cwd: input.cwd,
+            sessionsDir: undefined,
+            transcriptPath: getTranscriptPathForStore(transcript),
+            sessionId: options.resume?.sessionId ?? transcript.sessionId,
+            eventCount: allEvents.length,
+          })
           await compactTranscript({
             transcript,
-            summary: 'Auto-compacting transcript to optimize context window.',
+            summary:
+              memory?.content ?? 'Auto-compacting transcript to optimize context window.',
             trigger: 'auto',
             sessionState,
             reactiveEventCount: REACTIVE_EVENT_COUNT,
@@ -156,9 +192,25 @@ export function createVigilonAgentRuntime(
             timestamp: createTimestamp(),
           })
         }
+        const sessionMemory = await loadSessionMemory({
+          cwd: input.cwd,
+          sessionsDir: undefined,
+          transcriptPath:
+            options.resume?.transcriptPath ?? getTranscriptPathForStore(transcript),
+          sessionId: options.resume?.sessionId ?? transcript.sessionId,
+          eventCount: transcriptEvents.length,
+        })
         const visibleEvents = filterModelVisibleEvents(
           injectProjectConfig(
-            injectSkillListing(contextWindow.events, options.skills ?? []),
+            injectSkillListing(
+              injectSessionMemory(
+                contextWindow.events,
+                sessionMemory?.record,
+                sessionMemory?.fresh ?? false,
+                Boolean(options.resume),
+              ),
+              options.skills ?? [],
+            ),
             options.projectConfig,
           ),
         )
@@ -245,6 +297,7 @@ export function createVigilonAgentRuntime(
           operator: options.operator,
           lspServerManager,
           taskManager,
+          runSubagent,
           tools,
         }
 
@@ -343,6 +396,196 @@ function injectProjectConfig(
     },
     ...events,
   ]
+}
+
+function createSubagentRunner(options: {
+  modelClient: ModelClient
+  tools: ToolRegistry
+  parentTranscript: TranscriptStore
+  permissionGate: PermissionGate
+  preToolUseHooks?: PreToolUseHook[]
+  fileReadingLimits?: FileReadingLimits
+  globLimits?: {
+    maxResults?: number
+  }
+  bashLimits?: {
+    timeoutMs?: number
+    maxOutputChars?: number
+  }
+  projectConfig?: RuntimeProjectConfig
+  operator?: RuntimeOperator
+  skills?: readonly RuntimeSkill[]
+  toolResultReplacementLimit?: number
+}): (request: SubagentRunRequest) => Promise<SubagentRunResult> {
+  return async (request: SubagentRunRequest): Promise<SubagentRunResult> => {
+    const subagentSessionId = `${sanitizeForPath(request.definition.name)}-${createSessionId()}`
+    const transcriptPath = getSubagentTranscriptPath({
+      cwd: request.cwd,
+      parentTranscript: options.parentTranscript,
+      agentName: request.definition.name,
+      sessionId: subagentSessionId,
+    })
+    const transcript = new JsonlTranscriptStore({
+      sessionId: subagentSessionId,
+      transcriptPath,
+    })
+    const permissionGate = createSubagentPermissionGate(
+      options.permissionGate,
+      transcript,
+    )
+    const runtime = createVigilonAgentRuntime({
+      modelClient: options.modelClient,
+      tools: createToolRegistry(
+        filterAllowedSubagentTools(
+          options.tools.list(),
+          request.definition.allowedTools,
+        ),
+      ),
+      transcript,
+      permissionGate,
+      preToolUseHooks: options.preToolUseHooks,
+      maxTurns: request.definition.maxTurns,
+      fileReadingLimits: options.fileReadingLimits,
+      globLimits: options.globLimits,
+      bashLimits: options.bashLimits,
+      projectConfig: options.projectConfig,
+      operator: options.operator,
+      skills: options.skills,
+      toolResultReplacementLimit: options.toolResultReplacementLimit,
+    })
+
+    let turnResult: AgentRuntimeTurnResult | undefined
+    for await (const event of runtime.runTurn({
+      prompt: buildSubagentPrompt(request),
+      cwd: request.cwd,
+      abortSignal: new AbortController().signal,
+    })) {
+      if (event.type === 'turn-finished') {
+        turnResult = event.result
+      }
+    }
+
+    if (!turnResult) {
+      throw new Error(`Subagent ${request.definition.name} finished without a final result.`)
+    }
+
+    return {
+      status: 'completed',
+      agentName: request.definition.name,
+      transcriptPath,
+      finalMessage: turnResult.finalMessage,
+      report: turnResult.report,
+    }
+  }
+}
+
+function createSubagentPermissionGate(
+  parent: PermissionGate,
+  transcript: TranscriptStore,
+): PermissionGate {
+  return {
+    async requestPermission(request) {
+      const decision = await parent.requestPermission(request)
+      await transcript.append({
+        type: 'permission',
+        request,
+        decision,
+        timestamp: createTimestamp(),
+      })
+      return decision
+    },
+  }
+}
+
+function filterAllowedSubagentTools(
+  tools: readonly ReturnType<ToolRegistry['list']>[number][],
+  allowedTools: readonly string[],
+) {
+  const allowed = new Set(allowedTools)
+  return tools.filter(tool => allowed.has(tool.name))
+}
+
+function buildSubagentPrompt(request: SubagentRunRequest): string {
+  return [
+    request.definition.systemPrompt.trim(),
+    '',
+    'You are running as a focused local subagent.',
+    `Agent: ${request.definition.name}`,
+    `Allowed tools: ${request.definition.allowedTools.join(', ') || '(none)'}`,
+    '',
+    'Task:',
+    request.task,
+  ].join('\n')
+}
+
+function getSubagentTranscriptPath(options: {
+  cwd: string
+  parentTranscript: TranscriptStore
+  agentName: string
+  sessionId: string
+}): string {
+  const parentPath = getTranscriptPathForStore(options.parentTranscript)
+  const baseDir = parentPath
+    ? path.join(path.dirname(parentPath), 'subagents')
+    : path.join(getProjectSessionDir(options.cwd), 'subagents')
+  return path.join(
+    baseDir,
+    sanitizeForPath(options.agentName),
+    `${options.sessionId}.jsonl`,
+  )
+}
+
+function sanitizeForPath(value: string): string {
+  return value.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'agent'
+}
+
+function injectSessionMemory(
+  events: Awaited<ReturnType<TranscriptStore['readAll']>>,
+  memory: Parameters<typeof buildSessionMemoryInjection>[0] | undefined,
+  fresh: boolean,
+  shouldInject: boolean,
+): Awaited<ReturnType<TranscriptStore['readAll']>> {
+  if (!memory || !shouldInject) return events
+  return [
+    buildSessionMemoryInjection(memory, fresh ? 'fresh' : 'stale'),
+    ...events,
+  ]
+}
+
+async function loadSessionMemory(options: {
+  cwd: string
+  sessionsDir?: string
+  transcriptPath?: string
+  sessionId?: string
+  eventCount: number
+}): Promise<
+  | {
+      record: Parameters<typeof buildSessionMemoryInjection>[0]
+      fresh: boolean
+      content: string
+    }
+  | undefined
+> {
+  if (!options.sessionId) return undefined
+  const memoryPath = getSessionMemoryPath({
+    cwd: options.cwd,
+    sessionsDir: options.sessionsDir,
+    transcriptPath: options.transcriptPath,
+    sessionId: options.sessionId,
+  })
+  const record = await readSessionMemory(memoryPath)
+  if (!record) return undefined
+  return {
+    record,
+    fresh: isSessionMemoryFresh(record, options.eventCount),
+    content: record.content,
+  }
+}
+
+function getTranscriptPathForStore(
+  transcript: TranscriptStore,
+): string | undefined {
+  return 'transcriptPath' in transcript ? transcript.transcriptPath : undefined
 }
 
 export function syncPermissionModeFromSession(

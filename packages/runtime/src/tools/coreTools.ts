@@ -1,6 +1,7 @@
 import type { RuntimeSkill, Tool } from '../runtime/contracts.js'
 import { createToolRegistry, ToolRegistry } from '../runtime/tools.js'
 import { BashTool } from './bashTool.js'
+import { AgentTool } from './agentTool.js'
 import { AskUserQuestionTool } from './askUserQuestionTool.js'
 import { EditTool } from './editTool.js'
 import { GlobTool } from './globTool.js'
@@ -14,8 +15,6 @@ import {
   TodoWriteTool,
 } from './sessionTools.js'
 import { createSkillTool } from './skillTool.js'
-import { NotebookTool } from './notebookTool.js'
-import { ToolSearchTool } from './toolSearchTool.js'
 import { WebFetchTool } from './webFetchTool.js'
 import { TaskStopTool } from './taskStopTool.js'
 import { WriteTool } from './writeTool.js'
@@ -25,9 +24,8 @@ export const CORE_TOOLS = [
   GlobTool,
   GrepTool,
   LspTool,
-  NotebookTool,
-  ToolSearchTool,
   TaskStopTool,
+  AgentTool,
   WebFetchTool,
   AskUserQuestionTool,
   TodoWriteTool,
