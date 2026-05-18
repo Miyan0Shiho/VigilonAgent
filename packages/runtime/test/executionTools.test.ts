@@ -30,6 +30,7 @@ describe('execution tools', () => {
       'Read',
       'Glob',
       'Grep',
+      'LSP',
       'WebFetch',
       'AskUserQuestion',
       'TodoWrite',

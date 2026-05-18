@@ -33,6 +33,7 @@ describe('session tools', () => {
       'Read',
       'Glob',
       'Grep',
+      'LSP',
       'WebFetch',
       'AskUserQuestion',
       'TodoWrite',
