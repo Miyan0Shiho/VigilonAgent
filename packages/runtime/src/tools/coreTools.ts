@@ -8,6 +8,7 @@ import { EditTool } from './editTool.js'
 import { GlobTool } from './globTool.js'
 import { GrepTool } from './grepTool.js'
 import { LspTool } from './lspTool.js'
+import { NotebookTool } from './notebookTool.js'
 import { ReadTool } from './readTool.js'
 import {
   EnterPlanModeTool,
@@ -32,6 +33,7 @@ export const CORE_TOOLS = [
   ConfigTool,
   WebFetchTool,
   AskUserQuestionTool,
+  NotebookTool,
   TodoWriteTool,
   EnterPlanModeTool,
   ExitPlanModeTool,

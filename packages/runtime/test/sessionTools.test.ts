@@ -40,6 +40,7 @@ describe('session tools', () => {
       'Config',
       'WebFetch',
       'AskUserQuestion',
+      'Notebook',
       'TodoWrite',
       'EnterPlanMode',
       'ExitPlanMode',

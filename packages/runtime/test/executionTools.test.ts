@@ -38,6 +38,7 @@ describe('execution tools', () => {
       'Config',
       'WebFetch',
       'AskUserQuestion',
+      'Notebook',
       'TodoWrite',
       'EnterPlanMode',
       'ExitPlanMode',
