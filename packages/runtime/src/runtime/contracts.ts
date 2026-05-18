@@ -1,3 +1,5 @@
+import type { LSPServerManager } from '../services/lsp/LSPServerManager.js'
+
 export type ToolCall = {
   id: string
   name: string
@@ -197,6 +199,7 @@ export type ToolUseContext = {
   projectConfig?: RuntimeProjectConfig
   operator?: RuntimeOperator
   webFetch?: WebFetchRuntimeOptions
+  lspServerManager: LSPServerManager
 }
 
 export type RuntimeSessionState = {

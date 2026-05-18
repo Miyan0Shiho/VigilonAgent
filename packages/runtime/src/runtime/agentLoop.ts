@@ -36,6 +36,9 @@ import {
   restoreSessionStateFromEvents,
 } from './transcript.js'
 
+import { createLSPServerManager, type LSPServerManager } from '../services/lsp/LSPServerManager.js'
+import { DEFAULT_LSP_CONFIGS } from '../services/lsp/config.js'
+
 export type VigilonAgentRuntimeOptions = {
   modelClient: ModelClient
   tools?: ToolRegistry
@@ -57,6 +60,7 @@ export type VigilonAgentRuntimeOptions = {
   toolResultReplacementLimit?: number
   permissionMode?: PermissionMode
   resume?: RuntimeSessionSnapshot
+  lspServerManager?: LSPServerManager
 }
 
 export function createVigilonAgentRuntime(
@@ -64,6 +68,13 @@ export function createVigilonAgentRuntime(
 ): AgentRuntime {
   const tools = options.tools ?? new ToolRegistry()
   const transcript = options.transcript ?? new InMemoryTranscriptStore()
+  const lspServerManager = options.lspServerManager ?? createLSPServerManager()
+  
+  // Initialize LSP manager if it hasn't been initialized
+  if (lspServerManager.getAllServers().size === 0) {
+    void lspServerManager.initialize(DEFAULT_LSP_CONFIGS)
+  }
+
   const sessionState: RuntimeSessionState =
     options.resume?.sessionState ??
     restoreSessionStateFromEvents(
@@ -192,6 +203,7 @@ export function createVigilonAgentRuntime(
           bashLimits: options.bashLimits,
           projectConfig: options.projectConfig,
           operator: options.operator,
+          lspServerManager,
         }
 
         for (const call of response.toolCalls) {
