@@ -181,6 +181,12 @@ export type WebFetchRuntimeOptions = {
   maxRedirects?: number
 }
 
+export type TaskManager = {
+  readonly activeTasks: BackgroundTask[]
+  startBashTask(command: string, cwd: string): Promise<string>
+  killTask(taskId: string): Promise<boolean>
+}
+
 export type ToolUseContext = {
   cwd: string
   abortSignal: AbortSignal
@@ -200,6 +206,15 @@ export type ToolUseContext = {
   operator?: RuntimeOperator
   webFetch?: WebFetchRuntimeOptions
   lspServerManager: LSPServerManager
+  taskManager: TaskManager
+}
+
+export type BackgroundTask = {
+  id: string
+  type: 'bash' | 'subagent'
+  command: string
+  startTime: string
+  process?: any // For local process handle
 }
 
 export type RuntimeSessionState = {
@@ -211,6 +226,7 @@ export type RuntimeSessionState = {
   pendingPlan?: string
   handoffReport?: ResultHandoffReport
   verificationNotes: string[]
+  backgroundTasks: BackgroundTask[]
 }
 
 export type ResultHandoffReport = {

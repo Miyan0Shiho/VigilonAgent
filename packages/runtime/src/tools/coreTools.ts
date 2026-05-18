@@ -5,6 +5,7 @@ import { AskUserQuestionTool } from './askUserQuestionTool.js'
 import { EditTool } from './editTool.js'
 import { GlobTool } from './globTool.js'
 import { GrepTool } from './grepTool.js'
+import { LspTool } from './lspTool.js'
 import { ReadTool } from './readTool.js'
 import {
   EnterPlanModeTool,
@@ -14,12 +15,15 @@ import {
 } from './sessionTools.js'
 import { createSkillTool } from './skillTool.js'
 import { WebFetchTool } from './webFetchTool.js'
+import { TaskStopTool } from './taskStopTool.js'
 import { WriteTool } from './writeTool.js'
 
 export const CORE_TOOLS = [
   ReadTool,
   GlobTool,
   GrepTool,
+  LspTool,
+  TaskStopTool,
   WebFetchTool,
   AskUserQuestionTool,
   TodoWriteTool,

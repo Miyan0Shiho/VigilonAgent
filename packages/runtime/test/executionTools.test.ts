@@ -10,6 +10,7 @@ import {
   InMemoryTranscriptStore,
   ReadTool,
   WriteTool,
+  createTaskManager,
   type PermissionGate,
   type ToolUseContext,
 } from '../src/index.js'
@@ -31,6 +32,7 @@ describe('execution tools', () => {
       'Glob',
       'Grep',
       'LSP',
+      'TaskStop',
       'WebFetch',
       'AskUserQuestion',
       'TodoWrite',
@@ -205,6 +207,25 @@ describe('execution tools', () => {
     expect(largeOutput.metadata).toMatchObject({ truncated: true })
     expect(largeOutput.content.length).toBeLessThan(200)
   })
+
+  it('Bash supports background tasks', async () => {
+    const cwd = await createFixture({})
+    const context = createContext(cwd, { mode: 'bypass-local' })
+
+    const result = await BashTool.invoke(
+      { command: 'sleep 10', background: true },
+      context,
+    )
+
+    expect(result.ok).toBe(true)
+    expect(result.content).toContain('Command started in background')
+    expect(result.metadata?.taskId).toBeDefined()
+    expect(context.taskManager.activeTasks.length).toBe(1)
+
+    const taskId = result.metadata?.taskId as string
+    await context.taskManager.killTask(taskId)
+    expect(context.taskManager.activeTasks.length).toBe(0)
+  })
 })
 
 async function createFixture(files: Record<string, string>): Promise<string> {
@@ -240,5 +261,6 @@ function createContext(
       }),
     readFileState: new Map(),
     bashLimits: options.bashLimits,
+    taskManager: createTaskManager(),
   }
 }

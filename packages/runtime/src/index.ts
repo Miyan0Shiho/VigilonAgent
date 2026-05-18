@@ -38,6 +38,7 @@ export {
   loadRuntimeSkills,
 } from './runtime/skills.js'
 export { createToolRegistry, ToolRegistry } from './runtime/tools.js'
+export { createTaskManager } from './runtime/taskManager.js'
 export {
   createSessionId,
   createTimestamp,
@@ -67,6 +68,7 @@ export {
   TodoWriteTool,
 } from './tools/sessionTools.js'
 export { createSkillTool } from './tools/skillTool.js'
+export { TaskStopTool } from './tools/taskStopTool.js'
 export { WebFetchTool } from './tools/webFetchTool.js'
 export { WriteTool } from './tools/writeTool.js'
 export type {
