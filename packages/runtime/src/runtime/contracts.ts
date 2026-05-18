@@ -1,4 +1,5 @@
 import type { LSPServerManager } from '../services/lsp/LSPServerManager.js'
+import type { DiagnosticFile } from '../services/lsp/LSPDiagnosticRegistry.js'
 
 export type ToolCall = {
   id: string
@@ -86,6 +87,10 @@ export type CompactMetadata = {
   preEventCount: number
   messagesSummarized: number
   userContext?: string
+  discoveredToolNames?: string[]
+  todos?: TodoItem[]
+  approvedPlan?: string
+  verificationNotes?: string[]
 }
 
 export type ContentReplacementRecord = {
@@ -207,6 +212,10 @@ export type ToolUseContext = {
   webFetch?: WebFetchRuntimeOptions
   lspServerManager: LSPServerManager
   taskManager: TaskManager
+  tools: {
+    list(): Tool[]
+    find(name: string): Tool | undefined
+  }
 }
 
 export type BackgroundTask = {
@@ -227,6 +236,7 @@ export type RuntimeSessionState = {
   handoffReport?: ResultHandoffReport
   verificationNotes: string[]
   backgroundTasks: BackgroundTask[]
+  discoveredToolNames: string[]
 }
 
 export type ResultHandoffReport = {
@@ -255,6 +265,7 @@ export type Tool = {
   readonly description: string
   readonly inputJsonSchema?: ToolInputJsonSchema
   readonly readOnly?: boolean
+  readonly deferred?: boolean
   invoke(input: unknown, context: ToolUseContext): Promise<ToolResult>
 }
 
@@ -306,6 +317,8 @@ export type TranscriptEvent =
       pendingPlan?: string | null
       handoffReport?: ResultHandoffReport | null
       verificationNotes?: string[]
+      backgroundTasks?: BackgroundTask[]
+      discoveredToolNames?: string[]
       timestamp: string
     }
   | {
@@ -373,11 +386,18 @@ export type TranscriptEvent =
       contentReplacementChanged: boolean
       timestamp: string
     }
+  | {
+      type: 'lsp-diagnostics'
+      serverName: string
+      files: DiagnosticFile[]
+      timestamp: string
+    }
 
 export type TranscriptStore = {
   readonly sessionId?: string
   readonly transcriptPath?: string
   append(event: TranscriptEvent): Promise<void>
+  replace(events: TranscriptEvent[]): Promise<void>
   readAll(): Promise<TranscriptEvent[]>
 }
 

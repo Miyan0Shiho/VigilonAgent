@@ -119,16 +119,38 @@ async function fetchWithRedirects(
 }
 
 function normalizeFetchedContent(content: string, maxChars: number): string {
-  const plainText = content
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+  // Simple HTML to Markdown-ish conversion
+  let markdown = content
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<header[\s\S]*?<\/header>/gi, '')
+    .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+    .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+    // Headings
+    .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, '# $1\n\n')
+    .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, '## $1\n\n')
+    .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, '### $1\n\n')
+    // Paragraphs
+    .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
+    // Links
+    .replace(/<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, '[$2]($1)')
+    // Lists
+    .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n')
+    // Bold/Italic
+    .replace(/<(b|strong)[^>]*>([\s\S]*?)<\/\1>/gi, '**$2**')
+    .replace(/<(i|em)[^>]*>([\s\S]*?)<\/\1>/gi, '*$2*')
+    // Strip remaining tags
     .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-  if (plainText.length <= maxChars) {
-    return plainText
+    // Cleanup whitespace
+    .replace(/&nbsp;/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n\s*\n/g, '\n\n')
+    .trim();
+
+  if (markdown.length <= maxChars) {
+    return markdown;
   }
-  return `${plainText.slice(0, maxChars)}\n\n[Truncated by WebFetch result budget]`
+  return `${markdown.slice(0, maxChars)}\n\n[Truncated by WebFetch result budget]`;
 }
 
 function parseUrlInput(input: unknown): string | null {

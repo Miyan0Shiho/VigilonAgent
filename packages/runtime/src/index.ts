@@ -68,7 +68,9 @@ export {
   TodoWriteTool,
 } from './tools/sessionTools.js'
 export { createSkillTool } from './tools/skillTool.js'
+export { NotebookTool } from './tools/notebookTool.js'
 export { TaskStopTool } from './tools/taskStopTool.js'
+export { ToolSearchTool } from './tools/toolSearchTool.js'
 export { WebFetchTool } from './tools/webFetchTool.js'
 export { WriteTool } from './tools/writeTool.js'
 export type {

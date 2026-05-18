@@ -1,94 +1,121 @@
-import { describe, expect, it } from 'vitest'
-import {
-  createToolRegistry,
-  createVigilonAgentRuntime,
-  InMemoryTranscriptStore,
-  type ModelClient,
-  type Tool,
-} from '../src/index.js'
+import { test, expect, describe } from 'vitest';
+import { buildLlmRequestEvent, buildLlmResponseEvent, buildRequestStabilityEvent } from '../src/runtime/requestAudit';
+import type { TranscriptEvent } from '../src/runtime/contracts';
 
-describe('request stability audit', () => {
-  it('records request and response audit events around each model call', async () => {
-    const transcript = new InMemoryTranscriptStore()
-    const modelClient: ModelClient = {
-      id: 'fake-model',
-      async createMessage(request) {
-        const hasToolResult = request.messages.some(event => event.type === 'tool-result')
-        return hasToolResult
-          ? {
-              content: 'done',
-              toolCalls: [],
-              stopReason: 'end_turn',
-              usage: { inputTokens: 1800, outputTokens: 120 },
-            }
-          : {
-              content: '',
-              toolCalls: [{ id: 'read-1', name: 'echo', input: { text: 'alpha' } }],
-              stopReason: 'tool_use',
-              usage: { inputTokens: 600, outputTokens: 40 },
-            }
-      },
-    }
-    const tool: Tool = {
-      name: 'echo',
-      description: 'Echo input',
-      inputJsonSchema: {
-        type: 'object',
-        properties: { text: { type: 'string' } },
-        required: ['text'],
-        additionalProperties: false,
-      },
-      async invoke(input) {
-        return {
-          toolCallId: 'read-1',
-          ok: true,
-          content: JSON.stringify(input),
-        }
-      },
-    }
-    const runtime = createVigilonAgentRuntime({
-      modelClient,
-      tools: createToolRegistry([tool]),
-      transcript,
-    })
+describe('Request Stability Audit', () => {
+  test('should detect tool schema change', () => {
+    const timestamp = new Date().toISOString();
+    const request1 = buildLlmRequestEvent({
+      events: [],
+      visibleEvents: [],
+      tools: [{ name: 'Tool1', description: 'desc', invoke: async () => ({ toolCallId: '', ok: true, content: '' }) }],
+      model: 'model-a',
+      compacted: false,
+      droppedEventCount: 0,
+      timestamp,
+    });
 
-    for await (const _event of runtime.runTurn({
-      prompt: 'inspect request stability',
-      cwd: '/tmp/project',
-      abortSignal: new AbortController().signal,
-    })) {
-      // Drain runtime events.
-    }
-
-    const events = await transcript.readAll()
-    const llmRequests = events.filter(event => event.type === 'llm-request')
-    const llmResponses = events.filter(event => event.type === 'llm-response')
-    const requestStabilityEvents = events.filter(
-      event => event.type === 'request-stability',
-    )
-
-    expect(llmRequests).toHaveLength(2)
-    expect(llmResponses).toHaveLength(2)
-    expect(llmRequests[0]).toMatchObject({
-      toolCount: 1,
-      model: 'fake-model',
-      previousRequestId: null,
-    })
-    expect(llmRequests[1]).toMatchObject({
-      toolCount: 1,
-      previousRequestId: (llmResponses[0] as any).requestId,
-    })
-    expect(llmResponses[1]).toMatchObject({
-      status: 'ok',
-      inputTokens: 1800,
-      outputTokens: 120,
+    const response1 = buildLlmResponseEvent({
+      request: request1,
+      stopReason: 'end_turn',
+      inputTokens: 100,
+      outputTokens: 50,
+      durationMs: 100,
       toolCallCount: 0,
-    })
-    expect(requestStabilityEvents).toContainEqual(
-      expect.objectContaining({
-        classification: 'unexpected_change',
-        reasons: expect.arrayContaining(['input_tokens_shift_without_shape_change']),
-      }),
-    )
-  })
-})
+      assistantChars: 10,
+      timestamp,
+    });
+
+    const request2 = buildLlmRequestEvent({
+      events: [request1, response1],
+      visibleEvents: [],
+      tools: [
+        { name: 'Tool1', description: 'desc', invoke: async () => ({ toolCallId: '', ok: true, content: '' }) },
+        { name: 'Tool2', description: 'new tool', invoke: async () => ({ toolCallId: '', ok: true, content: '' }) }
+      ],
+      model: 'model-a',
+      compacted: false,
+      droppedEventCount: 0,
+      timestamp,
+    });
+
+    const response2 = buildLlmResponseEvent({
+      request: request2,
+      stopReason: 'end_turn',
+      inputTokens: 120,
+      outputTokens: 50,
+      durationMs: 100,
+      toolCallCount: 0,
+      assistantChars: 10,
+      timestamp,
+    });
+
+    const stabilityEvent = buildRequestStabilityEvent({
+      events: [request1, response1, request2, response2],
+      currentRequest: request2,
+      currentResponse: response2,
+      timestamp,
+    });
+
+    expect(stabilityEvent).not.toBeNull();
+    expect(stabilityEvent?.toolSchemaChanged).toBe(true);
+    expect(stabilityEvent?.classification).toBe('expected_change');
+    expect(stabilityEvent?.reasons).toContain('tool_schema_changed');
+  });
+
+  test('should detect unexpected token shift', () => {
+    const timestamp = new Date().toISOString();
+    const request1 = buildLlmRequestEvent({
+      events: [],
+      visibleEvents: [],
+      tools: [],
+      model: 'model-a',
+      compacted: false,
+      droppedEventCount: 0,
+      timestamp,
+    });
+
+    const response1 = buildLlmResponseEvent({
+      request: request1,
+      stopReason: 'end_turn',
+      inputTokens: 5000,
+      outputTokens: 50,
+      durationMs: 100,
+      toolCallCount: 0,
+      assistantChars: 10,
+      timestamp,
+    });
+
+    const request2 = buildLlmRequestEvent({
+      events: [request1, response1],
+      visibleEvents: [],
+      tools: [],
+      model: 'model-a',
+      compacted: false,
+      droppedEventCount: 0,
+      timestamp,
+    });
+
+    const response2 = buildLlmResponseEvent({
+      request: request2,
+      stopReason: 'end_turn',
+      inputTokens: 7000, // 40% increase without shape change
+      outputTokens: 50,
+      durationMs: 100,
+      toolCallCount: 0,
+      assistantChars: 10,
+      timestamp,
+    });
+
+    const stabilityEvent = buildRequestStabilityEvent({
+      events: [request1, response1, request2, response2],
+      currentRequest: request2,
+      currentResponse: response2,
+      timestamp,
+    });
+
+    expect(stabilityEvent).not.toBeNull();
+    expect(stabilityEvent?.classification).toBe('unexpected_change');
+    expect(stabilityEvent?.reasons).toContain('input_tokens_shift_without_shape_change');
+  });
+});

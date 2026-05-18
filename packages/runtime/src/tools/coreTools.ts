@@ -14,6 +14,8 @@ import {
   TodoWriteTool,
 } from './sessionTools.js'
 import { createSkillTool } from './skillTool.js'
+import { NotebookTool } from './notebookTool.js'
+import { ToolSearchTool } from './toolSearchTool.js'
 import { WebFetchTool } from './webFetchTool.js'
 import { TaskStopTool } from './taskStopTool.js'
 import { WriteTool } from './writeTool.js'
@@ -23,6 +25,8 @@ export const CORE_TOOLS = [
   GlobTool,
   GrepTool,
   LspTool,
+  NotebookTool,
+  ToolSearchTool,
   TaskStopTool,
   WebFetchTool,
   AskUserQuestionTool,

@@ -38,6 +38,12 @@ import {
 
 import { createLSPServerManager, type LSPServerManager } from '../services/lsp/LSPServerManager.js'
 import { DEFAULT_LSP_CONFIGS } from '../services/lsp/config.js'
+import { checkForLSPDiagnostics } from '../services/lsp/LSPDiagnosticRegistry.js'
+import { createTaskManager } from './taskManager.js'
+import { compactTranscript } from './compact.js'
+
+const AUTO_COMPACT_THRESHOLD = 30
+const REACTIVE_EVENT_COUNT = 10
 
 export type VigilonAgentRuntimeOptions = {
   modelClient: ModelClient
@@ -61,6 +67,7 @@ export type VigilonAgentRuntimeOptions = {
   permissionMode?: PermissionMode
   resume?: RuntimeSessionSnapshot
   lspServerManager?: LSPServerManager
+  taskManager?: TaskManager
 }
 
 export function createVigilonAgentRuntime(
@@ -69,6 +76,7 @@ export function createVigilonAgentRuntime(
   const tools = options.tools ?? new ToolRegistry()
   const transcript = options.transcript ?? new InMemoryTranscriptStore()
   const lspServerManager = options.lspServerManager ?? createLSPServerManager()
+  const taskManager = options.taskManager ?? createTaskManager()
   
   // Initialize LSP manager if it hasn't been initialized
   if (lspServerManager.getAllServers().size === 0) {
@@ -106,8 +114,35 @@ export function createVigilonAgentRuntime(
       let stopReason: ModelResponse['stopReason'] = 'end_turn'
       let turns = 0
 
-      while (turns < maxTurns) {
+      try {
+        await lspServerManager.initialize(DEFAULT_LSP_CONFIGS)
+
+        while (turns < maxTurns) {
         turns += 1
+
+        // Check for and append LSP diagnostics
+        const pendingLspDiagnostics = checkForLSPDiagnostics()
+        for (const diagnostic of pendingLspDiagnostics) {
+          await transcript.append({
+            type: 'lsp-diagnostics',
+            serverName: diagnostic.serverName,
+            files: diagnostic.files,
+            timestamp: createTimestamp(),
+          })
+        }
+
+        // Auto-compaction check
+        const allEvents = await transcript.readAll()
+        if (allEvents.length > AUTO_COMPACT_THRESHOLD) {
+          await compactTranscript({
+            transcript,
+            summary: 'Auto-compacting transcript to optimize context window.',
+            trigger: 'auto',
+            sessionState,
+            reactiveEventCount: REACTIVE_EVENT_COUNT,
+          })
+        }
+
         yield { type: 'model-request-started' }
 
         const transcriptEvents = await transcript.readAll()
@@ -127,10 +162,15 @@ export function createVigilonAgentRuntime(
             options.projectConfig,
           ),
         )
+        const visibleTools = tools.list().filter(tool => {
+          if (!tool.deferred) return true
+          return sessionState.discoveredToolNames.includes(tool.name)
+        })
+
         const requestAuditEvent = buildLlmRequestEvent({
           events: await transcript.readAll(),
           visibleEvents,
-          tools: tools.list(),
+          tools: visibleTools,
           model: options.modelClient.id,
           compacted: contextWindow.compacted,
           compactBoundaryIndex: contextWindow.compactBoundaryIndex,
@@ -143,7 +183,7 @@ export function createVigilonAgentRuntime(
         const requestStartedAt = Date.now()
         const response = await options.modelClient.createMessage({
           messages: visibleEvents,
-          tools: tools.list(),
+          tools: visibleTools,
           abortSignal: input.abortSignal,
         })
         const responseAuditEvent = buildLlmResponseEvent({
@@ -204,6 +244,8 @@ export function createVigilonAgentRuntime(
           projectConfig: options.projectConfig,
           operator: options.operator,
           lspServerManager,
+          taskManager,
+          tools,
         }
 
         for (const call of response.toolCalls) {
@@ -239,6 +281,15 @@ export function createVigilonAgentRuntime(
             result,
             timestamp: createTimestamp(),
           })
+
+          if (result.metadata?.discoveredTools && Array.isArray(result.metadata.discoveredTools)) {
+            for (const name of result.metadata.discoveredTools) {
+              if (typeof name === 'string' && !sessionState.discoveredToolNames.includes(name)) {
+                sessionState.discoveredToolNames.push(name)
+              }
+            }
+          }
+
           yield { type: 'tool-finished', result }
         }
 
@@ -264,6 +315,10 @@ export function createVigilonAgentRuntime(
         report: buildResultReport(finalMessage, stopReason, events, sessionState),
       }
       yield { type: 'turn-finished', result }
+    } finally {
+      await lspServerManager.shutdown()
+      await taskManager.shutdown()
+    }
     },
   }
 }
