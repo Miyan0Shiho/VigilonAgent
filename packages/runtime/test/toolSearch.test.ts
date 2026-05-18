@@ -1,10 +1,68 @@
 import { test, expect, describe, vi } from 'vitest';
 import { createVigilonAgentRuntime } from '../src/runtime/agentLoop';
+import { createCoreToolRegistry } from '../src/tools/coreTools';
 import { ToolRegistry } from '../src/runtime/tools';
 import { ToolSearchTool } from '../src/tools/toolSearchTool';
 import type { ModelClient, Tool } from '../src/runtime/contracts';
 
 describe('Deferred Tools and ToolSearch', () => {
+  test('should expose ToolSearch in the default core registry', () => {
+    expect(createCoreToolRegistry().list().map(tool => tool.name)).toContain('ToolSearch');
+  });
+
+  test('should discover deferred LSP tools from the default core registry', async () => {
+    const observedRequests: Array<{ tools: string[]; discoveredTools?: unknown }> = [];
+    const mockModelClient: ModelClient = {
+      id: 'test-model',
+      createMessage: vi
+        .fn()
+        .mockImplementationOnce(async request => {
+          observedRequests.push({
+            tools: request.tools.map(tool => tool.name),
+          });
+          return {
+            content: 'Search for LSP',
+            toolCalls: [{ id: 'call-1', name: 'ToolSearch', input: { query: 'lsp' } }],
+            stopReason: 'tool_use',
+          };
+        })
+        .mockImplementationOnce(async request => {
+          const toolResult = request.messages.find(event => event.type === 'tool-result');
+          observedRequests.push({
+            tools: request.tools.map(tool => tool.name),
+            discoveredTools:
+              toolResult?.type === 'tool-result'
+                ? toolResult.result.metadata?.discoveredTools
+                : undefined,
+          });
+          return {
+            content: 'Done',
+            toolCalls: [],
+            stopReason: 'end_turn',
+          };
+        }),
+    };
+
+    const runtime = createVigilonAgentRuntime({
+      modelClient: mockModelClient,
+      tools: createCoreToolRegistry(),
+    });
+
+    for await (const _event of runtime.runTurn({
+      prompt: 'Find the language intelligence tool',
+      cwd: '/',
+      abortSignal: new AbortController().signal,
+    })) {
+      // Drain the runtime stream.
+    }
+
+    expect(observedRequests[0]?.tools).toContain('ToolSearch');
+    expect(observedRequests[0]?.tools).not.toContain('LSP');
+    expect(observedRequests[1]?.discoveredTools).toEqual(['LSP']);
+    expect(observedRequests[1]?.tools).toContain('ToolSearch');
+    expect(observedRequests[1]?.tools).toContain('LSP');
+  });
+
   test('should not include deferred tools in initial request but include them after ToolSearch', async () => {
     const deferredTool: Tool = {
       name: 'DeferredTool',

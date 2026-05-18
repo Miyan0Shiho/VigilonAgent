@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   createLocalPermissionGate,
   createCoreToolRegistry,
@@ -165,6 +165,125 @@ describe('createVigilonAgentRuntime', () => {
         content: expect.stringContaining('### Skill: review'),
       },
     })
+  })
+
+  it('restores discovered LSP tools into the runtime request loop', async () => {
+    const observedToolSets: string[][] = []
+    const observedToolResults: string[] = []
+    const modelClient: ModelClient = {
+      id: 'fake-model',
+      async createMessage(request) {
+        observedToolSets.push(request.tools.map(tool => tool.name))
+        const lspResult = request.messages.find(
+          event =>
+            event.type === 'tool-result' &&
+            event.result.toolCallId === 'lsp-1',
+        )
+        if (lspResult?.type === 'tool-result') {
+          observedToolResults.push(lspResult.result.content)
+        }
+
+        if (observedToolSets.length === 1) {
+          return {
+            content: '',
+            toolCalls: [
+              {
+                id: 'tool-search-1',
+                name: 'ToolSearch',
+                input: { query: 'lsp' },
+              },
+            ],
+            stopReason: 'tool_use',
+          }
+        }
+
+        if (observedToolSets.length === 2) {
+          const toolSearchResult = request.messages.find(
+            event =>
+              event.type === 'tool-result' &&
+              event.result.toolCallId === 'tool-search-1',
+          )
+          expect(toolSearchResult).toMatchObject({
+            type: 'tool-result',
+            result: {
+              ok: true,
+              metadata: {
+                discoveredTools: ['LSP'],
+              },
+            },
+          })
+          return {
+            content: '',
+            toolCalls: [
+              {
+                id: 'lsp-1',
+                name: 'LSP',
+                input: {
+                  action: 'call_hierarchy',
+                  filePath: 'src/app.ts',
+                  line: 1,
+                  character: 1,
+                },
+              },
+            ],
+            stopReason: 'tool_use',
+          }
+        }
+
+        return {
+          content: 'done',
+          toolCalls: [],
+          stopReason: 'end_turn',
+        }
+      },
+    }
+    const mockServer = {
+      start: vi.fn(async () => undefined),
+      sendNotification: vi.fn(async () => undefined),
+      config: { languages: ['typescript'] },
+    }
+    const lspServerManager = {
+      initialize: vi.fn(async () => undefined),
+      shutdown: vi.fn(async () => undefined),
+      getAllServers: vi.fn(() => new Map([['ts', mockServer as any]])),
+      getServerForFile: vi.fn(() => mockServer as any),
+      getFileContent: vi.fn(async () => 'export const runTask = () => {}\n'),
+      callHierarchy: vi.fn(async () => ({
+        item: { name: 'runTask', kind: 12, uri: 'file:///src/app.ts' },
+        incoming: [
+          {
+            from: { name: 'scheduleTask', kind: 12, uri: 'file:///src/entry.ts' },
+          },
+        ],
+        outgoing: [
+          {
+            to: { name: 'stopTask', kind: 12, uri: 'file:///src/stop.ts' },
+          },
+        ],
+      })),
+    }
+    const runtime = createVigilonAgentRuntime({
+      modelClient,
+      tools: createCoreToolRegistry(),
+      permissionMode: 'bypass-local',
+      lspServerManager: lspServerManager as any,
+    })
+
+    for await (const _event of runtime.runTurn({
+      prompt: 'Find the LSP tool and inspect the call hierarchy',
+      cwd: '/tmp/project',
+      abortSignal: new AbortController().signal,
+    })) {
+      // Drain the runtime stream.
+    }
+
+    expect(observedToolSets[0]).toContain('ToolSearch')
+    expect(observedToolSets[0]).not.toContain('LSP')
+    expect(observedToolSets[1]).toContain('ToolSearch')
+    expect(observedToolSets[1]).toContain('LSP')
+    expect(observedToolResults).toHaveLength(1)
+    expect(observedToolResults[0]).toContain('incoming calls')
+    expect(observedToolResults[0]).toContain('scheduleTask')
   })
 
   it('runs a local subagent with filtered tools and an isolated transcript', async () => {

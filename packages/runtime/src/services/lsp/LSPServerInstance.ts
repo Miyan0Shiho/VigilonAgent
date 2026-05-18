@@ -1,8 +1,9 @@
 import * as path from 'path';
 import { pathToFileURL } from 'url';
-import type { InitializeParams, ServerCapabilities, InitializeResult } from 'vscode-languageserver-protocol';
+import type { InitializeParams, ServerCapabilities, InitializeResult, PublishDiagnosticsParams } from 'vscode-languageserver-protocol';
 import { createLSPClient, type LSPClient } from './LSPClient.js';
 import type { LspServerState, ScopedLspServerConfig } from './types.js';
+import { registerPendingLSPDiagnostic } from './LSPDiagnosticRegistry.js';
 
 const LSP_ERROR_CONTENT_MODIFIED = -32801;
 const MAX_RETRIES_FOR_TRANSIENT_ERRORS = 3;
@@ -42,6 +43,14 @@ export function createLSPServerInstance(
     state = 'error';
     lastError = error;
     crashRecoveryCount++;
+  });
+
+  client.onNotification('textDocument/publishDiagnostics', (params: any) => {
+    const { uri, diagnostics } = params as PublishDiagnosticsParams;
+    registerPendingLSPDiagnostic({
+      serverName: name,
+      files: [{ uri, diagnostics }],
+    });
   });
 
   async function start(): Promise<void> {
