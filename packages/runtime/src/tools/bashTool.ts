@@ -6,6 +6,8 @@ import { createTimestamp } from '../runtime/transcript.js'
 const execAsync = promisify(exec)
 const DEFAULT_TIMEOUT_MS = 30_000
 const DEFAULT_MAX_OUTPUT_CHARS = 20_000
+const BROAD_SHELL_PATH_LINE_THRESHOLD = 50
+const BROAD_SHELL_GROUP_LIMIT = 12
 const DEFAULT_OUTPUT_IGNORE_PATTERNS = [
   '.vigilon',
   '.vigilon/**',
@@ -179,9 +181,18 @@ export const BashTool: Tool = {
         stderr,
         context.projectConfig?.ignore ?? [],
       )
-      return ok(formatShellOutput(filtered.stdout, filtered.stderr, maxOutputChars), {
+      const broadScan = formatBroadShellScanOutput(parsed.command, filtered.stdout)
+      return ok(formatShellOutput(broadScan.stdout, filtered.stderr, maxOutputChars), {
         exitCode: 0,
-        truncated: filtered.stdout.length + filtered.stderr.length > maxOutputChars,
+        truncated: broadScan.stdout.length + filtered.stderr.length > maxOutputChars,
+        ...(broadScan.detected
+          ? {
+              broadShellScan: true,
+              ...(broadScan.summarized
+                ? { directoryGroups: broadScan.directoryGroups }
+                : {}),
+            }
+          : {}),
         ...(filtered.filteredLines > 0
           ? { filteredProjectIgnoredLines: filtered.filteredLines }
           : {}),
@@ -372,6 +383,86 @@ function formatShellOutput(
   const output = parts.join('\n')
   if (output.length <= maxOutputChars) return output || '(No output)'
   return `${output.slice(0, maxOutputChars)}\n[Output truncated to ${maxOutputChars} characters]`
+}
+
+function formatBroadShellScanOutput(
+  command: string,
+  stdout: string,
+): {
+  stdout: string
+  detected: boolean
+  summarized: boolean
+  directoryGroups?: Array<{ directory: string; count: number }>
+} {
+  if (!stdout || !isBroadFilesystemScanCommand(command)) {
+    return { stdout, detected: false, summarized: false }
+  }
+
+  const pathLines = stdout
+    .split(/\r?\n/)
+    .map(line => normalizePathLikeOutputLine(line))
+    .filter((line): line is string => Boolean(line))
+  if (pathLines.length === 0) {
+    return { stdout, detected: false, summarized: false }
+  }
+
+  const warning =
+    'Broad Bash filesystem scan detected. Prefer Glob/Grep with a narrower path or pattern before reading files.'
+  const groups = groupPathsByDirectory(pathLines)
+  if (pathLines.length >= BROAD_SHELL_PATH_LINE_THRESHOLD && groups.length >= 2) {
+    return {
+      stdout: [
+        warning,
+        `Path-like output was summarized after ${pathLines.length} lines.`,
+        'Directory groups:',
+        ...groups.slice(0, BROAD_SHELL_GROUP_LIMIT).map(group => `- ${group.directory}: ${group.count}`),
+      ].join('\n'),
+      detected: true,
+      summarized: true,
+      directoryGroups: groups,
+    }
+  }
+
+  return {
+    stdout: `${warning}\n${stdout}`,
+    detected: true,
+    summarized: false,
+  }
+}
+
+function isBroadFilesystemScanCommand(command: string): boolean {
+  return splitShellSubcommands(command).some(subcommand => {
+    const words = shellWords(subcommand)
+    if (words[0] !== 'find') return false
+    const target = words.find(word => !word.startsWith('-') && word !== 'find')
+    return !target || target === '.' || target === './'
+  })
+}
+
+function normalizePathLikeOutputLine(line: string): string | undefined {
+  const trimmed = line.trim()
+  if (!trimmed || /\s/.test(trimmed)) return undefined
+  if (!/^(?:\.{1,2}\/)?[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+$/.test(trimmed)) {
+    return undefined
+  }
+  return trimmed.replace(/^\.\//, '').replace(/\/+$/, '')
+}
+
+function groupPathsByDirectory(paths: readonly string[]): Array<{ directory: string; count: number }> {
+  const counts = new Map<string, number>()
+  for (const filePath of paths) {
+    const group = directoryGroup(filePath)
+    counts.set(group, (counts.get(group) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .map(([directory, count]) => ({ directory, count }))
+    .sort((a, b) => b.count - a.count || a.directory.localeCompare(b.directory))
+}
+
+function directoryGroup(filePath: string): string {
+  const parts = filePath.replace(/^\.\//, '').split('/').filter(Boolean)
+  if (parts.length <= 1) return '.'
+  return parts.slice(0, Math.min(2, parts.length - 1)).join('/')
 }
 
 function formatFilteredShellError(

@@ -20,9 +20,11 @@ import {
 describe('createVigilonAgentRuntime', () => {
   it('feeds tool results back into the next model request', async () => {
     const requestMessageTypes: string[][] = []
+    const observedRequests: TranscriptEvent[][] = []
     const modelClient: ModelClient = {
       id: 'fake-model',
       async createMessage(request) {
+        observedRequests.push(request.messages)
         requestMessageTypes.push(request.messages.map(message => message.type))
         if (requestMessageTypes.length === 1) {
           return {
@@ -86,9 +88,15 @@ describe('createVigilonAgentRuntime', () => {
       'turn-finished',
     ])
     expect(requestMessageTypes).toEqual([
-      ['user'],
-      ['user', 'assistant', 'tool-call', 'tool-result'],
+      ['user', 'user'],
+      ['user', 'user', 'assistant', 'tool-call', 'tool-result'],
     ])
+    const activeTask = observedRequests[1]?.find(
+      event =>
+        event.type === 'user' &&
+        event.content.includes('<vigilon_active_task>'),
+    )
+    expect(activeTask?.content).toContain('original_user_task="run echo"')
   })
 
   it('injects model-facing skill listing and supports Skill tool result feedback', async () => {
@@ -649,7 +657,7 @@ describe('createVigilonAgentRuntime', () => {
     }
 
     expect(requestMessageTypes).toEqual([
-      ['compact-boundary', 'user', 'user'],
+      ['compact-boundary', 'user', 'user', 'user'],
     ])
   })
 

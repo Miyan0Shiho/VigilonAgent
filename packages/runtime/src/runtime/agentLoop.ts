@@ -235,15 +235,19 @@ export function createVigilonAgentRuntime(
             injectProjectConfig(
               injectSkillListing(
                 injectRuntimeProgress(
-                  injectCapabilityReplay(
-                    injectSessionMemory(
-                      contextWindow.events,
-                      sessionMemory?.record,
-                      sessionMemory?.fresh ?? false,
+                  injectActiveTask(
+                    injectCapabilityReplay(
+                      injectSessionMemory(
+                        contextWindow.events,
+                        sessionMemory?.record,
+                        sessionMemory?.fresh ?? false,
+                        Boolean(options.resume),
+                      ),
+                      sessionState,
                       Boolean(options.resume),
                     ),
-                    sessionState,
-                    Boolean(options.resume),
+                    input.prompt,
+                    turnProjectConfig,
                   ),
                   sessionState,
                 ),
@@ -934,6 +938,57 @@ function injectRuntimeProgress(
     ]
   }
   return [progressEvent, ...events]
+}
+
+function injectActiveTask(
+  events: Awaited<ReturnType<TranscriptStore['readAll']>>,
+  prompt: string,
+  config: RuntimeProjectConfig | undefined,
+): Awaited<ReturnType<TranscriptStore['readAll']>> {
+  const lines = [
+    '<vigilon_active_task>',
+    `original_user_task=${JSON.stringify(prompt)}`,
+    'Keep subsequent tool use and the final answer anchored to this task. Do not drift into adjacent reference code, examples, or implementation summaries unless the user asked for that comparison.',
+  ]
+  if (config?.ignore.length) {
+    lines.push(`ignored_path_patterns=${JSON.stringify(config.ignore)}`)
+    lines.push('Respect ignored path patterns as hard task boundaries for search, reading, and summaries.')
+  }
+  lines.push('</vigilon_active_task>')
+
+  const taskEvent: Extract<TranscriptEvent, { type: 'user' }> = {
+    type: 'user',
+    content: lines.join('\n'),
+    timestamp: createTimestamp(),
+  }
+
+  const insertAfter = countLeadingRuntimeStateEvents(events)
+  return [
+    ...events.slice(0, insertAfter),
+    taskEvent,
+    ...events.slice(insertAfter),
+  ]
+}
+
+function countLeadingRuntimeStateEvents(
+  events: Awaited<ReturnType<TranscriptStore['readAll']>>,
+): number {
+  let index = 0
+  while (index < events.length) {
+    const event = events[index]
+    if (
+      event?.type === 'compact-boundary' ||
+      (event?.type === 'user' &&
+        (event.content.includes('<vigilon_session_memory') ||
+          event.content.includes('<vigilon_capability_replay>') ||
+          event.content.includes('<vigilon_runtime_progress>')))
+    ) {
+      index += 1
+      continue
+    }
+    break
+  }
+  return index
 }
 
 async function loadSessionMemory(options: {

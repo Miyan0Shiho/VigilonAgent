@@ -294,6 +294,7 @@ describe('transcript persistence', () => {
     expect(observedRequests[0]?.map(event => event.type)).toEqual([
       'user',
       'user',
+      'user',
       'assistant',
       'tool-call',
       'session-state',
@@ -307,6 +308,12 @@ describe('transcript persistence', () => {
         event.content.includes('<vigilon_runtime_progress>'),
     )
     expect(progress?.content).toContain('- in_progress resume: Keep resumed state')
+    const activeTask = observedRequests[0]?.find(
+      event =>
+        event.type === 'user' &&
+        event.content.includes('<vigilon_active_task>'),
+    )
+    expect(activeTask?.content).toContain('original_user_task="second turn"')
     expect(result?.report.todos).toMatchObject([
       { id: 'resume', status: 'in_progress' },
     ])

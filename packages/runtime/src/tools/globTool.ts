@@ -5,6 +5,7 @@ import type { Tool, ToolResult, ToolUseContext } from '../runtime/contracts.js'
 import { isUncPath, resolveToolPath, toRelativeToolPath } from './path.js'
 
 const DEFAULT_MAX_RESULTS = 100
+const BROAD_QUERY_GROUP_LIMIT = 12
 const DEFAULT_EXCLUDED_DIRECTORIES = new Set([
   '.git',
   '.svn',
@@ -77,6 +78,7 @@ export const GlobTool: Tool = {
     const ignoreMatchers = (context.projectConfig?.ignore ?? []).map(createGlobMatcher)
     const matches: string[] = []
     let truncated = false
+    const broadQuery = isBroadGlobQuery(parsed)
     await walk(root, async filePath => {
       const relativeFromRoot = path.relative(root, filePath).split(path.sep).join('/')
       const relativeFromCwd = toRelativeToolPath(context.cwd, filePath)
@@ -94,6 +96,21 @@ export const GlobTool: Tool = {
     }, context.abortSignal)
 
     matches.sort()
+    if (truncated && broadQuery) {
+      return {
+        toolCallId: '',
+        ok: true,
+        content: formatBroadGlobResult(matches, maxResults),
+        metadata: {
+          filenames: matches,
+          numFiles: matches.length,
+          truncated,
+          broadQuery: true,
+          directoryGroups: groupPathsByDirectory(matches),
+        },
+      }
+    }
+
     const content =
       matches.length === 0
         ? 'No files found'
@@ -126,6 +143,45 @@ function isIgnored(
   return ignoreMatchers.some(
     matcher => matcher(relativeFromRoot) || matcher(relativeFromCwd),
   )
+}
+
+function isBroadGlobQuery(input: GlobInput): boolean {
+  const pattern = input.pattern?.trim().replace(/\/+$/, '')
+  if (!pattern) return false
+  if (pattern === '*' || pattern === '**' || pattern === '**/*' || pattern === '**/*.*') {
+    return true
+  }
+  return /(?:^|\/)\*\*$/.test(pattern) || /(?:^|\/)\*\*\/\*$/.test(pattern)
+}
+
+function formatBroadGlobResult(matches: readonly string[], maxResults: number): string {
+  const groups = groupPathsByDirectory(matches)
+  const lines = [
+    `Broad Glob query was truncated after ${maxResults} files.`,
+    'Directory groups from the returned sample:',
+    ...groups.slice(0, BROAD_QUERY_GROUP_LIMIT).map(group => `- ${group.directory}: ${group.count}`),
+    '',
+    'Rerun Glob with a narrower path or pattern, for example `src/**/*.ts`, `packages/<name>/src/**/*.ts`, or a specific filename pattern.',
+  ]
+  return lines.join('\n')
+}
+
+function groupPathsByDirectory(paths: readonly string[]): Array<{ directory: string; count: number }> {
+  const counts = new Map<string, number>()
+  for (const filePath of paths) {
+    const group = directoryGroup(filePath)
+    counts.set(group, (counts.get(group) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .map(([directory, count]) => ({ directory, count }))
+    .sort((a, b) => b.count - a.count || a.directory.localeCompare(b.directory))
+}
+
+function directoryGroup(filePath: string): string {
+  const parts = filePath.split('/').filter(Boolean)
+  if (parts.length === 0) return '.'
+  if (parts.length === 1) return '.'
+  return parts.slice(0, Math.min(2, parts.length - 1)).join('/')
 }
 
 async function walk(

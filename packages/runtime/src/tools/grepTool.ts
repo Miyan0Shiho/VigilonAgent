@@ -7,6 +7,8 @@ import { isUncPath, resolveToolPath, toRelativeToolPath } from './path.js'
 
 const execFileAsync = promisify(execFile)
 const DEFAULT_HEAD_LIMIT = 250
+const BROAD_QUERY_FILE_THRESHOLD = 80
+const BROAD_QUERY_GROUP_LIMIT = 12
 const DEFAULT_DIRECTORIES_TO_EXCLUDE = [
   '.git',
   '.svn',
@@ -125,6 +127,26 @@ export const GrepTool: Tool = {
       })
     }
 
+    const allFilenames = lines.map(filePath => normalizeRipgrepPath(context.cwd, filePath))
+    if (
+      isBroadGrepQuery({
+        parsed,
+        outputMode,
+        resultCount: allFilenames.length,
+        directoryGroupCount: groupPathsByDirectory(allFilenames).length,
+      })
+    ) {
+      return ok(formatBroadGrepResult(allFilenames, parsed.pattern), {
+        mode: outputMode,
+        filenames: allFilenames.slice(0, DEFAULT_HEAD_LIMIT),
+        numFiles: allFilenames.length,
+        appliedLimit,
+        appliedOffset: offset || undefined,
+        broadQuery: true,
+        directoryGroups: groupPathsByDirectory(allFilenames),
+      })
+    }
+
     const filenames = items.map(filePath => normalizeRipgrepPath(context.cwd, filePath))
     const content =
       filenames.length === 0
@@ -138,6 +160,53 @@ export const GrepTool: Tool = {
       appliedOffset: offset || undefined,
     })
   },
+}
+
+function isBroadGrepQuery(options: {
+  parsed: GrepInput
+  outputMode: 'content' | 'files_with_matches' | 'count'
+  resultCount: number
+  directoryGroupCount: number
+}): boolean {
+  if (options.outputMode !== 'files_with_matches') return false
+  if (options.parsed.offset !== undefined) return false
+  if (options.parsed.head_limit === 0) return false
+  if (options.resultCount < BROAD_QUERY_FILE_THRESHOLD) return false
+  if (options.directoryGroupCount < 2) return false
+  return isLowSpecificityPattern(options.parsed.pattern ?? '')
+}
+
+function isLowSpecificityPattern(pattern: string): boolean {
+  const literalChars = pattern.replace(/\\.|[^\p{L}\p{N}_-]/gu, '')
+  return literalChars.length <= 24
+}
+
+function formatBroadGrepResult(filenames: readonly string[], pattern: string | undefined): string {
+  const groups = groupPathsByDirectory(filenames)
+  return [
+    `Broad Grep query${pattern ? ` for "${pattern}"` : ''} matched ${filenames.length} files.`,
+    'Directory groups:',
+    ...groups.slice(0, BROAD_QUERY_GROUP_LIMIT).map(group => `- ${group.directory}: ${group.count}`),
+    '',
+    'Rerun Grep with a narrower `path`, `glob`, `type`, or more specific pattern before reading files.',
+  ].join('\n')
+}
+
+function groupPathsByDirectory(paths: readonly string[]): Array<{ directory: string; count: number }> {
+  const counts = new Map<string, number>()
+  for (const filePath of paths) {
+    const group = directoryGroup(filePath)
+    counts.set(group, (counts.get(group) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .map(([directory, count]) => ({ directory, count }))
+    .sort((a, b) => b.count - a.count || a.directory.localeCompare(b.directory))
+}
+
+function directoryGroup(filePath: string): string {
+  const parts = filePath.replace(/^\.\//, '').split('/').filter(Boolean)
+  if (parts.length <= 1) return '.'
+  return parts.slice(0, Math.min(2, parts.length - 1)).join('/')
 }
 
 function toRipgrepTarget(cwd: string, absolutePath: string): string {

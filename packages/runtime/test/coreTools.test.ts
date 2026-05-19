@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
+  BashTool,
   createLocalPermissionGate,
   GlobTool,
   GrepTool,
@@ -115,6 +116,49 @@ describe('core file tools', () => {
     expect(result.content).not.toContain('.vigilon/session.jsonl')
     expect(result.content).not.toContain('.trae/documents/plan.md')
     expect(result.content).not.toContain('packages/runtime/dist/app.js')
+  })
+
+  it('Glob summarizes broad truncated root searches instead of dumping path lists', async () => {
+    const files: Record<string, string> = {}
+    for (let index = 0; index < 8; index += 1) {
+      files[`packages/runtime/src/file${index}.ts`] = 'source\n'
+      files[`packages/tui/src/file${index}.ts`] = 'source\n'
+      files[`docs/product/file${index}.md`] = 'doc\n'
+    }
+    const cwd = await createFixture(files)
+
+    const result = await GlobTool.invoke(
+      { pattern: '**/*' },
+      createContext(cwd, { globLimits: { maxResults: 10 } }),
+    )
+
+    expect(result.ok).toBe(true)
+    expect(result.metadata).toMatchObject({ broadQuery: true, truncated: true })
+    expect(result.content).toContain('Broad Glob query was truncated')
+    expect(result.content).toContain('Directory groups')
+    expect(result.content).toContain('Rerun Glob with a narrower path or pattern')
+  })
+
+  it('Glob summarizes broad truncated subtree patterns', async () => {
+    const files: Record<string, string> = {}
+    for (let index = 0; index < 8; index += 1) {
+      files[`packages/runtime/src/file${index}.ts`] = 'source\n'
+      files[`packages/tui/src/file${index}.ts`] = 'source\n'
+      files[`docs/product/file${index}.md`] = 'doc\n'
+    }
+    const cwd = await createFixture(files)
+
+    const result = await GlobTool.invoke(
+      { pattern: 'packages/**' },
+      createContext(cwd, { globLimits: { maxResults: 10 } }),
+    )
+
+    expect(result.ok).toBe(true)
+    expect(result.metadata).toMatchObject({ broadQuery: true, truncated: true })
+    expect(result.content).toContain('Broad Glob query was truncated')
+    expect(result.content).toContain('- packages/runtime:')
+    expect(result.content).toContain('- packages/tui:')
+    expect(result.content).not.toContain('file0.ts')
   })
 
   it('Grep supports files_with_matches, content, and count modes', async () => {
@@ -235,6 +279,114 @@ describe('core file tools', () => {
     expect(result.content).toContain('packages/runtime/src/skill.ts')
     expect(result.content).not.toContain('docs/research/skill.ts')
     expect(result.content).not.toContain('nested/.research/skill.ts')
+  })
+
+  it('Grep summarizes broad root searches instead of dumping large file lists', async () => {
+    const files: Record<string, string> = {}
+    for (let index = 0; index < 45; index += 1) {
+      files[`packages/runtime/src/skill${index}.ts`] = 'skill source\n'
+      files[`packages/tui/src/skill${index}.ts`] = 'skill source\n'
+    }
+    const cwd = await createFixture(files)
+
+    const result = await GrepTool.invoke(
+      { pattern: 'skill', output_mode: 'files_with_matches' },
+      createContext(cwd),
+    )
+
+    expect(result.ok).toBe(true)
+    expect(result.metadata).toMatchObject({ broadQuery: true, numFiles: 90 })
+    expect(result.content).toContain('Broad Grep query for "skill" matched 90 files')
+    expect(result.content).toContain('- packages/runtime:')
+    expect(result.content).toContain('- packages/tui:')
+    expect(result.content).toContain('Rerun Grep with a narrower')
+    expect(result.content).not.toContain('skill0.ts')
+  })
+
+  it('Grep returns normal file lists for narrowed searches', async () => {
+    const files: Record<string, string> = {}
+    for (let index = 0; index < 45; index += 1) {
+      files[`packages/runtime/src/skill${index}.ts`] = 'skill source\n'
+      files[`packages/tui/src/skill${index}.ts`] = 'skill source\n'
+    }
+    const cwd = await createFixture(files)
+
+    const result = await GrepTool.invoke(
+      {
+        pattern: 'skill',
+        path: 'packages/runtime',
+        output_mode: 'files_with_matches',
+      },
+      createContext(cwd),
+    )
+
+    expect(result.ok).toBe(true)
+    expect(result.metadata).not.toMatchObject({ broadQuery: true })
+    expect(result.content).toContain('packages/runtime/src/skill0.ts')
+  })
+
+  it('Grep summarizes broad multi-package subtree searches', async () => {
+    const files: Record<string, string> = {}
+    for (let index = 0; index < 45; index += 1) {
+      files[`packages/runtime/src/skill${index}.ts`] = 'skill source\n'
+      files[`packages/tui/src/skill${index}.ts`] = 'skill source\n'
+      files[`packages/bench/src/other${index}.ts`] = 'not relevant\n'
+    }
+    const cwd = await createFixture(files)
+
+    const result = await GrepTool.invoke(
+      {
+        pattern: 'skill',
+        path: 'packages',
+        glob: '*.ts',
+        output_mode: 'files_with_matches',
+      },
+      createContext(cwd),
+    )
+
+    expect(result.ok).toBe(true)
+    expect(result.metadata).toMatchObject({ broadQuery: true, numFiles: 90 })
+    expect(result.content).toContain('Broad Grep query for "skill" matched 90 files')
+    expect(result.content).toContain('- packages/runtime:')
+    expect(result.content).toContain('- packages/tui:')
+    expect(result.content).not.toContain('skill0.ts')
+  })
+
+  it('Bash warns on broad find scans that return path output', async () => {
+    const cwd = await createFixture({
+      'packages/runtime/src/SKILL.md': 'runtime\n',
+    })
+
+    const result = await BashTool.invoke(
+      { command: "find . -name 'SKILL.md'" },
+      createContext(cwd),
+    )
+
+    expect(result.ok).toBe(true)
+    expect(result.metadata).toMatchObject({ broadShellScan: true })
+    expect(result.content).toContain('Broad Bash filesystem scan detected')
+    expect(result.content).toContain('packages/runtime/src/SKILL.md')
+  })
+
+  it('Bash summarizes large broad find path lists', async () => {
+    const files: Record<string, string> = {}
+    for (let index = 0; index < 35; index += 1) {
+      files[`packages/runtime/src/file${index}.ts`] = 'source\n'
+      files[`packages/tui/src/file${index}.ts`] = 'source\n'
+    }
+    const cwd = await createFixture(files)
+
+    const result = await BashTool.invoke(
+      { command: 'find . -type f' },
+      createContext(cwd),
+    )
+
+    expect(result.ok).toBe(true)
+    expect(result.metadata).toMatchObject({ broadShellScan: true })
+    expect(result.content).toContain('Path-like output was summarized after 70 lines')
+    expect(result.content).toContain('- packages/runtime:')
+    expect(result.content).toContain('- packages/tui:')
+    expect(result.content).not.toContain('file0.ts')
   })
 
   it('Read rejects project ignored paths', async () => {
