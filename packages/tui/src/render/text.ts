@@ -5,6 +5,15 @@ import type {
   TuiSessionSummary,
   TuiToolActivity,
 } from '../runtime/types.js'
+import { formatCommandHelpLines } from '../runtime/commandCatalog.js'
+import { buildOperatorViewModel, type TuiOperatorViewModel } from '../runtime/operatorView.js'
+import {
+  buildTurnTimeline,
+  displayToolName,
+  isFocusedControlTool,
+  type TuiTurnTimelineItem,
+} from '../runtime/turnView.js'
+import { renderMarkdownToAnsi } from './markdown.js'
 
 export function renderShellFrame(input: {
   cwd: string
@@ -14,100 +23,85 @@ export function renderShellFrame(input: {
   sessions: TuiSessionSummary[]
   events: TuiRuntimeEvent[]
   status: string
+  showSessions?: boolean
+  detailMode?: boolean
 }): string {
+  const operator = buildOperatorViewModel({
+    sessions: input.sessions,
+    events: input.events,
+    status: input.status,
+    running: input.status.startsWith('running'),
+    detailMode: input.detailMode ?? false,
+  })
+  const timeline = operator.turn.timeline.length > 0 ? renderTimeline(operator.turn.timeline) : []
+
   return [
     '',
-    '╭─ Vigilon Operator Shell ────────────────────────────────────────────────╮',
-    `│ ${padRight('Claude-like local operator surface', 70)} │`,
-    `│ ${padRight(`cwd ${input.cwd}`, 70)} │`,
-    `│ ${padRight(`model ${input.model ?? 'deepseek-v4-flash'}   permission ${input.permissionMode ?? 'ask'}`, 70)} │`,
-    `│ ${padRight(`sessions ${input.sessionsDir ?? 'default .vigilon/sessions'}`, 70)} │`,
-    '╰────────────────────────────────────────────────────────────────────────╯',
-    '',
-    '╭─ Sessions / tasks ─────────────────────────────────────────────────────╮',
-    ...renderSessionRows(input.sessions),
-    '╰────────────────────────────────────────────────────────────────────────╯',
-    '',
-    '╭─ Conversation ─────────────────────────────────────────────────────────╮',
-    ...(input.events.length > 0 ? input.events.flatMap(renderRuntimeEvent) : ['  no active messages']),
-    '╰────────────────────────────────────────────────────────────────────────╯',
-    '',
-    renderComposer(input.status),
+    `✳ Vigilon Operator Shell                                                  ${operator.title}`,
+    `${operator.headline} · ${operator.nextAction}`,
+    ...timeline,
+    ...(input.showSessions || operator.sessions.attentionCount > 0 ? [
+      '',
+      ...renderSessionRows(operator),
+    ] : []),
+    renderComposer(operator, formatComposerEnvironment(input)),
   ].join('\n')
 }
 
 export function renderHelp(): string {
   return [
     '',
-    '╭─ Help ─────────────────────────────────────────────────────────────────╮',
-    '│ <prompt>                         start a task                          │',
-    '│ /clear                           clear visible message stream           │',
-    '│ /sessions                        refresh session/task panel             │',
-    '│ /resume <index|session-id> ...    continue a session                    │',
-    '│ /approve <index|session-id> ...   approve pending plan and continue     │',
-    '│ /open <index|session-id>          inspect transcript preview             │',
-    '│ /doctor                          show runtime health                    │',
-    '│ /quit                            exit shell                             │',
-    '╰────────────────────────────────────────────────────────────────────────╯',
+    'help',
+    '  <prompt>                            Start a new agent task.',
+    ...formatCommandHelpLines().map(line => `  ${line}`),
   ].join('\n')
 }
 
 export function renderDoctor(data: Record<string, unknown>): string {
   return [
     '',
-    '╭─ Doctor ───────────────────────────────────────────────────────────────╮',
-    ...Object.entries(data).map(([key, value]) => frameLine(`${key}: ${formatValue(value)}`)),
-    '╰────────────────────────────────────────────────────────────────────────╯',
+    'doctor    Doctor',
+    ...Object.entries(data).map(([key, value]) => `  ${key}: ${formatValue(value)}`),
   ].join('\n')
 }
 
 export function renderSessionDetail(detail: TuiSessionDetail): string {
   return [
     '',
-    '╭─ Session detail ───────────────────────────────────────────────────────╮',
-    frameLine(`session ${detail.session.sessionId}`),
-    frameLine(`status ${detail.session.status}`),
-    frameLine(`title ${detail.session.title ?? 'untitled'}`),
-    frameLine(`handoff ${detail.session.hasHandoffReport ? 'recorded' : 'missing'}`),
-    frameLine(`transcript ${detail.session.transcriptPath}`),
-    detail.session.pendingPlan ? frameLine(`pending plan ${detail.session.pendingPlan}`) : '',
-    '├─ Recent transcript ───────────────────────────────────────────────────┤',
-    ...detail.recentEvents.map(line => frameLine(line)),
-    '╰────────────────────────────────────────────────────────────────────────╯',
+    `session    Session detail  ${detail.session.sessionId}`,
+    `  status ${detail.session.status}`,
+    `  title ${detail.session.title ?? 'untitled'}`,
+    `  handoff ${detail.session.hasHandoffReport ? 'recorded' : 'missing'}`,
+    `  transcript ${detail.session.transcriptPath}`,
+    detail.session.pendingPlan ? `  pending plan ${detail.session.pendingPlan}` : '',
+    ...detail.recentEvents.map(line => `  ${line}`),
   ].filter(Boolean).join('\n')
 }
 
-export function renderRuntimeEvent(event: TuiRuntimeEvent): string[] {
-  switch (event.type) {
-    case 'user':
-      return [`│ > ${truncate(event.content, 68).padEnd(68, ' ')} │`]
-    case 'assistant':
-      return [
-        ...(event.reasoning ? [`│ ✻ ${truncate(event.reasoning, 68).padEnd(68, ' ')} │`] : []),
-        `│   ${truncate(event.content || '(no text)', 68).padEnd(68, ' ')} │`,
-      ]
-    case 'working':
-      return [`│ ✻ ${truncate(event.content, 68).padEnd(68, ' ')} │`]
-    case 'tool':
-      return renderToolActivity(event.activity)
-    case 'permission':
-      return renderDialog('Permission required', event.lines, 'permission')
-    case 'ask-user':
-      return renderDialog('Operator question', event.lines, 'ask-user')
-    case 'hook':
-      return renderDialog('Hook blocked tool', event.lines, 'hook-block')
-    case 'error':
-      return [`│ ✗ ${truncate(event.content, 68).padEnd(68, ' ')} │`]
-    case 'handoff':
-      return renderHandoff(event.handoff)
+export function renderRuntimeEvent(
+  event: TuiRuntimeEvent,
+  options: { detailMode?: boolean; previousEvents?: TuiRuntimeEvent[] } = {},
+): string[] {
+  const detailMode = options.detailMode ?? false
+  if (!detailMode && event.type === 'tool' && event.activity.status !== 'error' && isFocusedControlTool(event.activity)) {
+    return []
   }
+  if (!detailMode && event.type === 'tool' && event.activity.status === 'running') {
+    return [`● running ${displayToolName(event.activity.name)}${event.activity.summary ? `  ${truncate(event.activity.summary, 96)}` : ''}`]
+  }
+  const previousEvents = options.previousEvents ?? []
+  const eventIndex = previousEvents.length
+  return renderTimeline(
+    buildTurnTimeline([...previousEvents, event], { detailMode })
+      .filter(item => item.key.startsWith(`${eventIndex}-`)),
+  )
 }
 
 export function renderToolActivity(activity: TuiToolActivity): string[] {
   const status =
     activity.status === 'running' ? 'running' : activity.status === 'ok' ? 'ok' : 'failed'
   const icon = activity.status === 'running' ? '●' : activity.status === 'ok' ? '✓' : '✗'
-  const toolName = renderToolName(activity.name)
+  const toolName = displayToolName(activity.name)
   return [
     `│ ${icon} ${padRight(`${toolName}  ${status}`, 68)} │`,
     `│   ${padRight(`tool        ${activity.name}  id=${activity.id}`, 68)} │`,
@@ -118,8 +112,8 @@ export function renderToolActivity(activity: TuiToolActivity): string[] {
 
 export function renderHandoff(handoff: TuiHandoff): string[] {
   return [
-    '├─ Result handoff ──────────────────────────────────────────────────────┤',
-    `│ ${padRight(`result      ${handoff.status}${handoff.missing ? '  ResultReport missing' : ''}`, 70)} │`,
+    '├─ Result ──────────────────────────────────────────────────────────────┤',
+    `│ ${padRight(`result      ${handoff.status}${handoff.missing ? '  missing final answer' : ''}`, 70)} │`,
     frameLine(`final ${handoff.finalMessage || '(no final message)'}`),
     frameLine(`changed ${handoff.changedFiles.length ? handoff.changedFiles.join(' | ') : 'none recorded'}`),
     frameLine(`verified ${handoff.verification.length ? handoff.verification.join(' | ') : 'none recorded'}`),
@@ -131,13 +125,66 @@ export function renderHandoff(handoff: TuiHandoff): string[] {
   ]
 }
 
-function renderSessionRows(sessions: TuiSessionSummary[]): string[] {
-  if (sessions.length === 0) return [frameLine('no sessions yet')]
-  return sessions.slice(0, 10).flatMap((session, index) => [
-    frameLine(`${String(index + 1).padStart(2, ' ')} ${session.status.padEnd(16, ' ')} ${truncate(session.title ?? session.sessionId, 44)}`),
-    frameLine(`   id=${session.sessionId} todos=${session.completedTodoCount}/${session.completedTodoCount + session.remainingTodoCount} verify=${session.verificationCount} handoff=${session.hasHandoffReport ? 'yes' : 'no'}`),
-    session.lastAction ? frameLine(`   last ${truncate(session.lastAction, 60)}`) : '',
-  ].filter(Boolean))
+function renderSessionRows(operator: TuiOperatorViewModel): string[] {
+  const model = operator.sessions
+  if (model.rows.length === 0) return ['sessions  no sessions yet']
+  return [
+    `sessions  ${model.headline}`,
+    ...model.visibleRows.flatMap(row => [
+      `${String(row.commandIndex).padStart(2, ' ')} ${row.label.padEnd(10, ' ')} ${truncate(row.title, 42)}  ${row.commandHint}`,
+      `   ${row.meta}`,
+      row.context ? `   ${truncate(row.context, 60)}` : '',
+    ].filter(Boolean)),
+    model.hiddenCount > 0 ? `   ... ${model.hiddenCount} more; use /sessions` : '',
+  ].filter(Boolean)
+}
+
+function renderTurnSummary(operator: TuiOperatorViewModel): string[] {
+  const model = operator.turn
+  const { overview, toolSummary } = model
+  const lines = [
+    `${overview.phase}; ${overview.status}; timeline=${model.timeline.length}; tools=${overview.tools.ok}/${overview.tools.total} ok`,
+  ]
+  if (toolSummary) {
+    lines.push(
+      `tools running=${toolSummary.running} ok=${toolSummary.ok} errors=${toolSummary.error}${
+        toolSummary.latest ? ` latest=${displayToolName(toolSummary.latest.name)} ${toolSummary.latest.status}` : ''
+      }`,
+    )
+  }
+  return [
+    ...lines,
+  ]
+}
+
+function renderTimeline(items: TuiTurnTimelineItem[]): string[] {
+  return items.flatMap(item => {
+    if (item.kind === 'user') return [`> ${truncate(item.detail, 120)}`]
+    if (item.kind === 'assistant') return renderAssistantMarkdown(item.detail)
+    if ((item.kind === 'tool' || item.kind === 'prompt' || item.kind === 'result') && !item.meta) {
+      return [`${timelineGlyph(item)} ${item.label.padEnd(10, ' ')} ${truncate(`${item.title}  ${item.detail}`, 96)}`]
+    }
+    return [
+      `${timelineGlyph(item)} ${item.label.padEnd(10, ' ')} ${truncate(item.title, 96)}`,
+      `  ${truncate(item.detail, 120)}`,
+      item.meta ? `  ${truncate(item.meta, 120)}` : '',
+      item.activity?.detail ? `  ${truncate(item.activity.detail, 120)}` : '',
+    ].filter(Boolean)
+  })
+}
+
+function renderAssistantMarkdown(value: string): string[] {
+  const rendered = renderMarkdownToAnsi(value, { width: 112, maxLines: 12 })
+  if (!rendered.trim()) return ['  (no text)']
+  return rendered.split('\n').map(line => `  ${line}`)
+}
+
+function timelineGlyph(item: TuiTurnTimelineItem): string {
+  if (item.kind === 'tool' && item.activity?.status === 'running') return '●'
+  if (item.tone === 'success') return '✓'
+  if (item.tone === 'danger') return '✗'
+  if (item.tone === 'warning') return '!'
+  return '·'
 }
 
 function renderDialog(title: string, lines: string[], marker: string): string[] {
@@ -153,32 +200,31 @@ function renderDialog(title: string, lines: string[], marker: string): string[] 
   ]
 }
 
-function renderComposer(status: string): string {
+function renderComposer(operator: TuiOperatorViewModel, environment?: string): string {
   return [
-    '╭─ Composer ─────────────────────────────────────────────────────────────╮',
-    `│ ${padRight(`status ${status}`, 70)} │`,
-    '│ vigilon ›                                                              │',
-    '│ /help /clear /sessions /resume /open /approve /doctor /quit            │',
-    '╰────────────────────────────────────────────────────────────────────────╯',
+    'vigilon ›',
+    formatComposerFooter(operator, environment),
   ].join('\n')
 }
 
-function renderToolName(name: string): string {
-  const labels: Record<string, string> = {
-    Read: 'Read',
-    Grep: 'Search',
-    Glob: 'Glob',
-    Edit: 'Edit',
-    Write: 'Write',
-    Bash: 'Bash',
-    WebFetch: 'Fetch',
-    Notebook: 'Notebook',
-    TaskStop: 'Stop task',
-    Agent: 'Agent',
-    ResultReport: 'ResultReport',
-    AskUserQuestion: 'Ask user',
+function formatComposerFooter(operator: TuiOperatorViewModel, environment?: string): string {
+  if (operator.mode === 'ready' || operator.mode === 'attention') {
+    return [environment, operator.commandHint].filter(Boolean).join(' · ')
   }
-  return labels[name] ?? name
+  return [operator.composerHint, environment, operator.commandHint].filter(Boolean).join(' · ')
+}
+
+function formatComposerEnvironment(input: {
+  cwd: string
+  model?: string
+  permissionMode?: string
+}): string {
+  return `${input.model ?? 'deepseek-v4-flash'} · ${input.permissionMode ?? 'ask'} · cwd ${basename(input.cwd)}`
+}
+
+function basename(path: string): string {
+  const normalized = path.replace(/\/+$/, '')
+  return normalized.split('/').filter(Boolean).at(-1) ?? path
 }
 
 function frameLine(value: string): string {

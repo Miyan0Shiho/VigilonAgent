@@ -19,6 +19,8 @@ async function main(): Promise<void> {
       'inspect the fixture and produce a handoff',
       '1',
       'y',
+      '/details',
+      '/details',
       '/sessions',
       '/open 1',
       '/resume 1 continue briefly',
@@ -26,21 +28,23 @@ async function main(): Promise<void> {
       '',
     ].join('\n'),
   )
+  const model = scriptedModel()
   const exitCode = await runTui(
     ['--cwd', cwd, '--sessions-dir', sessionsDir, '--permission-mode', 'ask'],
     io,
-    { createModelClient: () => scriptedModel() },
+    { createModelClient: () => model },
   )
+  const focusedAfterDetails = sliceBetween(io.stdoutText, 'details hidden', 'sessions  1 sessions')
 
   const checks = [
     exitCode === 0 ? 'new TUI exited cleanly' : `missing clean exit: ${exitCode}`,
     io.stdoutText.includes('Vigilon Operator Shell')
       ? 'started @vigilon/tui shell'
       : 'missing shell startup',
-    io.stdoutText.includes('tool        Read')
+    io.stdoutText.includes('Read running') || io.stdoutText.includes('Read ok')
       ? 'displayed Read tool activity'
       : 'missing Read tool activity',
-    io.stdoutText.includes('tool        Write')
+    io.stdoutText.includes('Write running') || io.stdoutText.includes('Write ok')
       ? 'displayed Write tool activity'
       : 'missing Write tool activity',
     io.stdoutText.includes('permission')
@@ -49,13 +53,28 @@ async function main(): Promise<void> {
     io.stdoutText.includes('ask-user')
       ? 'displayed AskUserQuestion block'
       : 'missing AskUserQuestion block',
-    io.stdoutText.includes('result      completed')
-      ? 'displayed ResultReport handoff'
-      : 'missing ResultReport handoff',
+    io.stdoutText.includes('Result completed') || io.stdoutText.includes('result completed')
+      ? 'displayed detail result evidence'
+      : 'missing detail result evidence',
+    io.stdoutText.includes('Resumed session by index and continued briefly.')
+      ? 'displayed text-only final result'
+      : 'missing text-only final result',
     io.stdoutText.includes('Session detail')
       ? 'opened session detail'
       : 'missing session detail',
-    io.stdoutText.includes('composer: running session 1')
+    !io.stdoutText.includes('no active messages') && !io.stdoutText.includes('status:') && !io.stdoutText.includes('mode prompt')
+      ? 'default frame omitted filler status chrome'
+      : 'missing focused default frame',
+    !io.stdoutText.includes(`sessions ${sessionsDir}`) && !io.stdoutText.includes(`cwd ${cwd}\n`)
+      ? 'default frame compacted environment chrome'
+      : 'missing compact environment chrome',
+    focusedAfterDetails && !focusedAfterDetails.includes('! ask-user') && !focusedAfterDetails.includes('! permission')
+      ? 'focused frame folded resolved operator prompts'
+      : 'missing resolved prompt folding',
+    focusedAfterDetails && !focusedAfterDetails.includes('Ask user') && !focusedAfterDetails.includes('ResultReport')
+      ? 'focused frame folded control tools'
+      : 'missing control tool folding',
+    io.stdoutText.includes('> continue briefly')
       ? 'resumed session by index'
       : 'missing resume by index',
   ]
@@ -71,6 +90,13 @@ async function main(): Promise<void> {
   await writeFile(path.join(root, 'stdout.txt'), io.stdoutText)
   await writeFile(path.join(root, 'stderr.txt'), io.stderrText)
   if (!passed) process.exitCode = 1
+}
+
+function sliceBetween(value: string, start: string, end: string): string {
+  const startIndex = value.indexOf(start)
+  if (startIndex < 0) return ''
+  const endIndex = value.indexOf(end, startIndex)
+  return value.slice(startIndex, endIndex < 0 ? undefined : endIndex)
 }
 
 function createIo(env: NodeJS.ProcessEnv, stdinText: string) {
@@ -154,13 +180,13 @@ function scriptedModel() {
       }
       if (call === 2) {
         return {
-          content: 'Phase 3.1 scripted TUI fixture completed.',
+          content: 'Resumed session by index and continued briefly.',
           stopReason: 'end_turn',
           toolCalls: [],
         }
       }
       return {
-        content: 'Resumed session by index and continued briefly.',
+        content: 'Additional text-only final result.',
         stopReason: 'end_turn',
         toolCalls: [],
       }

@@ -52,9 +52,9 @@ async function runWorkbenchTaskScenario(root: string): Promise<ScenarioResult> {
     io.stdoutText.includes('Vigilon Operator Shell')
       ? 'rendered operator shell'
       : 'missing operator shell',
-    io.stdoutText.includes('result      completed')
-      ? 'rendered result handoff'
-      : 'missing result handoff',
+    io.stdoutText.includes('workbench acceptance done')
+      ? 'rendered assistant final result'
+      : 'missing assistant final result',
     sessions.length === 1 ? 'session recorded' : `unexpected session count ${sessions.length}`,
   ]
 

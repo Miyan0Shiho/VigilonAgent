@@ -1,10 +1,25 @@
+export type PendingPromptChoice = {
+  key: string
+  label: string
+  value: string
+  description?: string
+}
+
+export type PendingPromptRequest = {
+  kind: 'permission' | 'question' | 'input'
+  title: string
+  lines: string[]
+  choices?: PendingPromptChoice[]
+}
+
 export type LineReader = {
-  question(prompt?: string): Promise<string>
+  question(prompt?: string | PendingPromptRequest): Promise<string>
   close(): void
 }
 
 export type PendingPrompt = {
   id: number
+  request?: PendingPromptRequest
   resolve(answer: string): void
 }
 
@@ -13,10 +28,15 @@ export class InteractivePromptController implements LineReader {
   private pending: PendingPrompt | null = null
   private listeners = new Set<(prompt: PendingPrompt | null) => void>()
 
-  question(): Promise<string> {
+  question(prompt?: string | PendingPromptRequest): Promise<string> {
     return new Promise(resolve => {
       this.pending = {
         id: this.nextId,
+        request: typeof prompt === 'string' ? {
+          kind: 'input',
+          title: prompt,
+          lines: [prompt],
+        } : prompt,
         resolve: answer => {
           resolve(answer)
           this.pending = null

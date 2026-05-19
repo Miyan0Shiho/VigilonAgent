@@ -145,8 +145,8 @@ export async function createNodeRuntimeAdapter(input: {
         operatorGuidance: [
           'You are running inside the Vigilon Operator TUI.',
           'Do not keep re-checking once the task is answered or verified.',
-          'Before finishing, call ResultReport exactly once with status-quality handoff fields: final_message, changes, verification_notes, unverified, and risks.',
-          'If no files changed or no risk remains, still call ResultReport with an explicit "None" entry.',
+          'When you have a user-facing conclusion, answer directly in the final assistant message.',
+          'Use ResultReport only when a structured audit handoff is useful; it is optional for ordinary answers.',
         ].join('\n'),
         stopAfterResultReport: true,
       })
@@ -314,7 +314,21 @@ function createTuiPermissionGate(input: {
             'decision: [y] allow / [n] deny / [s] allow similar',
           ],
         })
-        const raw = (await input.reader.question()).trim().toLowerCase()
+        const raw = (await input.reader.question({
+          kind: 'permission',
+          title: 'Permission required',
+          lines: [
+            `action: ${request.action}`,
+            `risk: ${request.risk}`,
+            `subject: ${request.subject}`,
+            `reason: ${request.reason}`,
+          ],
+          choices: [
+            { key: '1', label: 'Allow', value: 'y', description: 'Allow this tool call once.' },
+            { key: '2', label: 'Deny', value: 'n', description: 'Deny this tool call.' },
+            { key: '3', label: 'Allow similar', value: 's', description: 'Promote this permission mode for similar calls.' },
+          ],
+        })).trim().toLowerCase()
         if (raw === 's' || raw === 'similar') {
           currentMode = request.action === 'write' || request.action === 'edit'
             ? 'accept-edits'
@@ -357,7 +371,19 @@ function createTuiOperator(input: {
             ),
           ],
         })
-        const raw = (await input.reader.question()).trim()
+        const raw = (await input.reader.question({
+          kind: 'question',
+          title: `${question.header}: ${question.question}`,
+          lines: [
+            `${question.header}: ${question.question}`,
+          ],
+          choices: (question.options ?? []).map((option: any, index: number) => ({
+            key: String(index + 1),
+            label: String(option.label),
+            value: String(option.label),
+            description: typeof option.description === 'string' ? option.description : undefined,
+          })),
+        })).trim()
         const resolved = resolveAnswer(raw, question.options ?? [])
         if (!resolved) return null
         answers[question.question] = resolved
@@ -423,25 +449,33 @@ async function emitRecentHookBlocks(
 }
 
 function buildHandoff(result: any, transcriptPath: string): TuiHandoff {
-  const handoff = result.report.handoffReport
-  const changedFiles = handoff?.changes?.length
-    ? handoff.changes
-    : result.report.fileChanges.map((change: any) => `${change.type} ${change.filePath}`)
-  const verification = handoff?.verified?.length
-    ? handoff.verified
-    : result.report.verificationNotes
-  const missing = !handoff
+  const currentTurnEvents = getCurrentTurnEvents(result.events)
+  const currentTurnHandoff = currentTurnCalledResultReport(currentTurnEvents)
+    ? result.report.handoffReport
+    : undefined
+  const finalMessage = result.finalMessage || currentTurnHandoff?.finalMessage || ''
+  const changedFiles = currentTurnHandoff?.changes?.length
+    ? currentTurnHandoff.changes
+    : collectCurrentTurnFileChanges(currentTurnEvents)
+  const verification = currentTurnHandoff?.verified?.length
+    ? currentTurnHandoff.verified
+    : []
+  const missing = !finalMessage?.trim()
   return {
     status: result.report.status,
-    finalMessage: handoff?.finalMessage ?? result.finalMessage,
+    finalMessage,
     changedFiles,
     verification,
-    unverified: handoff?.unverified?.length
-      ? handoff.unverified
-      : ['No ResultReport unverified list was recorded.'],
-    risks: handoff?.risks?.length
-      ? handoff.risks
-      : ['No ResultReport risk list was recorded.'],
+    unverified: currentTurnHandoff?.unverified?.length
+      ? currentTurnHandoff.unverified
+      : currentTurnHandoff
+        ? ['None']
+        : ['No structured ResultReport was recorded.'],
+    risks: currentTurnHandoff?.risks?.length
+      ? currentTurnHandoff.risks
+      : currentTurnHandoff
+        ? ['None']
+        : ['No structured ResultReport was recorded.'],
     todos: result.report.todos.map((todo: any) => `${todo.status}:${todo.content}`),
     transcriptPath,
     nextAction: result.report.status === 'completed'
@@ -449,6 +483,49 @@ function buildHandoff(result: any, transcriptPath: string): TuiHandoff {
       : 'Use /open then /resume to recover.',
     missing,
   }
+}
+
+function getCurrentTurnEvents(events: readonly any[]): readonly any[] {
+  const lastUserIndex = findLastIndex(events, event => event?.type === 'user')
+  return events.slice(Math.max(0, lastUserIndex))
+}
+
+function currentTurnCalledResultReport(events: readonly any[]): boolean {
+  return events
+    .some(event => event?.type === 'tool-call' && event.call?.name === 'ResultReport')
+}
+
+function collectCurrentTurnFileChanges(events: readonly any[]): string[] {
+  const toolCallsById = new Map(
+    events
+      .filter(event => event?.type === 'tool-call')
+      .map(event => [event.call?.id, event.call?.name]),
+  )
+  return events
+    .filter(event => event?.type === 'tool-result')
+    .flatMap(event => {
+      const result = event.result
+      const metadata = result?.metadata
+      if (
+        !result?.ok ||
+        typeof metadata?.filePath !== 'string' ||
+        (metadata.type !== 'create' && metadata.type !== 'update')
+      ) {
+        return []
+      }
+      const toolName = toolCallsById.get(result.toolCallId) ?? 'unknown'
+      return [`${metadata.type} ${metadata.filePath} (${toolName})`]
+    })
+}
+
+function findLastIndex<T>(
+  values: readonly T[],
+  predicate: (value: T) => boolean,
+): number {
+  for (let index = values.length - 1; index >= 0; index -= 1) {
+    if (predicate(values[index] as T)) return index
+  }
+  return -1
 }
 
 function resolveSessionSelector(selector: string, sessions: TuiSessionSummary[]): TuiSessionSummary | undefined {

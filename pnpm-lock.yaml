@@ -312,12 +312,27 @@ importers:
 
   packages/tui:
     dependencies:
+      chalk:
+        specifier: ^5.4.1
+        version: 5.6.2
       ink:
         specifier: ^7.0.2
         version: 7.0.2(@types/react@19.2.14)(react@19.2.6)
+      marked:
+        specifier: ^15.0.7
+        version: 15.0.12
       react:
         specifier: ^19.2.6
         version: 19.2.6
+      string-width:
+        specifier: ^8.2.1
+        version: 8.2.1
+      strip-ansi:
+        specifier: ^7.1.0
+        version: 7.2.0
+      wrap-ansi:
+        specifier: ^9.0.0
+        version: 9.0.2
     devDependencies:
       '@types/node':
         specifier: ^24.10.0

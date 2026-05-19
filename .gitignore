@@ -17,6 +17,8 @@ build/
 *.log
 coverage/
 .nyc_output/
+.vigilon/
+**/.vigilon/
 
 # 编辑器与工具
 .vscode/

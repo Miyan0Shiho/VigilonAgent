@@ -670,7 +670,7 @@ describe('runtime CLI', () => {
     })
   })
 
-  it('runs the lightweight workbench and prints a result handoff', async () => {
+  it('runs the lightweight workbench and prints a focused final answer', async () => {
     const cwd = await createTempRoot('vigilon-cli-tui-cwd-')
     const sessionsDir = await createTempRoot('vigilon-cli-tui-sessions-')
     const io = createIo(
@@ -690,8 +690,9 @@ describe('runtime CLI', () => {
 
     expect(exitCode).toBe(0)
     expect(io.stdoutText).toContain('Vigilon Operator Shell')
-    expect(io.stdoutText).toContain('composer: running new task')
-    expect(io.stdoutText).toContain('result      completed')
+    expect(io.stdoutText).toContain('> inspect current runtime state')
+    expect(io.stdoutText).not.toContain('status:')
+    expect(io.stdoutText).not.toContain('mode prompt')
     expect(io.stdoutText).toContain('workbench completed')
   })
 })

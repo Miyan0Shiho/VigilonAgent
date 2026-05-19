@@ -21,8 +21,13 @@
     "phase3.1:acceptance": "tsx scripts/phase31-tui-acceptance.ts"
   },
   "dependencies": {
+    "chalk": "^5.4.1",
     "ink": "^7.0.2",
-    "react": "^19.2.6"
+    "marked": "^15.0.7",
+    "react": "^19.2.6",
+    "string-width": "^8.2.1",
+    "strip-ansi": "^7.1.0",
+    "wrap-ansi": "^9.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.10.0",
