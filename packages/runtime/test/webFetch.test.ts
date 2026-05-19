@@ -85,6 +85,54 @@ describe('WebFetchTool', () => {
       },
     })
   })
+
+  it('caches normalized fetch results by URL', async () => {
+    let calls = 0
+    const cache = new Map()
+    const context = createContext('/tmp/project', {
+      permissionGate: createLocalPermissionGate({ mode: 'bypass-local' }),
+      webFetch: {
+        cache,
+        fetch: async () => {
+          calls += 1
+          return new Response('<h1>Cached</h1>', {
+            status: 200,
+            headers: { 'content-type': 'text/html' },
+          })
+        },
+      },
+    })
+
+    const first = await WebFetchTool.invoke({ url: 'https://example.com/cache' }, context)
+    const second = await WebFetchTool.invoke({ url: 'https://example.com/cache' }, context)
+
+    expect(first.ok).toBe(true)
+    expect(second.ok).toBe(true)
+    expect(calls).toBe(1)
+    expect(second.metadata).toMatchObject({ cache: 'hit' })
+  })
+
+  it('uses secondary summarization when normalized content exceeds budget', async () => {
+    const result = await WebFetchTool.invoke(
+      { url: 'https://example.com/large' },
+      createContext('/tmp/project', {
+        permissionGate: createLocalPermissionGate({ mode: 'bypass-local' }),
+        webFetch: {
+          maxContentChars: 20,
+          fetch: async () =>
+            new Response(`<p>${'alpha '.repeat(20)}</p>`, {
+              status: 200,
+              headers: { 'content-type': 'text/html' },
+            }),
+          summarize: async ({ url }) => `summary for ${url}`,
+        },
+      }),
+    )
+
+    expect(result.ok).toBe(true)
+    expect(result.content).toBe('summary for https://example.com/large')
+    expect(result.metadata).toMatchObject({ summarized: true })
+  })
 })
 
 function createContext(

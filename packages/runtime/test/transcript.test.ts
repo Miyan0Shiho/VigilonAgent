@@ -59,7 +59,50 @@ describe('transcript persistence', () => {
       {
         sessionId: 'session-a',
         eventCount: 2,
+        status: 'recoverable',
+        title: 'hello',
         firstUserMessage: 'hello',
+        finalMessage: 'world',
+      },
+    ])
+  })
+
+  it('derives workbench-facing session summary fields from transcript state', async () => {
+    const cwd = await createTempRoot('vigilon-transcript-summary-project-')
+    const sessionsDir = await createTempRoot('vigilon-transcript-summary-sessions-')
+    const store = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'plan-waiting',
+    })
+
+    await store.append({
+      type: 'user',
+      content: 'Plan the runtime packaging work',
+      timestamp: '2026-05-18T00:00:00.000Z',
+    })
+    await store.append({
+      type: 'session-state',
+      phase: 'plan',
+      permissionMode: 'read-only',
+      prePlanPermissionMode: 'accept-edits',
+      todos: [
+        { id: 'spec', content: 'Write plan', status: 'completed' },
+        { id: 'verify', content: 'Run checks', status: 'pending' },
+      ],
+      pendingPlan: '1. Package\n2. Verify',
+      verificationNotes: ['pnpm typecheck'],
+      timestamp: '2026-05-18T00:00:01.000Z',
+    })
+
+    expect(await listSessions({ cwd, sessionsDir })).toMatchObject([
+      {
+        sessionId: 'plan-waiting',
+        status: 'waiting_approval',
+        pendingPlan: '1. Package\n2. Verify',
+        verificationCount: 1,
+        completedTodoCount: 1,
+        remainingTodoCount: 1,
       },
     ])
   })
@@ -344,6 +387,66 @@ describe('transcript persistence', () => {
       'Use the filesystem MCP server for descriptors.',
     ])
     expect((resume.sessionState as any).memoryFreshness).toBe('stale')
+  })
+
+  it('records compact strategy and capability deltas in compact metadata', async () => {
+    const cwd = await createTempRoot('vigilon-transcript-compact-delta-')
+    const store = new JsonlTranscriptStore({
+      transcriptPath: path.join(cwd, 'compact-delta.jsonl'),
+      sessionId: 'compact-delta',
+    })
+    await store.append({
+      type: 'user',
+      content: 'compact with deltas',
+      timestamp: '2026-05-18T00:00:00Z',
+    })
+
+    await compactTranscript({
+      transcript: store,
+      summary: 'memory summary',
+      strategy: 'session-memory',
+      sessionState: {
+        phase: 'execute',
+        permissionMode: 'ask',
+        todos: [],
+        verificationNotes: [],
+        backgroundTasks: [],
+        discoveredToolNames: ['LSP'],
+        toolReferenceDeltas: [
+          {
+            name: 'LSP',
+            reason: 'ToolSearch materialized LSP',
+            schemaHash: 'hash',
+            discoveredAt: '2026-05-18T00:00:00Z',
+          },
+        ],
+        mcpInstructions: [],
+        activeSkill: {
+          name: 'reader',
+          allowedTools: ['Read'],
+          activatedAt: '2026-05-18T00:00:00Z',
+        },
+      },
+    })
+
+    const resume = await resumeSessionFromTranscript(store.transcriptPath)
+    expect(resume.sessionState.toolReferenceDeltas).toHaveLength(1)
+    expect(resume.sessionState.activeSkill).toMatchObject({
+      name: 'reader',
+      allowedTools: ['Read'],
+    })
+    const boundary = resume.events.at(-1)
+    expect(boundary).toMatchObject({
+      type: 'compact-boundary',
+      metadata: {
+        toolReferenceDeltas: [
+          expect.objectContaining({ name: 'LSP' }),
+        ],
+        modelParams: expect.objectContaining({
+          compactStrategy: 'session-memory',
+        }),
+      },
+    })
   })
 })
 

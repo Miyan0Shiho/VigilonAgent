@@ -1,10 +1,31 @@
 import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
 import type { Tool, ToolResult, ToolUseContext } from '../runtime/contracts.js'
+import { createTimestamp } from '../runtime/transcript.js'
 
 const execAsync = promisify(exec)
 const DEFAULT_TIMEOUT_MS = 30_000
 const DEFAULT_MAX_OUTPUT_CHARS = 20_000
+const DEFAULT_OUTPUT_IGNORE_PATTERNS = [
+  '.vigilon',
+  '.vigilon/**',
+  '**/.vigilon/**',
+  '.trae',
+  '.trae/**',
+  '**/.trae/**',
+  'node_modules',
+  'node_modules/**',
+  '**/node_modules/**',
+  'dist',
+  'dist/**',
+  '**/dist/**',
+  'build',
+  'build/**',
+  '**/build/**',
+  'coverage',
+  'coverage/**',
+  '**/coverage/**',
+]
 const LOW_RISK_COMMANDS = new Set([
   'cat',
   'head',
@@ -99,6 +120,42 @@ export const BashTool: Tool = {
 
     if (parsed.background) {
       const taskId = await context.taskManager.startBashTask(parsed.command, context.cwd)
+      if (context.sessionState) {
+        context.sessionState.backgroundTasks = context.taskManager.activeTasks.map(task => ({
+          ...task,
+        }))
+        await context.transcript.append({
+          type: 'session-state',
+          phase: context.sessionState.phase,
+          permissionMode: context.sessionState.permissionMode,
+          prePlanPermissionMode: context.sessionState.prePlanPermissionMode ?? null,
+          todos: context.sessionState.todos.map(todo => ({ ...todo })),
+          approvedPlan: context.sessionState.approvedPlan ?? null,
+          pendingPlan: context.sessionState.pendingPlan ?? null,
+          handoffReport: context.sessionState.handoffReport
+            ? {
+                finalMessage: context.sessionState.handoffReport.finalMessage,
+                changes: [...context.sessionState.handoffReport.changes],
+                verified: [...context.sessionState.handoffReport.verified],
+                unverified: [...context.sessionState.handoffReport.unverified],
+                risks: [...context.sessionState.handoffReport.risks],
+              }
+            : null,
+          verificationNotes: [...context.sessionState.verificationNotes],
+          backgroundTasks: context.sessionState.backgroundTasks.map(task => ({ ...task })),
+          discoveredToolNames: [...context.sessionState.discoveredToolNames],
+          toolReferenceDeltas: [...context.sessionState.toolReferenceDeltas],
+          mcpInstructions: [...context.sessionState.mcpInstructions],
+          activeSkill: context.sessionState.activeSkill
+            ? { ...context.sessionState.activeSkill }
+            : null,
+          memoryFreshness: context.sessionState.memoryFreshness ?? null,
+          systemPrompt: context.sessionState.systemPrompt ?? null,
+          toolSchema: context.sessionState.toolSchema ?? null,
+          modelParams: context.sessionState.modelParams ?? null,
+          timestamp: createTimestamp(),
+        })
+      }
       return ok(`Command started in background. Task ID: ${taskId}`, {
         taskId,
         status: 'running',
@@ -117,9 +174,17 @@ export const BashTool: Tool = {
         timeout,
         maxBuffer: Math.max(maxOutputChars * 4, 1024 * 1024),
       })
-      return ok(formatShellOutput(stdout, stderr, maxOutputChars), {
+      const filtered = filterProjectIgnoredShellOutput(
+        stdout,
+        stderr,
+        context.projectConfig?.ignore ?? [],
+      )
+      return ok(formatShellOutput(filtered.stdout, filtered.stderr, maxOutputChars), {
         exitCode: 0,
-        truncated: stdout.length + stderr.length > maxOutputChars,
+        truncated: filtered.stdout.length + filtered.stderr.length > maxOutputChars,
+        ...(filtered.filteredLines > 0
+          ? { filteredProjectIgnoredLines: filtered.filteredLines }
+          : {}),
       })
     } catch (error) {
       const shellError = error as {
@@ -133,10 +198,11 @@ export const BashTool: Tool = {
         toolCallId: '',
         ok: false,
         content:
-          formatShellOutput(
+          formatFilteredShellError(
             shellError.stdout ?? '',
             shellError.stderr ?? shellError.message ?? '',
             maxOutputChars,
+            context.projectConfig?.ignore ?? [],
           ) || `Command failed with code ${String(shellError.code ?? shellError.signal ?? 'unknown')}`,
         metadata: {
           exitCode: shellError.code,
@@ -306,6 +372,90 @@ function formatShellOutput(
   const output = parts.join('\n')
   if (output.length <= maxOutputChars) return output || '(No output)'
   return `${output.slice(0, maxOutputChars)}\n[Output truncated to ${maxOutputChars} characters]`
+}
+
+function formatFilteredShellError(
+  stdout: string,
+  stderr: string,
+  maxOutputChars: number,
+  projectIgnore: readonly string[],
+): string {
+  const filtered = filterProjectIgnoredShellOutput(stdout, stderr, projectIgnore)
+  return formatShellOutput(filtered.stdout, filtered.stderr, maxOutputChars)
+}
+
+function filterProjectIgnoredShellOutput(
+  stdout: string,
+  stderr: string,
+  projectIgnore: readonly string[],
+): { stdout: string; stderr: string; filteredLines: number } {
+  const ignore = [...DEFAULT_OUTPUT_IGNORE_PATTERNS, ...projectIgnore]
+  const matchers = ignore.map(globToRegex)
+  const stdoutResult = filterProjectIgnoredLines(stdout, matchers)
+  const stderrResult = filterProjectIgnoredLines(stderr, matchers)
+  return {
+    stdout: stdoutResult.text,
+    stderr: stderrResult.text,
+    filteredLines: stdoutResult.filteredLines + stderrResult.filteredLines,
+  }
+}
+
+function filterProjectIgnoredLines(
+  text: string,
+  matchers: readonly RegExp[],
+): { text: string; filteredLines: number } {
+  if (!text) return { text, filteredLines: 0 }
+  const trailingNewline = text.endsWith('\n')
+  const kept: string[] = []
+  let filteredLines = 0
+  for (const line of text.split(/\r?\n/)) {
+    if (line === '' && trailingNewline) continue
+    if (lineContainsIgnoredPath(line, matchers)) {
+      filteredLines += 1
+    } else {
+      kept.push(line)
+    }
+  }
+  return {
+    text: kept.join('\n') + (trailingNewline && kept.length > 0 ? '\n' : ''),
+    filteredLines,
+  }
+}
+
+function lineContainsIgnoredPath(line: string, matchers: readonly RegExp[]): boolean {
+  const candidates = line.match(/\.?\.?\/?[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)*/g) ?? []
+  return candidates.some(candidate => {
+    const normalized = candidate.replace(/^\.?\//, '').replace(/\/+$/, '')
+    return matchers.some(matcher => matcher.test(normalized))
+  })
+}
+
+function globToRegex(pattern: string): RegExp {
+  let source = '^'
+  for (let i = 0; i < pattern.length; i += 1) {
+    const char = pattern[i]
+    const next = pattern[i + 1]
+    const afterNext = pattern[i + 2]
+    if (char === '*' && next === '*' && afterNext === '/') {
+      source += '(?:.*/)?'
+      i += 2
+    } else if (char === '*' && next === '*') {
+      source += '.*'
+      i += 1
+    } else if (char === '*') {
+      source += '[^/]*'
+    } else if (char === '?') {
+      source += '[^/]'
+    } else {
+      source += escapeRegex(char)
+    }
+  }
+  source += '$'
+  return new RegExp(source)
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&')
 }
 
 function parseBashInput(input: unknown): BashInput {

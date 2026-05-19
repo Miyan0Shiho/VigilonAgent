@@ -10,6 +10,12 @@
       ],
       "@vigilon/runtime/*": [
         "packages/runtime/src/*"
+      ],
+      "@vigilon/tui": [
+        "packages/tui/src/index.ts"
+      ],
+      "@vigilon/tui/*": [
+        "packages/tui/src/*"
       ]
     },
     "lib": [

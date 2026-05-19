@@ -49,8 +49,28 @@ export const WebFetchTool: Tool = {
       })
     }
 
-    try {
+  try {
+      const cacheKey = parsedUrl.toString()
+      const cached = context.webFetch?.cache?.get(cacheKey)
+      if (cached) {
+        return ok(cached.content, {
+          url: cached.url,
+          code: cached.code,
+          codeText: cached.codeText,
+          bytes: cached.bytes,
+          cache: 'hit',
+          fetchedAt: cached.fetchedAt,
+        })
+      }
       const response = await fetchWithRedirects(parsedUrl, context, 0)
+      context.webFetch?.cache?.set(cacheKey, {
+        url: String(response.url),
+        fetchedAt: new Date().toISOString(),
+        code: Number(response.code),
+        codeText: String(response.codeText),
+        content: response.result,
+        bytes: Number(response.bytes),
+      })
       return ok(response.result, response)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
@@ -68,6 +88,9 @@ async function fetchWithRedirects(
   redirectCount: number,
 ): Promise<Record<string, unknown> & { result: string }> {
   const fetchImpl = context.webFetch?.fetch ?? fetch
+  if (redirectCount === 0) {
+    assertFetchableProtocol(url)
+  }
   const startedAt = Date.now()
   const response = await fetchImpl(url, {
     signal: context.abortSignal,
@@ -108,13 +131,29 @@ async function fetchWithRedirects(
     rawText,
     context.webFetch?.maxContentChars ?? DEFAULT_MAX_CONTENT_CHARS,
   )
+  const summarized =
+    context.webFetch?.summarize && normalized.length >= (context.webFetch?.maxContentChars ?? DEFAULT_MAX_CONTENT_CHARS)
+      ? await context.webFetch.summarize({
+          url: url.toString(),
+          content: normalized,
+          maxChars: context.webFetch?.maxContentChars ?? DEFAULT_MAX_CONTENT_CHARS,
+        })
+      : normalized
   return {
     url: url.toString(),
     code: response.status,
     codeText: response.statusText || defaultStatusText(response.status),
     bytes: Buffer.byteLength(rawText),
     durationMs,
-    result: normalized,
+    contentType: response.headers.get('content-type') ?? undefined,
+    summarized: summarized !== normalized,
+    result: summarized,
+  }
+}
+
+function assertFetchableProtocol(url: URL): void {
+  if (url.protocol !== 'https:') {
+    throw new Error(`WebFetch only supports https URLs after normalization: ${url.toString()}`)
   }
 }
 

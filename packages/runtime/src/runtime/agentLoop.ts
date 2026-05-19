@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { createHash } from 'node:crypto'
 import type {
   AgentRuntime,
   AgentRuntimeEvent,
@@ -11,6 +12,7 @@ import type {
   RuntimeProjectConfig,
   ToolResult,
   ToolUseContext,
+  Tool,
   TranscriptStore,
   FileReadingLimits,
   PermissionMode,
@@ -19,6 +21,8 @@ import type {
   RuntimeSessionSnapshot,
   RuntimeSkill,
   RuntimeOperator,
+  ActiveSkillRuntimeState,
+  WebFetchRuntimeOptions,
   SubagentRunRequest,
   SubagentRunResult,
   TaskManager,
@@ -54,7 +58,7 @@ import { createLSPServerManager, type LSPServerManager } from '../services/lsp/L
 import { DEFAULT_LSP_CONFIGS } from '../services/lsp/config.js'
 import { checkForLSPDiagnostics } from '../services/lsp/LSPDiagnosticRegistry.js'
 import { createTaskManager } from './taskManager.js'
-import { compactTranscript } from './compact.js'
+import { compactTranscript, shouldAutoCompactTranscript } from './compact.js'
 import { createToolRegistry } from './tools.js'
 
 const AUTO_COMPACT_THRESHOLD = 30
@@ -83,6 +87,9 @@ export type VigilonAgentRuntimeOptions = {
   resume?: RuntimeSessionSnapshot
   lspServerManager?: LSPServerManager
   taskManager?: TaskManager
+  webFetch?: WebFetchRuntimeOptions
+  operatorGuidance?: string
+  stopAfterResultReport?: boolean
 }
 
 export function createVigilonAgentRuntime(
@@ -105,6 +112,7 @@ export function createVigilonAgentRuntime(
       options.permissionMode ?? 'ask',
     )
   sessionState.discoveredToolNames = sessionState.discoveredToolNames ?? []
+  sessionState.toolReferenceDeltas = sessionState.toolReferenceDeltas ?? []
   sessionState.mcpInstructions = sessionState.mcpInstructions ?? []
   sessionState.permissionMode =
     sessionState.permissionMode ?? options.permissionMode ?? 'ask'
@@ -113,8 +121,9 @@ export function createVigilonAgentRuntime(
     transcript,
   })
   const permissionGate = options.permissionGate ?? mutablePermissionGate
-  const maxTurns = options.maxTurns ?? 16
+  const maxTurns = options.maxTurns
   const readFileState = new Map()
+  const lspOpenFileState = new Set<string>()
   syncPermissionModeFromSession(sessionState, permissionGate)
   const runSubagent = createSubagentRunner({
     modelClient: options.modelClient,
@@ -144,13 +153,23 @@ export function createVigilonAgentRuntime(
       let finalMessage = ''
       let stopReason: ModelResponse['stopReason'] = 'end_turn'
       let turns = 0
+      const turnProjectConfig = mergePromptDerivedProjectConfig(
+        options.projectConfig,
+        input.prompt,
+      )
+      let resourcesCleaned = false
+      const cleanupResources = async (): Promise<void> => {
+        if (resourcesCleaned) return
+        resourcesCleaned = true
+        await lspServerManager.shutdown()
+        await taskManager.shutdown()
+      }
 
       try {
         await lspServerManager.initialize(DEFAULT_LSP_CONFIGS)
 
-        while (turns < maxTurns) {
+        while (!maxTurns || turns < maxTurns) {
         turns += 1
-
         // Check for and append LSP diagnostics
         const pendingLspDiagnostics = checkForLSPDiagnostics()
         for (const diagnostic of pendingLspDiagnostics) {
@@ -164,7 +183,11 @@ export function createVigilonAgentRuntime(
 
         // Auto-compaction check
         const allEvents = await transcript.readAll()
-        if (allEvents.length > AUTO_COMPACT_THRESHOLD) {
+        if (
+          shouldAutoCompactTranscript(allEvents, {
+            threshold: AUTO_COMPACT_THRESHOLD,
+          })
+        ) {
           const memory = await loadSessionMemory({
             cwd: input.cwd,
             sessionsDir: undefined,
@@ -179,6 +202,7 @@ export function createVigilonAgentRuntime(
             trigger: 'auto',
             sessionState,
             reactiveEventCount: REACTIVE_EVENT_COUNT,
+            strategy: memory?.content ? 'session-memory' : 'reactive',
           })
         }
 
@@ -207,27 +231,31 @@ export function createVigilonAgentRuntime(
           sessionState.memoryFreshness = sessionMemory.fresh ? 'fresh' : 'stale'
         }
         const visibleEvents = filterModelVisibleEvents(
-          injectProjectConfig(
-            injectSkillListing(
-              injectCapabilityReplay(
-                injectSessionMemory(
-                  contextWindow.events,
-                  sessionMemory?.record,
-                  sessionMemory?.fresh ?? false,
+          injectOperatorGuidance(
+            injectProjectConfig(
+              injectSkillListing(
+                injectCapabilityReplay(
+                  injectSessionMemory(
+                    contextWindow.events,
+                    sessionMemory?.record,
+                    sessionMemory?.fresh ?? false,
+                    Boolean(options.resume),
+                  ),
+                  sessionState,
                   Boolean(options.resume),
                 ),
-                sessionState,
-                Boolean(options.resume),
+                options.skills ?? [],
               ),
-              options.skills ?? [],
+              turnProjectConfig,
             ),
-            options.projectConfig,
+            options.operatorGuidance,
           ),
         )
-        const visibleTools = tools.list().filter(tool => {
-          if (!tool.deferred) return true
-          return sessionState.discoveredToolNames.includes(tool.name)
-        })
+        const visibleTools = selectVisibleTools(
+          tools.list(),
+          sessionState,
+        )
+        const visibleToolNames = new Set(visibleTools.map(tool => tool.name))
 
         const requestAuditEvent = buildLlmRequestEvent({
           events: await transcript.readAll(),
@@ -237,11 +265,27 @@ export function createVigilonAgentRuntime(
           compacted: contextWindow.compacted,
           compactBoundaryIndex: contextWindow.compactBoundaryIndex,
           droppedEventCount: contextWindow.droppedEventCount,
-          projectConfig: options.projectConfig,
+          compactCapability: {
+            discoveredToolNames: sessionState.discoveredToolNames,
+            toolReferenceDeltas: sessionState.toolReferenceDeltas,
+            approvedPlan: sessionState.approvedPlan,
+            pendingPlan: sessionState.pendingPlan,
+            verificationNotes: sessionState.verificationNotes,
+            mcpInstructions: sessionState.mcpInstructions,
+            activeSkill: sessionState.activeSkill,
+            memoryFreshness: sessionState.memoryFreshness,
+          },
+          projectConfig: turnProjectConfig,
           skills: options.skills,
           timestamp: createTimestamp(),
         })
         await transcript.append(requestAuditEvent)
+
+        // Capture Request Stability State
+        sessionState.systemPrompt = visibleEvents.find(e => e.type === 'assistant' || e.type === 'user')?.content // Simplification
+        sessionState.toolSchema = JSON.stringify(visibleTools.map(t => ({ name: t.name, description: t.description, schema: t.inputJsonSchema })))
+        sessionState.modelParams = { model: options.modelClient.id }
+
         const requestStartedAt = Date.now()
         const response = await options.modelClient.createMessage({
           messages: visibleEvents,
@@ -300,11 +344,13 @@ export function createVigilonAgentRuntime(
           transcript,
           sessionState,
           readFileState,
+          lspOpenFileState,
           fileReadingLimits: options.fileReadingLimits,
           globLimits: options.globLimits,
           bashLimits: options.bashLimits,
-          projectConfig: options.projectConfig,
+          projectConfig: turnProjectConfig,
           operator: options.operator,
+          webFetch: options.webFetch,
           lspServerManager,
           taskManager,
           runSubagent,
@@ -320,6 +366,74 @@ export function createVigilonAgentRuntime(
           yield { type: 'tool-started', call }
 
           const tool = tools.find(call.name)
+          if (!visibleToolNames.has(call.name)) {
+            if (tool?.deferred) {
+              const result = createFailedToolResult(
+                call.id,
+                [
+                  `Deferred tool schema was not sent for ${tool.name}.`,
+                  'Call ToolSearch first to materialize this tool schema, then retry the tool call.',
+                ].join('\n'),
+              )
+              await transcript.append({
+                type: 'tool-result',
+                result,
+                timestamp: createTimestamp(),
+              })
+              yield { type: 'tool-finished', result }
+              continue
+            }
+            const result = createFailedToolResult(
+              call.id,
+              [
+                `Tool ${call.name} is not available in the current model request.`,
+                `Available tools: ${[...visibleToolNames].join(', ') || '(none)'}`,
+              ].join('\n'),
+            )
+            await transcript.append({
+              type: 'tool-result',
+              result,
+              timestamp: createTimestamp(),
+            })
+            yield { type: 'tool-finished', result }
+            continue
+          }
+          if (
+            tool &&
+            sessionState.activeSkill &&
+            !sessionState.activeSkill.allowedTools.includes(tool.name)
+          ) {
+            const result = createFailedToolResult(
+              call.id,
+              [
+                `Tool ${tool.name} is blocked by active skill ${sessionState.activeSkill.name}.`,
+                `Allowed tools: ${sessionState.activeSkill.allowedTools.join(', ') || '(none)'}`,
+              ].join('\n'),
+            )
+            await transcript.append({
+              type: 'tool-result',
+              result,
+              timestamp: createTimestamp(),
+            })
+            yield { type: 'tool-finished', result }
+            continue
+          }
+          if (tool?.deferred && !sessionState.discoveredToolNames.includes(tool.name)) {
+            const result = createFailedToolResult(
+              call.id,
+              [
+                `Deferred tool schema was not sent for ${tool.name}.`,
+                'Call ToolSearch first to materialize this tool schema, then retry the tool call.',
+              ].join('\n'),
+            )
+            await transcript.append({
+              type: 'tool-result',
+              result,
+              timestamp: createTimestamp(),
+            })
+            yield { type: 'tool-finished', result }
+            continue
+          }
           const hookDecision =
             tool && options.preToolUseHooks?.length
               ? await runPreToolUseHooks({
@@ -349,11 +463,44 @@ export function createVigilonAgentRuntime(
             for (const name of result.metadata.discoveredTools) {
               if (typeof name === 'string' && !sessionState.discoveredToolNames.includes(name)) {
                 sessionState.discoveredToolNames.push(name)
+                const discoveredTool = tools.find(name)
+                if (discoveredTool) {
+                  sessionState.toolReferenceDeltas.push({
+                    name,
+                    reason: `ToolSearch materialized ${name}`,
+                    schemaHash: hashToolSchema(discoveredTool),
+                    discoveredAt: createTimestamp(),
+                  })
+                }
               }
             }
           }
+          if (result.metadata?.toolReferenceDeltas && Array.isArray(result.metadata.toolReferenceDeltas)) {
+            for (const delta of result.metadata.toolReferenceDeltas) {
+              if (isToolReferenceDelta(delta)) {
+                const alreadyTracked = sessionState.toolReferenceDeltas.some(
+                  existing =>
+                    existing.name === delta.name &&
+                    existing.schemaHash === delta.schemaHash,
+                )
+                if (!alreadyTracked) sessionState.toolReferenceDeltas.push(delta)
+              }
+            }
+          }
+          if (result.metadata?.activeSkill && isActiveSkillRuntimeState(result.metadata.activeSkill)) {
+            sessionState.activeSkill = result.metadata.activeSkill
+          }
 
           yield { type: 'tool-finished', result }
+        }
+
+        if (
+          options.stopAfterResultReport &&
+          sessionState.handoffReport
+        ) {
+          finalMessage = sessionState.handoffReport.finalMessage
+          stopReason = 'end_turn'
+          break
         }
 
         if (input.abortSignal.aborted) {
@@ -363,7 +510,7 @@ export function createVigilonAgentRuntime(
         }
       }
 
-      if (turns >= maxTurns && stopReason === 'tool_use') {
+      if (maxTurns !== undefined && turns >= maxTurns && stopReason === 'tool_use') {
         finalMessage =
           finalMessage || `Stopped after reaching maxTurns (${maxTurns})`
         stopReason = 'max_tokens'
@@ -377,10 +524,10 @@ export function createVigilonAgentRuntime(
         turns,
         report: buildResultReport(finalMessage, stopReason, events, sessionState),
       }
+      await cleanupResources()
       yield { type: 'turn-finished', result }
     } finally {
-      await lspServerManager.shutdown()
-      await taskManager.shutdown()
+      await cleanupResources()
     }
     },
   }
@@ -406,6 +553,113 @@ function injectProjectConfig(
     },
     ...events,
   ]
+}
+
+function injectOperatorGuidance(
+  events: Awaited<ReturnType<TranscriptStore['readAll']>>,
+  guidance: string | undefined,
+): Awaited<ReturnType<TranscriptStore['readAll']>> {
+  if (!guidance?.trim()) return events
+  return [
+    {
+      type: 'user',
+      content: `<vigilon_operator_guidance>\n${guidance.trim()}\n</vigilon_operator_guidance>`,
+      timestamp: createTimestamp(),
+    },
+    ...events,
+  ]
+}
+
+function mergePromptDerivedProjectConfig(
+  config: RuntimeProjectConfig | undefined,
+  prompt: string,
+): RuntimeProjectConfig | undefined {
+  const derivedIgnore = derivePromptIgnorePatterns(prompt)
+  if (derivedIgnore.length === 0) return config
+
+  const base: RuntimeProjectConfig = config ?? {
+    ignore: [],
+    defaultCommands: {},
+  }
+  const ignore = [...base.ignore]
+  for (const pattern of derivedIgnore) {
+    if (!ignore.includes(pattern)) ignore.push(pattern)
+  }
+  return {
+    ...base,
+    ignore,
+    defaultCommands: { ...base.defaultCommands },
+    allowedTools: base.allowedTools ? [...base.allowedTools] : undefined,
+  }
+}
+
+function derivePromptIgnorePatterns(prompt: string): string[] {
+  const segments = prompt.match(
+    /(?:不(?:要)?搜索|不要查|别搜|排除|忽略|exclude|ignore|skip|do not search|don't search|without searching)[^，。；;,\n]*/giu,
+  )
+  if (!segments) return []
+
+  const patterns: string[] = []
+  for (const segment of segments) {
+    const cleaned = segment
+      .replace(
+        /^(?:不(?:要)?搜索|不要查|别搜|排除|忽略|exclude|ignore|skip|do not search|don't search|without searching)\s*/iu,
+        '',
+      )
+      .split(/(?:等|目录|文件夹|噪音|noise|dirs?|directories?)/iu)[0]
+    const tokens = cleaned.match(/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)*/g) ?? []
+    for (const token of tokens) {
+      for (const pathPattern of expandPromptIgnoreToken(token)) {
+        if (!patterns.includes(pathPattern)) patterns.push(pathPattern)
+      }
+    }
+  }
+  return patterns
+}
+
+function expandPromptIgnoreToken(token: string): string[] {
+  const normalized = token.replace(/^\.?\//, '').replace(/\/+$/, '')
+  if (!normalized || normalized === '.' || normalized === '..') return []
+  const parts = normalized.split('/').filter(Boolean)
+  const candidates = new Set<string>()
+  candidates.add(`${normalized}/**`)
+  candidates.add(`**/${normalized}/**`)
+
+  for (const part of parts) {
+    if (!isLikelyIgnorablePathPart(part)) continue
+    candidates.add(`${part}/**`)
+    candidates.add(`**/${part}/**`)
+    if (/research/iu.test(part)) {
+      candidates.add('*research*')
+      candidates.add('*research*/**')
+      candidates.add('**/*research*')
+      candidates.add('**/*research*/**')
+    }
+  }
+  return [...candidates]
+}
+
+function isLikelyIgnorablePathPart(part: string): boolean {
+  return (
+    part.startsWith('.') ||
+    /^(?:research|archive|archives|archived|dist|build|coverage|node_modules|tmp|temp)$/iu.test(
+      part,
+    )
+  )
+}
+
+function selectVisibleTools(
+  allTools: readonly Tool[],
+  sessionState: RuntimeSessionState,
+): Tool[] {
+  const activeAllowed = sessionState.activeSkill
+    ? new Set(sessionState.activeSkill.allowedTools)
+    : undefined
+  return allTools.filter(tool => {
+    if (activeAllowed && !activeAllowed.has(tool.name)) return false
+    if (!tool.deferred) return true
+    return sessionState.discoveredToolNames.includes(tool.name)
+  })
 }
 
 function createSubagentRunner(options: {
@@ -573,6 +827,19 @@ function injectCapabilityReplay(
   if (sessionState.discoveredToolNames.length > 0) {
     replayLines.push(`discovered_tools="${sessionState.discoveredToolNames.join(', ')}"`)
   }
+  if (sessionState.toolReferenceDeltas.length > 0) {
+    replayLines.push(
+      ...sessionState.toolReferenceDeltas.map(
+        delta =>
+          `tool_reference name="${delta.name}" schema_hash="${delta.schemaHash}" reason="${delta.reason}"`,
+      ),
+    )
+  }
+  if (sessionState.activeSkill) {
+    replayLines.push(
+      `active_skill="${sessionState.activeSkill.name}" allowed_tools="${sessionState.activeSkill.allowedTools.join(', ')}"`,
+    )
+  }
   if (sessionState.mcpInstructions.length > 0) {
     replayLines.push(...sessionState.mcpInstructions.map(line => `mcp_instruction="${line}"`))
   }
@@ -680,6 +947,41 @@ function createFailedToolResult(toolCallId: string, content: string): ToolResult
   }
 }
 
+function hashToolSchema(tool: Tool): string {
+  return createHash('sha256')
+    .update(
+      JSON.stringify({
+        name: tool.name,
+        description: tool.description,
+        inputJsonSchema: tool.inputJsonSchema,
+        readOnly: tool.readOnly ?? false,
+      }),
+    )
+    .digest('hex')
+}
+
+function isActiveSkillRuntimeState(value: unknown): value is ActiveSkillRuntimeState {
+  if (!value || typeof value !== 'object') return false
+  const record = value as Record<string, unknown>
+  return (
+    typeof record.name === 'string' &&
+    Array.isArray(record.allowedTools) &&
+    record.allowedTools.every(item => typeof item === 'string') &&
+    typeof record.activatedAt === 'string'
+  )
+}
+
+function isToolReferenceDelta(value: unknown): value is RuntimeSessionState['toolReferenceDeltas'][number] {
+  if (!value || typeof value !== 'object') return false
+  const record = value as Record<string, unknown>
+  return (
+    typeof record.name === 'string' &&
+    typeof record.reason === 'string' &&
+    typeof record.schemaHash === 'string' &&
+    typeof record.discoveredAt === 'string'
+  )
+}
+
 function buildResultReport(
   finalMessage: string,
   stopReason: ModelResponse['stopReason'],
@@ -721,10 +1023,12 @@ function buildResultReport(
         },
       ]
     })
+  const warnings = buildResultWarnings(stopReason, sessionState)
   return {
     status: stopReason === 'error' ? 'error' : stopReason === 'end_turn' ? 'completed' : 'stopped',
     finalMessage,
     todos: [...sessionState.todos],
+    warnings,
     approvedPlan: sessionState.approvedPlan,
     handoffReport: sessionState.handoffReport
       ? {
@@ -739,6 +1043,30 @@ function buildResultReport(
     fileChanges,
     toolResults,
   }
+}
+
+function buildResultWarnings(
+  stopReason: ModelResponse['stopReason'],
+  sessionState: RuntimeSessionState,
+): string[] {
+  const warnings: string[] = []
+  const incompleteTodos = sessionState.todos.filter(todo => todo.status !== 'completed')
+  if (stopReason === 'end_turn' && incompleteTodos.length > 0) {
+    warnings.push(
+      `Assistant ended with ${incompleteTodos.length} incomplete todo(s): ${incompleteTodos
+        .map(todo => `${todo.status}:${todo.content}`)
+        .join(' | ')}`,
+    )
+  }
+  if (
+    stopReason === 'end_turn' &&
+    sessionState.approvedPlan &&
+    sessionState.verificationNotes.length === 0 &&
+    !sessionState.handoffReport
+  ) {
+    warnings.push('Assistant ended after an approved plan without recorded verification notes.')
+  }
+  return warnings
 }
 
 function isFileChangeType(value: unknown): value is 'create' | 'update' {

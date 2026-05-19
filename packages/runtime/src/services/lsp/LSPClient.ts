@@ -11,6 +11,12 @@ import type {
   InitializeResult,
   ServerCapabilities,
 } from 'vscode-languageserver-protocol';
+import process from 'node:process';
+
+const LSP_SHUTDOWN_TIMEOUT_MS = 1000;
+const LSP_PROCESS_EXIT_TIMEOUT_MS = 500;
+const activeLspProcesses = new Set<ChildProcess>();
+let processCleanupRegistered = false;
 
 /**
  * LSP client interface.
@@ -45,7 +51,7 @@ export function createLSPClient(
   serverName: string,
   onCrash?: (error: Error) => void,
 ): LSPClient {
-  let process: ChildProcess | undefined;
+  let childProcess: ChildProcess | undefined;
   let connection: MessageConnection | undefined;
   let capabilities: ServerCapabilities | undefined;
   let isInitialized = false;
@@ -77,18 +83,21 @@ export function createLSPClient(
         cwd?: string;
       },
     ): Promise<void> {
-      process = spawn(command, args, {
+      childProcess = spawn(command, args, {
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...(typeof process !== 'undefined' ? process.env : {}), ...options?.env },
+        env: { ...process.env, ...options?.env },
         cwd: options?.cwd,
+        detached: process.platform !== 'win32',
         windowsHide: true,
       });
+      activeLspProcesses.add(childProcess);
+      registerProcessCleanup();
 
-      if (!process.stdout || !process.stdin) {
+      if (!childProcess.stdout || !childProcess.stdin) {
         throw new Error('LSP server process stdio not available');
       }
 
-      const spawnedProcess = process;
+      const spawnedProcess = childProcess;
       await new Promise<void>((resolve, reject) => {
         const onSpawn = (): void => {
           cleanup();
@@ -106,8 +115,8 @@ export function createLSPClient(
         spawnedProcess.once('error', onError);
       });
 
-      if (process.stderr) {
-        process.stderr.on('data', (data: Buffer) => {
+      if (childProcess.stderr) {
+        childProcess.stderr.on('data', (data: Buffer) => {
           const output = data.toString().trim();
           if (output) {
             // Log stderr in debug mode if needed
@@ -115,7 +124,8 @@ export function createLSPClient(
         });
       }
 
-      process.on('exit', (code, signal) => {
+      childProcess.on('exit', (code, signal) => {
+        activeLspProcesses.delete(spawnedProcess);
         if (code !== 0 && code !== null && !isStopping) {
           isInitialized = false;
           const crashError = new Error(
@@ -125,8 +135,8 @@ export function createLSPClient(
         }
       });
 
-      const reader = new StreamMessageReader(process.stdout);
-      const writer = new StreamMessageWriter(process.stdin);
+      const reader = new StreamMessageReader(childProcess.stdout);
+      const writer = new StreamMessageWriter(childProcess.stdin);
       connection = createMessageConnection(reader, writer);
 
       connection.onClose(() => {
@@ -193,16 +203,16 @@ export function createLSPClient(
       isStopping = true;
       try {
         if (connection) {
-          await connection.sendRequest('shutdown', {});
-          await connection.sendNotification('exit', {});
+          await waitForShutdown(connection.sendRequest('shutdown', {}));
+          void connection.sendNotification('exit', {}).catch(() => {});
           connection.dispose();
         }
       } catch (e) {
         // Ignore shutdown errors
       } finally {
-        if (process) {
-          process.kill();
-          process = undefined;
+        if (childProcess) {
+          await terminateChildProcess(childProcess);
+          childProcess = undefined;
         }
         connection = undefined;
         isInitialized = false;
@@ -210,4 +220,75 @@ export function createLSPClient(
       }
     },
   };
+}
+
+async function waitForShutdown(shutdownRequest: Promise<unknown>): Promise<void> {
+  await Promise.race([
+    Promise.resolve(shutdownRequest).catch(() => undefined),
+    new Promise<void>((resolve) => setTimeout(resolve, LSP_SHUTDOWN_TIMEOUT_MS)),
+  ]);
+}
+
+async function terminateChildProcess(childProcess: ChildProcess): Promise<void> {
+  destroyStream(childProcess.stdin);
+  destroyStream(childProcess.stdout);
+  destroyStream(childProcess.stderr);
+  if (childProcess.exitCode !== null || childProcess.signalCode !== null) return;
+  activeLspProcesses.delete(childProcess);
+  const exited = waitForProcessExit(childProcess);
+  killProcessTree(childProcess, 'SIGTERM');
+  const didExit = await Promise.race([
+    exited.then(() => true),
+    new Promise<boolean>((resolve) =>
+      setTimeout(() => resolve(false), LSP_PROCESS_EXIT_TIMEOUT_MS),
+    ),
+  ]);
+  if (!didExit && childProcess.exitCode === null && childProcess.signalCode === null) {
+    killProcessTree(childProcess, 'SIGKILL');
+    await Promise.race([
+      exited,
+      new Promise<void>((resolve) =>
+        setTimeout(resolve, LSP_PROCESS_EXIT_TIMEOUT_MS),
+      ),
+    ]);
+  }
+}
+
+function waitForProcessExit(childProcess: ChildProcess): Promise<void> {
+  return new Promise(resolve => {
+    if (childProcess.exitCode !== null || childProcess.signalCode !== null) {
+      resolve();
+      return;
+    }
+    childProcess.once('exit', () => resolve());
+    childProcess.once('close', () => resolve());
+  });
+}
+
+function registerProcessCleanup(): void {
+  if (processCleanupRegistered) return;
+  processCleanupRegistered = true;
+  process.once('exit', () => {
+    for (const childProcess of activeLspProcesses) {
+      killProcessTree(childProcess, 'SIGKILL');
+    }
+    activeLspProcesses.clear();
+  });
+}
+
+function killProcessTree(childProcess: ChildProcess, signal: NodeJS.Signals): void {
+  if (process.platform !== 'win32' && childProcess.pid) {
+    try {
+      process.kill(-childProcess.pid, signal);
+      return;
+    } catch {
+      // Fall back to killing the direct child below.
+    }
+  }
+  childProcess.kill(signal);
+}
+
+function destroyStream(stream: NodeJS.WritableStream | NodeJS.ReadableStream | null | undefined): void {
+  if (!stream || typeof (stream as { destroy?: unknown }).destroy !== 'function') return;
+  (stream as unknown as { destroy: () => void }).destroy();
 }

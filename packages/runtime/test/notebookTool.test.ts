@@ -134,6 +134,51 @@ describe('NotebookTool', () => {
     expect(updatedNotebook.cells[1]?.source.join('')).toContain('## Updated')
   })
 
+  test('should insert and delete notebook cells with atomic write metadata', async () => {
+    const context = createContext()
+    const readResult = await NotebookTool.invoke(
+      { action: 'read', filePath: 'test.ipynb' },
+      context,
+    )
+    expect(readResult.ok).toBe(true)
+
+    const insertResult = await NotebookTool.invoke(
+      {
+        action: 'insert',
+        filePath: 'test.ipynb',
+        cellIndex: 1,
+        cellType: 'markdown',
+        source: 'Inserted note',
+      },
+      context,
+    )
+    expect(insertResult.ok).toBe(true)
+    expect(insertResult.metadata).toMatchObject({
+      type: 'update',
+      cellIndex: 1,
+    })
+
+    const insertedId = insertResult.metadata?.cellId
+    const deleteResult = await NotebookTool.invoke(
+      {
+        action: 'delete',
+        filePath: 'test.ipynb',
+        cellId: insertedId,
+      },
+      context,
+    )
+    expect(deleteResult.ok).toBe(true)
+    expect(deleteResult.metadata).toMatchObject({
+      type: 'update',
+      cellIndex: 1,
+    })
+
+    const updatedNotebook = JSON.parse(await readFile(notebookPath, 'utf8')) as {
+      cells: Array<{ source: string[] }>
+    }
+    expect(updatedNotebook.cells.map(cell => cell.source.join(''))).not.toContain('Inserted note')
+  })
+
   test('should reject stale notebook edits after the file changes', async () => {
     const context = createContext()
 
@@ -196,6 +241,7 @@ function createContext(): ToolUseContext {
     taskManager: {
       activeTasks: [],
       startBashTask: vi.fn(),
+      stopTask: vi.fn(),
       killTask: vi.fn(),
       shutdown: vi.fn(),
     },

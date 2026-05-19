@@ -34,6 +34,8 @@ export function createLSPServerManager(): LSPServerManager {
 
   return {
     async initialize(configs: Record<string, ScopedLspServerConfig>): Promise<void> {
+      if (servers.size > 0) return;
+
       for (const [name, config] of Object.entries(configs)) {
         const instance = createLSPServerInstance(name, config);
         servers.set(name, instance);
@@ -48,7 +50,11 @@ export function createLSPServerManager(): LSPServerManager {
     },
 
     async shutdown(): Promise<void> {
-      await Promise.all(Array.from(servers.values()).map((s) => s.stop().catch(() => {})));
+      const instances = new Set<LSPServerInstance>(servers.values());
+      for (const candidates of extensionToServers.values()) {
+        for (const server of candidates) instances.add(server);
+      }
+      await Promise.all(Array.from(instances).map((s) => s.stop().catch(() => {})));
       servers.clear();
       extensionToServers.clear();
     },

@@ -48,4 +48,32 @@ describe('TaskManager', () => {
     const killed = await manager.killTask('non-existent');
     expect(killed).toBe(false);
   });
+
+  test('should shutdown and clear all active tasks', async () => {
+    const firstProcess = new EventEmitter() as any;
+    firstProcess.pid = 201;
+    firstProcess.kill = vi.fn();
+    firstProcess.unref = vi.fn();
+
+    const secondProcess = new EventEmitter() as any;
+    secondProcess.pid = 202;
+    secondProcess.kill = vi.fn();
+    secondProcess.unref = vi.fn();
+
+    (spawn as any)
+      .mockReturnValueOnce(firstProcess)
+      .mockReturnValueOnce(secondProcess);
+
+    const manager = createTaskManager();
+    await manager.startBashTask('sleep 10', '/tmp');
+    await manager.startBashTask('sleep 20', '/tmp');
+
+    expect(manager.activeTasks.length).toBe(2);
+
+    await manager.shutdown();
+
+    expect(firstProcess.kill).toHaveBeenCalled();
+    expect(secondProcess.kill).toHaveBeenCalled();
+    expect(manager.activeTasks.length).toBe(0);
+  });
 });

@@ -61,6 +61,30 @@ type DeepSeekChatCompletion = {
 const RETRYABLE_HTTP_STATUS = new Set([408, 409, 429, 500, 502, 503, 504])
 const MAX_ATTEMPTS = 2
 
+type DeepSeekStreamingChunk = {
+  choices?: Array<{
+    delta?: {
+      content?: string | null
+      reasoning_content?: string | null
+      tool_calls?: Array<{
+        index?: number
+        id?: string
+        type?: 'function'
+        function?: {
+          name?: string
+          arguments?: string
+        }
+      }>
+    }
+    finish_reason?: string | null
+  }>
+  usage?: DeepSeekChatCompletion['usage']
+}
+
+type DeepSeekStreamingToolCallDelta = NonNullable<
+  NonNullable<NonNullable<DeepSeekStreamingChunk['choices']>[number]['delta']>['tool_calls']
+>[number]
+
 export function createDeepSeekModelClient(
   options: DeepSeekModelClientOptions = {},
 ): ModelClient {
@@ -68,7 +92,7 @@ export function createDeepSeekModelClient(
   const baseUrl =
     options.baseUrl ?? process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com'
   const model =
-    options.model ?? process.env.DEEPSEEK_MODEL ?? 'deepseek-v4-pro'
+    options.model ?? process.env.DEEPSEEK_MODEL ?? 'deepseek-v4-flash'
   const fetchImpl = options.fetch ?? fetch
 
   return {
@@ -82,16 +106,19 @@ export function createDeepSeekModelClient(
         }
       }
 
-      const requestBody = JSON.stringify({
-        model,
-        messages: transcriptToDeepSeekMessages(request.messages),
-        tools: request.tools.map(toolToDeepSeekTool),
-        tool_choice: request.tools.length > 0 ? 'auto' : 'none',
-        stream: false,
-      })
+      const messages = transcriptToDeepSeekMessages(request.messages)
+      const apiTools = request.tools.map(toolToDeepSeekTool)
+      let allowSpecificToolChoice = true
 
       let lastError: string | undefined
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+        const requestBody = JSON.stringify({
+          model,
+          messages,
+          tools: apiTools,
+          tool_choice: toDeepSeekToolChoice(request, allowSpecificToolChoice),
+          stream: true,
+        })
         try {
           const response = await fetchImpl(`${baseUrl}/chat/completions`, {
             method: 'POST',
@@ -103,11 +130,30 @@ export function createDeepSeekModelClient(
             body: requestBody,
           })
 
-          const payload = (await response.json()) as DeepSeekChatCompletion
+          const payload = isEventStream(response)
+            ? await readStreamingResponse(response)
+            : ((await response.json()) as DeepSeekChatCompletion)
           if (!response.ok) {
             const errorMessage =
               payload.error?.message ??
               `DeepSeek request failed with HTTP ${response.status}`
+            if (
+              allowSpecificToolChoice &&
+              isSpecificToolChoice(request.toolChoice) &&
+              isUnsupportedToolChoiceError(errorMessage) &&
+              attempt < MAX_ATTEMPTS
+            ) {
+              allowSpecificToolChoice = false
+              lastError = errorMessage
+              continue
+            }
+            if (isContextOverflowError(errorMessage)) {
+              return {
+                content: normalizeContextOverflowMessage(errorMessage),
+                toolCalls: [],
+                stopReason: 'max_tokens',
+              }
+            }
             if (attempt < MAX_ATTEMPTS && RETRYABLE_HTTP_STATUS.has(response.status)) {
               lastError = errorMessage
               continue
@@ -164,11 +210,180 @@ export function createDeepSeekModelClient(
   }
 }
 
+function toDeepSeekToolChoice(
+  request: ModelRequest,
+  allowSpecificToolChoice: boolean,
+): 'auto' | 'none' | { type: 'function'; function: { name: string } } {
+  if (request.tools.length === 0) return 'none'
+  if (!request.toolChoice || request.toolChoice === 'auto') return 'auto'
+  if (request.toolChoice === 'none') return 'none'
+  if (!allowSpecificToolChoice) return 'auto'
+  return {
+    type: 'function',
+    function: {
+      name: request.toolChoice.name,
+    },
+  }
+}
+
+function isSpecificToolChoice(
+  toolChoice: ModelRequest['toolChoice'],
+): toolChoice is { type: 'tool'; name: string } {
+  return Boolean(toolChoice && typeof toolChoice === 'object' && toolChoice.type === 'tool')
+}
+
+function isUnsupportedToolChoiceError(message: string): boolean {
+  return /does not support this tool_choice|unsupported.*tool_choice|tool_choice.*not supported/iu.test(
+    message,
+  )
+}
+
 function isAbortError(error: unknown): boolean {
   return (
     (error instanceof DOMException && error.name === 'AbortError') ||
     (error instanceof Error && error.name === 'AbortError')
   )
+}
+
+function isEventStream(response: Response): boolean {
+  return response.headers.get('content-type')?.includes('text/event-stream') === true
+}
+
+async function readStreamingResponse(
+  response: Response,
+): Promise<DeepSeekChatCompletion> {
+  const body = response.body
+  if (!body) {
+    return {
+      choices: [
+        {
+          finish_reason: 'stop',
+          message: { content: '' },
+        },
+      ],
+    }
+  }
+
+  const reader = body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let content = ''
+  let reasoningContent = ''
+  let finishReason: string | null | undefined
+  let usage: DeepSeekChatCompletion['usage']
+  const toolCalls: Array<{
+    id: string
+    type: 'function'
+    function: {
+      name: string
+      arguments: string
+    }
+  }> = []
+
+  while (true) {
+    const { done, value } = await reader.read()
+    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done })
+    let boundaryIndex = buffer.indexOf('\n\n')
+    while (boundaryIndex !== -1) {
+      const rawEvent = buffer.slice(0, boundaryIndex)
+      buffer = buffer.slice(boundaryIndex + 2)
+      applyStreamingEvent(rawEvent, {
+        appendContent(chunk) {
+          content += chunk
+        },
+        appendReasoning(chunk) {
+          reasoningContent += chunk
+        },
+        mergeToolCall(delta) {
+          const index = delta.index ?? 0
+          const existing = toolCalls[index] ?? {
+            id: delta.id ?? `tool_call_${index}`,
+            type: 'function' as const,
+            function: {
+              name: delta.function?.name ?? '',
+              arguments: '',
+            },
+          }
+          if (delta.id) existing.id = delta.id
+          if (delta.function?.name) existing.function.name = delta.function.name
+          if (delta.function?.arguments) {
+            existing.function.arguments += delta.function.arguments
+          }
+          toolCalls[index] = existing
+        },
+        setFinishReason(value) {
+          finishReason = value
+        },
+        setUsage(value) {
+          usage = value
+        },
+      })
+      boundaryIndex = buffer.indexOf('\n\n')
+    }
+    if (done) break
+  }
+
+  return {
+    choices: [
+      {
+        finish_reason: finishReason,
+        message: {
+          content,
+          ...(reasoningContent ? { reasoning_content: reasoningContent } : {}),
+          ...(toolCalls.length > 0 ? { tool_calls: toolCalls } : {}),
+        },
+      },
+    ],
+    usage,
+  }
+}
+
+function applyStreamingEvent(
+  rawEvent: string,
+  handlers: {
+    appendContent(chunk: string): void
+    appendReasoning(chunk: string): void
+    mergeToolCall(delta: DeepSeekStreamingToolCallDelta): void
+    setFinishReason(value: string | null | undefined): void
+    setUsage(value: DeepSeekChatCompletion['usage']): void
+  },
+): void {
+  const dataLines = rawEvent
+    .split(/\r?\n/)
+    .filter(line => line.startsWith('data:'))
+    .map(line => line.slice(5).trim())
+  if (dataLines.length === 0) return
+  const payloadText = dataLines.join('\n')
+  if (payloadText === '[DONE]') return
+
+  const payload = JSON.parse(payloadText) as DeepSeekStreamingChunk
+  const choice = payload.choices?.[0]
+  if (choice?.delta?.content) handlers.appendContent(choice.delta.content)
+  if (choice?.delta?.reasoning_content) {
+    handlers.appendReasoning(choice.delta.reasoning_content)
+  }
+  for (const toolCall of choice?.delta?.tool_calls ?? []) {
+    handlers.mergeToolCall(toolCall)
+  }
+  if (choice?.finish_reason !== undefined) {
+    handlers.setFinishReason(choice.finish_reason)
+  }
+  if (payload.usage) {
+    handlers.setUsage(payload.usage)
+  }
+}
+
+function isContextOverflowError(message: string): boolean {
+  const normalized = message.toLowerCase()
+  return (
+    normalized.includes('context window') ||
+    normalized.includes('context length') ||
+    normalized.includes('maximum context length')
+  )
+}
+
+function normalizeContextOverflowMessage(message: string): string {
+  return `DeepSeek request exceeded the model context window: ${message}`
 }
 
 function transcriptToDeepSeekMessages(
@@ -183,6 +398,15 @@ function transcriptToDeepSeekMessages(
       flushToolCalls(messages, pendingToolCalls)
       pendingToolCalls = []
       messages.push({ role: 'user', content: event.content })
+    }
+
+    if (event.type === 'project-config') {
+      flushToolCalls(messages, pendingToolCalls)
+      pendingToolCalls = []
+      messages.push({
+        role: 'user',
+        content: formatProjectConfigForModel(event.config),
+      })
     }
 
     if (event.type === 'compact-boundary') {
@@ -233,6 +457,30 @@ function transcriptToDeepSeekMessages(
 
   flushToolCalls(messages, pendingToolCalls)
   return messages
+}
+
+function formatProjectConfigForModel(
+  config: Extract<TranscriptEvent, { type: 'project-config' }>['config'],
+): string {
+  const lines = ['<vigilon_project_config>']
+  if (config.ignore.length > 0) {
+    lines.push('Ignored paths/globs for this task:')
+    for (const pattern of config.ignore) lines.push(`- ${pattern}`)
+    lines.push(
+      'Do not search, read, or summarize files matching these ignored paths unless the user explicitly overrides this constraint later.',
+    )
+  }
+  if (Object.keys(config.defaultCommands).length > 0) {
+    lines.push('Default project commands:')
+    for (const [name, command] of Object.entries(config.defaultCommands)) {
+      lines.push(`- ${name}: ${command}`)
+    }
+  }
+  if (config.allowedTools?.length) {
+    lines.push(`Allowed tools: ${config.allowedTools.join(', ')}`)
+  }
+  lines.push('</vigilon_project_config>')
+  return lines.join('\n')
 }
 
 function flushToolCalls(
@@ -294,6 +542,7 @@ function mapStopReason(
 ): ModelResponse['stopReason'] {
   if (value === 'tool_calls') return 'tool_use'
   if (value === 'length') return 'max_tokens'
+  if (value === 'model_context_window_exceeded') return 'max_tokens'
   if (value === 'stop' || value == null) return 'end_turn'
   return 'error'
 }

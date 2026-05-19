@@ -212,6 +212,32 @@ describe('execution tools', () => {
     expect(largeOutput.content.length).toBeLessThan(200)
   })
 
+  it('Bash filters project ignored path lines from command output', async () => {
+    const cwd = await createFixture({})
+    const context = createContext(cwd, {
+      mode: 'bypass-local',
+      projectConfig: {
+        ignore: ['**/*research*/**', '**/.research/**'],
+        defaultCommands: {},
+      },
+    })
+
+    const result = await BashTool.invoke(
+      {
+        command:
+          'printf "packages/runtime/src/skills.ts\\ndocs/archived-research/skill.ts\\nnested/.research/hidden.ts\\n.vigilon/session.jsonl\\n"',
+      },
+      context,
+    )
+
+    expect(result.ok).toBe(true)
+    expect(result.content).toContain('packages/runtime/src/skills.ts')
+    expect(result.content).not.toContain('docs/archived-research/skill.ts')
+    expect(result.content).not.toContain('nested/.research/hidden.ts')
+    expect(result.content).not.toContain('.vigilon/session.jsonl')
+    expect(result.metadata).toMatchObject({ filteredProjectIgnoredLines: 3 })
+  })
+
   it('Bash supports background tasks', async () => {
     const cwd = await createFixture({})
     const context = createContext(cwd, { mode: 'bypass-local' })
@@ -250,6 +276,7 @@ function createContext(
     transcript?: InMemoryTranscriptStore
     permissionGate?: PermissionGate
     bashLimits?: ToolUseContext['bashLimits']
+    projectConfig?: ToolUseContext['projectConfig']
   } = {},
 ): ToolUseContext {
   const transcript = options.transcript ?? new InMemoryTranscriptStore()
@@ -265,6 +292,7 @@ function createContext(
       }),
     readFileState: new Map(),
     bashLimits: options.bashLimits,
+    projectConfig: options.projectConfig,
     taskManager: createTaskManager(),
   }
 }

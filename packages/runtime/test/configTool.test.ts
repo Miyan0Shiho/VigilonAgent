@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   ConfigTool,
   InMemoryTranscriptStore,
@@ -19,6 +19,10 @@ afterEach(async () => {
 })
 
 describe('ConfigTool', () => {
+  it('does not advertise Config as a globally read-only tool', () => {
+    expect(ConfigTool.readOnly).not.toBe(true)
+  })
+
   it('reads the effective merged value for a supported setting', async () => {
     const cwd = await createTempRoot('vigilon-config-tool-')
     await writeSettings(cwd, 'settings.json', {
@@ -41,6 +45,20 @@ describe('ConfigTool', () => {
       mode: 'get',
       effectiveValue: 'read-only',
     })
+  })
+
+  it('reads supported settings without requesting write permission', async () => {
+    const cwd = await createTempRoot('vigilon-config-tool-')
+    const context = createContext(cwd)
+    const permissionSpy = vi.spyOn(context.permissionGate, 'requestPermission')
+
+    const result = await ConfigTool.invoke(
+      { setting: 'permissionMode' },
+      context,
+    )
+
+    expect(result.ok).toBe(true)
+    expect(permissionSpy).not.toHaveBeenCalled()
   })
 
   it('writes permissionMode to local settings and updates runtime permission state immediately', async () => {
@@ -111,6 +129,26 @@ describe('ConfigTool', () => {
     expect(result.ok).toBe(false)
     expect(result.content).toContain('Unknown setting')
   })
+
+  it('returns a tool failure when a supported setting value is invalid', async () => {
+    const cwd = await createTempRoot('vigilon-config-tool-')
+    const context = createContext(cwd, {
+      gateMode: 'bypass-local',
+    })
+
+    await expect(
+      ConfigTool.invoke(
+        {
+          setting: 'permissionMode',
+          value: 'definitely-invalid',
+        },
+        context,
+      ),
+    ).resolves.toMatchObject({
+      ok: false,
+      content: expect.stringContaining('permissionMode must be one of'),
+    })
+  })
 })
 
 async function createTempRoot(prefix: string): Promise<string> {
@@ -151,6 +189,7 @@ function createContext(
     verificationNotes: [],
     backgroundTasks: [],
     discoveredToolNames: [],
+    mcpInstructions: [],
   }
   return {
     cwd,
@@ -171,6 +210,7 @@ function createContext(
     taskManager: {
       activeTasks: [],
       startBashTask: async () => 'task-id',
+      stopTask: async () => true,
       killTask: async () => true,
       shutdown: async () => undefined,
     },

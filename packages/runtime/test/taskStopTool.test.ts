@@ -3,8 +3,9 @@ import { TaskStopTool } from '../src/tools/taskStopTool';
 import type { ToolUseContext } from '../src/runtime/contracts';
 
 describe('TaskStopTool', () => {
-  test('should terminate a task successfully', async () => {
+  test('should route task termination through the shared stop path', async () => {
     const mockTaskManager = {
+      stopTask: vi.fn().mockResolvedValue(true),
       killTask: vi.fn().mockResolvedValue(true),
     } as any;
 
@@ -15,13 +16,14 @@ describe('TaskStopTool', () => {
     const result = await TaskStopTool.invoke({ taskId: 'task-123' }, context);
 
     expect(result.ok).toBe(true);
-    expect(result.content).toContain('Task task-123 terminated successfully');
-    expect(mockTaskManager.killTask).toHaveBeenCalledWith('task-123');
+    expect(result.content).toContain('shared stop path');
+    expect(mockTaskManager.stopTask).toHaveBeenCalledWith('task-123');
+    expect(mockTaskManager.killTask).not.toHaveBeenCalled();
   });
 
   test('should fail if taskId is not found', async () => {
     const mockTaskManager = {
-      killTask: vi.fn().mockResolvedValue(false),
+      stopTask: vi.fn().mockResolvedValue(false),
     } as any;
 
     const context = {
@@ -32,6 +34,7 @@ describe('TaskStopTool', () => {
 
     expect(result.ok).toBe(false);
     expect(result.content).toContain('not found');
+    expect(mockTaskManager.stopTask).toHaveBeenCalledWith('task-unknown');
   });
 
   test('should fail if taskId is missing', async () => {

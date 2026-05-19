@@ -2,6 +2,37 @@ import { describe, expect, it } from 'vitest'
 import { createDeepSeekModelClient, type Tool } from '../src/index.js'
 
 describe('createDeepSeekModelClient', () => {
+  it('defaults to deepseek-v4-flash when no model override is provided', async () => {
+    let requestBody: unknown
+    const client = createDeepSeekModelClient({
+      apiKey: 'test-key',
+      fetch: async (_input, init) => {
+        requestBody = JSON.parse(String(init?.body))
+        return new Response(
+          JSON.stringify({
+            choices: [
+              {
+                finish_reason: 'stop',
+                message: { content: 'ok' },
+              },
+            ],
+          }),
+          { status: 200 },
+        )
+      },
+    })
+
+    expect(client.id).toBe('deepseek:deepseek-v4-flash')
+    await client.createMessage({
+      messages: [],
+      tools: [],
+      abortSignal: new AbortController().signal,
+    })
+    expect(requestBody).toMatchObject({
+      model: 'deepseek-v4-flash',
+    })
+  })
+
   it('maps Vigilon transcript and tools to DeepSeek chat completions', async () => {
     let requestBody: unknown
     const client = createDeepSeekModelClient({
@@ -66,6 +97,14 @@ describe('createDeepSeekModelClient', () => {
           timestamp: '2026-05-17T00:00:00Z',
         },
         {
+          type: 'assistant',
+          content: '',
+          toolCalls: [
+            { id: 'old_call', name: 'echo', input: { text: 'before' } },
+          ],
+          timestamp: '2026-05-17T00:00:01Z',
+        },
+        {
           type: 'tool-call',
           call: { id: 'old_call', name: 'echo', input: { text: 'before' } },
           timestamp: '2026-05-17T00:00:01Z',
@@ -83,6 +122,7 @@ describe('createDeepSeekModelClient', () => {
     expect(requestBody).toMatchObject({
       model: 'deepseek-v4-pro',
       tool_choice: 'auto',
+      stream: true,
       messages: [
         { role: 'user', content: 'hello' },
         {
@@ -128,6 +168,175 @@ describe('createDeepSeekModelClient', () => {
       stopReason: 'tool_use',
       usage: { inputTokens: 11, outputTokens: 7 },
     })
+  })
+
+  it('maps required tool choice to DeepSeek function tool_choice', async () => {
+    let requestBody: unknown
+    const client = createDeepSeekModelClient({
+      apiKey: 'test-key',
+      fetch: async (_input, init) => {
+        requestBody = JSON.parse(String(init?.body))
+        return new Response(
+          JSON.stringify({
+            choices: [
+              {
+                finish_reason: 'stop',
+                message: { content: 'ok' },
+              },
+            ],
+          }),
+          { status: 200 },
+        )
+      },
+    })
+    const tool: Tool = {
+      name: 'ResultReport',
+      description: 'Report',
+      inputJsonSchema: {
+        type: 'object',
+        properties: {},
+        additionalProperties: false,
+      },
+      async invoke() {
+        return { toolCallId: '', ok: true, content: 'unused' }
+      },
+    }
+
+    await client.createMessage({
+      messages: [],
+      tools: [tool],
+      toolChoice: { type: 'tool', name: 'ResultReport' },
+      abortSignal: new AbortController().signal,
+    })
+
+    expect(requestBody).toMatchObject({
+      tool_choice: {
+        type: 'function',
+        function: {
+          name: 'ResultReport',
+        },
+      },
+    })
+  })
+
+  it('retries with auto tool choice when DeepSeek rejects specific tool_choice', async () => {
+    const requestBodies: unknown[] = []
+    const client = createDeepSeekModelClient({
+      apiKey: 'test-key',
+      fetch: async (_input, init) => {
+        requestBodies.push(JSON.parse(String(init?.body)))
+        if (requestBodies.length === 1) {
+          return new Response(
+            JSON.stringify({
+              error: { message: 'deepseek-reasoner does not support this tool_choice' },
+            }),
+            { status: 400 },
+          )
+        }
+        return new Response(
+          JSON.stringify({
+            choices: [
+              {
+                finish_reason: 'stop',
+                message: { content: 'ok' },
+              },
+            ],
+          }),
+          { status: 200 },
+        )
+      },
+    })
+    const tool: Tool = {
+      name: 'ResultReport',
+      description: 'Report',
+      inputJsonSchema: {
+        type: 'object',
+        properties: {},
+        additionalProperties: false,
+      },
+      async invoke() {
+        return { toolCallId: '', ok: true, content: 'unused' }
+      },
+    }
+
+    const response = await client.createMessage({
+      messages: [],
+      tools: [tool],
+      toolChoice: { type: 'tool', name: 'ResultReport' },
+      abortSignal: new AbortController().signal,
+    })
+
+    expect(requestBodies).toHaveLength(2)
+    expect(requestBodies[0]).toMatchObject({
+      tool_choice: {
+        type: 'function',
+        function: { name: 'ResultReport' },
+      },
+    })
+    expect(requestBodies[1]).toMatchObject({
+      tool_choice: 'auto',
+    })
+    expect(response).toMatchObject({
+      content: 'ok',
+      stopReason: 'end_turn',
+    })
+  })
+
+  it('maps project config events into model-visible chat messages', async () => {
+    let requestBody: unknown
+    const client = createDeepSeekModelClient({
+      apiKey: 'test-key',
+      fetch: async (_input, init) => {
+        requestBody = JSON.parse(String(init?.body))
+        return new Response(
+          JSON.stringify({
+            choices: [
+              {
+                finish_reason: 'stop',
+                message: { content: 'ok' },
+              },
+            ],
+          }),
+          { status: 200 },
+        )
+      },
+    })
+
+    await client.createMessage({
+      messages: [
+        {
+          type: 'project-config',
+          config: {
+            ignore: ['**/research/**', '**/.research/**'],
+            defaultCommands: { test: 'pnpm test' },
+            allowedTools: ['Read', 'Grep'],
+          },
+          timestamp: '2026-05-17T00:00:00Z',
+        },
+        {
+          type: 'user',
+          content: 'inspect skills',
+          timestamp: '2026-05-17T00:00:01Z',
+        },
+      ],
+      tools: [],
+      abortSignal: new AbortController().signal,
+    })
+
+    expect(requestBody).toMatchObject({
+      messages: [
+        {
+          role: 'user',
+          content: expect.stringContaining('<vigilon_project_config>'),
+        },
+        { role: 'user', content: 'inspect skills' },
+      ],
+    })
+    const messages = (requestBody as { messages: Array<{ content: string }> }).messages
+    expect(messages[0].content).toContain('**/research/**')
+    expect(messages[0].content).toContain('Do not search, read, or summarize')
+    expect(messages[0].content).toContain('test: pnpm test')
+    expect(messages[0].content).toContain('Allowed tools: Read, Grep')
   })
 
   it('round-trips reasoning content for thinking-mode tool calls', async () => {
@@ -181,6 +390,7 @@ describe('createDeepSeekModelClient', () => {
     })
 
     expect(requestBody).toMatchObject({
+      stream: true,
       messages: [
         { role: 'user', content: 'read file' },
         {
@@ -293,4 +503,123 @@ describe('createDeepSeekModelClient', () => {
     })
     expect(callCount).toBe(1)
   })
+
+  it('accumulates streaming text and tool-call argument deltas into one response', async () => {
+    const client = createDeepSeekModelClient({
+      apiKey: 'test-key',
+      fetch: async () =>
+        new Response(
+          createSseStream([
+            {
+              choices: [{ delta: { content: 'Hello ' } }],
+            },
+            {
+              choices: [
+                {
+                  delta: {
+                    tool_calls: [
+                      {
+                        index: 0,
+                        id: 'call_1',
+                        type: 'function',
+                        function: {
+                          name: 'echo',
+                          arguments: '{"text":"o',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+            {
+              choices: [
+                {
+                  delta: {
+                    content: 'world',
+                    tool_calls: [
+                      {
+                        index: 0,
+                        function: {
+                          arguments: 'k"}',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+            {
+              choices: [{ finish_reason: 'tool_calls' }],
+              usage: {
+                prompt_tokens: 9,
+                completion_tokens: 4,
+              },
+            },
+          ]),
+          {
+            status: 200,
+            headers: {
+              'content-type': 'text/event-stream',
+            },
+          },
+        ),
+    })
+
+    await expect(
+      client.createMessage({
+        messages: [{ type: 'user', content: 'say hello', timestamp: '2026-05-17T00:00:00Z' }],
+        tools: [],
+        abortSignal: new AbortController().signal,
+      }),
+    ).resolves.toEqual({
+      content: 'Hello world',
+      toolCalls: [{ id: 'call_1', name: 'echo', input: { text: 'ok' } }],
+      stopReason: 'tool_use',
+      usage: { inputTokens: 9, outputTokens: 4 },
+    })
+  })
+
+  it('classifies provider context overflow as a max-token stop', async () => {
+    const client = createDeepSeekModelClient({
+      apiKey: 'test-key',
+      fetch: async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              message:
+                'This model maximum context length is 65536 tokens, however your request exceeded the context window.',
+            },
+          }),
+          { status: 400 },
+        ),
+    })
+
+    await expect(
+      client.createMessage({
+        messages: [{ type: 'user', content: 'huge prompt', timestamp: '2026-05-17T00:00:00Z' }],
+        tools: [],
+        abortSignal: new AbortController().signal,
+      }),
+    ).resolves.toMatchObject({
+      stopReason: 'max_tokens',
+      content: expect.stringContaining('context window'),
+    })
+  })
 })
+
+function createSseStream(events: unknown[]): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder()
+  const chunks = [
+    ...events.map(event => encoder.encode(`data: ${JSON.stringify(event)}\n\n`)),
+    encoder.encode('data: [DONE]\n\n'),
+  ]
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) {
+        controller.enqueue(chunk)
+      }
+      controller.close()
+    },
+  })
+}

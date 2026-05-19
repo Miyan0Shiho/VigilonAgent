@@ -1,4 +1,4 @@
-import { readFile, stat, writeFile } from 'node:fs/promises'
+import { readFile, rename, stat, writeFile } from 'node:fs/promises'
 import type { Tool, ToolResult, ToolUseContext } from '../runtime/contracts.js'
 import { isBlockedDevicePath, isUncPath, resolveToolPath } from './path.js'
 
@@ -35,7 +35,7 @@ export const NotebookTool: Tool = {
     properties: {
       action: {
         type: 'string',
-        enum: ['read', 'edit'],
+        enum: ['read', 'edit', 'insert', 'delete'],
       },
       filePath: {
         type: 'string',
@@ -51,14 +51,19 @@ export const NotebookTool: Tool = {
       },
       source: {
         type: 'string',
-        description: 'New source code for the cell (required for edit).',
+        description: 'New source code for the cell (required for edit/insert).',
+      },
+      cellType: {
+        type: 'string',
+        enum: ['code', 'markdown', 'raw'],
+        description: 'Cell type for inserted cells.',
       },
     },
     required: ['action', 'filePath'],
     additionalProperties: false,
   },
   async invoke(input: unknown, context: ToolUseContext): Promise<ToolResult> {
-    const { action, filePath: rawPath, cellIndex, cellId, source } = input as any
+    const { action, filePath: rawPath, cellIndex, cellId, source, cellType } = input as any
     const filePath = resolveToolPath(context.cwd, rawPath)
 
     if (isUncPath(filePath)) return failed('UNC paths are not supported.')
@@ -84,6 +89,11 @@ export const NotebookTool: Tool = {
       } else if (action === 'edit') {
         if (source === undefined) return failed('source is required for edit action.')
         return handleEdit(notebook, filePath, content, fileStat.mtimeMs, context, cellIndex, cellId, source)
+      } else if (action === 'insert') {
+        if (source === undefined) return failed('source is required for insert action.')
+        return handleInsert(notebook, filePath, content, fileStat.mtimeMs, context, cellIndex, source, cellType)
+      } else if (action === 'delete') {
+        return handleDelete(notebook, filePath, content, fileStat.mtimeMs, context, cellIndex, cellId)
       }
       return failed(`Unknown action: ${action}`)
     } catch (error) {
@@ -148,23 +158,15 @@ async function handleEdit(
   const oldSource = Array.isArray(match.cell.source)
     ? match.cell.source.join('')
     : match.cell.source
-  match.cell.source = source
-    .split('\n')
-    .map((line, idx, arr) => (idx === arr.length - 1 ? line : `${line}\n`))
+  match.cell.source = sourceToLines(source)
   if (match.cell.cell_type === 'code') {
     match.cell.outputs = []
     match.cell.execution_count = null
   }
 
   const updatedContent = JSON.stringify(notebook, null, 1)
-  await writeFile(filePath, updatedContent, 'utf8')
-  const updatedStat = await stat(filePath)
-  context.readFileState?.set(filePath, {
-    content: updatedContent,
-    mtimeMs: updatedStat.mtimeMs,
-    offset: 1,
-    fullRead: true,
-  })
+  await atomicWriteFile(filePath, updatedContent)
+  await updateNotebookReadState(context, filePath, updatedContent)
 
   return ok(`Cell updated successfully.`, {
     type: 'update',
@@ -174,12 +176,88 @@ async function handleEdit(
   })
 }
 
+async function handleInsert(
+  notebook: NotebookContent,
+  filePath: string,
+  rawContent: string,
+  mtimeMs: number,
+  context: ToolUseContext,
+  cellIndex: number | undefined,
+  source: string,
+  cellType: NotebookCell['cell_type'] = 'code',
+): Promise<ToolResult> {
+  const stale = validateReadBeforeEdit(filePath, rawContent, mtimeMs, context)
+  if (stale) return failed(stale)
+  if (cellType !== 'code' && cellType !== 'markdown' && cellType !== 'raw') {
+    return failed('cellType must be code, markdown, or raw.')
+  }
+  const insertAt =
+    cellIndex === undefined
+      ? notebook.cells.length
+      : Math.max(0, Math.min(cellIndex, notebook.cells.length))
+  const id = `cell-${Date.now().toString(36)}`
+  const cell: NotebookCell = {
+    cell_type: cellType,
+    source: sourceToLines(source),
+    metadata: {},
+    id,
+  }
+  if (cellType === 'code') {
+    cell.outputs = []
+    cell.execution_count = null
+  }
+  notebook.cells.splice(insertAt, 0, cell)
+  const updatedContent = JSON.stringify(notebook, null, 1)
+  await atomicWriteFile(filePath, updatedContent)
+  await updateNotebookReadState(context, filePath, updatedContent)
+  return ok('Cell inserted successfully.', {
+    type: 'update',
+    filePath,
+    cellId: id,
+    cellIndex: insertAt,
+    diff: `+++ inserted ${cellType} cell ${id}\n+ ${source.replace(/\n/g, '\n+ ')}`,
+  })
+}
+
+async function handleDelete(
+  notebook: NotebookContent,
+  filePath: string,
+  rawContent: string,
+  mtimeMs: number,
+  context: ToolUseContext,
+  cellIndex: number | undefined,
+  cellId: string | undefined,
+): Promise<ToolResult> {
+  const match = findCell(notebook, cellIndex, cellId)
+  if (!match) return failed('Cell not found.')
+  const stale = validateReadBeforeEdit(filePath, rawContent, mtimeMs, context)
+  if (stale) return failed(stale)
+  const oldSource = Array.isArray(match.cell.source)
+    ? match.cell.source.join('')
+    : match.cell.source
+  notebook.cells.splice(match.index, 1)
+  const updatedContent = JSON.stringify(notebook, null, 1)
+  await atomicWriteFile(filePath, updatedContent)
+  await updateNotebookReadState(context, filePath, updatedContent)
+  return ok('Cell deleted successfully.', {
+    type: 'update',
+    filePath,
+    cellId: match.identity,
+    cellIndex: match.index,
+    diff: `--- deleted cell ${match.identity}\n- ${oldSource.replace(/\n/g, '\n- ')}`,
+  })
+}
+
 function findCell(
   notebook: NotebookContent,
   index?: number,
   id?: string,
 ): NotebookCellMatch | undefined {
   if (id !== undefined) {
+    const syntheticIndex = parseSyntheticCellIndex(id)
+    if (syntheticIndex !== undefined) {
+      return findCell(notebook, syntheticIndex, undefined)
+    }
     for (const [cellIndex, cell] of notebook.cells.entries()) {
       const identity = getCellIdentity(cell, cellIndex)
       if (cell.id === id || identity === id) {
@@ -193,6 +271,39 @@ function findCell(
     return { cell, index, identity: getCellIdentity(cell, index) }
   }
   return undefined
+}
+
+function parseSyntheticCellIndex(id: string): number | undefined {
+  const match = id.match(/^cell-(\d+)$/)
+  if (!match) return undefined
+  const index = Number.parseInt(match[1] ?? '', 10)
+  return Number.isInteger(index) ? index : undefined
+}
+
+function sourceToLines(source: string): string[] {
+  return source
+    .split('\n')
+    .map((line, idx, arr) => (idx === arr.length - 1 ? line : `${line}\n`))
+}
+
+async function atomicWriteFile(filePath: string, content: string): Promise<void> {
+  const tmpPath = `${filePath}.${process.pid}.${Date.now()}.tmp`
+  await writeFile(tmpPath, content, 'utf8')
+  await rename(tmpPath, filePath)
+}
+
+async function updateNotebookReadState(
+  context: ToolUseContext,
+  filePath: string,
+  content: string,
+): Promise<void> {
+  const updatedStat = await stat(filePath)
+  context.readFileState?.set(filePath, {
+    content,
+    mtimeMs: updatedStat.mtimeMs,
+    offset: 1,
+    fullRead: true,
+  })
 }
 
 function formatCell(

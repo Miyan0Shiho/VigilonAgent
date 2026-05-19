@@ -1,7 +1,9 @@
 export {
   createPhase1RuntimeBaseline,
+  createPhase2RuntimeBaseline,
   PHASE1_EXCLUDED_SURFACES,
   PHASE1_INCLUDED_CAPABILITIES,
+  PHASE2_INCLUDED_CAPABILITIES,
 } from './runtime/baseline.js'
 export { runCli } from './cli.js'
 export { createDeepSeekModelClient } from './model/deepseek.js'

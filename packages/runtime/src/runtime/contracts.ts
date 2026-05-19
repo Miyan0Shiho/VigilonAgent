@@ -24,6 +24,7 @@ export type ToolResult = {
 export type ModelRequest = {
   messages: TranscriptEvent[]
   tools: Tool[]
+  toolChoice?: 'auto' | 'none' | { type: 'tool'; name: string }
   abortSignal: AbortSignal
 }
 
@@ -91,12 +92,17 @@ export type CompactMetadata = {
   messagesSummarized: number
   userContext?: string
   discoveredToolNames?: string[]
+  toolReferenceDeltas?: ToolReferenceDelta[]
   todos?: TodoItem[]
   approvedPlan?: string
   pendingPlan?: string
   verificationNotes?: string[]
   mcpInstructions?: string[]
+  activeSkill?: ActiveSkillRuntimeState
   memoryFreshness?: 'fresh' | 'stale'
+  systemPrompt?: string
+  toolSchema?: string
+  modelParams?: Record<string, unknown>
 }
 
 export type ContentReplacementRecord = {
@@ -190,6 +196,21 @@ export type WebFetchRuntimeOptions = {
   fetch?: typeof fetch
   maxContentChars?: number
   maxRedirects?: number
+  cache?: Map<string, WebFetchCacheEntry>
+  summarize?: (input: {
+    url: string
+    content: string
+    maxChars: number
+  }) => Promise<string>
+}
+
+export type WebFetchCacheEntry = {
+  url: string
+  fetchedAt: string
+  code: number
+  codeText: string
+  content: string
+  bytes: number
 }
 
 export type LocalAgentDefinition = {
@@ -217,6 +238,7 @@ export type SubagentRunResult = {
 export type TaskManager = {
   readonly activeTasks: BackgroundTask[]
   startBashTask(command: string, cwd: string): Promise<string>
+  stopTask(taskId: string): Promise<boolean>
   killTask(taskId: string): Promise<boolean>
   shutdown(): Promise<void>
 }
@@ -228,6 +250,7 @@ export type ToolUseContext = {
   transcript: TranscriptStore
   sessionState?: RuntimeSessionState
   readFileState?: Map<string, ReadFileStateEntry>
+  lspOpenFileState?: Set<string>
   fileReadingLimits?: FileReadingLimits
   globLimits?: {
     maxResults?: number
@@ -267,8 +290,26 @@ export type RuntimeSessionState = {
   verificationNotes: string[]
   backgroundTasks: BackgroundTask[]
   discoveredToolNames: string[]
+  toolReferenceDeltas: ToolReferenceDelta[]
   mcpInstructions: string[]
+  activeSkill?: ActiveSkillRuntimeState
   memoryFreshness?: 'fresh' | 'stale'
+  systemPrompt?: string
+  toolSchema?: string
+  modelParams?: Record<string, unknown>
+}
+
+export type ToolReferenceDelta = {
+  name: string
+  reason: string
+  schemaHash: string
+  discoveredAt: string
+}
+
+export type ActiveSkillRuntimeState = {
+  name: string
+  allowedTools: string[]
+  activatedAt: string
 }
 
 export type ResultHandoffReport = {
@@ -298,6 +339,7 @@ export type Tool = {
   readonly inputJsonSchema?: ToolInputJsonSchema
   readonly readOnly?: boolean
   readonly deferred?: boolean
+  readonly searchTerms?: readonly string[]
   invoke(input: unknown, context: ToolUseContext): Promise<ToolResult>
 }
 
@@ -351,8 +393,13 @@ export type TranscriptEvent =
       verificationNotes?: string[]
       backgroundTasks?: BackgroundTask[]
       discoveredToolNames?: string[]
+      toolReferenceDeltas?: ToolReferenceDelta[]
       mcpInstructions?: string[]
+      activeSkill?: ActiveSkillRuntimeState | null
       memoryFreshness?: 'fresh' | 'stale' | null
+      systemPrompt?: string | null
+      toolSchema?: string | null
+      modelParams?: Record<string, unknown> | null
       timestamp: string
     }
   | {
@@ -376,6 +423,7 @@ export type TranscriptEvent =
       requestId: string
       previousRequestId: string | null
       model: string
+      systemPromptHash: string | null
       toolCount: number
       toolSchemaHash: string
       messageCount: number
@@ -385,6 +433,7 @@ export type TranscriptEvent =
       droppedEventCount: number
       contentReplacementCount: number
       contentReplacementChars: number
+      compactCapabilityHash: string | null
       projectConfigHash: string | null
       skillListingHash: string | null
       timestamp: string
@@ -412,12 +461,25 @@ export type TranscriptEvent =
       reasons: string[]
       inputTokensDelta?: number
       inputTokensDeltaRatio?: number
+      systemChanged: boolean
       toolSchemaChanged: boolean
       modelChanged: boolean
       projectConfigChanged: boolean
       skillListingChanged: boolean
+      compactCapabilityChanged: boolean
       compactionChanged: boolean
       contentReplacementChanged: boolean
+      details: {
+        modelId: string
+        systemPromptHash: string | null
+        toolSchemaHash: string
+        compactCapabilityHash: string | null
+        projectConfigHash: string | null
+        skillListingHash: string | null
+        systemChanged: boolean
+        toolSchemaChanged: boolean
+        compactCapabilityChanged: boolean
+      }
       timestamp: string
     }
   | {
@@ -442,13 +504,31 @@ export type RuntimeSessionSnapshot = {
   sessionState: RuntimeSessionState
 }
 
+export type RuntimeSessionStatus =
+  | 'completed'
+  | 'failed'
+  | 'running'
+  | 'waiting_approval'
+  | 'recoverable'
+
 export type RuntimeSessionSummary = {
   sessionId: string
   transcriptPath: string
   eventCount: number
+  status: RuntimeSessionStatus
   createdAt?: string
   updatedAt?: string
+  title?: string
   firstUserMessage?: string
+  finalMessage?: string
+  lastAction?: string
+  pendingPlan?: string
+  verificationCount: number
+  completedTodoCount: number
+  remainingTodoCount: number
+  backgroundTaskCount: number
+  memoryFreshness?: 'fresh' | 'stale'
+  hasHandoffReport: boolean
 }
 
 export type AgentRuntimeTurnInput = {
@@ -469,6 +549,7 @@ export type ResultReport = {
   status: 'completed' | 'stopped' | 'error'
   finalMessage: string
   todos: TodoItem[]
+  warnings: string[]
   approvedPlan?: string
   handoffReport?: ResultHandoffReport
   verificationNotes: string[]

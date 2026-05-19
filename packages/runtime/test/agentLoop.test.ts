@@ -167,7 +167,62 @@ describe('createVigilonAgentRuntime', () => {
     })
   })
 
+  it('applies skill allowedTools as a runtime tool-pool gate after Skill loads', async () => {
+    const observedToolSets: string[][] = []
+    const modelClient: ModelClient = {
+      id: 'fake-model',
+      async createMessage(request) {
+        observedToolSets.push(request.tools.map(tool => tool.name))
+        if (observedToolSets.length === 1) {
+          return {
+            content: '',
+            toolCalls: [
+              {
+                id: 'skill-1',
+                name: 'Skill',
+                input: { skill: 'reader' },
+              },
+            ],
+            stopReason: 'tool_use',
+          }
+        }
+        return { content: 'done', toolCalls: [], stopReason: 'end_turn' }
+      },
+    }
+    const readerSkill = {
+      name: 'reader',
+      description: 'Read-only repo inspection',
+      content: 'Use only allowed tools.',
+      path: '/repo/.vigilon/skills/reader/SKILL.md',
+      root: '/repo/.vigilon/skills/reader',
+      source: 'project' as const,
+      allowedTools: ['Read', 'Grep'],
+      disableModelInvocation: false,
+      userInvocable: false,
+    }
+
+    const runtime = createVigilonAgentRuntime({
+      modelClient,
+      tools: createCoreToolRegistry({ skills: [readerSkill] }),
+      skills: [readerSkill],
+    })
+
+    for await (const _event of runtime.runTurn({
+      prompt: 'use reader skill',
+      cwd: '/repo',
+      abortSignal: new AbortController().signal,
+    })) {
+      // Drain the runtime stream.
+    }
+
+    expect(observedToolSets[0]).toContain('Skill')
+    expect(observedToolSets[1]).toEqual(['Read', 'Grep'])
+  })
+
   it('restores discovered LSP tools into the runtime request loop', async () => {
+    const cwd = await mkdtemp(path.join(tmpdir(), 'vigilon-lsp-loop-'))
+    await mkdir(path.join(cwd, 'src'), { recursive: true })
+    await writeFile(path.join(cwd, 'src', 'app.ts'), 'export const runTask = () => {}\n')
     const observedToolSets: string[][] = []
     const observedToolResults: string[] = []
     const modelClient: ModelClient = {
@@ -271,7 +326,7 @@ describe('createVigilonAgentRuntime', () => {
 
     for await (const _event of runtime.runTurn({
       prompt: 'Find the LSP tool and inspect the call hierarchy',
-      cwd: '/tmp/project',
+      cwd,
       abortSignal: new AbortController().signal,
     })) {
       // Drain the runtime stream.
@@ -869,6 +924,248 @@ describe('createVigilonAgentRuntime', () => {
       stopReason: 'max_tokens',
       finalMessage: 'Stopped after reaching maxTurns (2)',
       report: { status: 'stopped' },
+    })
+  })
+
+  it('does not apply an implicit 16-turn cap when maxTurns is omitted', async () => {
+    let requests = 0
+    const modelClient: ModelClient = {
+      id: 'long-running-model',
+      async createMessage() {
+        requests += 1
+        if (requests > 16) {
+          return { content: 'done after implicit cap would have fired', toolCalls: [], stopReason: 'end_turn' }
+        }
+        return {
+          content: '',
+          toolCalls: [{ id: randomUUID(), name: 'echo', input: {} }],
+          stopReason: 'tool_use',
+        }
+      },
+    }
+    const runtime = createVigilonAgentRuntime({
+      modelClient,
+      tools: createToolRegistry([
+        {
+          name: 'echo',
+          description: 'Echo',
+          async invoke() {
+            return { toolCallId: '', ok: true, content: 'again' }
+          },
+        },
+      ]),
+    })
+
+    let result
+    for await (const event of runtime.runTurn({
+      prompt: 'loop past old cap',
+      cwd: '/tmp/project',
+      abortSignal: new AbortController().signal,
+    })) {
+      if (event.type === 'turn-finished') result = event.result
+    }
+
+    expect(requests).toBe(17)
+    expect(result).toMatchObject({
+      turns: 17,
+      stopReason: 'end_turn',
+      finalMessage: 'done after implicit cap would have fired',
+      report: { status: 'completed' },
+    })
+  })
+
+  it('does not force ResultReport on the final maxTurns request', async () => {
+    const seenRequests: Array<{ messages: TranscriptEvent[]; tools: string[] }> = []
+    const modelClient: ModelClient = {
+      id: 'max-turns-model',
+      async createMessage(request) {
+        seenRequests.push({
+          messages: request.messages,
+          tools: request.tools.map(tool => tool.name),
+        })
+        if (seenRequests.length === 1) {
+          return {
+            content: '',
+            toolCalls: [{ id: 'echo-1', name: 'echo', input: {} }],
+            stopReason: 'tool_use',
+          }
+        }
+        return { content: 'natural final answer', toolCalls: [], stopReason: 'end_turn' }
+      },
+    }
+    const runtime = createVigilonAgentRuntime({
+      modelClient,
+      tools: createCoreToolRegistry(),
+      permissionMode: 'bypass-local',
+      maxTurns: 2,
+      stopAfterResultReport: true,
+    })
+
+    let result
+    for await (const event of runtime.runTurn({
+      prompt: 'produce a report',
+      cwd: '/tmp/project',
+      abortSignal: new AbortController().signal,
+    })) {
+      if (event.type === 'turn-finished') result = event.result
+    }
+
+    expect(seenRequests[0]?.tools).toContain('Read')
+    expect(seenRequests[1]?.tools).toContain('Read')
+    expect(seenRequests[1]?.tools).toContain('ResultReport')
+    expect(
+      seenRequests[1]?.messages.every(
+        message =>
+          message.type !== 'user' ||
+          !message.content.includes('<vigilon_handoff_deadline>'),
+      ),
+    ).toBe(true)
+    expect(result).toMatchObject({
+      turns: 2,
+      stopReason: 'end_turn',
+      finalMessage: 'natural final answer',
+      report: {
+        status: 'completed',
+      },
+    })
+  })
+
+  it('keeps maxTurns as an explicit stop instead of generating a fallback report', async () => {
+    const modelClient: ModelClient = {
+      id: 'continuing-tool-model',
+      async createMessage() {
+        return {
+          content: '',
+          toolCalls: [
+            {
+              id: 'grep-1',
+              name: 'Grep',
+              input: { pattern: 'still searching' },
+            },
+          ],
+          stopReason: 'tool_use',
+        }
+      },
+    }
+    const runtime = createVigilonAgentRuntime({
+      modelClient,
+      tools: createCoreToolRegistry(),
+      permissionMode: 'bypass-local',
+      maxTurns: 2,
+      stopAfterResultReport: true,
+    })
+
+    let result
+    for await (const event of runtime.runTurn({
+      prompt: 'produce a report',
+      cwd: '/tmp/project',
+      abortSignal: new AbortController().signal,
+    })) {
+      if (event.type === 'turn-finished') result = event.result
+    }
+
+    expect(result).toMatchObject({
+      turns: 2,
+      stopReason: 'max_tokens',
+      finalMessage: 'Stopped after reaching maxTurns (2)',
+      report: {
+        status: 'stopped',
+      },
+    })
+    expect(result?.report.handoffReport).toBeUndefined()
+  })
+
+  it('treats a text-only final answer as the result without requiring ResultReport', async () => {
+    const modelClient: ModelClient = {
+      id: 'text-only-final-model',
+      async createMessage() {
+        return {
+          content: 'Natural language final answer.',
+          toolCalls: [],
+          stopReason: 'end_turn',
+        }
+      },
+    }
+    const runtime = createVigilonAgentRuntime({
+      modelClient,
+      tools: createCoreToolRegistry(),
+      stopAfterResultReport: true,
+    })
+
+    let result
+    for await (const event of runtime.runTurn({
+      prompt: 'answer with a report',
+      cwd: '/tmp/project',
+      abortSignal: new AbortController().signal,
+    })) {
+      if (event.type === 'turn-finished') result = event.result
+    }
+
+    expect(result).toMatchObject({
+      turns: 1,
+      stopReason: 'end_turn',
+      finalMessage: 'Natural language final answer.',
+      report: {
+        status: 'completed',
+      },
+    })
+    expect(result?.report.handoffReport).toBeUndefined()
+  })
+
+  it('surfaces incomplete todos as warnings without changing final-result completion', async () => {
+    let requestCount = 0
+    const modelClient: ModelClient = {
+      id: 'unfinished-todo-model',
+      async createMessage() {
+        requestCount += 1
+        if (requestCount === 1) {
+          return {
+            content: '',
+            toolCalls: [
+              {
+                id: 'todo-1',
+                name: 'TodoWrite',
+                input: {
+                  todos: [
+                    { id: 'search', content: 'Search the repo', status: 'in_progress' },
+                    { id: 'report', content: 'Write the answer', status: 'pending' },
+                  ],
+                },
+              },
+            ],
+            stopReason: 'tool_use',
+          }
+        }
+        return {
+          content: 'Natural language final answer with unfinished work.',
+          toolCalls: [],
+          stopReason: 'end_turn',
+        }
+      },
+    }
+    const runtime = createVigilonAgentRuntime({
+      modelClient,
+      tools: createCoreToolRegistry(),
+    })
+
+    let result
+    for await (const event of runtime.runTurn({
+      prompt: 'answer with visible task progress',
+      cwd: '/tmp/project',
+      abortSignal: new AbortController().signal,
+    })) {
+      if (event.type === 'turn-finished') result = event.result
+    }
+
+    expect(result).toMatchObject({
+      turns: 2,
+      stopReason: 'end_turn',
+      report: {
+        status: 'completed',
+        warnings: [
+          expect.stringContaining('Assistant ended with 2 incomplete todo(s)'),
+        ],
+      },
     })
   })
 })

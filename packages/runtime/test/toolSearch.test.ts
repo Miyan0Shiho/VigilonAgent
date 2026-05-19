@@ -63,6 +63,67 @@ describe('Deferred Tools and ToolSearch', () => {
     expect(observedRequests[1]?.tools).toContain('LSP');
   });
 
+  test('should discover LSP through semantic code-intelligence queries, not only the LSP name', async () => {
+    const observedRequests: Array<{ tools: string[]; discoveredTools?: unknown; content?: string }> = [];
+    const mockModelClient: ModelClient = {
+      id: 'test-model',
+      createMessage: vi
+        .fn()
+        .mockImplementationOnce(async request => {
+          observedRequests.push({
+            tools: request.tools.map(tool => tool.name),
+          });
+          return {
+            content: '',
+            toolCalls: [
+              {
+                id: 'call-1',
+                name: 'ToolSearch',
+                input: { query: 'language symbols references diagnostics' },
+              },
+            ],
+            stopReason: 'tool_use',
+          };
+        })
+        .mockImplementationOnce(async request => {
+          const toolResult = request.messages.find(event => event.type === 'tool-result');
+          observedRequests.push({
+            tools: request.tools.map(tool => tool.name),
+            discoveredTools:
+              toolResult?.type === 'tool-result'
+                ? toolResult.result.metadata?.discoveredTools
+                : undefined,
+            content:
+              toolResult?.type === 'tool-result'
+                ? toolResult.result.content
+                : undefined,
+          });
+          return {
+            content: 'Done',
+            toolCalls: [],
+            stopReason: 'end_turn',
+          };
+        }),
+    };
+
+    const runtime = createVigilonAgentRuntime({
+      modelClient: mockModelClient,
+      tools: createCoreToolRegistry(),
+    });
+
+    for await (const _event of runtime.runTurn({
+      prompt: 'Find structural code intelligence',
+      cwd: '/',
+      abortSignal: new AbortController().signal,
+    })) {
+      // Drain the runtime stream.
+    }
+
+    expect(observedRequests[1]?.discoveredTools).toContain('LSP');
+    expect(observedRequests[1]?.tools).toContain('LSP');
+    expect(observedRequests[1]?.content).toContain('Matched:');
+  });
+
   test('should not include deferred tools in initial request but include them after ToolSearch', async () => {
     const deferredTool: Tool = {
       name: 'DeferredTool',
@@ -118,5 +179,51 @@ describe('Deferred Tools and ToolSearch', () => {
     const secondCallTools = (mockModelClient.createMessage as any).mock.calls[1][0].tools;
     expect(secondCallTools.map((t: any) => t.name)).toContain('ToolSearch');
     expect(secondCallTools.map((t: any) => t.name)).toContain('DeferredTool');
+  });
+
+  test('should recover when a deferred tool is called before schema materialization', async () => {
+    const deferredTool: Tool = {
+      name: 'DeferredTool',
+      description: 'A deferred tool',
+      deferred: true,
+      invoke: vi.fn(async () => ({
+        toolCallId: '',
+        ok: true,
+        content: 'should not run',
+      })),
+    };
+    const modelClient: ModelClient = {
+      id: 'test-model',
+      createMessage: vi.fn()
+        .mockResolvedValueOnce({
+          content: '',
+          toolCalls: [{ id: 'call-1', name: 'DeferredTool', input: {} }],
+          stopReason: 'tool_use',
+        })
+        .mockResolvedValueOnce({
+          content: 'Recovered',
+          toolCalls: [],
+          stopReason: 'end_turn',
+        }),
+    };
+    const runtime = createVigilonAgentRuntime({
+      modelClient,
+      tools: new ToolRegistry([ToolSearchTool, deferredTool]),
+    });
+
+    const events = [];
+    for await (const event of runtime.runTurn({
+      prompt: 'Use deferred without search',
+      cwd: '/',
+      abortSignal: new AbortController().signal,
+    })) {
+      events.push(event);
+    }
+
+    expect(deferredTool.invoke).not.toHaveBeenCalled();
+    const secondRequest = (modelClient.createMessage as any).mock.calls[1][0];
+    const result = secondRequest.messages.find((event: any) => event.type === 'tool-result');
+    expect(result.result.ok).toBe(false);
+    expect(result.result.content).toContain('Call ToolSearch first');
   });
 });

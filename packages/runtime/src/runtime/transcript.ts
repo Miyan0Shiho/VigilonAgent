@@ -2,12 +2,15 @@ import { randomUUID } from 'node:crypto'
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import type {
+  ActiveSkillRuntimeState,
   PermissionMode,
   RuntimeSessionSnapshot,
+  RuntimeSessionStatus,
   RuntimeSessionState,
   RuntimeSessionSummary,
   ResultHandoffReport,
   TodoItem,
+  ToolReferenceDelta,
   TranscriptEvent,
   TranscriptStore,
 } from './contracts.js'
@@ -197,8 +200,13 @@ export function restoreSessionStateFromEvents(
     verificationNotes: [],
     backgroundTasks: [],
     discoveredToolNames: [],
+    toolReferenceDeltas: [],
     mcpInstructions: [],
+    activeSkill: undefined,
     memoryFreshness: undefined,
+    systemPrompt: undefined,
+    toolSchema: undefined,
+    modelParams: undefined,
   }
 
   for (const event of events) {
@@ -215,6 +223,9 @@ export function restoreSessionStateFromEvents(
       if (event.metadata.discoveredToolNames) {
         state.discoveredToolNames = [...event.metadata.discoveredToolNames]
       }
+      if (event.metadata.toolReferenceDeltas) {
+        state.toolReferenceDeltas = [...event.metadata.toolReferenceDeltas]
+      }
       if (event.metadata.todos) {
         state.todos = cloneTodos(event.metadata.todos)
       }
@@ -230,8 +241,20 @@ export function restoreSessionStateFromEvents(
       if (event.metadata.mcpInstructions) {
         state.mcpInstructions = [...event.metadata.mcpInstructions]
       }
+      if (event.metadata.activeSkill) {
+        state.activeSkill = { ...event.metadata.activeSkill }
+      }
       if (event.metadata.memoryFreshness) {
         state.memoryFreshness = event.metadata.memoryFreshness
+      }
+      if (event.metadata.systemPrompt) {
+        state.systemPrompt = event.metadata.systemPrompt
+      }
+      if (event.metadata.toolSchema) {
+        state.toolSchema = event.metadata.toolSchema
+      }
+      if (event.metadata.modelParams) {
+        state.modelParams = { ...event.metadata.modelParams }
       }
       continue
     }
@@ -269,12 +292,28 @@ export function restoreSessionStateFromEvents(
       if (event.discoveredToolNames) {
         state.discoveredToolNames = [...event.discoveredToolNames]
       }
+      if (event.toolReferenceDeltas) {
+        state.toolReferenceDeltas = [...event.toolReferenceDeltas]
+      }
       if (event.mcpInstructions) {
         state.mcpInstructions = [...event.mcpInstructions]
+      }
+      if (event.activeSkill !== undefined) {
+        state.activeSkill =
+          event.activeSkill === null ? undefined : { ...event.activeSkill }
       }
       if (event.memoryFreshness !== undefined) {
         state.memoryFreshness =
           event.memoryFreshness === null ? undefined : event.memoryFreshness
+      }
+      if (event.systemPrompt !== undefined) {
+        state.systemPrompt = event.systemPrompt === null ? undefined : event.systemPrompt
+      }
+      if (event.toolSchema !== undefined) {
+        state.toolSchema = event.toolSchema === null ? undefined : event.toolSchema
+      }
+      if (event.modelParams !== undefined) {
+        state.modelParams = event.modelParams === null ? undefined : { ...event.modelParams }
       }
       continue
     }
@@ -287,6 +326,23 @@ export function restoreSessionStateFromEvents(
             state.discoveredToolNames.push(name)
           }
         }
+      }
+    }
+
+    if (event.type === 'tool-result' && event.result.metadata?.toolReferenceDeltas) {
+      const deltas = event.result.metadata.toolReferenceDeltas
+      if (Array.isArray(deltas)) {
+        state.toolReferenceDeltas = [
+          ...state.toolReferenceDeltas,
+          ...deltas.filter(isToolReferenceDelta),
+        ]
+      }
+    }
+
+    if (event.type === 'tool-result' && event.result.metadata?.activeSkill) {
+      const activeSkill = event.result.metadata.activeSkill
+      if (isActiveSkillRuntimeState(activeSkill)) {
+        state.activeSkill = activeSkill
       }
     }
 
@@ -315,14 +371,103 @@ async function summarizeTranscript(
 ): Promise<RuntimeSessionSummary> {
   const events = await readTranscriptFile(transcriptPath)
   const fileStat = await stat(transcriptPath)
+  const sessionState = restoreSessionStateFromEvents(events)
+  const firstUserMessage = events.find(event => event.type === 'user')?.content
+  const finalAssistantMessage = [...events]
+    .reverse()
+    .find(event => event.type === 'assistant') as
+    | Extract<TranscriptEvent, { type: 'assistant' }>
+    | undefined
+  const completedTodoCount = sessionState.todos.filter(
+    todo => todo.status === 'completed',
+  ).length
+  const remainingTodoCount = sessionState.todos.filter(
+    todo => todo.status !== 'completed',
+  ).length
   return {
     sessionId: path.basename(transcriptPath, '.jsonl'),
     transcriptPath,
     eventCount: events.length,
+    status: deriveSessionStatus(events, sessionState),
     createdAt: events[0]?.timestamp,
     updatedAt: events.at(-1)?.timestamp ?? fileStat.mtime.toISOString(),
-    firstUserMessage: events.find(event => event.type === 'user')?.content,
+    title: buildSessionTitle(firstUserMessage),
+    firstUserMessage,
+    finalMessage: finalAssistantMessage?.content,
+    lastAction: buildLastAction(events, sessionState),
+    pendingPlan: sessionState.pendingPlan,
+    verificationCount: sessionState.verificationNotes.length,
+    completedTodoCount,
+    remainingTodoCount,
+    backgroundTaskCount: sessionState.backgroundTasks.length,
+    memoryFreshness: sessionState.memoryFreshness,
+    hasHandoffReport: Boolean(sessionState.handoffReport),
   }
+}
+
+function deriveSessionStatus(
+  events: readonly TranscriptEvent[],
+  sessionState: RuntimeSessionState,
+): RuntimeSessionStatus {
+  if (sessionState.backgroundTasks.length > 0) return 'running'
+  if (sessionState.phase === 'plan' && sessionState.pendingPlan) {
+    return 'waiting_approval'
+  }
+
+  const lastResponse = [...events]
+    .reverse()
+    .find(event => event.type === 'llm-response') as
+    | Extract<TranscriptEvent, { type: 'llm-response' }>
+    | undefined
+  if (lastResponse?.status === 'error' || lastResponse?.stopReason === 'error') {
+    return 'failed'
+  }
+
+  const lastToolResult = [...events]
+    .reverse()
+    .find(event => event.type === 'tool-result') as
+    | Extract<TranscriptEvent, { type: 'tool-result' }>
+    | undefined
+  if (lastToolResult && !lastToolResult.result.ok) {
+    return 'recoverable'
+  }
+
+  if (sessionState.handoffReport) return 'completed'
+  return events.length > 0 ? 'recoverable' : 'running'
+}
+
+function buildSessionTitle(message: string | undefined): string | undefined {
+  if (!message) return undefined
+  const singleLine = message.replace(/\s+/g, ' ').trim()
+  if (singleLine.length <= 72) return singleLine
+  return `${singleLine.slice(0, 69)}...`
+}
+
+function buildLastAction(
+  events: readonly TranscriptEvent[],
+  sessionState: RuntimeSessionState,
+): string | undefined {
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const event = events[index]
+    if (event.type === 'tool-result') {
+      return event.result.ok
+        ? `Tool ${event.result.toolCallId || 'result'} succeeded`
+        : `Tool ${event.result.toolCallId || 'result'} failed: ${event.result.content}`
+    }
+    if (event.type === 'tool-call') {
+      return `Tool ${event.call.name} started`
+    }
+    if (event.type === 'permission') {
+      return event.decision.allowed
+        ? `Permission allowed: ${event.request.action}`
+        : `Permission denied: ${event.request.action}`
+    }
+    if (event.type === 'assistant' && event.content.trim()) {
+      return buildSessionTitle(event.content)
+    }
+  }
+  if (sessionState.pendingPlan) return 'Waiting for plan approval'
+  return undefined
 }
 
 function parseTodos(input: unknown): TodoItem[] | undefined {
@@ -398,6 +543,28 @@ function parseHandoffReport(input: unknown): ResultHandoffReport | undefined {
     return undefined
   }
   return { finalMessage, changes, verified, unverified, risks }
+}
+
+function isToolReferenceDelta(value: unknown): value is ToolReferenceDelta {
+  if (!value || typeof value !== 'object') return false
+  const record = value as Record<string, unknown>
+  return (
+    typeof record.name === 'string' &&
+    typeof record.reason === 'string' &&
+    typeof record.schemaHash === 'string' &&
+    typeof record.discoveredAt === 'string'
+  )
+}
+
+function isActiveSkillRuntimeState(value: unknown): value is ActiveSkillRuntimeState {
+  if (!value || typeof value !== 'object') return false
+  const record = value as Record<string, unknown>
+  return (
+    typeof record.name === 'string' &&
+    Array.isArray(record.allowedTools) &&
+    record.allowedTools.every(item => typeof item === 'string') &&
+    typeof record.activatedAt === 'string'
+  )
 }
 
 function isNotFound(error: unknown): boolean {

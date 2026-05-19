@@ -25,9 +25,11 @@ export function buildLlmRequestEvent(options: {
   visibleEvents: readonly TranscriptEvent[]
   tools: readonly Tool[]
   model: string
+  systemPrompt?: string
   compacted: boolean
   compactBoundaryIndex?: number
   droppedEventCount: number
+  compactCapability?: unknown
   projectConfig?: RuntimeProjectConfig
   skills?: readonly RuntimeSkill[]
   timestamp: string
@@ -54,6 +56,8 @@ export function buildLlmRequestEvent(options: {
     requestId: randomUUID(),
     previousRequestId: previousRequest?.requestId ?? null,
     model: options.model,
+    systemPromptHash:
+      options.systemPrompt !== undefined ? hashValue(options.systemPrompt) : null,
     toolCount: options.tools.length,
     toolSchemaHash: hashValue(
       options.tools.map(tool => ({
@@ -72,6 +76,10 @@ export function buildLlmRequestEvent(options: {
     droppedEventCount: options.droppedEventCount,
     contentReplacementCount,
     contentReplacementChars,
+    compactCapabilityHash:
+      options.compactCapability !== undefined
+        ? hashValue(options.compactCapability)
+        : null,
     projectConfigHash: options.projectConfig
       ? hashValue(options.projectConfig)
       : null,
@@ -140,9 +148,14 @@ export function buildRequestStabilityEvent(options: {
     previousRequest.requestId,
   )
 
+  const systemChanged =
+    previousRequest.systemPromptHash !== options.currentRequest.systemPromptHash
   const toolSchemaChanged =
     previousRequest.toolSchemaHash !== options.currentRequest.toolSchemaHash
   const modelChanged = previousRequest.model !== options.currentRequest.model
+  const compactCapabilityChanged =
+    previousRequest.compactCapabilityHash !==
+    options.currentRequest.compactCapabilityHash
   const projectConfigChanged =
     previousRequest.projectConfigHash !== options.currentRequest.projectConfigHash
   const skillListingChanged =
@@ -158,8 +171,10 @@ export function buildRequestStabilityEvent(options: {
       options.currentRequest.contentReplacementChars
 
   const reasons: string[] = []
+  if (systemChanged) reasons.push('system_changed')
   if (toolSchemaChanged) reasons.push('tool_schema_changed')
   if (modelChanged) reasons.push('model_changed')
+  if (compactCapabilityChanged) reasons.push('compact_capability_changed')
   if (projectConfigChanged) reasons.push('project_config_changed')
   if (skillListingChanged) reasons.push('skill_listing_changed')
   if (compactionChanged) reasons.push('compact_boundary_moved')
@@ -202,12 +217,25 @@ export function buildRequestStabilityEvent(options: {
     reasons,
     ...(inputTokensDelta !== undefined ? { inputTokensDelta } : {}),
     ...(inputTokensDeltaRatio !== undefined ? { inputTokensDeltaRatio } : {}),
+    systemChanged,
     toolSchemaChanged,
     modelChanged,
     projectConfigChanged,
     skillListingChanged,
+    compactCapabilityChanged,
     compactionChanged,
     contentReplacementChanged,
+    details: {
+      modelId: options.currentRequest.model,
+      systemPromptHash: options.currentRequest.systemPromptHash,
+      toolSchemaHash: options.currentRequest.toolSchemaHash,
+      compactCapabilityHash: options.currentRequest.compactCapabilityHash,
+      projectConfigHash: options.currentRequest.projectConfigHash,
+      skillListingHash: options.currentRequest.skillListingHash,
+      systemChanged,
+      toolSchemaChanged,
+      compactCapabilityChanged,
+    },
     timestamp: options.timestamp,
   }
 }

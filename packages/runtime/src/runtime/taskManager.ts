@@ -5,6 +5,22 @@ import type { BackgroundTask, TaskManager } from './contracts.js';
 export function createTaskManager(): TaskManager {
   const tasks = new Map<string, { info: BackgroundTask; process: ChildProcess }>();
 
+  async function stopTask(taskId: string): Promise<boolean> {
+    const task = tasks.get(taskId);
+    if (!task) return false;
+
+    const { process } = task;
+    if (process.pid) {
+      try {
+        process.kill();
+      } catch {
+        // Best-effort stop: the shared path removes the task even if the host already exited.
+      }
+    }
+    tasks.delete(taskId);
+    return true;
+  }
+
   return {
     get activeTasks(): BackgroundTask[] {
       return Array.from(tasks.values()).map((t) => t.info);
@@ -42,21 +58,17 @@ export function createTaskManager(): TaskManager {
       return id;
     },
 
-    async killTask(taskId: string): Promise<boolean> {
-      const task = tasks.get(taskId);
-      if (!task) return false;
+    async stopTask(taskId: string): Promise<boolean> {
+      return stopTask(taskId);
+    },
 
-      const { process } = task;
-      if (process.pid) {
-        // Kill the process group if detached
-        try {
-          process.kill();
-        } catch (e) {
-          // Ignore
-        }
-      }
-      tasks.delete(taskId);
-      return true;
+    async killTask(taskId: string): Promise<boolean> {
+      return stopTask(taskId);
+    },
+
+    async shutdown(): Promise<void> {
+      const taskIds = Array.from(tasks.keys());
+      await Promise.all(taskIds.map(taskId => stopTask(taskId)));
     },
   };
 }

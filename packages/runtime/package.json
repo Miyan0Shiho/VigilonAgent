@@ -11,10 +11,15 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "start": "tsx src/cli.ts",
+    "tui": "tsx src/cli.ts tui",
     "smoke:version": "tsx src/cli.ts --version",
-    "doctor": "tsx src/cli.ts doctor"
+    "doctor": "tsx src/cli.ts doctor",
+    "phase3:acceptance": "tsx scripts/phase3-acceptance.ts",
+    "phase3:selfhost": "tsx scripts/phase3-selfhost.ts",
+    "phase23:boundary-probe": "tsx scripts/phase23-boundary-probe.ts"
   },
   "dependencies": {
+    "@vigilon/tui": "workspace:*",
     "vscode-jsonrpc": "^8.2.1",
     "vscode-languageserver-protocol": "^3.17.5",
     "vscode-languageserver-types": "^3.17.5"

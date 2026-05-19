@@ -45,67 +45,70 @@ export const ConfigTool: Tool = {
     required: ['setting'],
     additionalProperties: false,
   },
-  readOnly: true,
   async invoke(input: unknown, context: ToolUseContext): Promise<ToolResult> {
-    const parsed = parseConfigInput(input)
-    if (!parsed.setting) {
-      return failed('Config requires a supported "setting" key.')
-    }
-    if (!SUPPORTED_SETTINGS.has(parsed.setting)) {
-      return failed(`Unknown setting: ${parsed.setting}`)
-    }
+    try {
+      const parsed = parseConfigInput(input)
+      if (!parsed.setting) {
+        return failed('Config requires a supported "setting" key.')
+      }
+      if (!SUPPORTED_SETTINGS.has(parsed.setting)) {
+        return failed(`Unknown setting: ${parsed.setting}`)
+      }
 
-    if (parsed.value === undefined) {
-      const loaded = await loadRuntimeSettings({
-        cwd: context.cwd,
-        includeGlobal: false,
+      if (parsed.value === undefined) {
+        const loaded = await loadRuntimeSettings({
+          cwd: context.cwd,
+          includeGlobal: false,
+        })
+        const effectiveValue = readEffectiveSetting(loaded.settings, parsed.setting)
+        return {
+          toolCallId: '',
+          ok: true,
+          content: `Config ${parsed.setting} = ${formatValue(effectiveValue)}`,
+          metadata: {
+            mode: 'get',
+            setting: parsed.setting,
+            effectiveValue,
+          },
+        }
+      }
+
+      const permission = await context.permissionGate.requestPermission({
+        action: 'write',
+        subject: `config:${parsed.setting}`,
+        risk: 'low',
+        reason: `Update runtime setting ${parsed.setting}`,
       })
-      const effectiveValue = readEffectiveSetting(loaded.settings, parsed.setting)
+      if (!permission.allowed) {
+        return failed(`Config permission denied: ${permission.reason}`)
+      }
+
+      const source = parsed.source ?? 'local'
+      const coercedValue = coerceSettingValue(parsed.setting, parsed.value)
+      const filePath = getSettingsPath(context.cwd, source)
+      const previousDocument = await readSettingsDocument(filePath)
+      const previousValue = readRawSetting(previousDocument, parsed.setting)
+      const nextDocument = writeRawSetting(previousDocument, parsed.setting, coercedValue)
+      await mkdir(path.dirname(filePath), { recursive: true })
+      await writeFile(filePath, `${JSON.stringify(nextDocument, null, 2)}\n`, 'utf8')
+
+      applyImmediateEffect(context, parsed.setting, coercedValue)
+
       return {
         toolCallId: '',
         ok: true,
-        content: `Config ${parsed.setting} = ${formatValue(effectiveValue)}`,
+        content: `Updated ${parsed.setting} in ${filePath} to ${formatValue(coercedValue)}`,
         metadata: {
-          mode: 'get',
+          mode: 'set',
           setting: parsed.setting,
-          effectiveValue,
+          source,
+          filePath,
+          previousValue,
+          value: coercedValue,
         },
       }
-    }
-
-    const permission = await context.permissionGate.requestPermission({
-      action: 'write',
-      subject: `config:${parsed.setting}`,
-      risk: 'low',
-      reason: `Update runtime setting ${parsed.setting}`,
-    })
-    if (!permission.allowed) {
-      return failed(`Config permission denied: ${permission.reason}`)
-    }
-
-    const source = parsed.source ?? 'local'
-    const coercedValue = coerceSettingValue(parsed.setting, parsed.value)
-    const filePath = getSettingsPath(context.cwd, source)
-    const previousDocument = await readSettingsDocument(filePath)
-    const previousValue = readRawSetting(previousDocument, parsed.setting)
-    const nextDocument = writeRawSetting(previousDocument, parsed.setting, coercedValue)
-    await mkdir(path.dirname(filePath), { recursive: true })
-    await writeFile(filePath, `${JSON.stringify(nextDocument, null, 2)}\n`, 'utf8')
-
-    applyImmediateEffect(context, parsed.setting, coercedValue)
-
-    return {
-      toolCallId: '',
-      ok: true,
-      content: `Updated ${parsed.setting} in ${filePath} to ${formatValue(coercedValue)}`,
-      metadata: {
-        mode: 'set',
-        setting: parsed.setting,
-        source,
-        filePath,
-        previousValue,
-        value: coercedValue,
-      },
+    } catch (error) {
+      return failed(error instanceof Error ? error.message : String(error))
     }
   },
 }

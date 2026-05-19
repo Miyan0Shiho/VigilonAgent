@@ -160,7 +160,7 @@ export function createLSPServerInstance(
   }
 
   async function stop(): Promise<void> {
-    if (state === 'stopped' || state === 'stopping') {
+    if (state === 'stopping') {
       return;
     }
 
