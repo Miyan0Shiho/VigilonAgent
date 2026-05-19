@@ -264,11 +264,11 @@ describe('transcript persistence', () => {
       { id: 'resume', status: 'in_progress' },
     ])
 
-    const observedRequests: string[][] = []
+    const observedRequests: TranscriptEvent[][] = []
     const secondModel: ModelClient = {
       id: 'second-model',
       async createMessage(request) {
-        observedRequests.push(request.messages.map(event => event.type))
+        observedRequests.push(request.messages)
         return {
           content: 'second done',
           toolCalls: [],
@@ -291,7 +291,8 @@ describe('transcript persistence', () => {
       'second turn',
     )
 
-    expect(observedRequests[0]).toEqual([
+    expect(observedRequests[0]?.map(event => event.type)).toEqual([
+      'user',
       'user',
       'assistant',
       'tool-call',
@@ -300,6 +301,12 @@ describe('transcript persistence', () => {
       'assistant',
       'user',
     ])
+    const progress = observedRequests[0]?.find(
+      event =>
+        event.type === 'user' &&
+        event.content.includes('<vigilon_runtime_progress>'),
+    )
+    expect(progress?.content).toContain('- in_progress resume: Keep resumed state')
     expect(result?.report.todos).toMatchObject([
       { id: 'resume', status: 'in_progress' },
     ])

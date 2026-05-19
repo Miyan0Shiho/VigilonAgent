@@ -1114,9 +1114,11 @@ describe('createVigilonAgentRuntime', () => {
 
   it('surfaces incomplete todos as warnings without changing final-result completion', async () => {
     let requestCount = 0
+    const observedRequests: TranscriptEvent[][] = []
     const modelClient: ModelClient = {
       id: 'unfinished-todo-model',
-      async createMessage() {
+      async createMessage(request) {
+        observedRequests.push(request.messages)
         requestCount += 1
         if (requestCount === 1) {
           return {
@@ -1167,6 +1169,15 @@ describe('createVigilonAgentRuntime', () => {
         ],
       },
     })
+    const secondRequestProgress = observedRequests[1]?.find(
+      event =>
+        event.type === 'user' &&
+        event.content.includes('<vigilon_runtime_progress>'),
+    )
+    expect(secondRequestProgress?.content).toContain('current_todos:')
+    expect(secondRequestProgress?.content).toContain('- in_progress search: Search the repo')
+    expect(secondRequestProgress?.content).toContain('- pending report: Write the answer')
+    expect(secondRequestProgress?.content).toContain('Do not give a final answer')
   })
 })
 

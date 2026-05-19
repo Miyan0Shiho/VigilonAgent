@@ -231,6 +231,7 @@ Vigilon 旧行为：
 - CLI operator guidance 明确：“There is no fixed default turn limit”。
 - workbench 显示从 `maxTurns=16` 改为 `maxTurns=unbounded`。
 - runtime final report 增加 `warnings`：自然语言结束仍是一等完成结果，但如果 todo 未完成或已批准计划缺少验证记录，会在报告和 workbench 中显式暴露，不再用 fallback handoff 伪装完成。
+- runtime 每次模型请求前注入轻量 `<vigilon_runtime_progress>`：包含未完成 todo、批准/待批准计划和验证记录。这样进度状态不只藏在历史工具结果或最终 warning 里，而是在下一轮推理时持续可见，帮助复杂任务向当前 in-progress/pending 项收敛。
 
 验证：
 
@@ -247,6 +248,7 @@ Vigilon 旧行为：
 - 显式 `maxTurns` 到达且模型仍持续调用工具时，结果保持 `status=stopped`，不会生成 fallback handoff。
 - `stopAfterResultReport` 模式下，模型自然语言结束仍是 final result；`ResultReport` 是可选结构化审计增强，不是完成条件。
 - 自然语言结束但 todo 未完成时，结果保持 `completed`，同时报告 `warnings`，用于暴露“看似结束但任务状态未闭合”的深层问题。
+- TodoWrite 后的下一次模型请求包含 `<vigilon_runtime_progress>`，列出当前 `in_progress` / `pending` todo，并提醒不要在未完成 todo 存在时直接 final answer，除非明确报告 blocker 或任务范围变化。
 - DeepSeek 拒绝 specific `tool_choice` 时，adapter 会降级重试 `auto`。
 
 最新 live 指标：
@@ -262,4 +264,4 @@ Vigilon 旧行为：
 3. 自然语言 final result 要成为 first-class 结果；结构化报告可以作为审计增强，但不能是主循环完成的脆弱依赖。
 4. 后续要继续补计划/进度/任务完成判断，让模型更早收敛到正确答案，而不是靠默认轮数或 fallback 报告硬切。
 
-仍未关闭的问题：真实模型可以自然语言结束但偏离原任务，且 todo 仍未完成。这说明下一步重点应转向 Claude Code 式任务状态、结果判定、工具输出聚焦和 operator-visible progress，而不是继续堆 `ResultReport` 兜底。
+仍未关闭的问题：真实模型仍可能自然语言结束但偏离原任务；当前只把 todo/plan/verification 进度持续放回模型上下文，并在最终报告暴露 warning，还没有证明 live 模型在复杂任务中稳定收敛。下一步重点应转向工具输出聚焦、结果判定和 operator-visible progress 的 live 验证，而不是继续堆 `ResultReport` 兜底。

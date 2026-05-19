@@ -234,15 +234,18 @@ export function createVigilonAgentRuntime(
           injectOperatorGuidance(
             injectProjectConfig(
               injectSkillListing(
-                injectCapabilityReplay(
-                  injectSessionMemory(
-                    contextWindow.events,
-                    sessionMemory?.record,
-                    sessionMemory?.fresh ?? false,
+                injectRuntimeProgress(
+                  injectCapabilityReplay(
+                    injectSessionMemory(
+                      contextWindow.events,
+                      sessionMemory?.record,
+                      sessionMemory?.fresh ?? false,
+                      Boolean(options.resume),
+                    ),
+                    sessionState,
                     Boolean(options.resume),
                   ),
                   sessionState,
-                  Boolean(options.resume),
                 ),
                 options.skills ?? [],
               ),
@@ -874,6 +877,63 @@ function injectCapabilityReplay(
     return [firstEvent, replayEvent, ...events.slice(1)]
   }
   return [replayEvent, ...events]
+}
+
+function injectRuntimeProgress(
+  events: Awaited<ReturnType<TranscriptStore['readAll']>>,
+  sessionState: RuntimeSessionState,
+): Awaited<ReturnType<TranscriptStore['readAll']>> {
+  const lines: string[] = []
+  if (sessionState.phase !== 'execute') {
+    lines.push(`phase="${sessionState.phase}"`)
+  }
+  if (sessionState.approvedPlan) {
+    lines.push(`approved_plan=${JSON.stringify(sessionState.approvedPlan)}`)
+  }
+  if (sessionState.pendingPlan) {
+    lines.push(`pending_plan=${JSON.stringify(sessionState.pendingPlan)}`)
+  }
+  const incompleteTodos = sessionState.todos.filter(todo => todo.status !== 'completed')
+  if (incompleteTodos.length > 0) {
+    lines.push('current_todos:')
+    lines.push(
+      ...incompleteTodos.map(
+        todo =>
+          `- ${todo.status} ${todo.id}: ${todo.activeForm?.trim() || todo.content}`,
+      ),
+    )
+    lines.push(
+      'Do not give a final answer while pending or in_progress todos remain unless you are explicitly reporting a blocker or changed task scope.',
+    )
+  }
+  if (sessionState.verificationNotes.length > 0) {
+    lines.push('verification_notes:')
+    lines.push(...sessionState.verificationNotes.map(note => `- ${note}`))
+  }
+  if (lines.length === 0) return events
+
+  const progressEvent: Extract<TranscriptEvent, { type: 'user' }> = {
+    type: 'user',
+    content: [
+      '<vigilon_runtime_progress>',
+      ...lines,
+      '</vigilon_runtime_progress>',
+    ].join('\n'),
+    timestamp: createTimestamp(),
+  }
+  const insertAfter = events.findIndex(
+    event =>
+      event.type === 'user' &&
+      event.content.includes('<vigilon_capability_replay>'),
+  )
+  if (insertAfter >= 0) {
+    return [
+      ...events.slice(0, insertAfter + 1),
+      progressEvent,
+      ...events.slice(insertAfter + 1),
+    ]
+  }
+  return [progressEvent, ...events]
 }
 
 async function loadSessionMemory(options: {
