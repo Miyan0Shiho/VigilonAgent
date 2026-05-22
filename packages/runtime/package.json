@@ -1,0 +1,57 @@
+{
+  "name": "@vigilon/runtime",
+  "version": "0.1.0",
+  "description": "Core runtime for the Vigilon local whiteboard Agent.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "vigilon": "dist/cli.js"
+  },
+  "files": [
+    "dist/**/*.d.ts",
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "clean": "node -e \"import('node:fs').then(fs => fs.rmSync('dist', { recursive: true, force: true }))\"",
+    "build": "pnpm run clean && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "start": "tsx src/cli.ts",
+    "tui": "tsx src/cli.ts tui",
+    "smoke:version": "tsx src/cli.ts --version",
+    "doctor": "tsx src/cli.ts doctor",
+    "phase3:acceptance": "tsx scripts/phase3-acceptance.ts",
+    "phase3:selfhost": "tsx scripts/phase3-selfhost.ts",
+    "phase23:boundary-probe": "tsx scripts/phase23-boundary-probe.ts",
+    "phase2.5:baseline": "tsx scripts/phase25-governance-baseline.ts",
+    "phase2.5:memory-probe": "tsx scripts/phase25-memory-probe.ts",
+    "phase2.5:provider-memory-probe": "tsx scripts/phase25-provider-memory-probe.ts --require-provider",
+    "phase2.5:compact-probe": "tsx scripts/phase25-compact-probe.ts",
+    "phase2.5:safety-probe": "tsx scripts/phase25-safety-probe.ts",
+    "phase2.5:subagent-probe": "tsx scripts/phase25-subagent-probe.ts",
+    "phase2.5:cache-probe": "tsx scripts/phase25-cache-probe.ts",
+    "phase2.5:provider-cache-probe": "tsx scripts/phase25-cache-probe.ts --require-provider",
+    "phase2.5:governance-probe": "tsx scripts/phase25-governance-probe.ts"
+  },
+  "dependencies": {
+    "vscode-jsonrpc": "^8.2.1",
+    "vscode-languageserver-protocol": "^3.17.5",
+    "vscode-languageserver-types": "^3.17.5"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "name": "@vigilon/tui",
+  "version": "0.1.0",
+  "description": "Terminal operator interface for Vigilon Agent.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "vigilon-tui": "dist/entrypoints/cli.js"
+  },
+  "files": [
+    "dist/**/*.d.ts",
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "clean": "node -e \"import('node:fs').then(fs => fs.rmSync('dist', { recursive: true, force: true }))\"",
+    "build": "pnpm run clean && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "tsx src/entrypoints/cli.tsx",
+    "phase3.1:acceptance": "tsx scripts/phase31-tui-acceptance.ts"
+  },
+  "dependencies": {
+    "@vigilon/runtime": "workspace:*",
+    "chalk": "^5.4.1",
+    "ink": "^7.0.2",
+    "marked": "^15.0.7",
+    "react": "^19.2.6",
+    "string-width": "^8.2.1",
+    "strip-ansi": "^7.1.0",
+    "wrap-ansi": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "@types/react": "^19.2.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}

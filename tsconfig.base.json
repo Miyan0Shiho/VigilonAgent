@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "paths": {
+      "@vigilon/runtime": [
+        "packages/runtime/src/index.ts"
+      ],
+      "@vigilon/runtime/*": [
+        "packages/runtime/src/*"
+      ],
+      "@vigilon/tui": [
+        "packages/tui/src/index.ts"
+      ],
+      "@vigilon/tui/*": [
+        "packages/tui/src/*"
+      ]
+    },
+    "lib": [
+      "ES2023"
+    ],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "sourceMap": true,
+    "ignoreDeprecations": "6.0",
+    "jsx": "react-jsx",
+    "types": [
+      "node"
+    ]
+  }
+}
