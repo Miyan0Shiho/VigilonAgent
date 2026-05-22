@@ -1,12 +1,15 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 import { describe, expect, it, vi } from 'vitest'
 import {
   createLocalPermissionGate,
   createCoreToolRegistry,
   createToolRegistry,
+  createTaskManager,
   createVigilonAgentRuntime,
   InMemoryTranscriptStore,
   JsonlTranscriptStore,
@@ -16,6 +19,8 @@ import {
   type Tool,
   type TranscriptEvent,
 } from '../src/index.js'
+
+const execFileAsync = promisify(execFile)
 
 describe('createVigilonAgentRuntime', () => {
   it('feeds tool results back into the next model request', async () => {
@@ -404,6 +409,21 @@ describe('createVigilonAgentRuntime', () => {
           handoffReport: undefined,
           verificationNotes: ['Ran focused checks'],
           backgroundTasks: [],
+          retainedTasks: [
+            {
+              id: 'agent-finished-1',
+              type: 'subagent',
+              command: 'subagent:finisher',
+              startTime: '2026-05-18T00:00:00Z',
+              status: 'completed',
+              background: true,
+              agentName: 'finisher',
+              transcriptPath: '/tmp/project/.vigilon/subagents/finisher.jsonl',
+              completedAt: '2026-05-18T00:00:02Z',
+              terminalReason: 'subagent_completed',
+              outputSummary: 'Background finisher completed.',
+            },
+          ],
           discoveredToolNames: ['LSP'],
           mcpInstructions: ['Use the filesystem MCP server for descriptors.'],
           memoryFreshness: 'stale',
@@ -426,6 +446,8 @@ describe('createVigilonAgentRuntime', () => {
           content.includes('<vigilon_capability_replay') &&
           content.includes('Investigate compact replay') &&
           content.includes('filesystem MCP server') &&
+          content.includes('retained_task id="agent-finished-1"') &&
+          content.includes('output="Background finisher completed."') &&
           content.includes('memory_freshness="stale"'),
       ),
     ).toBe(true)
@@ -455,12 +477,14 @@ describe('createVigilonAgentRuntime', () => {
       sessionId: 'parent-session',
     })
     const observedToolSets: string[][] = []
+    const observedCachePrefixes: Array<NonNullable<Parameters<ModelClient['createMessage']>[0]['cachePrefix']>> = []
     let requestCount = 0
     const modelClient: ModelClient = {
       id: 'fake-model',
       async createMessage(request) {
         requestCount += 1
         observedToolSets.push(request.tools.map(tool => tool.name))
+        if (request.cachePrefix) observedCachePrefixes.push(request.cachePrefix)
         if (requestCount === 1) {
           return {
             content: '',
@@ -478,12 +502,20 @@ describe('createVigilonAgentRuntime', () => {
           }
         }
         if (requestCount === 2) {
-          expect(request.tools.map(tool => tool.name)).toEqual(['Read', 'Grep'])
-          expect(request.messages[0]).toMatchObject({
+          expect(request.tools.map(tool => tool.name)).toEqual(observedToolSets[0])
+          expect(request.tools.map(tool => tool.name)).toEqual(
+            expect.arrayContaining(['Agent', 'Read', 'Grep']),
+          )
+          const subagentPrompt = request.messages.find(
+            event =>
+              event.type === 'user' &&
+              event.content.includes('You are a focused runtime investigator.'),
+          )
+          expect(subagentPrompt).toMatchObject({
             type: 'user',
             content: expect.stringContaining('You are a focused runtime investigator.'),
           })
-          expect(request.messages[0]).toMatchObject({
+          expect(subagentPrompt).toMatchObject({
             content: expect.stringContaining('Inspect the runtime regressions'),
           })
           return {
@@ -492,17 +524,6 @@ describe('createVigilonAgentRuntime', () => {
             stopReason: 'end_turn',
           }
         }
-        const toolResult = request.messages.find(event => event.type === 'tool-result')
-        expect(toolResult).toMatchObject({
-          type: 'tool-result',
-          result: {
-            ok: true,
-            metadata: {
-              agentName: 'researcher',
-              status: 'completed',
-            },
-          },
-        })
         return {
           content: 'Delegation complete.',
           toolCalls: [],
@@ -510,26 +531,61 @@ describe('createVigilonAgentRuntime', () => {
         }
       },
     }
+    const taskManager = createTaskManager()
     const runtime = createVigilonAgentRuntime({
       modelClient,
       tools: createCoreToolRegistry(),
       transcript,
+      taskManager,
       permissionGate: createLocalPermissionGate({
         mode: 'bypass-local',
         transcript,
       }),
     })
 
-    for await (const _event of runtime.runTurn({
+    const runtimeEvents = []
+    for await (const event of runtime.runTurn({
       prompt: 'delegate the regression investigation',
       cwd,
       abortSignal: new AbortController().signal,
     })) {
-      // Drain the runtime stream.
+      runtimeEvents.push(event)
     }
 
     expect(observedToolSets[0]).toContain('Agent')
+    expect(observedCachePrefixes[1]).toMatchObject({
+      source: 'fork-shared-prefix',
+      parentCanonicalPrefixHash: observedCachePrefixes[0]?.canonicalPrefixHash,
+    })
+    const lifecycleEvents = runtimeEvents
+      .filter(event => event.type === 'subagent-lifecycle')
+      .map(event => event.event)
+    expect(lifecycleEvents.map(event => event.status)).toEqual(
+      expect.arrayContaining([
+        'started',
+        'model-request-started',
+        'model-response-received',
+        'completed',
+      ]),
+    )
+    expect(lifecycleEvents[0]).toMatchObject({
+      agentName: 'researcher',
+      background: false,
+      status: 'started',
+    })
     const parentEvents = await transcript.readAll()
+    expect(parentEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'subagent-lifecycle',
+          event: expect.objectContaining({
+            agentName: 'researcher',
+            status: 'completed',
+            finalMessage: 'Subagent found the regression source.',
+          }),
+        }),
+      ]),
+    )
     const agentResult = parentEvents.find(
       event =>
         event.type === 'tool-result' &&
@@ -549,6 +605,319 @@ describe('createVigilonAgentRuntime', () => {
       ?.result.metadata?.transcriptPath
     expect(typeof transcriptPath).toBe('string')
     expect(transcriptPath).toContain(`${path.sep}subagents${path.sep}`)
+    expect(taskManager.retainedTasks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'subagent',
+          agentName: 'researcher',
+          parentSessionId: transcript.sessionId,
+          status: 'completed',
+        }),
+      ]),
+    )
+  })
+
+  it('runs a worktree-hosted subagent from an isolated cwd with host metadata', async () => {
+    const cwd = await mkdtemp(path.join(tmpdir(), 'vigilon-subagent-worktree-'))
+    const sessionsDir = path.join(cwd, '.sessions')
+    await mkdir(path.join(cwd, '.vigilon', 'agents'), { recursive: true })
+    await writeFile(path.join(cwd, 'marker.txt'), 'source marker\n', 'utf8')
+    await writeFile(
+      path.join(cwd, '.vigilon', 'agents', 'worker.md'),
+      [
+        '---',
+        'description: Worktree worker',
+        'maxTurns: 3',
+        'host: worktree',
+        'allowedTools:',
+        '  - Bash',
+        '---',
+        'You are a focused worktree subagent.',
+      ].join('\n'),
+      'utf8',
+    )
+    const transcript = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'worktree-parent-session',
+    })
+    let requestCount = 0
+    const modelClient: ModelClient = {
+      id: 'fake-model',
+      async createMessage(request) {
+        requestCount += 1
+        if (requestCount === 1) {
+          return {
+            content: '',
+            toolCalls: [
+              {
+                id: 'agent-worktree-1',
+                name: 'Agent',
+                input: {
+                  agent: 'worker',
+                  task: 'Verify worktree isolation.',
+                },
+              },
+            ],
+            stopReason: 'tool_use',
+          }
+        }
+        if (requestCount === 2) {
+          expect(request.tools.map(tool => tool.name)).toEqual(
+            expect.arrayContaining(['Agent', 'Bash']),
+          )
+          const subagentPrompt = request.messages.find(
+            event =>
+              event.type === 'user' &&
+              event.content.includes('Execution host: worktree'),
+          )
+          expect(subagentPrompt).toMatchObject({
+            type: 'user',
+            content: expect.stringContaining('Execution host: worktree'),
+          })
+          return {
+            content: '',
+            toolCalls: [
+              {
+                id: 'worktree-bash-1',
+                name: 'Bash',
+                input: {
+                  command: 'pwd && test -f marker.txt && test ! -d .git && test ! -d .vigilon && printf subagent-output > subagent-output.txt',
+                  description: 'Verify worktree cwd and copied source files',
+                },
+              },
+            ],
+            stopReason: 'tool_use',
+          }
+        }
+        if (requestCount === 3) {
+          return {
+            content: 'Worktree isolation verified.',
+            toolCalls: [],
+            stopReason: 'end_turn',
+          }
+        }
+        const toolResult = request.messages.find(event => event.type === 'tool-result')
+        expect(toolResult).toMatchObject({
+          type: 'tool-result',
+          result: {
+            ok: true,
+            metadata: {
+              status: 'completed',
+              taskHost: {
+                host: 'worktree',
+                worktreeDiff: {
+                  status: 'changed',
+                  filesChanged: 1,
+                },
+              },
+            },
+          },
+        })
+        return {
+          content: 'Parent observed worktree handoff.',
+          toolCalls: [],
+          stopReason: 'end_turn',
+        }
+      },
+    }
+    const runtime = createVigilonAgentRuntime({
+      modelClient,
+      tools: createCoreToolRegistry(),
+      transcript,
+      permissionGate: createLocalPermissionGate({
+        mode: 'bypass-local',
+        transcript,
+      }),
+    })
+
+    for await (const _event of runtime.runTurn({
+      prompt: 'delegate to worktree subagent',
+      cwd,
+      abortSignal: new AbortController().signal,
+    })) {
+      // Drain events.
+    }
+
+    const parentEvents = await transcript.readAll()
+    const agentResult = parentEvents.find(
+      event =>
+        event.type === 'tool-result' &&
+        event.result.metadata?.agentName === 'worker',
+    )
+    expect(agentResult).toMatchObject({
+      type: 'tool-result',
+      result: {
+        metadata: {
+          taskHost: {
+            host: 'worktree',
+            sourceCwd: cwd,
+          },
+        },
+      },
+    })
+    const metadata = (agentResult as Extract<typeof agentResult, { type: 'tool-result' }>).result.metadata
+    expect(metadata?.taskHost?.cwd).toContain('subagent-worktrees')
+    expect(metadata?.taskHost?.worktreePath).toBe(metadata?.taskHost?.cwd)
+    expect(metadata?.taskHost?.worktreeDiff?.patchPath).toContain('.worktree.patch')
+    expect(metadata?.taskHost?.worktreeDiff?.changedFiles).toEqual([
+      {
+        path: 'subagent-output.txt',
+        status: 'added',
+      },
+    ])
+    const patch = await readFile(metadata?.taskHost?.worktreeDiff?.patchPath as string, 'utf8')
+    expect(patch).toContain('diff --git a/subagent-output.txt b/subagent-output.txt')
+    expect(patch).toContain('+subagent-output')
+  })
+
+  it('runs a git-worktree-hosted subagent on a real branch with HEAD provenance', async () => {
+    const cwd = await mkdtemp(path.join(tmpdir(), 'vigilon-subagent-git-worktree-'))
+    await mkdir(path.join(cwd, '.vigilon', 'agents.local'), { recursive: true })
+    await writeFile(path.join(cwd, 'marker.txt'), 'git worktree marker\n', 'utf8')
+    await execFileAsync('git', ['init'], { cwd })
+    await execFileAsync('git', ['config', 'user.email', 'vigilon@example.test'], { cwd })
+    await execFileAsync('git', ['config', 'user.name', 'Vigilon Test'], { cwd })
+    await execFileAsync('git', ['add', 'marker.txt'], { cwd })
+    await execFileAsync('git', ['commit', '-m', 'initial'], { cwd })
+    const { stdout: baseHead } = await execFileAsync('git', ['rev-parse', 'HEAD'], { cwd })
+    await writeFile(
+      path.join(cwd, '.vigilon', 'agents.local', 'worker.md'),
+      [
+        '---',
+        'description: Git worktree worker',
+        'maxTurns: 2',
+        'host: git-worktree',
+        'allowedTools:',
+        '  - Bash',
+        '---',
+        'You are a focused git worktree subagent.',
+      ].join('\n'),
+      'utf8',
+    )
+    const transcript = new JsonlTranscriptStore({
+      cwd,
+      sessionId: 'git-worktree-parent-session',
+    })
+    let requestCount = 0
+    const modelClient: ModelClient = {
+      id: 'fake-model',
+      async createMessage(request) {
+        requestCount += 1
+        if (requestCount === 1) {
+          return {
+            content: '',
+            toolCalls: [
+              {
+                id: 'agent-git-worktree-1',
+                name: 'Agent',
+                input: {
+                  agent: 'worker',
+                  task: 'Verify git worktree isolation.',
+                },
+              },
+            ],
+            stopReason: 'tool_use',
+          }
+        }
+        if (requestCount === 2) {
+          const subagentPrompt = request.messages.find(
+            event =>
+              event.type === 'user' &&
+              event.content.includes('Execution host: git-worktree'),
+          )
+          expect(subagentPrompt).toMatchObject({
+            type: 'user',
+            content: expect.stringContaining('Execution host: git-worktree'),
+          })
+          expect(subagentPrompt).toMatchObject({
+            type: 'user',
+            content: expect.stringContaining('Git worktree base HEAD:'),
+          })
+          return {
+            content: '',
+            toolCalls: [
+              {
+                id: 'git-worktree-bash-1',
+                name: 'Bash',
+                input: {
+                  command: 'test -f marker.txt && test -f .git && printf git-output > git-output.txt && git add git-output.txt',
+                  description: 'Verify git worktree host isolation and stage output',
+                },
+              },
+            ],
+            stopReason: 'tool_use',
+          }
+        }
+        if (requestCount === 3) {
+          return {
+            content: 'Git worktree isolation verified.',
+            toolCalls: [],
+            stopReason: 'end_turn',
+          }
+        }
+        const toolResult = request.messages.find(event => event.type === 'tool-result')
+        expect(toolResult).toMatchObject({
+          type: 'tool-result',
+          result: {
+            ok: true,
+            metadata: {
+              taskHost: {
+                host: 'git-worktree',
+                gitWorktree: {
+                  baseHead: baseHead.trim(),
+                },
+              },
+            },
+          },
+        })
+        return {
+          content: 'Parent observed git worktree handoff.',
+          toolCalls: [],
+          stopReason: 'end_turn',
+        }
+      },
+    }
+    const runtime = createVigilonAgentRuntime({
+      modelClient,
+      tools: createCoreToolRegistry(),
+      transcript,
+      permissionGate: createLocalPermissionGate({
+        mode: 'bypass-local',
+        transcript,
+      }),
+    })
+
+    for await (const _event of runtime.runTurn({
+      prompt: 'delegate to git worktree subagent',
+      cwd,
+      abortSignal: new AbortController().signal,
+    })) {
+      // Drain events.
+    }
+
+    const parentEvents = await transcript.readAll()
+    const agentResult = parentEvents.find(
+      event =>
+        event.type === 'tool-result' &&
+        event.result.metadata?.agentName === 'worker',
+    )
+    const metadata = (agentResult as Extract<typeof agentResult, { type: 'tool-result' }>).result.metadata
+    expect(metadata?.taskHost?.host).toBe('git-worktree')
+    expect(metadata?.taskHost?.gitWorktree?.branchName).toContain('vigilon/subagent/worker/')
+    expect(metadata?.taskHost?.gitWorktree?.baseHead).toBe(baseHead.trim())
+    expect(metadata?.taskHost?.worktreeDiff?.strategy).toBe('git-worktree-diff')
+    expect(metadata?.taskHost?.worktreeDiff?.baselineRef).toBe(baseHead.trim())
+    expect(metadata?.taskHost?.worktreeDiff?.changedFiles).toEqual([
+      {
+        path: 'git-output.txt',
+        status: 'added',
+      },
+    ])
+    const patch = await readFile(metadata?.taskHost?.worktreeDiff?.patchPath as string, 'utf8')
+    expect(patch).toContain('diff --git a/git-output.txt b/git-output.txt')
+    expect(patch).toContain('+git-output')
+    await expect(readFile(path.join(cwd, 'git-output.txt'), 'utf8')).rejects.toThrow()
   })
 
   it('passes a shared ToolUseContext with permission and transcript state', async () => {
@@ -711,6 +1080,76 @@ describe('createVigilonAgentRuntime', () => {
     expect((await transcript.readAll()).map(event => event.type)).toContain(
       'content-replacement',
     )
+  })
+
+  it('uses model input-token preflight for auto compact when no usage anchor exists', async () => {
+    const transcript = new InMemoryTranscriptStore()
+    await transcript.append({
+      type: 'user',
+      content: 'existing context with no provider usage anchor',
+      timestamp: '2026-05-17T00:00:00Z',
+    })
+    const preflightRequests: Array<{ eventCount: number; toolCount: number }> = []
+    const modelClient: ModelClient = {
+      id: 'fake-provider:model-a',
+      async countInputTokens(request) {
+        preflightRequests.push({
+          eventCount: request.messages.length,
+          toolCount: request.tools.length,
+        })
+        return {
+          ok: true,
+          source: 'provider-chat-completion-usage',
+          inputTokens: 900,
+          usage: {
+            inputTokens: 900,
+            totalTokens: 901,
+            cacheReadInputTokens: 700,
+            cacheCreationInputTokens: 200,
+          },
+        }
+      },
+      async createMessage() {
+        return { content: 'done', toolCalls: [], stopReason: 'end_turn' }
+      },
+    }
+    const runtime = createVigilonAgentRuntime({
+      modelClient,
+      transcript,
+      autoCompactTokenBudget: 1_000,
+      autoCompactPressureThreshold: 0.8,
+    })
+
+    for await (const _event of runtime.runTurn({
+      prompt: 'continue',
+      cwd: '/tmp/project',
+      abortSignal: new AbortController().signal,
+    })) {
+      // Drain the runtime stream.
+    }
+
+    expect(preflightRequests).toHaveLength(1)
+    const boundary = (await transcript.readAll()).find(
+      (event): event is Extract<TranscriptEvent, { type: 'compact-boundary' }> =>
+        event.type === 'compact-boundary',
+    )
+    expect(boundary?.metadata.tokenPressure).toMatchObject({
+      estimatedTokens: 900,
+      tokenBudget: 1000,
+      tokenCountSource: 'provider-input-token-preflight',
+      reason: 'token_pressure_exceeded',
+      contextBudget: {
+        estimator: {
+          kind: 'provider-input-token-preflight',
+          modelId: 'fake-provider:model-a',
+          provider: 'fake-provider',
+          inputTokens: 900,
+          totalTokens: 901,
+          cacheReadInputTokens: 700,
+          cacheCreationInputTokens: 200,
+        },
+      },
+    })
   })
 
   it('summarizes file diffs in the final result report', async () => {

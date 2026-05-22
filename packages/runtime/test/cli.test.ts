@@ -1,14 +1,19 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { Readable } from 'node:stream'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   JsonlTranscriptStore,
+  readSessionMemoryExtractionStatus,
   readTranscriptFile,
   runCli,
   type ModelClient,
 } from '../src/index.js'
+
+const execFileAsync = promisify(execFile)
 
 const tempRoots: string[] = []
 
@@ -18,6 +23,101 @@ afterEach(async () => {
 })
 
 describe('runtime CLI', () => {
+  it('initializes a project with alpha-ready settings and project instructions', async () => {
+    const cwd = await createTempRoot('vigilon-cli-init-cwd-')
+    await writeFile(
+      path.join(cwd, 'package.json'),
+      JSON.stringify({
+        scripts: {
+          test: 'vitest run',
+          typecheck: 'tsc --noEmit',
+          build: 'tsc',
+        },
+      }),
+      'utf8',
+    )
+    await writeFile(path.join(cwd, 'pnpm-lock.yaml'), '', 'utf8')
+
+    const io = createIo({ DEEPSEEK_MODEL: 'deepseek-v4-flash' })
+    const exitCode = await runCli(['init', '--cwd', cwd], io)
+
+    const output = JSON.parse(io.stdoutText)
+    const settings = JSON.parse(
+      await readFile(path.join(cwd, '.vigilon', 'settings.json'), 'utf8'),
+    )
+    const instructions = await readFile(path.join(cwd, 'AGENTS.md'), 'utf8')
+    expect(exitCode).toBe(0)
+    expect(output).toMatchObject({
+      status: 'ok',
+      settingsPath: path.join(cwd, '.vigilon', 'settings.json'),
+      instructionsPath: path.join(cwd, 'AGENTS.md'),
+      defaultCommands: {
+        test: 'pnpm test',
+        typecheck: 'pnpm typecheck',
+        build: 'pnpm build',
+      },
+    })
+    expect(settings).toMatchObject({
+      model: 'deepseek-v4-flash',
+      permissionMode: 'ask',
+      project: {
+        ignore: expect.arrayContaining(['node_modules/**', '.vigilon/sessions/**']),
+        defaultCommands: {
+          test: 'pnpm test',
+          typecheck: 'pnpm typecheck',
+          build: 'pnpm build',
+        },
+      },
+    })
+    expect(instructions).toContain('Project Agent Instructions')
+
+    const second = createIo()
+    await runCli(['init', '--cwd', cwd], second)
+    expect(JSON.parse(second.stdoutText).skipped).toEqual(
+      expect.arrayContaining([
+        path.join(cwd, '.vigilon', 'settings.json'),
+        path.join(cwd, 'AGENTS.md'),
+      ]),
+    )
+  })
+
+  it('lists effective core tools, skills, and MCP tools', async () => {
+    const cwd = await createTempRoot('vigilon-cli-tools-cwd-')
+    await mkdir(path.join(cwd, '.vigilon', 'skills', 'alpha-skill'), { recursive: true })
+    await writeFile(
+      path.join(cwd, '.vigilon', 'skills', 'alpha-skill', 'SKILL.md'),
+      [
+        '---',
+        'description: Alpha local skill',
+        'allowed-tools: [Read]',
+        '---',
+        'Use this skill for alpha checks.',
+      ].join('\n'),
+      'utf8',
+    )
+    const io = createIo({ VIGILON_DISABLE_GLOBAL_SETTINGS: '1' })
+
+    const exitCode = await runCli(['tools', '--cwd', cwd], io)
+
+    const output = JSON.parse(io.stdoutText)
+    expect(exitCode).toBe(0)
+    expect(output.coreTools).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'Read' }),
+        expect.objectContaining({ name: 'Bash' }),
+        expect.objectContaining({ name: 'Agent' }),
+      ]),
+    )
+    expect(output.skills).toEqual([
+      expect.objectContaining({
+        name: 'alpha-skill',
+        description: 'Alpha local skill',
+        allowedTools: ['Read'],
+      }),
+    ])
+    expect(output.effectiveToolCount).toBeGreaterThan(output.coreTools.length)
+  })
+
   it('runs a headless turn and writes a JSONL session', async () => {
     const cwd = await createTempRoot('vigilon-cli-cwd-')
     const sessionsDir = await createTempRoot('vigilon-cli-sessions-')
@@ -104,6 +204,784 @@ describe('runtime CLI', () => {
     })
   })
 
+  it('lists agent catalog source precedence and overrides', async () => {
+    const cwd = await createTempRoot('vigilon-cli-agents-cwd-')
+    await mkdir(path.join(cwd, '.vigilon', 'agents'), { recursive: true })
+    await mkdir(path.join(cwd, '.vigilon', 'agents.local'), { recursive: true })
+    await writeFile(
+      path.join(cwd, '.vigilon', 'agents', 'researcher.md'),
+      [
+        '---',
+        'description: Project researcher',
+        'allowedTools:',
+        '  - Read',
+        '---',
+        'Project researcher prompt.',
+      ].join('\n'),
+      'utf8',
+    )
+    await writeFile(
+      path.join(cwd, '.vigilon', 'agents.local', 'researcher.md'),
+      [
+        '---',
+        'description: Local researcher override',
+        'background: true',
+        'allowedTools:',
+        '  - Grep',
+        '---',
+        'Local researcher prompt.',
+      ].join('\n'),
+      'utf8',
+    )
+
+    const io = createIo()
+    const exitCode = await runCli(['agents', '--cwd', cwd], io, {
+      createModelClient: () => oneShotModel('unused'),
+    })
+
+    const output = JSON.parse(io.stdoutText)
+    expect(exitCode).toBe(0)
+    expect(output.sourcePrecedence).toEqual([
+      'built-in',
+      'plugin',
+      'user',
+      'project',
+      'local',
+      'flag',
+      'managed',
+    ])
+    expect(output.active).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'researcher',
+          source: 'local',
+          allowedTools: ['Grep'],
+          background: true,
+        }),
+      ]),
+    )
+    expect(output.entries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'researcher',
+          source: 'project',
+          active: false,
+          overriddenBy: 'local',
+        }),
+      ]),
+    )
+  })
+
+  it('inspects and resumes a retained subagent task through the CLI', async () => {
+    const cwd = await createTempRoot('vigilon-cli-agent-resume-cwd-')
+    const sessionsDir = await createTempRoot('vigilon-cli-agent-resume-sessions-')
+    await mkdir(path.join(cwd, '.vigilon', 'agents'), { recursive: true })
+    await writeFile(
+      path.join(cwd, '.vigilon', 'agents', 'researcher.md'),
+      [
+        '---',
+        'description: Resumable researcher',
+        'maxTurns: 2',
+        'allowedTools:',
+        '---',
+        'Researcher prompt.',
+      ].join('\n'),
+      'utf8',
+    )
+    const subagentTranscriptPath = path.join(
+      sessionsDir,
+      'subagents',
+      'researcher',
+      'researcher-task-1.jsonl',
+    )
+    const subagentTranscript = new JsonlTranscriptStore({
+      transcriptPath: subagentTranscriptPath,
+      sessionId: 'researcher-task-1',
+    })
+    await subagentTranscript.append({
+      type: 'user',
+      content: 'Original delegated task',
+      timestamp: '2026-05-20T00:00:00Z',
+    })
+	    await subagentTranscript.append({
+	      type: 'assistant',
+	      content: 'Initial subagent output.',
+	      timestamp: '2026-05-20T00:00:01Z',
+	    })
+	    await subagentTranscript.append({
+	      type: 'permission',
+	      request: {
+	        action: 'bash',
+	        subject: 'pnpm test',
+	        risk: 'medium',
+	        reason: 'Run validation',
+	        origin: {
+	          agentId: 'researcher',
+	          agentRole: 'subagent',
+	          parentAgentId: 'main',
+	          toolName: 'Bash',
+	        },
+	      },
+	      decision: {
+	        allowed: true,
+	        reason: 'operator approved',
+	      },
+	      timestamp: '2026-05-20T00:00:02Z',
+	    })
+    const parentTranscript = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'parent-agent-session',
+    })
+    await parentTranscript.append({
+      type: 'session-state',
+      phase: 'execute',
+      permissionMode: 'bypass-local',
+      retainedTasks: [
+        {
+          id: 'researcher-task-1',
+          type: 'subagent',
+          command: 'subagent:researcher',
+          startTime: '2026-05-20T00:00:00Z',
+          status: 'completed',
+          background: true,
+          agentName: 'researcher',
+          transcriptPath: subagentTranscriptPath,
+          parentAgentId: 'main',
+          completedAt: '2026-05-20T00:00:01Z',
+          terminalReason: 'subagent_completed',
+          outputSummary: 'Initial subagent output.',
+        },
+      ],
+      timestamp: '2026-05-20T00:00:02Z',
+    })
+
+    const inspectIo = createIo()
+    const inspectExit = await runCli(
+      [
+        'agents',
+        'inspect',
+        'parent-agent-session',
+        'researcher-task-1',
+        '--cwd',
+        cwd,
+        '--sessions-dir',
+        sessionsDir,
+      ],
+      inspectIo,
+      {},
+    )
+    const inspectOutput = JSON.parse(inspectIo.stdoutText)
+    expect(inspectExit).toBe(0)
+	    expect(inspectOutput.outputStream).toEqual(
+	      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'assistant',
+          content: 'Initial subagent output.',
+        }),
+	      ]),
+	    )
+	    expect(inspectOutput.permissionSummary).toMatchObject({
+	      totalRequests: 1,
+	      allowed: 1,
+	      agents: [
+	        expect.objectContaining({
+	          agentRole: 'subagent',
+	          parentAgentId: 'main',
+	          tools: ['Bash'],
+	        }),
+	      ],
+	    })
+
+    const resumeIo = createIo()
+    const resumeExit = await runCli(
+      [
+        'agents',
+        'resume',
+        'parent-agent-session',
+        'researcher-task-1',
+        'continue',
+        'the',
+        'subagent',
+        '--cwd',
+        cwd,
+        '--sessions-dir',
+        sessionsDir,
+        '--permission-mode',
+        'bypass-local',
+      ],
+      resumeIo,
+      {
+        createModelClient: () => ({
+          id: 'subagent-resume-model',
+          async createMessage(request) {
+            expect(request.messages.some(message =>
+              message.type === 'user' &&
+              message.content.includes('<vigilon_subagent_resume'),
+            )).toBe(true)
+            expect(request.messages.at(-1)).toMatchObject({
+              type: 'user',
+              content: 'continue the subagent',
+            })
+            return {
+              content: 'Resumed subagent completed.',
+              toolCalls: [],
+              stopReason: 'end_turn',
+            }
+          },
+        }),
+      },
+    )
+    const resumeOutput = JSON.parse(resumeIo.stdoutText)
+    expect(resumeExit).toBe(0)
+    expect(resumeOutput).toMatchObject({
+      parentSessionId: 'parent-agent-session',
+      taskId: 'researcher-task-1',
+      agentName: 'researcher',
+      status: 'completed',
+      finalMessage: 'Resumed subagent completed.',
+      task: {
+        status: 'completed',
+        terminalReason: 'subagent_resume_completed',
+        outputSummary: 'Resumed subagent completed.',
+      },
+    })
+    expect(resumeOutput.outputStream).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'assistant',
+          content: 'Resumed subagent completed.',
+        }),
+      ]),
+    )
+    const parentEvents = await parentTranscript.readAll()
+    expect(parentEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'session-state',
+          retainedTasks: expect.arrayContaining([
+            expect.objectContaining({
+              id: 'researcher-task-1',
+              terminalReason: 'subagent_resume_completed',
+              outputSummary: 'Resumed subagent completed.',
+            }),
+          ]),
+        }),
+      ]),
+    )
+  })
+
+  it('applies a retained worktree subagent diff after baseline drift checks', async () => {
+    const cwd = await createTempRoot('vigilon-cli-agent-apply-cwd-')
+    const sessionsDir = await createTempRoot('vigilon-cli-agent-apply-sessions-')
+    const baselinePath = await createTempRoot('vigilon-cli-agent-apply-baseline-')
+    const worktreePath = await createTempRoot('vigilon-cli-agent-apply-worktree-')
+    const patchPath = path.join(sessionsDir, 'subagent.worktree.patch')
+    await writeFile(
+      patchPath,
+      [
+        'diff --git a/subagent-output.txt b/subagent-output.txt',
+        'new file mode 100644',
+        'index 0000000..fc20393',
+        '--- /dev/null',
+        '+++ b/subagent-output.txt',
+        '@@ -0,0 +1 @@',
+        '+subagent-output',
+        '',
+      ].join('\n'),
+      'utf8',
+    )
+    const parentTranscript = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'parent-apply-session',
+    })
+    await parentTranscript.append({
+      type: 'session-state',
+      phase: 'execute',
+      permissionMode: 'bypass-local',
+      retainedTasks: [
+        {
+          id: 'worker-task-1',
+          type: 'subagent',
+          command: 'subagent:worker',
+          startTime: '2026-05-20T00:00:00Z',
+          status: 'completed',
+          background: false,
+          agentName: 'worker',
+          transcriptPath: path.join(sessionsDir, 'subagents', 'worker-task-1.jsonl'),
+          parentAgentId: 'main',
+          completedAt: '2026-05-20T00:00:01Z',
+          terminalReason: 'subagent_completed',
+          outputSummary: 'Worktree completed.',
+          worktreeDiff: {
+            strategy: 'copy-baseline-diff',
+            status: 'changed',
+            sourceCwd: cwd,
+            baselinePath,
+            worktreePath,
+            patchPath,
+            filesChanged: 1,
+            additions: 1,
+            deletions: 0,
+            changedFiles: [
+              {
+                path: 'subagent-output.txt',
+                status: 'added',
+              },
+            ],
+          },
+        },
+      ],
+      timestamp: '2026-05-20T00:00:02Z',
+    })
+
+    const io = createIo()
+    const exitCode = await runCli(
+      [
+        'agents',
+        'apply',
+        'parent-apply-session',
+        'worker-task-1',
+        '--cwd',
+        cwd,
+        '--sessions-dir',
+        sessionsDir,
+      ],
+      io,
+      {},
+    )
+
+    const output = JSON.parse(io.stdoutText)
+    expect(exitCode).toBe(0)
+    expect(output).toMatchObject({
+      parentSessionId: 'parent-apply-session',
+      taskId: 'worker-task-1',
+      status: 'applied',
+      applied: true,
+      apply: {
+        strategy: 'git-apply-after-baseline-check',
+        status: 'applied',
+        filesChanged: 1,
+        checkedFiles: ['subagent-output.txt'],
+      },
+      task: {
+        worktreeDiff: {
+          sourceApply: {
+            status: 'applied',
+          },
+        },
+      },
+    })
+    await expect(readFile(path.join(cwd, 'subagent-output.txt'), 'utf8')).resolves.toBe('subagent-output\n')
+    const parentEvents = await parentTranscript.readAll()
+    expect(parentEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'session-state',
+          retainedTasks: expect.arrayContaining([
+            expect.objectContaining({
+              id: 'worker-task-1',
+              worktreeDiff: expect.objectContaining({
+                sourceApply: expect.objectContaining({
+                  status: 'applied',
+                }),
+              }),
+            }),
+          ]),
+          verificationNotes: expect.arrayContaining([
+            'subagent worktree apply applied: worker-task-1 (1 files)',
+          ]),
+        }),
+      ]),
+    )
+  })
+
+  it('supports check-only, partial apply, and rollback for a retained worktree diff', async () => {
+    const cwd = await createTempRoot('vigilon-cli-agent-apply-partial-cwd-')
+    const sessionsDir = await createTempRoot('vigilon-cli-agent-apply-partial-sessions-')
+    const baselinePath = await createTempRoot('vigilon-cli-agent-apply-partial-baseline-')
+    const worktreePath = await createTempRoot('vigilon-cli-agent-apply-partial-worktree-')
+    const patchPath = path.join(sessionsDir, 'subagent-partial.worktree.patch')
+    await writeFile(
+      patchPath,
+      [
+        'diff --git a/a.txt b/a.txt',
+        'new file mode 100644',
+        'index 0000000..7898192',
+        '--- /dev/null',
+        '+++ b/a.txt',
+        '@@ -0,0 +1 @@',
+        '+a',
+        'diff --git a/b.txt b/b.txt',
+        'new file mode 100644',
+        'index 0000000..6178079',
+        '--- /dev/null',
+        '+++ b/b.txt',
+        '@@ -0,0 +1 @@',
+        '+b',
+        '',
+      ].join('\n'),
+      'utf8',
+    )
+    const parentTranscript = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'parent-partial-apply-session',
+    })
+    await parentTranscript.append({
+      type: 'session-state',
+      phase: 'execute',
+      permissionMode: 'bypass-local',
+      retainedTasks: [
+        {
+          id: 'worker-task-partial',
+          type: 'subagent',
+          command: 'subagent:worker',
+          startTime: '2026-05-20T00:00:00Z',
+          status: 'completed',
+          background: false,
+          agentName: 'worker',
+          transcriptPath: path.join(sessionsDir, 'subagents', 'worker-task-partial.jsonl'),
+          parentAgentId: 'main',
+          terminalReason: 'subagent_completed',
+          worktreeDiff: {
+            strategy: 'copy-baseline-diff',
+            status: 'changed',
+            sourceCwd: cwd,
+            baselinePath,
+            worktreePath,
+            patchPath,
+            filesChanged: 2,
+            additions: 2,
+            deletions: 0,
+            changedFiles: [
+              { path: 'a.txt', status: 'added' },
+              { path: 'b.txt', status: 'added' },
+            ],
+          },
+        },
+      ],
+      timestamp: '2026-05-20T00:00:02Z',
+    })
+
+    const checkIo = createIo()
+    await runCli(
+      [
+        'agents',
+        'apply',
+        'parent-partial-apply-session',
+        'worker-task-partial',
+        '--check',
+        '--files',
+        'a.txt',
+        '--cwd',
+        cwd,
+        '--sessions-dir',
+        sessionsDir,
+      ],
+      checkIo,
+      {},
+    )
+    expect(JSON.parse(checkIo.stdoutText)).toMatchObject({
+      status: 'checked',
+      applied: false,
+      apply: {
+        mode: 'check',
+        checkedFiles: ['a.txt'],
+        skippedFiles: ['b.txt'],
+        appliedFiles: [],
+      },
+    })
+    await expect(readFile(path.join(cwd, 'a.txt'), 'utf8')).rejects.toThrow()
+
+    const applyIo = createIo()
+    await runCli(
+      [
+        'agents',
+        'apply',
+        'parent-partial-apply-session',
+        'worker-task-partial',
+        '--files',
+        'a.txt',
+        '--cwd',
+        cwd,
+        '--sessions-dir',
+        sessionsDir,
+      ],
+      applyIo,
+      {},
+    )
+    expect(JSON.parse(applyIo.stdoutText)).toMatchObject({
+      status: 'applied',
+      apply: {
+        mode: 'apply',
+        appliedFiles: ['a.txt'],
+        skippedFiles: ['b.txt'],
+      },
+    })
+    await expect(readFile(path.join(cwd, 'a.txt'), 'utf8')).resolves.toBe('a\n')
+    await expect(readFile(path.join(cwd, 'b.txt'), 'utf8')).rejects.toThrow()
+
+    const rollbackIo = createIo()
+    await runCli(
+      [
+        'agents',
+        'apply',
+        'parent-partial-apply-session',
+        'worker-task-partial',
+        '--rollback',
+        '--files',
+        'a.txt',
+        '--cwd',
+        cwd,
+        '--sessions-dir',
+        sessionsDir,
+      ],
+      rollbackIo,
+      {},
+    )
+    expect(JSON.parse(rollbackIo.stdoutText)).toMatchObject({
+      status: 'rolled_back',
+      apply: {
+        mode: 'rollback',
+        appliedFiles: ['a.txt'],
+        skippedFiles: ['b.txt'],
+      },
+    })
+    await expect(readFile(path.join(cwd, 'a.txt'), 'utf8')).rejects.toThrow()
+  })
+
+  it('reports a conflict instead of applying when source drifted from the subagent baseline', async () => {
+    const cwd = await createTempRoot('vigilon-cli-agent-apply-conflict-cwd-')
+    const sessionsDir = await createTempRoot('vigilon-cli-agent-apply-conflict-sessions-')
+    const baselinePath = await createTempRoot('vigilon-cli-agent-apply-conflict-baseline-')
+    const worktreePath = await createTempRoot('vigilon-cli-agent-apply-conflict-worktree-')
+    await writeFile(path.join(cwd, 'existing.txt'), 'source drift\n', 'utf8')
+    await writeFile(path.join(baselinePath, 'existing.txt'), 'baseline\n', 'utf8')
+    const patchPath = path.join(sessionsDir, 'subagent-conflict.worktree.patch')
+    await writeFile(
+      patchPath,
+      [
+        'diff --git a/existing.txt b/existing.txt',
+        'index df967b9..2f9a147 100644',
+        '--- a/existing.txt',
+        '+++ b/existing.txt',
+        '@@ -1 +1 @@',
+        '-baseline',
+        '+subagent change',
+        '',
+      ].join('\n'),
+      'utf8',
+    )
+    const parentTranscript = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'parent-conflict-session',
+    })
+    await parentTranscript.append({
+      type: 'session-state',
+      phase: 'execute',
+      permissionMode: 'bypass-local',
+      retainedTasks: [
+        {
+          id: 'worker-task-conflict',
+          type: 'subagent',
+          command: 'subagent:worker',
+          startTime: '2026-05-20T00:00:00Z',
+          status: 'completed',
+          background: false,
+          agentName: 'worker',
+          transcriptPath: path.join(sessionsDir, 'subagents', 'worker-task-conflict.jsonl'),
+          parentAgentId: 'main',
+          terminalReason: 'subagent_completed',
+          worktreeDiff: {
+            strategy: 'copy-baseline-diff',
+            status: 'changed',
+            sourceCwd: cwd,
+            baselinePath,
+            worktreePath,
+            patchPath,
+            filesChanged: 1,
+            additions: 1,
+            deletions: 1,
+            changedFiles: [
+              {
+                path: 'existing.txt',
+                status: 'modified',
+              },
+            ],
+          },
+        },
+      ],
+      timestamp: '2026-05-20T00:00:02Z',
+    })
+
+    const io = createIo()
+    const exitCode = await runCli(
+      [
+        'agents',
+        'apply',
+        'parent-conflict-session',
+        'worker-task-conflict',
+        '--cwd',
+        cwd,
+        '--sessions-dir',
+        sessionsDir,
+      ],
+      io,
+      {},
+    )
+
+    const output = JSON.parse(io.stdoutText)
+    expect(exitCode).toBe(0)
+    expect(output).toMatchObject({
+      status: 'conflict',
+      applied: false,
+      apply: {
+        conflicts: ['existing.txt'],
+      },
+    })
+    await expect(readFile(path.join(cwd, 'existing.txt'), 'utf8')).resolves.toBe('source drift\n')
+  })
+
+  it('applies a retained git-worktree subagent diff against the recorded base HEAD', async () => {
+    const cwd = await createTempRoot('vigilon-cli-agent-apply-git-cwd-')
+    const sessionsDir = await createTempRoot('vigilon-cli-agent-apply-git-sessions-')
+    await writeFile(path.join(cwd, 'marker.txt'), 'git apply marker\n', 'utf8')
+    await execFileAsync('git', ['init'], { cwd })
+    await execFileAsync('git', ['config', 'user.email', 'vigilon@example.test'], { cwd })
+    await execFileAsync('git', ['config', 'user.name', 'Vigilon Test'], { cwd })
+    await execFileAsync('git', ['add', 'marker.txt'], { cwd })
+    await execFileAsync('git', ['commit', '-m', 'initial'], { cwd })
+    const { stdout: baseHead } = await execFileAsync('git', ['rev-parse', 'HEAD'], { cwd })
+    const patchPath = path.join(sessionsDir, 'git-subagent.worktree.patch')
+    await writeFile(
+      patchPath,
+      [
+        'diff --git a/git-output.txt b/git-output.txt',
+        'new file mode 100644',
+        'index 0000000..d5fa46c',
+        '--- /dev/null',
+        '+++ b/git-output.txt',
+        '@@ -0,0 +1 @@',
+        '+git-output',
+        '',
+      ].join('\n'),
+      'utf8',
+    )
+    const parentTranscript = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'parent-git-apply-session',
+    })
+    await parentTranscript.append({
+      type: 'session-state',
+      phase: 'execute',
+      permissionMode: 'bypass-local',
+      retainedTasks: [
+        {
+          id: 'git-worker-task-1',
+          type: 'subagent',
+          command: 'subagent:worker',
+          startTime: '2026-05-20T00:00:00Z',
+          status: 'completed',
+          background: false,
+          agentName: 'worker',
+          transcriptPath: path.join(sessionsDir, 'subagents', 'git-worker-task-1.jsonl'),
+          parentAgentId: 'main',
+          terminalReason: 'subagent_completed',
+          worktreePath: path.join(sessionsDir, 'git-worktree'),
+          sourceCwd: cwd,
+          host: 'git-worktree',
+          worktreeDiff: {
+            strategy: 'git-worktree-diff',
+            status: 'changed',
+            sourceCwd: cwd,
+            baselinePath: cwd,
+            baselineRef: baseHead.trim(),
+            worktreePath: path.join(sessionsDir, 'git-worktree'),
+            patchPath,
+            gitWorktree: {
+              gitRoot: cwd,
+              worktreePath: path.join(sessionsDir, 'git-worktree'),
+              branchName: 'vigilon/subagent/worker/git-worker-task-1',
+              baseHead: baseHead.trim(),
+            },
+            filesChanged: 1,
+            additions: 1,
+            deletions: 0,
+            changedFiles: [
+              {
+                path: 'git-output.txt',
+                status: 'added',
+              },
+            ],
+          },
+        },
+      ],
+      timestamp: '2026-05-20T00:00:02Z',
+    })
+
+    const threeWayCheckIo = createIo()
+    await runCli(
+      [
+        'agents',
+        'apply',
+        'parent-git-apply-session',
+        'git-worker-task-1',
+        '--check',
+        '--3way',
+        '--cwd',
+        cwd,
+        '--sessions-dir',
+        sessionsDir,
+      ],
+      threeWayCheckIo,
+      {},
+    )
+    expect(JSON.parse(threeWayCheckIo.stdoutText)).toMatchObject({
+      status: 'checked',
+      applied: false,
+      apply: {
+        mode: 'check',
+        threeWay: true,
+        baselineRef: baseHead.trim(),
+      },
+    })
+    await expect(readFile(path.join(cwd, 'git-output.txt'), 'utf8')).rejects.toThrow()
+
+    const io = createIo()
+    const exitCode = await runCli(
+      [
+        'agents',
+        'apply',
+        'parent-git-apply-session',
+        'git-worker-task-1',
+        '--cwd',
+        cwd,
+        '--sessions-dir',
+        sessionsDir,
+      ],
+      io,
+      {},
+    )
+
+    const output = JSON.parse(io.stdoutText)
+    expect(exitCode).toBe(0)
+    expect(output).toMatchObject({
+      status: 'applied',
+      applied: true,
+      apply: {
+        baselineRef: baseHead.trim(),
+        gitWorktree: {
+          branchName: 'vigilon/subagent/worker/git-worker-task-1',
+        },
+      },
+    })
+    await expect(readFile(path.join(cwd, 'git-output.txt'), 'utf8')).resolves.toBe('git-output\n')
+  })
+
   it('generates session memory for an existing session', async () => {
     const cwd = await createTempRoot('vigilon-cli-summary-cwd-')
     const sessionsDir = await createTempRoot('vigilon-cli-summary-sessions-')
@@ -133,6 +1011,522 @@ describe('runtime CLI', () => {
       fresh: true,
     })
     expect(output.memoryPath).toContain('summary-me.memory.md')
+  })
+
+  it('runs manual compact from the CLI after synchronizing session memory', async () => {
+    const cwd = await createTempRoot('vigilon-cli-compact-cwd-')
+    const sessionsDir = await createTempRoot('vigilon-cli-compact-sessions-')
+    const transcript = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'compact-me',
+    })
+    await transcript.append({
+      type: 'user',
+      content: 'Start a long governance task',
+      timestamp: '2026-05-18T00:00:00Z',
+    })
+    await transcript.append({
+      type: 'assistant',
+      content: 'Plan accepted for compact governance',
+      timestamp: '2026-05-18T00:00:01Z',
+    })
+    await transcript.append({
+      type: 'user',
+      content: 'Continue with verification evidence',
+      timestamp: '2026-05-18T00:00:02Z',
+    })
+
+    const io = createIo()
+    expect(
+      await runCli(
+        [
+          'compact',
+          'compact-me',
+          '--reactive-events',
+          '1',
+          '--token-budget',
+          '100',
+          '--pressure-threshold',
+          '0.5',
+          '--cwd',
+          cwd,
+          '--sessions-dir',
+          sessionsDir,
+        ],
+        io,
+        {},
+      ),
+    ).toBe(0)
+
+    const output = JSON.parse(io.stdoutText)
+    expect(output).toMatchObject({
+      sessionId: 'compact-me',
+      compacted: true,
+      summarySource: 'refreshed-session-memory',
+      memoryReadiness: {
+        before: null,
+        after: 'fresh',
+        refreshed: true,
+        extraction: {
+          status: 'completed',
+          trigger: 'compact',
+          sourceEventCount: 3,
+        },
+      },
+      boundary: {
+        trigger: 'manual',
+        route: {
+          strategy: 'session-memory',
+        },
+        preservedSegment: {
+          preservedEventCount: 1,
+        },
+        postCompactCleanup: {
+          completed: true,
+        },
+        memoryFreshness: 'fresh',
+        memoryReadiness: {
+          refreshed: true,
+          extraction: {
+            status: 'completed',
+            trigger: 'compact',
+          },
+        },
+      },
+    })
+    const events = await readTranscriptFile(output.transcriptPath)
+    expect(events.some(event => event.type === 'compact-boundary')).toBe(true)
+  })
+
+  it('runs manual compact with model-grounded memory validation when requested', async () => {
+    const cwd = await createTempRoot('vigilon-cli-compact-grounded-cwd-')
+    const sessionsDir = await createTempRoot('vigilon-cli-compact-grounded-sessions-')
+    const transcript = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'compact-grounded',
+    })
+    await transcript.append({
+      type: 'user',
+      content: 'Ground memory before compacting the transcript',
+      timestamp: '2026-05-18T00:00:00Z',
+    })
+    await transcript.append({
+      type: 'assistant',
+      content: 'The compact summary should carry model grounding evidence.',
+      timestamp: '2026-05-18T00:00:01Z',
+    })
+
+    const io = createIo()
+    const exitCode = await runCli(
+      [
+        'compact',
+        'compact-grounded',
+        '--validate-memory',
+        '--reactive-events',
+        '0',
+        '--cwd',
+        cwd,
+        '--sessions-dir',
+        sessionsDir,
+      ],
+      io,
+      {
+        createModelClient: () => ({
+          id: 'cli-grounding-model',
+          async createMessage() {
+            return {
+              content: JSON.stringify({
+                status: 'supported',
+                supportedClaims: ['The transcript asks to ground memory before compacting.'],
+                contradictedClaims: [],
+                missingClaims: [],
+                reason: 'The evidence matches the generated session memory.',
+              }),
+              toolCalls: [],
+              stopReason: 'end_turn',
+            }
+          },
+        }),
+      },
+    )
+
+    const output = JSON.parse(io.stdoutText)
+    expect(exitCode).toBe(0)
+    expect(output.memoryReadiness.groundingValidation).toMatchObject({
+      kind: 'vigilon.session-memory-grounding',
+      status: 'supported',
+      modelId: 'cli-grounding-model',
+      supportedClaims: ['The transcript asks to ground memory before compacting.'],
+    })
+    expect(output.boundary.memoryReadiness.groundingValidation).toMatchObject({
+      status: 'supported',
+      modelId: 'cli-grounding-model',
+    })
+    expect(output.memoryReadiness).toMatchObject({
+      ready: true,
+      blockingReasons: [],
+      validationRequired: true,
+    })
+  })
+
+  it('blocks memory-first compact when required grounding contradicts session memory', async () => {
+    const cwd = await createTempRoot('vigilon-cli-compact-contradicted-cwd-')
+    const sessionsDir = await createTempRoot('vigilon-cli-compact-contradicted-sessions-')
+    const transcript = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'compact-contradicted',
+    })
+    await transcript.append({
+      type: 'user',
+      content: 'Keep evidence before compacting.',
+      timestamp: '2026-05-18T00:00:00Z',
+    })
+    await transcript.append({
+      type: 'assistant',
+      content: 'The future compact summary must be grounded.',
+      timestamp: '2026-05-18T00:00:01Z',
+    })
+
+    const io = createIo()
+    const exitCode = await runCli(
+      [
+        'compact',
+        'compact-contradicted',
+        '--validate-memory',
+        '--reactive-events',
+        '0',
+        '--cwd',
+        cwd,
+        '--sessions-dir',
+        sessionsDir,
+      ],
+      io,
+      {
+        createModelClient: () => ({
+          id: 'cli-contradicting-grounding-model',
+          async createMessage() {
+            return {
+              content: JSON.stringify({
+                status: 'contradicted',
+                supportedClaims: [],
+                contradictedClaims: ['The memory conflicts with newer transcript evidence.'],
+                missingClaims: [],
+                reason: 'The compact memory is not supported.',
+              }),
+              toolCalls: [],
+              stopReason: 'end_turn',
+            }
+          },
+        }),
+      },
+    )
+
+    expect(exitCode).toBe(1)
+    expect(io.stderrText).toContain('compact memory readiness blocked: session_memory_grounding_contradicted')
+    const events = await readTranscriptFile(transcript.transcriptPath)
+    expect(events.some(event => event.type === 'compact-boundary')).toBe(false)
+  })
+
+  it('views, edits, and deletes governed session memory from the CLI', async () => {
+    const cwd = await createTempRoot('vigilon-cli-memory-cwd-')
+    const sessionsDir = await createTempRoot('vigilon-cli-memory-sessions-')
+    const transcript = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'memory-me',
+    })
+    await transcript.append({
+      type: 'user',
+      content: 'Capture the memory lifecycle',
+      timestamp: '2026-05-18T00:00:00Z',
+    })
+
+    const writeIo = createIo()
+    expect(
+      await runCli(
+        [
+          'memory',
+          'write',
+          'memory-me',
+          '--content',
+          '## Current Task\nCapture the memory lifecycle',
+          '--cwd',
+          cwd,
+          '--sessions-dir',
+          sessionsDir,
+        ],
+        writeIo,
+        {},
+      ),
+    ).toBe(0)
+    const writeOutput = JSON.parse(writeIo.stdoutText)
+    expect(writeOutput).toMatchObject({
+      exists: true,
+      freshness: 'fresh',
+      content: expect.stringContaining('Capture the memory lifecycle'),
+      manifest: {
+        kind: 'vigilon.session-memory',
+        sourceEventCount: 1,
+      },
+    })
+
+    const viewIo = createIo()
+    expect(
+      await runCli(
+        ['memory', 'view', 'memory-me', '--cwd', cwd, '--sessions-dir', sessionsDir],
+        viewIo,
+        {},
+      ),
+    ).toBe(0)
+    expect(JSON.parse(viewIo.stdoutText)).toMatchObject({
+      exists: true,
+      content: expect.stringContaining('Capture the memory lifecycle'),
+    })
+
+    await transcript.append({
+      type: 'assistant',
+      content: 'The transcript moved forward after memory was written.',
+      timestamp: '2026-05-18T00:00:10Z',
+    })
+    const statusIo = createIo()
+    expect(
+      await runCli(
+        ['memory', 'status', 'memory-me', '--cwd', cwd, '--sessions-dir', sessionsDir],
+        statusIo,
+        {},
+      ),
+    ).toBe(0)
+    expect(JSON.parse(statusIo.stdoutText)).toMatchObject({
+      exists: true,
+      freshness: 'stale',
+      driftCaveat: expect.stringContaining('may be outdated'),
+    })
+
+    const deleteIo = createIo()
+    expect(
+      await runCli(
+        ['memory', 'delete', 'memory-me', '--cwd', cwd, '--sessions-dir', sessionsDir],
+        deleteIo,
+        {},
+      ),
+    ).toBe(0)
+    expect(JSON.parse(deleteIo.stdoutText)).toMatchObject({
+      sessionId: 'memory-me',
+      deleted: true,
+    })
+  })
+
+  it('queues a background session-memory refresh from the CLI', async () => {
+    const cwd = await createTempRoot('vigilon-cli-memory-refresh-cwd-')
+    const sessionsDir = await createTempRoot('vigilon-cli-memory-refresh-sessions-')
+    const transcript = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'refresh-memory-me',
+    })
+    await transcript.append({
+      type: 'user',
+      content: 'Refresh memory through the background worker',
+      timestamp: '2026-05-18T00:00:00Z',
+    })
+
+    const io = createIo()
+    expect(
+      await runCli(
+        [
+          'memory',
+          'refresh',
+          'refresh-memory-me',
+          '--background',
+          '--cwd',
+          cwd,
+          '--sessions-dir',
+          sessionsDir,
+        ],
+        io,
+        {},
+      ),
+    ).toBe(0)
+
+    const output = JSON.parse(io.stdoutText)
+    expect(output).toMatchObject({
+      sessionId: 'refresh-memory-me',
+      queued: true,
+      background: true,
+      extraction: {
+        status: 'queued',
+        trigger: 'manual',
+        sourceEventCount: 1,
+      },
+    })
+
+    const completed = await waitForExtraction(output.extraction.memoryPath)
+    expect(completed).toMatchObject({
+      status: 'completed',
+      outputSummary: 'Wrote session memory from 1 transcript events.',
+    })
+  })
+
+  it('validates session memory directly through the provider grounding contract', async () => {
+    const cwd = await createTempRoot('vigilon-cli-memory-validate-cwd-')
+    const sessionsDir = await createTempRoot('vigilon-cli-memory-validate-sessions-')
+    const transcript = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'validate-memory-me',
+    })
+    await transcript.append({
+      type: 'user',
+      content: 'Validate memory before compact readiness.',
+      timestamp: '2026-05-18T00:00:00Z',
+    })
+
+    const io = createIo()
+    const exitCode = await runCli(
+      [
+        'memory',
+        'validate',
+        'validate-memory-me',
+        '--refresh',
+        '--cwd',
+        cwd,
+        '--sessions-dir',
+        sessionsDir,
+      ],
+      io,
+      {
+        createModelClient: () => ({
+          id: 'cli-memory-validate-model',
+          async createMessage() {
+            return {
+              content: JSON.stringify({
+                status: 'supported',
+                supportedClaims: ['The transcript asks to validate memory before compact readiness.'],
+                contradictedClaims: [],
+                missingClaims: [],
+                reason: 'The generated memory is grounded in the transcript.',
+              }),
+              toolCalls: [],
+              stopReason: 'end_turn',
+            }
+          },
+        }),
+      },
+    )
+
+    const output = JSON.parse(io.stdoutText)
+    expect(exitCode).toBe(0)
+    expect(output).toMatchObject({
+      sessionId: 'validate-memory-me',
+      validated: true,
+      providerGrounded: true,
+      readiness: {
+        ready: true,
+        blockingReasons: [],
+        validationRequired: true,
+        refreshed: true,
+        groundingValidation: {
+          status: 'supported',
+          modelId: 'cli-memory-validate-model',
+        },
+      },
+    })
+  })
+
+  it('manually promotes typed long-term memory and rejects unsafe promotion content', async () => {
+    const cwd = await createTempRoot('vigilon-cli-long-memory-cwd-')
+    const sessionsDir = await createTempRoot('vigilon-cli-long-memory-sessions-')
+    const transcript = new JsonlTranscriptStore({
+      cwd,
+      sessionsDir,
+      sessionId: 'long-memory-me',
+    })
+    await transcript.append({
+      type: 'user',
+      content: 'Define P2.5 memory policy',
+      timestamp: '2026-05-18T00:00:00Z',
+    })
+
+    const promoteIo = createIo()
+    expect(
+      await runCli(
+        [
+          'memory',
+          'promote',
+          'long-memory-me',
+          '--type',
+          'project',
+          '--topic',
+          'runtime governance',
+          '--content',
+          'P2.5 long-term memory must be manual, typed, file-backed, and auditable.',
+          '--cwd',
+          cwd,
+          '--sessions-dir',
+          sessionsDir,
+        ],
+        promoteIo,
+        {},
+      ),
+    ).toBe(0)
+    const promoteOutput = JSON.parse(promoteIo.stdoutText)
+    expect(promoteOutput).toMatchObject({
+      sessionId: 'long-memory-me',
+      promoted: true,
+      decision: {
+        status: 'allowed',
+      },
+      entry: {
+        kind: 'project',
+        topic: 'runtime governance',
+        source: {
+          sessionId: 'long-memory-me',
+          sourceEventCount: 1,
+        },
+      },
+      entryCount: 1,
+    })
+    expect(await readFile(promoteOutput.indexPath, 'utf8')).toContain(
+      'Manual promotion only',
+    )
+    expect(await readFile(promoteOutput.entry.topicPath, 'utf8')).toContain(
+      'P2.5 long-term memory must be manual',
+    )
+
+    const rejectIo = createIo()
+    expect(
+      await runCli(
+        [
+          'memory',
+          'promote',
+          'long-memory-me',
+          '--type',
+          'project',
+          '--topic',
+          'tool noise',
+          '--content',
+          'Command failed with ENOENT while reading package.json',
+          '--cwd',
+          cwd,
+          '--sessions-dir',
+          sessionsDir,
+        ],
+        rejectIo,
+        {},
+      ),
+    ).toBe(0)
+    expect(JSON.parse(rejectIo.stdoutText)).toMatchObject({
+      promoted: false,
+      decision: {
+        status: 'rejected',
+        rejectedCategories: ['transient_execution_noise'],
+      },
+      entry: null,
+      entryCount: 1,
+    })
   })
 
   it('reports doctor details for config, sessions, and model key presence', async () => {
@@ -402,6 +1796,11 @@ describe('runtime CLI', () => {
   it('injects CLI operator guidance for bounded search and optional report handoff', async () => {
     const cwd = await createTempRoot('vigilon-cli-guidance-cwd-')
     const sessionsDir = await createTempRoot('vigilon-cli-guidance-sessions-')
+    await writeFile(
+      path.join(cwd, 'AGENTS.md'),
+      'Always treat alpha scope as a whiteboard Agent baseline.\n',
+      'utf8',
+    )
     const io = createIo({
       VIGILON_DISABLE_GLOBAL_SETTINGS: '1',
     })
@@ -422,6 +1821,12 @@ describe('runtime CLI', () => {
             )
             expect(request.messages[0].type === 'user' ? request.messages[0].content : '').toContain(
               'Use ResultReport only when a structured handoff is useful',
+            )
+            expect(request.messages[0].type === 'user' ? request.messages[0].content : '').toContain(
+              '<vigilon_project_instructions',
+            )
+            expect(request.messages[0].type === 'user' ? request.messages[0].content : '').toContain(
+              'whiteboard Agent baseline',
             )
             return {
               content: 'guided',
@@ -746,4 +2151,16 @@ async function writeSettings(cwd: string, value: unknown): Promise<void> {
     path.join(dir, 'settings.json'),
     `${JSON.stringify(value, null, 2)}\n`,
   )
+}
+
+async function waitForExtraction(memoryPath: string): Promise<unknown> {
+  const deadline = Date.now() + 2000
+  while (Date.now() < deadline) {
+    const status = await readSessionMemoryExtractionStatus(memoryPath)
+    if (status?.status === 'completed' || status?.status === 'failed') {
+      return status
+    }
+    await new Promise(resolve => setTimeout(resolve, 10))
+  }
+  throw new Error('Timed out waiting for session-memory extraction')
 }

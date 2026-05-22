@@ -4,6 +4,8 @@ import type { InteractivePromptController, PendingPrompt } from '../runtime/line
 import type {
   TuiRuntimeAdapter,
   TuiRuntimeEvent,
+  TuiAgentView,
+  TuiCompactResult,
   TuiSessionDetail,
   TuiSessionSummary,
 } from '../runtime/types.js'
@@ -47,11 +49,25 @@ export function InteractiveOperatorShell({
   const [historyDraft, setHistoryDraft] = useState('')
   const [pendingPrompt, setPendingPrompt] = useState<PendingPrompt | null>(null)
   const [sessionDetail, setSessionDetail] = useState<TuiSessionDetail | null>(null)
+  const [agentView, setAgentView] = useState<TuiAgentView | null>(null)
+  const [compactResult, setCompactResult] = useState<TuiCompactResult | null>(null)
   const [doctor, setDoctor] = useState<Record<string, unknown> | null>(null)
   const [detailMode, setDetailMode] = useState(false)
   const [sessionListVisible, setSessionListVisible] = useState(false)
 
   useEffect(() => promptController.subscribe(setPendingPrompt), [promptController])
+  useEffect(() => adapter.subscribeAgentTaskNotifications(event => {
+    setEvents(current => [...current, event])
+    if (event.type === 'agent-notification') {
+      const notification = event.notification
+      const replay = notification.replayed ? ' replayed' : ''
+      setStatus(`background subagent${replay} ${notification.agentName ?? notification.taskId} ${notification.status}`)
+      void adapter.listSessions().then(setSessions).catch(() => undefined)
+      void adapter.listAgents()
+        .then(view => setAgentView(current => current ? view : current))
+        .catch(() => undefined)
+    }
+  }), [adapter])
 
   const operator = useMemo(() => buildOperatorViewModel({
     sessions,
@@ -198,16 +214,27 @@ export function InteractiveOperatorShell({
     if (parsedCommand?.definition.name === 'clear') {
       setEvents([])
       setSessionDetail(null)
+      setAgentView(null)
+      setCompactResult(null)
       setDoctor(null)
       setSessionListVisible(false)
       setStatus('cleared')
       return
     }
     if (parsedCommand?.definition.name === 'sessions') {
+      setCompactResult(null)
       const next = await adapter.listSessions()
       setSessions(next)
       setSessionListVisible(true)
       setStatus(`loaded ${next.length} sessions`)
+      return
+    }
+    if (parsedCommand?.definition.name === 'agents') {
+      await runAgentsCommand(parsedCommand.args)
+      return
+    }
+    if (parsedCommand?.definition.name === 'compact') {
+      await runCompactCommand(parsedCommand.args)
       return
     }
     if (parsedCommand?.definition.name === 'details') {
@@ -216,11 +243,13 @@ export function InteractiveOperatorShell({
       return
     }
     if (parsedCommand?.definition.name === 'doctor') {
+      setCompactResult(null)
       setDoctor(await adapter.doctor())
       setStatus('doctor complete')
       return
     }
     if (parsedCommand?.definition.name === 'open') {
+      setCompactResult(null)
       const detail = await adapter.openSession(parsedCommand.args)
       setSessionDetail(detail)
       setSessionListVisible(false)
@@ -259,6 +288,8 @@ export function InteractiveOperatorShell({
     setRunning(true)
     setStatus(input.sessionSelector ? `running session ${input.sessionSelector}` : 'running new task')
     setSessionDetail(null)
+    setAgentView(null)
+    setCompactResult(null)
     setDoctor(null)
     try {
       await adapter.runTask({
@@ -293,6 +324,131 @@ export function InteractiveOperatorShell({
     setStatus(`answered prompt: ${answer}`)
   }
 
+  async function runAgentsCommand(args: string): Promise<void> {
+    const [subcommand, sessionSelector, taskId, ...promptParts] = args.split(' ').filter(Boolean)
+    setSessionDetail(null)
+    setCompactResult(null)
+    setDoctor(null)
+    if (!subcommand) {
+      const view = await adapter.listAgents()
+      setAgentView(view)
+      setStatus(`loaded ${view.definitions.filter(definition => definition.active).length} agents and ${view.tasks.length} subagent tasks`)
+      return
+    }
+    if (subcommand === 'inspect') {
+      if (!sessionSelector || !taskId) {
+        setStatus('/agents inspect requires <session> <task-id>')
+        return
+      }
+      const view = await adapter.inspectAgentTask(sessionSelector, taskId)
+      setAgentView(view)
+      setStatus(view?.detail ? `opened subagent ${view.detail.task.id}` : 'no subagent task matched')
+      return
+    }
+    if (subcommand === 'resume') {
+      if (!sessionSelector || !taskId) {
+        setStatus('/agents resume requires <session> <task-id> <prompt>')
+        return
+      }
+      setRunning(true)
+      setStatus(`resuming subagent ${taskId}`)
+      try {
+        const view = await adapter.resumeAgentTask({
+          sessionSelector,
+          taskId,
+          prompt: promptParts.join(' ').trim() || 'Continue from the parent retained task state.',
+        })
+        setAgentView(view)
+        setSessions(await adapter.listSessions())
+        setStatus(view?.detail ? `resumed subagent ${view.detail.task.id}` : 'no subagent task matched')
+      } catch (error) {
+        setEvents(current => [
+          ...current,
+          {
+            type: 'error',
+            content: error instanceof Error ? error.message : String(error),
+          },
+        ])
+        setStatus('error')
+      } finally {
+        setRunning(false)
+      }
+      return
+    }
+    if (subcommand === 'stop') {
+      if (!sessionSelector || !taskId) {
+        setStatus('/agents stop requires <session> <task-id>')
+        return
+      }
+      const view = await adapter.stopAgentTask(sessionSelector, taskId)
+      setAgentView(view)
+      setSessions(await adapter.listSessions())
+      setStatus(view?.detail?.stopResult?.message ?? 'no subagent task matched')
+      return
+    }
+    if (subcommand === 'apply') {
+      if (!sessionSelector || !taskId) {
+        setStatus('/agents apply requires <session> <task-id>')
+        return
+      }
+      setRunning(true)
+      setStatus(`applying subagent worktree diff ${taskId}`)
+      try {
+        const view = await adapter.applyAgentTask(sessionSelector, taskId, promptParts)
+        setAgentView(view)
+        setSessions(await adapter.listSessions())
+        setStatus(view?.detail?.applyResult?.message ?? 'no subagent task matched')
+      } catch (error) {
+        setEvents(current => [
+          ...current,
+          {
+            type: 'error',
+            content: error instanceof Error ? error.message : String(error),
+          },
+        ])
+        setStatus('error')
+      } finally {
+        setRunning(false)
+      }
+      return
+    }
+    setStatus(`/agents ${subcommand} is not supported; use /agents, /agents inspect, /agents resume, /agents apply, or /agents stop`)
+  }
+
+  async function runCompactCommand(args: string): Promise<void> {
+    const [sessionSelector, ...compactArgs] = args.split(' ').filter(Boolean)
+    setSessionDetail(null)
+    setAgentView(null)
+    setCompactResult(null)
+    setDoctor(null)
+    if (!sessionSelector) {
+      setStatus('/compact requires <session> or <index>')
+      return
+    }
+    setRunning(true)
+    setStatus(`compacting session ${sessionSelector}`)
+    try {
+      const result = await adapter.compactSession({
+        sessionSelector,
+        args: compactArgs,
+      })
+      setCompactResult(result)
+      setSessions(await adapter.listSessions())
+      setStatus(result ? `compacted ${result.sessionId}` : 'no session matched')
+    } catch (error) {
+      setEvents(current => [
+        ...current,
+        {
+          type: 'error',
+          content: error instanceof Error ? error.message : String(error),
+        },
+      ])
+      setStatus('error')
+    } finally {
+      setRunning(false)
+    }
+  }
+
   return (
     <Box flexDirection="column">
       <Box justifyContent="space-between">
@@ -309,6 +465,8 @@ export function InteractiveOperatorShell({
           sessions={sessions}
           showSessions={sessionListVisible || operator.sessions.attentionCount > 0}
           sessionDetail={sessionDetail}
+          agentView={agentView}
+          compactResult={compactResult}
           doctor={doctor}
           pendingPrompt={pendingPrompt}
         />

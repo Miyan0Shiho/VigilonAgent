@@ -35,6 +35,7 @@ describe('session tools', () => {
       'Grep',
       'ToolSearch',
       'LSP',
+      'AgentInventory',
       'TaskStop',
       'Agent',
       'Config',

@@ -1,6 +1,7 @@
 import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import type { Tool, ToolResult, ToolUseContext } from '../runtime/contracts.js'
+import { withToolPermissionOrigin } from '../runtime/permissionOrigins.js'
 import { isUncPath, resolveToolPath } from './path.js'
 
 type WriteInput = {
@@ -44,14 +45,15 @@ export const WriteTool: Tool = {
       if (stale) return failed(stale)
     }
 
-    const permission = await context.permissionGate.requestPermission({
-      action: 'write',
-      subject: filePath,
-      risk: existing.exists ? 'medium' : 'low',
-      reason: existing.exists
-        ? 'Overwrite existing local file'
-        : 'Create local file',
-    })
+	    const permission = await context.permissionGate.requestPermission({
+	      action: 'write',
+	      subject: filePath,
+	      risk: existing.exists ? 'medium' : 'low',
+	      reason: existing.exists
+	        ? 'Overwrite existing local file'
+	        : 'Create local file',
+	      origin: withToolPermissionOrigin(context.permissionOrigin, 'Write'),
+	    })
     if (!permission.allowed) return failed(permission.reason)
 
     await mkdir(path.dirname(filePath), { recursive: true })

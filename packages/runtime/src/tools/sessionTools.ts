@@ -8,6 +8,7 @@ import type {
   ToolResult,
   ToolUseContext,
 } from '../runtime/contracts.js'
+import { withToolPermissionOrigin } from '../runtime/permissionOrigins.js'
 import { createTimestamp } from '../runtime/transcript.js'
 
 type TodoWriteInput = {
@@ -139,12 +140,13 @@ export const ExitPlanModeTool: Tool = {
 
     const restoredMode = sessionState.prePlanPermissionMode ?? 'ask'
     setPermissionMode(context.permissionGate, restoredMode)
-    const approval = await context.permissionGate.requestPermission({
-      action: 'plan-approval',
-      subject: 'Exit plan mode',
-      risk: 'medium',
-      reason: 'Approve implementation plan and return to execution mode',
-    })
+	    const approval = await context.permissionGate.requestPermission({
+	      action: 'plan-approval',
+	      subject: 'Exit plan mode',
+	      risk: 'medium',
+	      reason: 'Approve implementation plan and return to execution mode',
+	      origin: withToolPermissionOrigin(context.permissionOrigin, 'ExitPlanMode'),
+	    })
     if (!approval.allowed) {
       setPermissionMode(context.permissionGate, 'read-only')
       sessionState.pendingPlan = parsed.plan
@@ -281,6 +283,7 @@ async function appendSessionState(
       : null,
     verificationNotes: [...sessionState.verificationNotes],
     backgroundTasks: [...(sessionState.backgroundTasks ?? [])],
+    retainedTasks: [...(sessionState.retainedTasks ?? [])],
     discoveredToolNames: [...(sessionState.discoveredToolNames ?? [])],
     mcpInstructions: [...(sessionState.mcpInstructions ?? [])],
     memoryFreshness: sessionState.memoryFreshness ?? null,

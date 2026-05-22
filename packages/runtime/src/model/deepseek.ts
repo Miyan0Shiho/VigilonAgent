@@ -52,6 +52,12 @@ type DeepSeekChatCompletion = {
   usage?: {
     prompt_tokens?: number
     completion_tokens?: number
+    total_tokens?: number
+    prompt_cache_hit_tokens?: number
+    prompt_cache_miss_tokens?: number
+    prompt_tokens_details?: {
+      cached_tokens?: number
+    }
   }
   error?: {
     message?: string
@@ -97,6 +103,128 @@ export function createDeepSeekModelClient(
 
   return {
     id: `deepseek:${model}`,
+    async countInputTokens(request: ModelRequest) {
+      if (!apiKey) {
+        return {
+          ok: false,
+          source: 'provider-chat-completion-usage',
+          errorKind: 'missing_credentials',
+          errorMessage: 'DEEPSEEK_API_KEY is not set',
+        }
+      }
+
+      const messages = transcriptToDeepSeekMessages(request.messages)
+      const apiTools = request.tools.map(toolToDeepSeekTool)
+      let allowSpecificToolChoice = true
+      let lastError: string | undefined
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+        const requestBody = JSON.stringify({
+          model,
+          messages,
+          tools: apiTools,
+          tool_choice: toDeepSeekToolChoice(request, allowSpecificToolChoice),
+          stream: false,
+          max_tokens: 1,
+        })
+        try {
+          const response = await fetchImpl(`${baseUrl}/chat/completions`, {
+            method: 'POST',
+            signal: request.abortSignal,
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: requestBody,
+          })
+          const payload = (await response.json()) as DeepSeekChatCompletion
+          if (!response.ok) {
+            const errorMessage =
+              payload.error?.message ??
+              `DeepSeek token count request failed with HTTP ${response.status}`
+            if (
+              allowSpecificToolChoice &&
+              isSpecificToolChoice(request.toolChoice) &&
+              isUnsupportedToolChoiceError(errorMessage) &&
+              attempt < MAX_ATTEMPTS
+            ) {
+              allowSpecificToolChoice = false
+              lastError = errorMessage
+              continue
+            }
+            if (isContextOverflowError(errorMessage)) {
+              return {
+                ok: false,
+                source: 'provider-chat-completion-usage',
+                errorKind: 'context_overflow',
+                errorMessage: normalizeContextOverflowMessage(errorMessage),
+              }
+            }
+            if (attempt < MAX_ATTEMPTS && RETRYABLE_HTTP_STATUS.has(response.status)) {
+              lastError = errorMessage
+              continue
+            }
+            return {
+              ok: false,
+              source: 'provider-chat-completion-usage',
+              errorKind: 'provider_error',
+              errorMessage,
+            }
+          }
+
+          const usage = mapDeepSeekUsage(payload.usage)
+          const inputTokens =
+            usage?.inputTokens ??
+            (usage?.cacheReadInputTokens !== undefined ||
+            usage?.cacheCreationInputTokens !== undefined
+              ? (usage.cacheReadInputTokens ?? 0) +
+                (usage.cacheCreationInputTokens ?? 0)
+              : undefined)
+          if (inputTokens === undefined) {
+            return {
+              ok: false,
+              source: 'provider-chat-completion-usage',
+              errorKind: 'usage_unavailable',
+              errorMessage: 'DeepSeek token count response did not include prompt usage',
+            }
+          }
+          return {
+            ok: true,
+            source: 'provider-chat-completion-usage',
+            inputTokens,
+            ...(usage ? { usage } : {}),
+          }
+        } catch (error) {
+          if (isAbortError(error) || request.abortSignal.aborted) {
+            return {
+              ok: false,
+              source: 'provider-chat-completion-usage',
+              errorKind: 'aborted',
+              errorMessage: 'DeepSeek token count request aborted',
+            }
+          }
+          if (attempt < MAX_ATTEMPTS) {
+            lastError = error instanceof Error ? error.message : String(error)
+            continue
+          }
+          return {
+            ok: false,
+            source: 'provider-chat-completion-usage',
+            errorKind: 'provider_error',
+            errorMessage:
+              (error instanceof Error ? error.message : String(error)) ||
+              lastError ||
+              'DeepSeek token count request failed',
+          }
+        }
+      }
+
+      return {
+        ok: false,
+        source: 'provider-chat-completion-usage',
+        errorKind: 'provider_error',
+        errorMessage: lastError ?? 'DeepSeek token count request failed',
+      }
+    },
     async createMessage(request: ModelRequest): Promise<ModelResponse> {
       if (!apiKey) {
         return {
@@ -118,6 +246,9 @@ export function createDeepSeekModelClient(
           tools: apiTools,
           tool_choice: toDeepSeekToolChoice(request, allowSpecificToolChoice),
           stream: true,
+          stream_options: {
+            include_usage: true,
+          },
         })
         try {
           const response = await fetchImpl(`${baseUrl}/chat/completions`, {
@@ -173,10 +304,7 @@ export function createDeepSeekModelClient(
             ...(reasoningContent !== undefined ? { reasoningContent } : {}),
             toolCalls: (message?.tool_calls ?? []).map(fromDeepSeekToolCall),
             stopReason: mapStopReason(choice?.finish_reason),
-            usage: {
-              inputTokens: payload.usage?.prompt_tokens,
-              outputTokens: payload.usage?.completion_tokens,
-            },
+            usage: mapDeepSeekUsage(payload.usage),
           }
         } catch (error) {
           if (isAbortError(error) || request.abortSignal.aborted) {
@@ -207,6 +335,33 @@ export function createDeepSeekModelClient(
         stopReason: 'error',
       }
     },
+  }
+}
+
+function mapDeepSeekUsage(
+  usage: DeepSeekChatCompletion['usage'],
+): ModelResponse['usage'] | undefined {
+  if (!usage) return undefined
+  const cacheReadInputTokens =
+    usage.prompt_cache_hit_tokens ?? usage.prompt_tokens_details?.cached_tokens
+  const cacheCreationInputTokens =
+    usage.prompt_cache_miss_tokens ??
+    (usage.prompt_tokens !== undefined && cacheReadInputTokens !== undefined
+      ? Math.max(0, usage.prompt_tokens - cacheReadInputTokens)
+      : undefined)
+  const cacheHitRatio =
+    usage.prompt_tokens !== undefined &&
+    usage.prompt_tokens > 0 &&
+    cacheReadInputTokens !== undefined
+      ? cacheReadInputTokens / usage.prompt_tokens
+      : undefined
+  return {
+    ...(usage.prompt_tokens !== undefined ? { inputTokens: usage.prompt_tokens } : {}),
+    ...(usage.completion_tokens !== undefined ? { outputTokens: usage.completion_tokens } : {}),
+    ...(usage.total_tokens !== undefined ? { totalTokens: usage.total_tokens } : {}),
+    ...(cacheReadInputTokens !== undefined ? { cacheReadInputTokens } : {}),
+    ...(cacheCreationInputTokens !== undefined ? { cacheCreationInputTokens } : {}),
+    ...(cacheHitRatio !== undefined ? { cacheHitRatio } : {}),
   }
 }
 

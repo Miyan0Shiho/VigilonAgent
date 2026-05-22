@@ -240,7 +240,10 @@ function createContext(): ToolUseContext {
     } as unknown as ToolUseContext['lspServerManager'],
     taskManager: {
       activeTasks: [],
+      retainedTasks: [],
       startBashTask: vi.fn(),
+      startSubagentTask: vi.fn(),
+      completeTask: vi.fn(),
       stopTask: vi.fn(),
       killTask: vi.fn(),
       shutdown: vi.fn(),

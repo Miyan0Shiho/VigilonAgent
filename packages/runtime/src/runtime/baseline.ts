@@ -56,26 +56,26 @@ export type Phase2IncludedCapability =
 export type Phase1ExcludedSurface = (typeof PHASE1_EXCLUDED_SURFACES)[number]
 
 export type Phase1RuntimeBaseline = {
-  phase: 'phase-1'
-  runtime: 'solo-runtime'
-  sourcePolicy: 'copy-first-claude-code-mechanisms'
+  phase: 'whiteboard-agent-alpha'
+  runtime: 'local-whiteboard-agent'
+  sourcePolicy: 'clean-runnable-extensible-alpha'
   includedCapabilities: readonly Phase1IncludedCapability[]
   excludedSurfaces: readonly Phase1ExcludedSurface[]
 }
 
 export type Phase2RuntimeBaseline = {
   phase: 'phase-2'
-  runtime: 'claude-code-core-capability-alignment'
-  sourcePolicy: 'copy-first-claude-code-mechanisms'
+  runtime: 'historical-core-capability-alignment'
+  sourcePolicy: 'historical-reference-checklist'
   includedCapabilities: readonly Phase2IncludedCapability[]
   excludedSurfaces: readonly Phase1ExcludedSurface[]
 }
 
 export function createPhase1RuntimeBaseline(): Phase1RuntimeBaseline {
   return {
-    phase: 'phase-1',
-    runtime: 'solo-runtime',
-    sourcePolicy: 'copy-first-claude-code-mechanisms',
+    phase: 'whiteboard-agent-alpha',
+    runtime: 'local-whiteboard-agent',
+    sourcePolicy: 'clean-runnable-extensible-alpha',
     includedCapabilities: PHASE1_INCLUDED_CAPABILITIES,
     excludedSurfaces: PHASE1_EXCLUDED_SURFACES,
   }
@@ -84,8 +84,8 @@ export function createPhase1RuntimeBaseline(): Phase1RuntimeBaseline {
 export function createPhase2RuntimeBaseline(): Phase2RuntimeBaseline {
   return {
     phase: 'phase-2',
-    runtime: 'claude-code-core-capability-alignment',
-    sourcePolicy: 'copy-first-claude-code-mechanisms',
+    runtime: 'historical-core-capability-alignment',
+    sourcePolicy: 'historical-reference-checklist',
     includedCapabilities: PHASE2_INCLUDED_CAPABILITIES,
     excludedSurfaces: PHASE1_EXCLUDED_SURFACES,
   }

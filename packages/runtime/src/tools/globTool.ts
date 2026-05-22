@@ -2,6 +2,7 @@ import { readdir, stat } from 'node:fs/promises'
 import path from 'node:path'
 import type { Dirent } from 'node:fs'
 import type { Tool, ToolResult, ToolUseContext } from '../runtime/contracts.js'
+import { withToolPermissionOrigin } from '../runtime/permissionOrigins.js'
 import { isUncPath, resolveToolPath, toRelativeToolPath } from './path.js'
 
 const DEFAULT_MAX_RESULTS = 100
@@ -63,12 +64,13 @@ export const GlobTool: Tool = {
       return failed(`Path is not a directory: ${parsed.path ?? root}`)
     }
 
-    const permission = await context.permissionGate.requestPermission({
-      action: 'read',
-      subject: root,
-      risk: 'low',
-      reason: 'Enumerate local file paths',
-    })
+	    const permission = await context.permissionGate.requestPermission({
+	      action: 'read',
+	      subject: root,
+	      risk: 'low',
+	      reason: 'Enumerate local file paths',
+	      origin: withToolPermissionOrigin(context.permissionOrigin, 'Glob'),
+	    })
     if (!permission.allowed) {
       return failed(permission.reason)
     }

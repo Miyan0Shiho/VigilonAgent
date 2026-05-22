@@ -91,6 +91,65 @@ describe('turnView', () => {
     ])
   })
 
+  it('shows subagent lifecycle as timeline activity', () => {
+    const model = buildTurnViewModel([
+      {
+        type: 'subagent',
+        status: 'tool-started',
+        agentName: 'researcher',
+        taskId: 'researcher-1',
+        summary: 'Subagent researcher started Bash.',
+      },
+      {
+        type: 'subagent',
+        status: 'completed',
+        agentName: 'researcher',
+        taskId: 'researcher-1',
+        summary: 'Subagent inspected runtime state.',
+      },
+    ], { detailMode: true })
+
+    expect(model.timeline.map(item => item.title)).toEqual([
+      'researcher tool-started',
+      'researcher completed',
+    ])
+    expect(model.timeline.at(-1)).toMatchObject({
+      label: 'agent',
+      tone: 'success',
+      detail: 'Subagent inspected runtime state.',
+    })
+  })
+
+  it('shows subscribed background subagent terminal notifications', () => {
+    const model = buildTurnViewModel([
+      {
+        type: 'agent-notification',
+        notification: {
+          sessionId: 'parent-session',
+          taskId: 'task-bg',
+          agentName: 'finisher',
+          status: 'completed',
+          background: true,
+          outputSummary: 'Background finisher completed.',
+        },
+      },
+    ])
+
+    expect(model.overview).toMatchObject({
+      phase: 'agent',
+      status: 'finisher completed; errors=0',
+      needsAttention: false,
+    })
+    expect(model.timeline).toMatchObject([
+      {
+        label: 'agent',
+        title: 'finisher completed',
+        detail: 'Background finisher completed.',
+        tone: 'success',
+      },
+    ])
+  })
+
   it('builds one focused timeline with latest tool state and final answer handoff', () => {
     const events: TuiRuntimeEvent[] = [
       { type: 'user', content: 'hello' },

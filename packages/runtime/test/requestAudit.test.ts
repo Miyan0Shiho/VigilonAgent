@@ -119,6 +119,73 @@ describe('Request Stability Audit', () => {
     expect(stabilityEvent?.reasons).toContain('input_tokens_shift_without_shape_change');
   });
 
+  test('should detect provider cache read drops without request shape changes', () => {
+    const timestamp = new Date().toISOString();
+    const request1 = buildLlmRequestEvent({
+      events: [],
+      visibleEvents: [],
+      tools: [],
+      model: 'model-a',
+      compacted: false,
+      droppedEventCount: 0,
+      timestamp,
+    });
+
+    const response1 = buildLlmResponseEvent({
+      request: request1,
+      stopReason: 'end_turn',
+      inputTokens: 6000,
+      outputTokens: 50,
+      cacheReadInputTokens: 5000,
+      cacheCreationInputTokens: 1000,
+      durationMs: 100,
+      toolCallCount: 0,
+      assistantChars: 10,
+      timestamp,
+    });
+
+    const request2 = buildLlmRequestEvent({
+      events: [request1, response1],
+      visibleEvents: [],
+      tools: [],
+      model: 'model-a',
+      compacted: false,
+      droppedEventCount: 0,
+      timestamp,
+    });
+
+    const response2 = buildLlmResponseEvent({
+      request: request2,
+      stopReason: 'end_turn',
+      inputTokens: 6000,
+      outputTokens: 50,
+      cacheReadInputTokens: 3500,
+      cacheCreationInputTokens: 2500,
+      durationMs: 100,
+      toolCallCount: 0,
+      assistantChars: 10,
+      timestamp,
+    });
+
+    const stabilityEvent = buildRequestStabilityEvent({
+      events: [request1, response1, request2, response2],
+      currentRequest: request2,
+      currentResponse: response2,
+      timestamp,
+    });
+
+    expect(stabilityEvent).not.toBeNull();
+    expect(stabilityEvent?.classification).toBe('unexpected_change');
+    expect(stabilityEvent?.reasons).toContain('provider_cache_read_drop_without_shape_change');
+    expect(stabilityEvent?.cacheReadInputTokensDelta).toBe(-1500);
+    expect(stabilityEvent?.details.providerCache).toMatchObject({
+      previousReadTokens: 5000,
+      currentReadTokens: 3500,
+      currentCreationTokens: 2500,
+      currentHitRatio: 3500 / 6000,
+    });
+  });
+
   test('should include detailed hashes for system, tool schema, and compact capability changes', () => {
     const timestamp = new Date().toISOString();
     const request1 = buildLlmRequestEvent({

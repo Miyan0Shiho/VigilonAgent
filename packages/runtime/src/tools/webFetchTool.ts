@@ -1,4 +1,5 @@
 import type { Tool, ToolResult, ToolUseContext } from '../runtime/contracts.js'
+import { withToolPermissionOrigin } from '../runtime/permissionOrigins.js'
 
 const DEFAULT_MAX_CONTENT_CHARS = 12_000
 const DEFAULT_MAX_REDIRECTS = 10
@@ -36,12 +37,13 @@ export const WebFetchTool: Tool = {
       parsedUrl = new URL(parsedUrl.toString().replace(/^http:/, 'https:'))
     }
 
-    const permission = await context.permissionGate.requestPermission({
-      action: 'network',
-      subject: `domain:${parsedUrl.hostname}`,
-      risk: 'medium',
-      reason: `Fetch public webpage ${parsedUrl.origin}`,
-    })
+	    const permission = await context.permissionGate.requestPermission({
+	      action: 'network',
+	      subject: `domain:${parsedUrl.hostname}`,
+	      risk: 'medium',
+	      reason: `Fetch public webpage ${parsedUrl.origin}`,
+	      origin: withToolPermissionOrigin(context.permissionOrigin, 'WebFetch'),
+	    })
     if (!permission.allowed) {
       return failed(`WebFetch permission denied: ${permission.reason}`, {
         code: 'DOMAIN_BLOCKED',

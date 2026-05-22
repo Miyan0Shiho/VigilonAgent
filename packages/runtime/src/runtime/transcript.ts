@@ -3,17 +3,20 @@ import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import type {
   ActiveSkillRuntimeState,
+  BackgroundTask,
   PermissionMode,
   RuntimeSessionSnapshot,
   RuntimeSessionStatus,
   RuntimeSessionState,
   RuntimeSessionSummary,
   ResultHandoffReport,
+  SubagentLifecycleEvent,
   TodoItem,
   ToolReferenceDelta,
   TranscriptEvent,
   TranscriptStore,
 } from './contracts.js'
+import { resolveTaskStopRequestPath } from './taskControl.js'
 
 export class InMemoryTranscriptStore implements TranscriptStore {
   readonly sessionId: string
@@ -199,6 +202,7 @@ export function restoreSessionStateFromEvents(
     handoffReport: undefined,
     verificationNotes: [],
     backgroundTasks: [],
+    retainedTasks: [],
     discoveredToolNames: [],
     toolReferenceDeltas: [],
     mcpInstructions: [],
@@ -289,6 +293,9 @@ export function restoreSessionStateFromEvents(
       if (event.backgroundTasks) {
         state.backgroundTasks = [...event.backgroundTasks]
       }
+      if (event.retainedTasks) {
+        state.retainedTasks = [...event.retainedTasks]
+      }
       if (event.discoveredToolNames) {
         state.discoveredToolNames = [...event.discoveredToolNames]
       }
@@ -315,6 +322,11 @@ export function restoreSessionStateFromEvents(
       if (event.modelParams !== undefined) {
         state.modelParams = event.modelParams === null ? undefined : { ...event.modelParams }
       }
+      continue
+    }
+
+    if (event.type === 'subagent-lifecycle') {
+      applySubagentLifecycleToState(state, event.event)
       continue
     }
 
@@ -366,6 +378,84 @@ export function restoreSessionStateFromEvents(
   return state
 }
 
+function applySubagentLifecycleToState(
+  state: RuntimeSessionState,
+  event: SubagentLifecycleEvent,
+): void {
+  const terminalStatus = lifecycleTerminalStatus(event.status)
+  if (!terminalStatus) {
+    if (event.background !== true) return
+    upsertBackgroundTask(state, lifecycleTask(event, 'running'))
+    return
+  }
+
+  const existing = [
+    ...state.backgroundTasks,
+    ...(state.retainedTasks ?? []),
+  ].find(task => task.id === event.taskId)
+  if (event.background !== true && existing?.background !== true) return
+
+  state.backgroundTasks = state.backgroundTasks.filter(task => task.id !== event.taskId)
+  const retained = lifecycleTask(event, terminalStatus, existing)
+  const retainedById = new Map((state.retainedTasks ?? []).map(task => [task.id, task]))
+  retainedById.set(event.taskId, retained)
+  state.retainedTasks = [...retainedById.values()]
+}
+
+function upsertBackgroundTask(state: RuntimeSessionState, task: BackgroundTask): void {
+  const byId = new Map(state.backgroundTasks.map(existing => [existing.id, existing]))
+  byId.set(task.id, {
+    ...byId.get(task.id),
+    ...task,
+  })
+  state.backgroundTasks = [...byId.values()]
+}
+
+function lifecycleTerminalStatus(
+  status: SubagentLifecycleEvent['status'],
+): Exclude<NonNullable<BackgroundTask['status']>, 'running'> | null {
+  if (status === 'completed') return 'completed'
+  if (status === 'failed') return 'failed'
+  if (status === 'stopped') return 'stopped'
+  return null
+}
+
+function lifecycleTask(
+  event: SubagentLifecycleEvent,
+  status: NonNullable<BackgroundTask['status']>,
+  existing?: BackgroundTask,
+): BackgroundTask {
+  const transcriptPath = event.transcriptPath || existing?.transcriptPath
+  return {
+    id: event.taskId,
+    type: 'subagent',
+    command: `subagent:${event.agentName}`,
+    startTime: existing?.startTime ?? event.timestamp,
+    status,
+    background: event.background,
+    agentName: event.agentName,
+    transcriptPath,
+    cwd: event.cwd ?? existing?.cwd,
+    host: event.host ?? existing?.host,
+    worktreePath: event.worktreePath ?? existing?.worktreePath,
+    gitWorktree: event.gitWorktree ?? existing?.gitWorktree,
+    sourceCwd: event.sourceCwd ?? existing?.sourceCwd,
+    worktreeDiff: event.worktreeDiff ?? existing?.worktreeDiff,
+    parentAgentId: event.parentAgentId ?? existing?.parentAgentId,
+    parentSessionId: existing?.parentSessionId,
+    completedAt: status === 'running' ? existing?.completedAt : event.timestamp,
+    terminalReason: status === 'running'
+      ? existing?.terminalReason
+      : `subagent_${status}`,
+    outputSummary: event.finalMessage ?? event.summary ?? existing?.outputSummary,
+    stopRequestPath: existing?.stopRequestPath ?? resolveTaskStopRequestPath({
+      id: event.taskId,
+      transcriptPath,
+    }),
+    stopRequestedAt: existing?.stopRequestedAt,
+  }
+}
+
 async function summarizeTranscript(
   transcriptPath: string,
 ): Promise<RuntimeSessionSummary> {
@@ -400,6 +490,7 @@ async function summarizeTranscript(
     completedTodoCount,
     remainingTodoCount,
     backgroundTaskCount: sessionState.backgroundTasks.length,
+    retainedTaskCount: sessionState.retainedTasks?.length ?? 0,
     memoryFreshness: sessionState.memoryFreshness,
     hasHandoffReport: Boolean(sessionState.handoffReport),
   }

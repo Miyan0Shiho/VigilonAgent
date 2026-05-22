@@ -134,6 +134,17 @@ export function buildTurnOverview(events: TuiRuntimeEvent[]): TuiTurnOverview {
     }
   }
 
+  if (latest?.type === 'agent-notification') {
+    const replay = latest.notification.replayed ? 'replayed ' : ''
+    return {
+      phase: 'agent',
+      status: `${replay}${latest.notification.agentName ?? 'subagent'} ${latest.notification.status}; errors=${errors}`,
+      needsAttention: latest.notification.status === 'failed' || latest.notification.status === 'stopped' || errors > 0,
+      errors,
+      tools,
+    }
+  }
+
   const runningTool = latestRunningTool(events, toolSnapshot)
   if (runningTool) {
     return {
@@ -308,6 +319,35 @@ function timelineItemForEvent(event: TuiRuntimeEvent, index: number, detailMode:
         meta: detailMode ? `tool        ${event.activity.name}  id=${event.activity.id}` : undefined,
         tone: event.activity.status === 'error' ? 'danger' : event.activity.status === 'running' ? 'active' : 'success',
         activity: event.activity,
+      }]
+    case 'subagent':
+      return [{
+        key: `${index}-subagent-${event.taskId}-${event.status}`,
+        kind: 'tool',
+        label: 'agent',
+        title: `${event.agentName} ${event.status}`,
+        detail: event.summary || event.taskId,
+        meta: detailMode ? `subagent    ${event.agentName}  id=${event.taskId}` : undefined,
+        tone: event.status === 'failed' || event.status === 'stopped'
+          ? 'danger'
+          : event.status === 'completed'
+            ? 'success'
+            : 'active',
+      }]
+    case 'agent-notification':
+      const replay = event.notification.replayed ? 'replayed ' : ''
+      return [{
+        key: `${index}-agent-notification-${event.notification.taskId}-${event.notification.status}`,
+        kind: 'system',
+        label: 'agent',
+        title: `${replay}${event.notification.agentName ?? 'subagent'} ${event.notification.status}`,
+        detail: event.notification.outputSummary ?? event.notification.terminalReason ?? event.notification.taskId,
+        meta: detailMode
+          ? `task        ${event.notification.taskId}${event.notification.sessionId ? `  parent=${event.notification.sessionId}` : ''}`
+          : undefined,
+        tone: event.notification.status === 'failed' || event.notification.status === 'stopped'
+          ? 'warning'
+          : 'success',
       }]
     case 'permission':
       return [{

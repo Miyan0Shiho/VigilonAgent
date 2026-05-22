@@ -3,6 +3,7 @@ import { stat } from 'node:fs/promises'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import type { Tool, ToolResult, ToolUseContext } from '../runtime/contracts.js'
+import { withToolPermissionOrigin } from '../runtime/permissionOrigins.js'
 import { isUncPath, resolveToolPath, toRelativeToolPath } from './path.js'
 
 const execFileAsync = promisify(execFile)
@@ -80,12 +81,13 @@ export const GrepTool: Tool = {
       throw new Error(formatPathError('Path does not exist', parsed.path ?? '.', error))
     })
 
-    const permission = await context.permissionGate.requestPermission({
-      action: 'read',
-      subject: searchPath,
-      risk: 'low',
-      reason: 'Search local file contents',
-    })
+	    const permission = await context.permissionGate.requestPermission({
+	      action: 'read',
+	      subject: searchPath,
+	      risk: 'low',
+	      reason: 'Search local file contents',
+	      origin: withToolPermissionOrigin(context.permissionOrigin, 'Grep'),
+	    })
     if (!permission.allowed) {
       return failed(permission.reason)
     }

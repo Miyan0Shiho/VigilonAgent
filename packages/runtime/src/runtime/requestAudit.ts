@@ -5,6 +5,7 @@ import type {
   Tool,
   TranscriptEvent,
 } from './contracts.js'
+import { buildRequestCachePrefixMetadata } from './requestCache.js'
 
 type LlmRequestEvent = Extract<TranscriptEvent, { type: 'llm-request' }>
 type LlmResponseEvent = Extract<TranscriptEvent, { type: 'llm-response' }>
@@ -16,7 +17,8 @@ export function filterModelVisibleEvents(
     event =>
       event.type !== 'llm-request' &&
       event.type !== 'llm-response' &&
-      event.type !== 'request-stability',
+      event.type !== 'request-stability' &&
+      event.type !== 'subagent-lifecycle',
   )
 }
 
@@ -32,6 +34,9 @@ export function buildLlmRequestEvent(options: {
   compactCapability?: unknown
   projectConfig?: RuntimeProjectConfig
   skills?: readonly RuntimeSkill[]
+  cachePrefixSource?: 'request' | 'fork-shared-prefix'
+  cachePrefixSharedEventCount?: number
+  parentCachePrefixHash?: string
   timestamp: string
 }): LlmRequestEvent {
   const previousRequest = findLastLlmRequestEvent(options.events)
@@ -50,6 +55,15 @@ export function buildLlmRequestEvent(options: {
       }, 0)
     )
   }, 0)
+
+  const cachePrefix = buildRequestCachePrefixMetadata({
+    model: options.model,
+    visibleEvents: options.visibleEvents,
+    tools: options.tools,
+    source: options.cachePrefixSource,
+    sharedPrefixEventCount: options.cachePrefixSharedEventCount,
+    parentCanonicalPrefixHash: options.parentCachePrefixHash,
+  }) ?? null
 
   return {
     type: 'llm-request',
@@ -93,6 +107,7 @@ export function buildLlmRequestEvent(options: {
             })),
           )
         : null,
+    cachePrefix,
     timestamp: options.timestamp,
   }
 }
@@ -102,6 +117,9 @@ export function buildLlmResponseEvent(options: {
   stopReason: LlmResponseEvent['stopReason']
   inputTokens?: number
   outputTokens?: number
+  totalTokens?: number
+  cacheReadInputTokens?: number
+  cacheCreationInputTokens?: number
   durationMs: number
   toolCallCount: number
   assistantChars: number
@@ -120,6 +138,18 @@ export function buildLlmResponseEvent(options: {
       : {}),
     ...(options.outputTokens !== undefined
       ? { outputTokens: options.outputTokens }
+      : {}),
+    ...(options.totalTokens !== undefined
+      ? { totalTokens: options.totalTokens }
+      : {}),
+    ...(options.cacheReadInputTokens !== undefined
+      ? { cacheReadInputTokens: options.cacheReadInputTokens }
+      : {}),
+    ...(options.cacheCreationInputTokens !== undefined
+      ? { cacheCreationInputTokens: options.cacheCreationInputTokens }
+      : {}),
+    ...(options.cacheReadInputTokens !== undefined && options.inputTokens !== undefined && options.inputTokens > 0
+      ? { cacheHitRatio: options.cacheReadInputTokens / options.inputTokens }
       : {}),
     durationMs: options.durationMs,
     toolCallCount: options.toolCallCount,
@@ -169,6 +199,9 @@ export function buildRequestStabilityEvent(options: {
       options.currentRequest.contentReplacementCount ||
     previousRequest.contentReplacementChars !==
       options.currentRequest.contentReplacementChars
+  const cachePrefixChanged =
+    previousRequest.cachePrefix?.canonicalPrefixHash !==
+    options.currentRequest.cachePrefix?.canonicalPrefixHash
 
   const reasons: string[] = []
   if (systemChanged) reasons.push('system_changed')
@@ -179,6 +212,7 @@ export function buildRequestStabilityEvent(options: {
   if (skillListingChanged) reasons.push('skill_listing_changed')
   if (compactionChanged) reasons.push('compact_boundary_moved')
   if (contentReplacementChanged) reasons.push('content_replacement_changed')
+  if (cachePrefixChanged) reasons.push('cache_prefix_changed')
 
   let inputTokensDelta: number | undefined
   let inputTokensDeltaRatio: number | undefined
@@ -201,11 +235,34 @@ export function buildRequestStabilityEvent(options: {
     }
   }
 
+  let cacheReadInputTokensDelta: number | undefined
+  let cacheReadInputTokensDeltaRatio: number | undefined
+  if (
+    previousResponse?.cacheReadInputTokens !== undefined &&
+    options.currentResponse.cacheReadInputTokens !== undefined
+  ) {
+    cacheReadInputTokensDelta =
+      options.currentResponse.cacheReadInputTokens - previousResponse.cacheReadInputTokens
+    cacheReadInputTokensDeltaRatio =
+      previousResponse.cacheReadInputTokens === 0
+        ? undefined
+        : Math.abs(cacheReadInputTokensDelta) / previousResponse.cacheReadInputTokens
+    if (
+      reasons.length === 0 &&
+      cacheReadInputTokensDelta < 0 &&
+      Math.abs(cacheReadInputTokensDelta) >= 1_000 &&
+      (cacheReadInputTokensDeltaRatio ?? 0) >= 0.2
+    ) {
+      reasons.push('provider_cache_read_drop_without_shape_change')
+    }
+  }
+
   if (reasons.length === 0) return null
   const classification =
     compactionChanged || contentReplacementChanged
       ? 'expected_reset'
       : reasons.includes('input_tokens_shift_without_shape_change')
+        || reasons.includes('provider_cache_read_drop_without_shape_change')
         ? 'unexpected_change'
         : 'expected_change'
 
@@ -217,6 +274,8 @@ export function buildRequestStabilityEvent(options: {
     reasons,
     ...(inputTokensDelta !== undefined ? { inputTokensDelta } : {}),
     ...(inputTokensDeltaRatio !== undefined ? { inputTokensDeltaRatio } : {}),
+    ...(cacheReadInputTokensDelta !== undefined ? { cacheReadInputTokensDelta } : {}),
+    ...(cacheReadInputTokensDeltaRatio !== undefined ? { cacheReadInputTokensDeltaRatio } : {}),
     systemChanged,
     toolSchemaChanged,
     modelChanged,
@@ -225,6 +284,7 @@ export function buildRequestStabilityEvent(options: {
     compactCapabilityChanged,
     compactionChanged,
     contentReplacementChanged,
+    cachePrefixChanged,
     details: {
       modelId: options.currentRequest.model,
       systemPromptHash: options.currentRequest.systemPromptHash,
@@ -232,9 +292,25 @@ export function buildRequestStabilityEvent(options: {
       compactCapabilityHash: options.currentRequest.compactCapabilityHash,
       projectConfigHash: options.currentRequest.projectConfigHash,
       skillListingHash: options.currentRequest.skillListingHash,
+      cachePrefix: options.currentRequest.cachePrefix,
+      providerCache: {
+        ...(previousResponse?.cacheReadInputTokens !== undefined
+          ? { previousReadTokens: previousResponse.cacheReadInputTokens }
+          : {}),
+        ...(options.currentResponse.cacheReadInputTokens !== undefined
+          ? { currentReadTokens: options.currentResponse.cacheReadInputTokens }
+          : {}),
+        ...(options.currentResponse.cacheCreationInputTokens !== undefined
+          ? { currentCreationTokens: options.currentResponse.cacheCreationInputTokens }
+          : {}),
+        ...(options.currentResponse.cacheHitRatio !== undefined
+          ? { currentHitRatio: options.currentResponse.cacheHitRatio }
+          : {}),
+      },
       systemChanged,
       toolSchemaChanged,
       compactCapabilityChanged,
+      cachePrefixChanged,
     },
     timestamp: options.timestamp,
   }

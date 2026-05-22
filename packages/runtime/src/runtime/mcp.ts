@@ -7,6 +7,7 @@ import type {
   ToolResult,
   ToolUseContext,
 } from './contracts.js'
+import { withToolPermissionOrigin } from './permissionOrigins.js'
 
 export type RuntimeMcpTool = Tool & {
   mcpInfo: {
@@ -178,12 +179,13 @@ function createListMcpResourcesTool(states: RuntimeMcpServerState[]): Tool {
         }
       }
 
-      const decision = await context.permissionGate.requestPermission({
-        action: 'read',
-        subject: server ? `MCP resources on ${server}` : 'MCP resources',
-        risk: 'low',
-        reason: 'List MCP resources',
-      })
+	      const decision = await context.permissionGate.requestPermission({
+	        action: 'read',
+	        subject: server ? `MCP resources on ${server}` : 'MCP resources',
+	        risk: 'low',
+	        reason: 'List MCP resources',
+	        origin: withToolPermissionOrigin(context.permissionOrigin, 'McpListResources'),
+	      })
       if (!decision.allowed) {
         return { toolCallId: '', ok: false, content: decision.reason }
       }
@@ -254,12 +256,13 @@ function createReadMcpResourceTool(
         }
       }
 
-      const decision = await context.permissionGate.requestPermission({
-        action: 'read',
-        subject: `MCP resource ${server} ${uri}`,
-        risk: 'low',
-        reason: 'Read MCP resource',
-      })
+	      const decision = await context.permissionGate.requestPermission({
+	        action: 'read',
+	        subject: `MCP resource ${server} ${uri}`,
+	        risk: 'low',
+	        reason: 'Read MCP resource',
+	        origin: withToolPermissionOrigin(context.permissionOrigin, 'McpReadResource'),
+	      })
       if (!decision.allowed) {
         return { toolCallId: '', ok: false, content: decision.reason }
       }
@@ -434,12 +437,13 @@ function createRuntimeMcpTool(
     readOnly: definition.annotations?.readOnlyHint ?? false,
     mcpInfo: { serverName, toolName },
     async invoke(input: unknown, context: ToolUseContext): Promise<ToolResult> {
-      const decision = await context.permissionGate.requestPermission({
-        action: 'external-tool',
-        subject: name,
-        risk: definition.annotations?.readOnlyHint ? 'low' : 'medium',
-        reason: `Invoke MCP tool ${serverName}/${toolName}`,
-      })
+	      const decision = await context.permissionGate.requestPermission({
+	        action: 'external-tool',
+	        subject: name,
+	        risk: definition.annotations?.readOnlyHint ? 'low' : 'medium',
+	        reason: `Invoke MCP tool ${serverName}/${toolName}`,
+	        origin: withToolPermissionOrigin(context.permissionOrigin, `MCP:${serverName}/${toolName}`),
+	      })
       if (!decision.allowed) {
         return {
           toolCallId: '',

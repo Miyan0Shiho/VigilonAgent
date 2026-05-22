@@ -209,7 +209,10 @@ function createContext(
     } as ToolUseContext['lspServerManager'],
     taskManager: {
       activeTasks: [],
+      retainedTasks: [],
       startBashTask: async () => 'task-id',
+      startSubagentTask: async task => task.taskId,
+      completeTask: async () => true,
       stopTask: async () => true,
       killTask: async () => true,
       shutdown: async () => undefined,

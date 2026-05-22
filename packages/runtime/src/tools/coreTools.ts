@@ -1,6 +1,7 @@
 import type { RuntimeSkill, Tool } from '../runtime/contracts.js'
 import { createToolRegistry, ToolRegistry } from '../runtime/tools.js'
 import { BashTool } from './bashTool.js'
+import { AgentInventoryTool } from './agentInventoryTool.js'
 import { AgentTool } from './agentTool.js'
 import { AskUserQuestionTool } from './askUserQuestionTool.js'
 import { ConfigTool } from './configTool.js'
@@ -28,6 +29,7 @@ export const CORE_TOOLS = [
   GrepTool,
   ToolSearchTool,
   LspTool,
+  AgentInventoryTool,
   TaskStopTool,
   AgentTool,
   ConfigTool,

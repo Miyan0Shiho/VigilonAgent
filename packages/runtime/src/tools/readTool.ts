@@ -1,5 +1,6 @@
 import { readFile, stat } from 'node:fs/promises'
 import type { Tool, ToolResult, ToolUseContext } from '../runtime/contracts.js'
+import { withToolPermissionOrigin } from '../runtime/permissionOrigins.js'
 import {
   isBlockedDevicePath,
   isUncPath,
@@ -79,12 +80,13 @@ export const ReadTool: Tool = {
       return failed(`Read path is ignored by project config: ${relativePath}`)
     }
 
-    const permission = await context.permissionGate.requestPermission({
-      action: 'read',
-      subject: filePath,
-      risk: 'low',
-      reason: 'Read local file content',
-    })
+	    const permission = await context.permissionGate.requestPermission({
+	      action: 'read',
+	      subject: filePath,
+	      risk: 'low',
+	      reason: 'Read local file content',
+	      origin: withToolPermissionOrigin(context.permissionOrigin, 'Read'),
+	    })
     if (!permission.allowed) {
       return failed(permission.reason)
     }

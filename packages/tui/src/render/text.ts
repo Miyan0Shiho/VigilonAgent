@@ -1,4 +1,6 @@
 import type {
+  TuiAgentView,
+  TuiCompactResult,
   TuiHandoff,
   TuiRuntimeEvent,
   TuiSessionDetail,
@@ -76,6 +78,114 @@ export function renderSessionDetail(detail: TuiSessionDetail): string {
     detail.session.pendingPlan ? `  pending plan ${detail.session.pendingPlan}` : '',
     ...detail.recentEvents.map(line => `  ${line}`),
   ].filter(Boolean).join('\n')
+}
+
+export function renderAgentView(view: TuiAgentView): string {
+  const activeDefinitions = view.definitions.filter(definition => definition.active)
+  return [
+    '',
+    `agents    ${activeDefinitions.length} active definitions · ${view.tasks.length} subagent tasks`,
+    `  cwd ${view.cwd}`,
+    `  sources ${view.sourcePrecedence.join(' < ')}`,
+    ...activeDefinitions.slice(0, 12).map(definition =>
+      `  ${definition.name} · ${formatAgentSource(definition.source, definition.sourceScope)} · ${definition.host ?? 'local'}${definition.background ? ' · background' : ''} · ${(definition.allowedTools ?? []).join(', ') || 'no tools'}`,
+    ),
+    view.tasks.length === 0 ? '  no retained or background subagent tasks' : '',
+    ...view.tasks.slice(0, 12).flatMap(task => [
+      `  ${task.id} · ${task.agentName ?? 'subagent'} · ${task.status ?? 'unknown'} · parent ${task.sessionId}`,
+      task.outputSummary ? `    ${truncate(task.outputSummary, 120)}` : '',
+      task.worktreeDiff ? `    worktree diff ${formatWorktreeDiff(task.worktreeDiff)}` : '',
+      task.worktreeDiff?.sourceApply ? `    source apply ${formatWorktreeApply(task.worktreeDiff.sourceApply)}` : '',
+      task.worktreeDiff ? `    merge ${formatMergeCommands(task.sessionId, task.id, task.worktreeDiff)}` : '',
+      `    /agents inspect ${task.sessionId} ${task.id}`,
+    ].filter(Boolean)),
+    ...(view.detail ? [
+      '',
+      `agent     Task detail ${view.detail.task.id}`,
+	      `  parent ${view.detail.parentSessionId}`,
+	      `  status ${view.detail.task.status ?? 'unknown'}`,
+	      `  transcript ${view.detail.transcriptPath ?? 'missing'}`,
+	      ...formatPermissionSummary(view.detail.permissionSummary),
+	      view.detail.task.worktreeDiff ? `  worktree diff ${formatWorktreeDiff(view.detail.task.worktreeDiff)}` : '',
+      view.detail.task.worktreeDiff?.sourceApply ? `  source apply ${formatWorktreeApply(view.detail.task.worktreeDiff.sourceApply)}` : '',
+      view.detail.task.worktreeDiff ? `  merge ${formatMergeCommands(view.detail.parentSessionId, view.detail.task.id, view.detail.task.worktreeDiff)}` : '',
+      view.detail.resumeResult ? `  resume ${view.detail.resumeResult.status}: ${truncate(view.detail.resumeResult.finalMessage, 120)}` : '',
+      view.detail.stopResult ? `  stop ${view.detail.stopResult.ok ? 'ok' : 'unavailable'}: ${truncate(view.detail.stopResult.message, 120)}` : '',
+      view.detail.applyResult ? `  apply ${view.detail.applyResult.status}: ${truncate(view.detail.applyResult.message, 120)}` : '',
+      ...view.detail.lifecycleEvents.slice(-8).map(line => `  lifecycle ${line}`),
+      ...view.detail.recentEvents.slice(-8).map(line => `  ${line}`),
+    ].filter(Boolean) : []),
+	  ].filter(Boolean).join('\n')
+}
+
+export function renderCompactResult(result: TuiCompactResult): string {
+  const readiness = result.memoryReadiness
+  const grounding = readiness?.groundingValidation
+  const tokenPressure = result.boundary?.tokenPressure
+  return [
+    '',
+    `compact   ${result.sessionId}`,
+    `  compacted ${result.compacted ? 'yes' : 'no'} · summary ${result.summarySource ?? 'unknown'} · events ${result.eventCount ?? 'unknown'}`,
+    `  memory ${readiness?.after ?? 'missing'} · ready ${readiness?.ready === false ? 'no' : 'yes'} · refreshed ${readiness?.refreshed ? 'yes' : 'no'}`,
+    readiness?.blockingReasons?.length ? `  blocks ${readiness.blockingReasons.join(', ')}` : '',
+    grounding ? `  grounding ${grounding.status ?? 'unknown'} · ${grounding.modelId ?? 'unknown-model'} · ${truncate(grounding.reason ?? '', 120)}` : '',
+    tokenPressure ? `  tokens ${tokenPressure.tokenCountSource ?? 'unknown'} · ${tokenPressure.estimatedTokens ?? '?'} / ${tokenPressure.tokenBudget ?? '?'} · ${tokenPressure.reason ?? 'unknown'}` : '',
+    `  route ${result.boundary?.route?.strategy ?? 'unknown'} · cleanup ${result.boundary?.postCompactCleanup?.completed ? 'complete' : 'unknown'}`,
+    result.transcriptPath ? `  transcript ${result.transcriptPath}` : '',
+  ].filter(Boolean).join('\n')
+}
+
+function formatAgentSource(source: string, scope?: string): string {
+  return scope ? `${source}:${scope}` : source
+}
+
+function formatPermissionSummary(
+  summary: NonNullable<TuiAgentView['detail']>['permissionSummary'],
+): string[] {
+  if (!summary) return []
+  if (summary.totalRequests === 0) return ['  permissions none']
+  const actions = summary.actions.map(action => `${action.action}:${action.count}`).join(', ')
+  const origins = summary.agents
+    .map(agent => {
+      const parent = agent.parentAgentId ? `<-${agent.parentAgentId}` : ''
+      const tools = agent.tools.length ? ` · ${agent.tools.join(',')}` : ''
+      return `${agent.agentRole}:${agent.agentId}${parent} ${agent.count}/${agent.allowed}/${agent.denied}${tools}`
+    })
+    .join('; ')
+  const latest = summary.latest
+    ? `  latest permission ${summary.latest.action} ${summary.latest.allowed ? 'allow' : 'deny'} ${summary.latest.subject}`
+    : ''
+  return [
+    `  permissions ${summary.totalRequests} · allow ${summary.allowed} · deny ${summary.denied}${actions ? ` · ${actions}` : ''}`,
+    origins ? `  origins ${origins}` : '',
+    latest,
+  ].filter(Boolean)
+}
+
+function formatWorktreeDiff(diff: NonNullable<TuiAgentView['tasks'][number]['worktreeDiff']>): string {
+  const files = diff.changedFiles?.length ? ` · files ${diff.changedFiles.slice(0, 5).join(', ')}` : ''
+  return `${diff.status} · ${diff.filesChanged} files · +${diff.additions} -${diff.deletions}${files}${diff.patchPath ? ` · patch ${diff.patchPath}` : ''}`
+}
+
+function formatWorktreeApply(apply: NonNullable<NonNullable<TuiAgentView['tasks'][number]['worktreeDiff']>['sourceApply']>): string {
+  const conflicts = apply.conflicts?.length ? ` · conflicts ${apply.conflicts.join(', ')}` : ''
+  const error = apply.error ? ` · ${truncate(apply.error, 80)}` : ''
+  return `${apply.status} · ${apply.filesChanged} files${conflicts}${error}`
+}
+
+function formatMergeCommands(
+  sessionId: string,
+  taskId: string,
+  diff: NonNullable<TuiAgentView['tasks'][number]['worktreeDiff']>,
+): string {
+  const fileHint = diff.changedFiles?.length
+    ? ` · partial /agents apply ${sessionId} ${taskId} --files ${diff.changedFiles.slice(0, 3).join(',')}`
+    : ''
+  return [
+    `/agents apply ${sessionId} ${taskId} --check`,
+    `/agents apply ${sessionId} ${taskId} --3way`,
+    `/agents apply ${sessionId} ${taskId} --rollback`,
+  ].join(' · ') + fileHint
 }
 
 export function renderRuntimeEvent(

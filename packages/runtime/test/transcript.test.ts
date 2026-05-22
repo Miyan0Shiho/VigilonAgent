@@ -130,6 +130,20 @@ describe('transcript persistence', () => {
         prePlanPermissionMode: 'bypass-local',
         todos: [{ id: 'plan', content: 'Write plan', status: 'in_progress' }],
         pendingPlan: '1. Inspect\n2. Edit',
+        retainedTasks: [
+          {
+            id: 'agent-finished-1',
+            type: 'subagent',
+            command: 'subagent:finisher',
+            startTime: '2026-05-17T00:00:00.500Z',
+            status: 'completed',
+            background: true,
+            agentName: 'finisher',
+            completedAt: '2026-05-17T00:00:00.900Z',
+            terminalReason: 'subagent_completed',
+            outputSummary: 'Background finisher completed.',
+          },
+        ],
         handoffReport: {
           finalMessage: 'handoff',
           changes: ['No code changes'],
@@ -156,6 +170,14 @@ describe('transcript persistence', () => {
       prePlanPermissionMode: 'bypass-local',
       todos: [{ id: 'plan', content: 'Write plan', status: 'in_progress' }],
       pendingPlan: '1. Inspect\n2. Edit',
+      retainedTasks: [
+        expect.objectContaining({
+          id: 'agent-finished-1',
+          status: 'completed',
+          terminalReason: 'subagent_completed',
+          outputSummary: 'Background finisher completed.',
+        }),
+      ],
       handoffReport: {
         finalMessage: 'handoff',
         changes: ['No code changes'],
@@ -164,6 +186,58 @@ describe('transcript persistence', () => {
         risks: ['None'],
       },
       verificationNotes: ['pnpm phase1:baseline passed'],
+    })
+  })
+
+  it('replays background subagent terminal state from lifecycle events without a session-state tail', () => {
+    const events: TranscriptEvent[] = [
+      {
+        type: 'subagent-lifecycle',
+        event: {
+          taskId: 'finisher-1',
+          agentName: 'finisher',
+          status: 'started',
+          background: true,
+          transcriptPath: '/tmp/finisher.jsonl',
+          parentAgentId: 'main',
+          timestamp: '2026-05-21T00:00:00.000Z',
+          summary: 'Subagent finisher registered with shared task manager.',
+        },
+        timestamp: '2026-05-21T00:00:00.000Z',
+      },
+      {
+        type: 'subagent-lifecycle',
+        event: {
+          taskId: 'finisher-1',
+          agentName: 'finisher',
+          status: 'completed',
+          background: true,
+          transcriptPath: '/tmp/finisher.jsonl',
+          parentAgentId: 'main',
+          timestamp: '2026-05-21T00:00:03.000Z',
+          finalMessage: 'Background finisher completed.',
+          summary: 'Background finisher completed.',
+        },
+        timestamp: '2026-05-21T00:00:03.000Z',
+      },
+    ]
+
+    expect(restoreSessionStateFromEvents(events)).toMatchObject({
+      backgroundTasks: [],
+      retainedTasks: [
+        {
+          id: 'finisher-1',
+          type: 'subagent',
+          status: 'completed',
+          background: true,
+          agentName: 'finisher',
+          transcriptPath: '/tmp/finisher.jsonl',
+          completedAt: '2026-05-21T00:00:03.000Z',
+          terminalReason: 'subagent_completed',
+          outputSummary: 'Background finisher completed.',
+          stopRequestPath: '/tmp/finisher.jsonl.stop.json',
+        },
+      ],
     })
   })
 

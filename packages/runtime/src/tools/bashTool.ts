@@ -1,7 +1,17 @@
 import { exec } from 'node:child_process'
+import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises'
+import path from 'node:path'
 import { promisify } from 'node:util'
 import type { Tool, ToolResult, ToolUseContext } from '../runtime/contracts.js'
+import {
+  evaluateBashSafetyPolicy,
+  type BashSedEditSurrogate,
+} from '../runtime/safetyPolicy.js'
+import { prepareBashSandboxExecution } from '../runtime/sandbox.js'
+import { withToolPermissionOrigin } from '../runtime/permissionOrigins.js'
 import { createTimestamp } from '../runtime/transcript.js'
+import { isUncPath, resolveToolPath } from './path.js'
+import { createLineDiff } from './writeTool.js'
 
 const execAsync = promisify(exec)
 const DEFAULT_TIMEOUT_MS = 30_000
@@ -111,19 +121,44 @@ export const BashTool: Tool = {
     const parsed = parseBashInput(input)
     if (!parsed.command) return failed('Bash requires command')
 
-    const risk = classifyRisk(parsed.command)
+    const policy = evaluateBashSafetyPolicy(parsed.command)
+    const permissionOrigin = withToolPermissionOrigin(context.permissionOrigin, 'Bash')
     const permission = await context.permissionGate.requestPermission({
-      action: 'bash',
-      subject: parsed.command,
-      risk,
-      reason: parsed.description ?? 'Run local shell command',
+      action: policy.sedEdit ? 'edit' : 'bash',
+      subject: policy.sedEdit
+        ? resolveToolPath(context.cwd, policy.sedEdit.filePath)
+        : parsed.command,
+      risk: policy.risk,
+      reason: parsed.description ?? policy.reason,
+      origin: permissionOrigin,
+      policy: policy.permissionMetadata,
     })
-    if (!permission.allowed) return failed(permission.reason)
+    if (!permission.allowed) {
+      return failed(permission.reason, {
+        safetyPolicy: policy.permissionMetadata,
+        permissionDecision: permission,
+      })
+    }
+
+    if (policy.sedEdit) {
+      return applySedEditSurrogate(policy.sedEdit, parsed.command, context, {
+        safetyPolicy: policy.permissionMetadata,
+        permissionDecision: permission,
+      })
+    }
+
+    const sandboxExecution = await prepareBashSandboxExecution({
+      command: parsed.command,
+      policy,
+    })
 
     if (parsed.background) {
-      const taskId = await context.taskManager.startBashTask(parsed.command, context.cwd)
+      const taskId = await context.taskManager.startBashTask(sandboxExecution.command, context.cwd)
       if (context.sessionState) {
         context.sessionState.backgroundTasks = context.taskManager.activeTasks.map(task => ({
+          ...task,
+        }))
+        context.sessionState.retainedTasks = context.taskManager.retainedTasks.map(task => ({
           ...task,
         }))
         await context.transcript.append({
@@ -145,6 +180,7 @@ export const BashTool: Tool = {
             : null,
           verificationNotes: [...context.sessionState.verificationNotes],
           backgroundTasks: context.sessionState.backgroundTasks.map(task => ({ ...task })),
+          retainedTasks: context.sessionState.retainedTasks.map(task => ({ ...task })),
           discoveredToolNames: [...context.sessionState.discoveredToolNames],
           toolReferenceDeltas: [...context.sessionState.toolReferenceDeltas],
           mcpInstructions: [...context.sessionState.mcpInstructions],
@@ -161,6 +197,9 @@ export const BashTool: Tool = {
       return ok(`Command started in background. Task ID: ${taskId}`, {
         taskId,
         status: 'running',
+        safetyPolicy: policy.permissionMetadata,
+        permissionDecision: permission,
+        sandboxRuntime: sandboxExecution.metadata,
       })
     }
 
@@ -170,7 +209,7 @@ export const BashTool: Tool = {
       context.bashLimits?.maxOutputChars ?? DEFAULT_MAX_OUTPUT_CHARS
 
     try {
-      const { stdout, stderr } = await execAsync(parsed.command, {
+      const { stdout, stderr } = await execAsync(sandboxExecution.command, {
         cwd: context.cwd,
         signal: context.abortSignal,
         timeout,
@@ -185,6 +224,9 @@ export const BashTool: Tool = {
       return ok(formatShellOutput(broadScan.stdout, filtered.stderr, maxOutputChars), {
         exitCode: 0,
         truncated: broadScan.stdout.length + filtered.stderr.length > maxOutputChars,
+        safetyPolicy: policy.permissionMetadata,
+        permissionDecision: permission,
+        sandboxRuntime: sandboxExecution.metadata,
         ...(broadScan.detected
           ? {
               broadShellScan: true,
@@ -218,10 +260,66 @@ export const BashTool: Tool = {
         metadata: {
           exitCode: shellError.code,
           signal: shellError.signal,
+          safetyPolicy: policy.permissionMetadata,
+          permissionDecision: permission,
+          sandboxRuntime: sandboxExecution.metadata,
         },
       }
     }
   },
+}
+
+async function applySedEditSurrogate(
+  sedEdit: BashSedEditSurrogate,
+  command: string,
+  context: ToolUseContext,
+  metadata: Record<string, unknown>,
+): Promise<ToolResult> {
+  const filePath = resolveToolPath(context.cwd, sedEdit.filePath)
+  if (isUncPath(filePath)) {
+    return failed('UNC paths are not supported by the Bash sed edit surrogate', metadata)
+  }
+
+  let before: string
+  try {
+    before = await readFile(filePath, 'utf8')
+  } catch (error) {
+    if (isNotFound(error)) return failed(`sed edit target does not exist: ${sedEdit.filePath}`, metadata)
+    throw error
+  }
+
+  const pattern = new RegExp(sedEdit.pattern, sedEdit.global ? 'g' : '')
+  if (!pattern.test(before)) {
+    return failed('sed edit pattern did not match the target file', metadata)
+  }
+  pattern.lastIndex = 0
+  const after = before.replace(pattern, () => sedEdit.replacement)
+  await mkdir(path.dirname(filePath), { recursive: true })
+  await atomicWriteFile(filePath, after)
+  const fileStat = await stat(filePath)
+  context.readFileState?.set(filePath, {
+    content: after,
+    mtimeMs: fileStat.mtimeMs,
+    offset: 1,
+    fullRead: true,
+  })
+
+  return ok(`Applied sed edit surrogate for ${sedEdit.filePath}`, {
+    ...metadata,
+    command,
+    surrogate: {
+      kind: 'sed-edit',
+      filePath,
+      global: sedEdit.global,
+    },
+    diff: createLineDiff(before, after, { filePath: sedEdit.filePath }),
+  })
+}
+
+async function atomicWriteFile(filePath: string, content: string): Promise<void> {
+  const tempPath = `${filePath}.vigilon-tmp-${process.pid}-${Date.now()}`
+  await writeFile(tempPath, content, 'utf8')
+  await rename(tempPath, filePath)
 }
 
 function classifyRisk(command: string): 'low' | 'medium' | 'high' {
@@ -565,6 +663,15 @@ function ok(content: string, metadata?: Record<string, unknown>): ToolResult {
   return { toolCallId: '', ok: true, content, metadata }
 }
 
-function failed(content: string): ToolResult {
-  return { toolCallId: '', ok: false, content }
+function failed(content: string, metadata?: Record<string, unknown>): ToolResult {
+  return { toolCallId: '', ok: false, content, metadata }
+}
+
+function isNotFound(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: unknown }).code === 'ENOENT'
+  )
 }

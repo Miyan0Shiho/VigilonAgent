@@ -5,6 +5,7 @@ import type {
   ToolResult,
   ToolUseContext,
 } from '../runtime/contracts.js'
+import { withToolPermissionOrigin } from '../runtime/permissionOrigins.js'
 
 export const AskUserQuestionTool: Tool = {
   name: 'AskUserQuestion',
@@ -28,12 +29,13 @@ export const AskUserQuestionTool: Tool = {
     const validation = validateQuestions(parsed)
     if (validation) return failed(validation)
 
-    const permission = await context.permissionGate.requestPermission({
-      action: 'ask-user',
-      subject: 'Structured operator clarification',
-      risk: 'low',
-      reason: 'Need structured human input before continuing the task',
-    })
+	    const permission = await context.permissionGate.requestPermission({
+	      action: 'ask-user',
+	      subject: 'Structured operator clarification',
+	      risk: 'low',
+	      reason: 'Need structured human input before continuing the task',
+	      origin: withToolPermissionOrigin(context.permissionOrigin, 'AskUserQuestion'),
+	    })
     if (!permission.allowed) {
       return failed(`AskUserQuestion permission denied: ${permission.reason}`)
     }

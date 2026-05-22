@@ -6,6 +6,7 @@ import type {
   ToolResult,
   ToolUseContext,
 } from '../runtime/contracts.js'
+import { withToolPermissionOrigin } from '../runtime/permissionOrigins.js'
 import { loadRuntimeSettings } from '../runtime/settings.js'
 
 type SupportedSetting = 'permissionMode' | 'project.allowedTools'
@@ -75,10 +76,11 @@ export const ConfigTool: Tool = {
 
       const permission = await context.permissionGate.requestPermission({
         action: 'write',
-        subject: `config:${parsed.setting}`,
-        risk: 'low',
-        reason: `Update runtime setting ${parsed.setting}`,
-      })
+	      subject: `config:${parsed.setting}`,
+	      risk: 'low',
+	      reason: `Update runtime setting ${parsed.setting}`,
+	      origin: withToolPermissionOrigin(context.permissionOrigin, 'Config'),
+	    })
       if (!permission.allowed) {
         return failed(`Config permission denied: ${permission.reason}`)
       }

@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { access, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -33,6 +33,7 @@ describe('execution tools', () => {
       'Grep',
       'ToolSearch',
       'LSP',
+      'AgentInventory',
       'TaskStop',
       'Agent',
       'Config',
@@ -154,9 +155,66 @@ describe('execution tools', () => {
     expect(echo.ok).toBe(true)
     expect(echo.content).toContain('<stdout>')
     expect(echo.content).toContain('hello')
+    expect(echo.metadata?.safetyPolicy).toMatchObject({
+      kind: 'bash-safety',
+      sandboxDecision: 'sandboxed',
+      readOnly: true,
+    })
+    expect(echo.metadata?.sandboxRuntime).toMatchObject({
+      requested: true,
+    })
     expect(rm.ok).toBe(false)
-    expect(rm.content).toContain('read-only mode blocks')
+    expect(rm.content).toContain('safety policy denied')
+    expect(rm.metadata?.safetyPolicy).toMatchObject({
+      sandboxDecision: 'denied',
+      findings: expect.arrayContaining(['high_risk_command:rm']),
+    })
     expect((await transcript.readAll()).filter(e => e.type === 'permission')).toHaveLength(2)
+  })
+
+  it('Bash enforces read-only commands through the OS sandbox when available', async () => {
+    const cwd = await createFixture({ 'input.txt': 'alpha\n' })
+    const context = createContext(cwd, {
+      mode: 'read-only',
+      bashLimits: { timeoutMs: 1_000, maxOutputChars: 400 },
+    })
+
+    const read = await BashTool.invoke({ command: 'cat input.txt' }, context)
+
+    expect(read.ok).toBe(true)
+    expect(read.content).toContain('alpha')
+    expect(read.metadata?.sandboxRuntime).toMatchObject({
+      requested: true,
+      enforced: await canUseMacSandbox(),
+    })
+  })
+
+  it('Bash OS sandbox blocks a shell-level write even when the local policy classifies it as read-only', async () => {
+    if (!(await canUseMacSandbox())) return
+    const cwd = await createFixture({ 'input.txt': 'alpha\n' })
+    const context = createContext(cwd, {
+      mode: 'read-only',
+      bashLimits: { timeoutMs: 1_000, maxOutputChars: 800 },
+    })
+
+    const result = await BashTool.invoke(
+      { command: "sed -n '1w sandbox-blocked.txt' input.txt" },
+      context,
+    )
+
+    expect(result.ok).toBe(false)
+    expect(result.metadata?.safetyPolicy).toMatchObject({
+      sandboxDecision: 'sandboxed',
+      readOnly: true,
+    })
+    expect(result.metadata?.sandboxRuntime).toMatchObject({
+      requested: true,
+      enforced: true,
+      adapter: 'macos-sandbox-exec',
+    })
+    await expect(readFile(path.join(cwd, 'sandbox-blocked.txt'), 'utf8')).rejects.toMatchObject({
+      code: 'ENOENT',
+    })
   })
 
   it('Bash treats shell writes and unsafe wrappers as non-read-only', async () => {
@@ -182,7 +240,45 @@ describe('execution tools', () => {
       code: 'ENOENT',
     })
     expect(sedWrite.ok).toBe(false)
+    expect(sedWrite.metadata?.safetyPolicy).toMatchObject({
+      sandboxDecision: 'ask',
+      surrogate: {
+        kind: 'sed-edit',
+      },
+    })
     expect(shellWrapper.ok).toBe(false)
+    expect(shellWrapper.metadata?.safetyPolicy).toMatchObject({
+      sandboxDecision: 'ask',
+      findings: expect.arrayContaining(['shell_wrapper:sh']),
+    })
+  })
+
+  it('Bash converts a narrow sed -i command into an audited edit surrogate', async () => {
+    const cwd = await createFixture({ 'src/app.txt': 'alpha\nalpha\n' })
+    const context = createContext(cwd, { mode: 'bypass-local' })
+
+    const result = await BashTool.invoke(
+      { command: "sed -i 's/alpha/beta/g' src/app.txt" },
+      context,
+    )
+
+    expect(result.ok).toBe(true)
+    expect(result.content).toContain('Applied sed edit surrogate')
+    expect(result.metadata).toMatchObject({
+      safetyPolicy: {
+        sandboxDecision: 'ask',
+        surrogate: {
+          kind: 'sed-edit',
+          filePath: 'src/app.txt',
+        },
+      },
+      surrogate: {
+        kind: 'sed-edit',
+      },
+    })
+    expect(result.metadata?.diff).toContain('-alpha')
+    expect(result.metadata?.diff).toContain('+beta')
+    expect(await readFile(path.join(cwd, 'src/app.txt'), 'utf8')).toBe('beta\nbeta\n')
   })
 
   it('Bash times out long commands and truncates large output', async () => {
@@ -267,6 +363,16 @@ async function createFixture(files: Record<string, string>): Promise<string> {
     await writeFile(filePath, content)
   }
   return root
+}
+
+async function canUseMacSandbox(): Promise<boolean> {
+  if (process.platform !== 'darwin') return false
+  try {
+    await access('/usr/bin/sandbox-exec')
+    return true
+  } catch {
+    return false
+  }
 }
 
 function createContext(

@@ -1,5 +1,6 @@
 import { readFile, rename, stat, writeFile } from 'node:fs/promises'
 import type { Tool, ToolResult, ToolUseContext } from '../runtime/contracts.js'
+import { withToolPermissionOrigin } from '../runtime/permissionOrigins.js'
 import { isBlockedDevicePath, isUncPath, resolveToolPath } from './path.js'
 
 const MAX_NOTEBOOK_OUTPUT_CHARS = 10_000
@@ -69,12 +70,13 @@ export const NotebookTool: Tool = {
     if (isUncPath(filePath)) return failed('UNC paths are not supported.')
     if (isBlockedDevicePath(filePath)) return failed('Blocked device path.')
 
-    const permission = await context.permissionGate.requestPermission({
-      action: action === 'read' ? 'read' : 'edit',
-      subject: filePath,
-      risk: action === 'read' ? 'low' : 'medium',
-      reason: `${action === 'read' ? 'Read' : 'Edit'} Jupyter Notebook`,
-    })
+	    const permission = await context.permissionGate.requestPermission({
+	      action: action === 'read' ? 'read' : 'edit',
+	      subject: filePath,
+	      risk: action === 'read' ? 'low' : 'medium',
+	      reason: `${action === 'read' ? 'Read' : 'Edit'} Jupyter Notebook`,
+	      origin: withToolPermissionOrigin(context.permissionOrigin, 'Notebook'),
+	    })
     if (!permission.allowed) return failed(permission.reason)
 
     try {

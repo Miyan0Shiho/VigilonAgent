@@ -3,6 +3,8 @@ export type TuiCommandName =
   | 'help'
   | 'clear'
   | 'sessions'
+  | 'agents'
+  | 'compact'
   | 'details'
   | 'open'
   | 'resume'
@@ -45,6 +47,18 @@ const COMMANDS: readonly TuiCommandDefinition[] = [
     name: 'sessions',
     usage: '/sessions',
     summary: 'Refresh the session/task panel.',
+  },
+  {
+    name: 'agents',
+    usage: '/agents [inspect|resume|apply|stop] <session> <task-id> [args]',
+    summary: 'List, inspect, resume, apply/check/rollback, or stop local subagent tasks.',
+    argumentHint: 'inspect|resume|apply|stop',
+  },
+  {
+    name: 'compact',
+    usage: '/compact <index|session-id> [--validate-memory] [budget args]',
+    summary: 'Run governed memory-first compact for a session and show readiness metadata.',
+    argumentHint: 'index|session-id',
   },
   {
     name: 'details',

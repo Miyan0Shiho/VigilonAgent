@@ -1,3 +1,7 @@
+import { constants } from 'node:fs'
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { execFile } from 'node:child_process'
+import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createInterface } from 'node:readline/promises'
 import { createDeepSeekModelClient } from './model/deepseek.js'
@@ -7,22 +11,32 @@ import type {
   AskUserQuestionInput,
   AgentRuntimeEvent,
   AgentRuntimeTurnResult,
+  BackgroundTask,
+  LocalAgentDefinition,
   ModelClient,
   PermissionDecision,
   PermissionGate,
   PermissionMode,
+  PermissionOrigin,
   PermissionRequest,
   PreToolUseHook,
   RuntimeProjectConfig,
   RuntimeOperator,
   RuntimeSessionSnapshot,
   RuntimeSessionSummary,
+  SubagentWorktreeApply,
+  SubagentWorktreeDiff,
+  Tool,
 } from './runtime/contracts.js'
 import {
   loadRuntimeMcpTools,
   type LoadedRuntimeMcp,
 } from './runtime/mcp.js'
-import { decidePermission } from './runtime/permissions.js'
+import {
+  createPermissionResolutionCoordinator,
+  decidePermission,
+} from './runtime/permissions.js'
+import { buildPermissionOriginSummary } from './runtime/permissionOrigins.js'
 import {
   createSettingsPreToolUseHooks,
   loadRuntimeSettings,
@@ -40,14 +54,41 @@ import {
   listSessions,
   readTranscriptFile,
   resumeSessionById,
+  resumeSessionFromTranscript,
 } from './runtime/transcript.js'
 import {
+  compactTranscript,
+  estimateCompactTokenPressure,
+  resolveCompactContextWindowBudget,
+} from './runtime/compact.js'
+import {
+  buildCompactMemoryReadiness,
+  deleteSessionMemory,
+  ensureFreshSessionMemory,
   generateSessionMemoryFromSnapshot,
+  getSessionMemoryEventPointer,
   getSessionMemoryPath,
+  inspectSessionMemory,
   isSessionMemoryFresh,
+  readSessionMemoryExtractionStatus,
+  scheduleSessionMemoryExtraction,
   writeSessionMemory,
 } from './runtime/sessionMemory.js'
-import { createCoreToolRegistry } from './tools/coreTools.js'
+import {
+  loadAgentCatalog,
+} from './runtime/agentDefinitions.js'
+import { createTaskManager } from './runtime/taskManager.js'
+import { writeTaskStopRequest } from './runtime/taskControl.js'
+import {
+  promoteLongTermMemory,
+  type LongTermMemoryKind,
+} from './runtime/projectMemory.js'
+import {
+  buildProjectInstructionsGuidance,
+  loadProjectInstructions,
+  type ProjectInstructions,
+} from './runtime/projectInstructions.js'
+import { CORE_TOOLS, createCoreToolRegistry } from './tools/coreTools.js'
 import { VIGILON_RUNTIME_VERSION } from './version.js'
 
 type CliIO = {
@@ -84,6 +125,7 @@ type ResolvedOptions = Omit<ParsedOptions, 'permissionMode'> & {
   skills: LoadedRuntimeSkills
   mcp: LoadedRuntimeMcp
   projectConfig: RuntimeProjectConfig
+  projectInstructions: ProjectInstructions
   preToolUseHooks: PreToolUseHook[]
 }
 
@@ -124,12 +166,32 @@ export async function runCli(
       await runDoctor(args.slice(1), io.stdout, io.env)
       return 0
     }
+    if (command === 'init') {
+      await initProject(args.slice(1), io.stdout, io.env)
+      return 0
+    }
+    if (command === 'tools') {
+      await printTools(args.slice(1), io.stdout, io.env)
+      return 0
+    }
     if (command === 'sessions') {
       await printSessions(args.slice(1), io.stdout, io.env)
       return 0
     }
+    if (command === 'agents') {
+      await printAgents(args.slice(1), io.stdout, io.env, io, deps)
+      return 0
+    }
     if (command === 'summary') {
       await summarizeSession(args.slice(1), io.stdout, io.env)
+      return 0
+    }
+    if (command === 'memory') {
+      await manageSessionMemory(args.slice(1), io.stdout, io.env, deps)
+      return 0
+    }
+    if (command === 'compact') {
+      await compactSession(args.slice(1), io.stdout, io.env, deps)
       return 0
     }
     if (command === 'run') {
@@ -192,6 +254,10 @@ function createRuntimeModuleForTui(): Record<string, unknown> {
     readTranscriptFile,
     resumeSessionById,
     createCoreToolRegistry,
+    buildProjectInstructionsGuidance,
+    loadProjectInstructions,
+    createTaskManager,
+    runCli,
     VIGILON_RUNTIME_VERSION,
   }
 }
@@ -202,9 +268,21 @@ function printHelp(output: Pick<NodeJS.WriteStream, 'write'>): void {
 Usage:
   vigilon --version
   vigilon doctor
+  vigilon init [--cwd <path>] [--force] [--model <name>] [--permission-mode <mode>]
+  vigilon tools [--cwd <path>]
   vigilon tui [--cwd <path>] [--sessions-dir <path>] [--permission-mode <mode>] [--model <name>]
   vigilon sessions [--cwd <path>] [--sessions-dir <path>]
+  vigilon agents [--cwd <path>]
+  vigilon agents inspect <parent-session-id> <task-id> [--cwd <path>] [--sessions-dir <path>]
+  vigilon agents resume <parent-session-id> <task-id> <prompt...> [--cwd <path>] [--sessions-dir <path>] [--permission-mode <mode>] [--model <name>]
+  vigilon agents apply <parent-session-id> <task-id> [--check] [--files <a,b>] [--3way] [--rollback] [--cwd <path>] [--sessions-dir <path>]
+  vigilon agents stop <parent-session-id> <task-id> [--cwd <path>] [--sessions-dir <path>]
   vigilon summary <session-id> [--cwd <path>] [--sessions-dir <path>]
+  vigilon memory <status|view|write|edit|delete|refresh|validate> <session-id> [--content <markdown>] [--background] [--refresh] [--cwd <path>] [--sessions-dir <path>]
+  vigilon memory refresh <session-id> [--background] [--cwd <path>] [--sessions-dir <path>]
+  vigilon memory validate <session-id> [--refresh] [--model <name>] [--deepseek-base-url <url>] [--cwd <path>] [--sessions-dir <path>]
+  vigilon memory promote <session-id> --type <user|feedback|project|reference> --topic <name> --content <markdown> [--cwd <path>] [--sessions-dir <path>]
+  vigilon compact <session-id> [--summary <markdown>] [--validate-memory] [--reactive-events <n>] [--context-window <n>|--token-budget <n>] [--output-reserve <n>] [--system-reserve <n>] [--tool-schema-reserve <n>] [--safety-margin <n>] [--pressure-threshold <ratio>] [--cwd <path>] [--sessions-dir <path>]
   vigilon run <prompt...> [--cwd <path>] [--sessions-dir <path>] [--permission-mode <mode>] [--model <name>] [--deepseek-base-url <url>] [--max-turns <n>]
   vigilon resume <session-id> <prompt...> [--approve-plan] [--cwd <path>] [--sessions-dir <path>] [--permission-mode <mode>] [--model <name>] [--deepseek-base-url <url>] [--max-turns <n>]
 
@@ -212,6 +290,7 @@ Permission modes: read-only, ask, accept-edits, bypass-local
 Interactive workbench: plain text starts a new task; /resume, /approve, /open, /doctor, /refresh, /quit manage sessions.
 Plan approval: resume <session-id> --approve-plan "continue..." promotes a pending plan from transcript state before running the next turn.
 Settings files: ~/.vigilon/settings.json, <cwd>/.vigilon/settings.json, <cwd>/.vigilon/settings.local.json
+Project instructions: AGENTS.md, VIGILON.md, <cwd>/.vigilon/instructions.md
 Local MCP servers: configure mcpServers in settings files
 `)
 }
@@ -226,6 +305,69 @@ function printDoctor(output: Pick<NodeJS.WriteStream, 'write'>): void {
     sourcePolicy: baseline.sourcePolicy,
     includedCapabilities: baseline.includedCapabilities.length,
     excludedSurfaces: baseline.excludedSurfaces.length,
+  })
+}
+
+async function initProject(
+  args: string[],
+  output: Pick<NodeJS.WriteStream, 'write'>,
+  env: NodeJS.ProcessEnv,
+): Promise<void> {
+  const parsed = parseInitOptions(args, env)
+  const vigilonDir = path.join(parsed.cwd, '.vigilon')
+  const settingsPath = path.join(vigilonDir, 'settings.json')
+  const agentsDir = path.join(vigilonDir, 'agents')
+  const skillsDir = path.join(vigilonDir, 'skills')
+  const instructionsPath = path.join(parsed.cwd, 'AGENTS.md')
+
+  await mkdir(vigilonDir, { recursive: true })
+  await mkdir(agentsDir, { recursive: true })
+  await mkdir(skillsDir, { recursive: true })
+
+  const defaultCommands = await detectDefaultCommands(parsed.cwd)
+  const settings = {
+    model: parsed.model,
+    permissionMode: parsed.permissionMode,
+    project: {
+      ignore: [
+        'node_modules/**',
+        'dist/**',
+        'build/**',
+        'coverage/**',
+        '.git/**',
+        '.vigilon/sessions/**',
+        '**/.vigilon/sessions/**',
+      ],
+      defaultCommands,
+    },
+  }
+  const settingsWrite = await writeTextFileIfAllowed(
+    settingsPath,
+    `${JSON.stringify(settings, null, 2)}\n`,
+    parsed.force,
+  )
+  const instructionsWrite = await writeTextFileIfAllowed(
+    instructionsPath,
+    buildDefaultAgentsInstructions(),
+    parsed.force,
+  )
+
+  writeJson(output, {
+    status: 'ok',
+    cwd: parsed.cwd,
+    created: [
+      ...settingsWrite.created,
+      ...instructionsWrite.created,
+      agentsDir,
+      skillsDir,
+    ],
+    skipped: [
+      ...settingsWrite.skipped,
+      ...instructionsWrite.skipped,
+    ],
+    settingsPath,
+    instructionsPath,
+    defaultCommands,
   })
 }
 
@@ -260,6 +402,41 @@ async function runDoctor(
   parsed.mcp.close()
 }
 
+async function printTools(
+  args: string[],
+  output: Pick<NodeJS.WriteStream, 'write'>,
+  env: NodeJS.ProcessEnv,
+): Promise<void> {
+  const parsed = await resolveOptions(
+    parseOptions(args, { requirePrompt: false }),
+    env,
+  )
+  try {
+    const registry = createCoreToolRegistry({
+      skills: parsed.skills.skills,
+      mcpTools: parsed.mcp.tools,
+      allowedTools: parsed.projectConfig.allowedTools,
+    })
+    writeJson(output, {
+      cwd: parsed.cwd,
+      allowedTools: parsed.projectConfig.allowedTools ?? null,
+      effectiveToolCount: registry.list().length,
+      coreTools: CORE_TOOLS.map(formatToolForListing),
+      mcpTools: parsed.mcp.tools.map(formatToolForListing),
+      skills: parsed.skills.skills.map(skill => ({
+        name: skill.name,
+        description: skill.description,
+        source: skill.source,
+        path: skill.path,
+        allowedTools: skill.allowedTools,
+        userInvocable: skill.userInvocable,
+      })),
+    })
+  } finally {
+    parsed.mcp.close()
+  }
+}
+
 async function printSessions(
   args: string[],
   output: Pick<NodeJS.WriteStream, 'write'>,
@@ -275,6 +452,997 @@ async function printSessions(
       sessionsDir: parsed.sessionsDir,
     }),
   })
+}
+
+async function printAgents(
+  args: string[],
+  output: Pick<NodeJS.WriteStream, 'write'>,
+  env: NodeJS.ProcessEnv,
+  io?: Pick<CliIO, 'stdin' | 'stderr'>,
+  deps: CliDeps = {},
+): Promise<void> {
+  if (args[0] === 'inspect') {
+    await inspectAgentTask(args.slice(1), output, env)
+    return
+  }
+  if (args[0] === 'resume') {
+    if (!io) throw new Error('agents resume requires CLI IO')
+    await resumeAgentTask(args.slice(1), output, env, io, deps)
+    return
+  }
+  if (args[0] === 'apply') {
+    await applyAgentTask(args.slice(1), output, env)
+    return
+  }
+  if (args[0] === 'stop') {
+    await stopPersistedAgentTask(args.slice(1), output, env)
+    return
+  }
+  const parsed = await resolveOptions(
+    parseOptions(args, { requirePrompt: false }),
+    env,
+  )
+  const catalog = await loadAgentCatalog({ cwd: parsed.cwd, env })
+  writeJson(output, {
+    cwd: parsed.cwd,
+    sourcePrecedence: catalog.precedence,
+    active: catalog.active.map(agent => ({
+      name: agent.name,
+      source: agent.source,
+      sourceScope: agent.sourceScope,
+      sourcePath: agent.sourcePath,
+      description: agent.description,
+      allowedTools: agent.allowedTools,
+      maxTurns: agent.maxTurns,
+      memory: agent.memory ?? 'inherit',
+      background: agent.background === true,
+      host: agent.host ?? 'local',
+      permissionMode: agent.permissionMode,
+      model: agent.model,
+      effort: agent.effort,
+    })),
+    entries: catalog.entries.map(entry => ({
+      name: entry.definition.name,
+      source: entry.definition.source,
+      sourceScope: entry.definition.sourceScope,
+      sourcePath: entry.definition.sourcePath,
+      active: !entry.overriddenBy,
+      overriddenBy: entry.overriddenBy,
+    })),
+  })
+  parsed.mcp.close()
+}
+
+async function inspectAgentTask(
+  args: string[],
+  output: Pick<NodeJS.WriteStream, 'write'>,
+  env: NodeJS.ProcessEnv,
+): Promise<void> {
+  const parentSessionId = args[0]
+  const taskId = args[1]
+  if (!parentSessionId || parentSessionId.startsWith('-') || !taskId || taskId.startsWith('-')) {
+    throw new Error('agents inspect requires: <parent-session-id> <task-id>')
+  }
+  const parsed = await resolveOptions(
+    parseOptions(args.slice(2), { requirePrompt: false }),
+    env,
+  )
+  try {
+    const parent = await resumeSessionById({
+      sessionId: parentSessionId,
+      cwd: parsed.cwd,
+      sessionsDir: parsed.sessionsDir,
+    })
+    const task = findSubagentTask(parent.sessionState, taskId)
+    const transcriptPath = requireSubagentTranscriptPath(task)
+    const events = await readTranscriptFile(transcriptPath)
+    const permissionSummary = buildPermissionOriginSummary(events)
+    writeJson(output, {
+      parentSessionId: parent.sessionId,
+      task,
+      transcriptPath,
+      eventCount: events.length,
+      permissionSummary,
+      outputStream: buildSubagentOutputStream(events),
+      lastEvents: events.slice(-12).map(formatTranscriptEvent),
+    })
+  } finally {
+    parsed.mcp.close()
+  }
+}
+
+async function resumeAgentTask(
+  args: string[],
+  output: Pick<NodeJS.WriteStream, 'write'>,
+  env: NodeJS.ProcessEnv,
+  io: Pick<CliIO, 'stdin' | 'stderr'>,
+  deps: CliDeps,
+): Promise<void> {
+  const parentSessionId = args[0]
+  const taskId = args[1]
+  if (!parentSessionId || parentSessionId.startsWith('-') || !taskId || taskId.startsWith('-')) {
+    throw new Error('agents resume requires: <parent-session-id> <task-id> <prompt...>')
+  }
+  const raw = parseOptions(args.slice(2), { requirePrompt: true })
+  const parsed = await resolveOptions(raw, env)
+  try {
+    const parent = await resumeSessionById({
+      sessionId: parentSessionId,
+      cwd: parsed.cwd,
+      sessionsDir: parsed.sessionsDir,
+    })
+    const task = findSubagentTask(parent.sessionState, taskId)
+    const transcriptPath = requireSubagentTranscriptPath(task)
+    const agentName = task.agentName
+    if (!agentName) throw new Error(`subagent task ${taskId} has no agent name`)
+    const catalog = await loadAgentCatalog({ cwd: parsed.cwd })
+    const definition = catalog.active.find(agent => agent.name === agentName)
+    if (!definition) throw new Error(`active agent definition not found for ${agentName}`)
+    const subagentResume = await resumeSessionFromTranscript(transcriptPath)
+    const transcript = new JsonlTranscriptStore({
+      transcriptPath: subagentResume.transcriptPath,
+      sessionId: subagentResume.sessionId,
+    })
+    const result = await runSubagentResumeTurn({
+      parsed,
+      transcript,
+      resume: subagentResume,
+      definition,
+      task,
+      env,
+      io,
+      deps,
+    })
+    const events = await transcript.readAll()
+    const updatedTask = await appendResumedSubagentTaskState({
+      parent,
+      task,
+      result,
+    })
+    writeJson(output, {
+      parentSessionId: parent.sessionId,
+      taskId: task.id,
+      agentName,
+      transcriptPath: subagentResume.transcriptPath,
+      status: result.report.status,
+      finalMessage: result.finalMessage,
+      task: updatedTask,
+      outputStream: buildSubagentOutputStream(events),
+    })
+  } finally {
+    parsed.mcp.close()
+  }
+}
+
+async function runSubagentResumeTurn({
+  parsed,
+  transcript,
+  resume,
+  definition,
+  task,
+  env,
+  io,
+  deps,
+}: {
+  parsed: ResolvedOptions
+  transcript: JsonlTranscriptStore
+  resume: RuntimeSessionSnapshot
+  definition: LocalAgentDefinition
+  task: BackgroundTask
+  env: NodeJS.ProcessEnv
+  io: Pick<CliIO, 'stdin' | 'stderr'>
+  deps: CliDeps
+}): Promise<AgentRuntimeTurnResult> {
+  const modelClient =
+    deps.createModelClient?.(env) ??
+    createDeepSeekModelClient({
+      apiKey: env.DEEPSEEK_API_KEY,
+      baseUrl: parsed.deepseekBaseUrl ?? env.DEEPSEEK_BASE_URL,
+      model: definition.model ?? parsed.model ?? env.DEEPSEEK_MODEL,
+    })
+  const permissionOrigin: PermissionOrigin = {
+    agentId: `agent:${definition.name}:${resume.sessionId}`,
+    agentRole: 'subagent',
+    parentAgentId: task.parentAgentId ?? 'main',
+  }
+  const runtime = createVigilonAgentRuntime({
+    modelClient,
+    tools: createCoreToolRegistry({
+      skills: parsed.skills.skills,
+      mcpTools: parsed.mcp.tools,
+      allowedTools: definition.allowedTools,
+    }),
+    transcript,
+    permissionMode: definition.permissionMode ?? parsed.permissionMode,
+    preToolUseHooks: parsed.preToolUseHooks,
+    skills: parsed.skills.skills,
+    projectConfig: parsed.projectConfig,
+    operator: createCliOperator(io),
+    permissionGate: createCliPermissionGate({
+      mode: definition.permissionMode ?? parsed.permissionMode,
+      transcript,
+      stdin: (definition.permissionMode ?? parsed.permissionMode) === 'ask' ? io.stdin : undefined,
+      stderr: io.stderr,
+    }),
+    maxTurns: parsed.maxTurns ?? definition.maxTurns,
+    resume,
+    operatorGuidance: [
+      buildCliOperatorGuidance(parsed),
+      `<vigilon_subagent_resume agent="${escapePromptAttribute(definition.name)}" task_id="${escapePromptAttribute(task.id)}">`,
+      `parent_agent="${escapePromptAttribute(task.parentAgentId ?? 'main')}"`,
+      `previous_status="${escapePromptAttribute(task.status ?? 'unknown')}"`,
+      `previous_reason="${escapePromptAttribute(task.terminalReason ?? '')}"`,
+      '</vigilon_subagent_resume>',
+    ].join('\n'),
+    stopAfterResultReport: true,
+    permissionOrigin,
+  })
+
+  let result: AgentRuntimeTurnResult | undefined
+  for await (const event of runtime.runTurn({
+    prompt: parsed.prompt,
+    cwd: parsed.cwd,
+    abortSignal: new AbortController().signal,
+  })) {
+    if (event.type === 'turn-finished') result = event.result
+  }
+  if (!result) throw new Error('subagent resume finished without a turn result')
+  return result
+}
+
+async function appendResumedSubagentTaskState({
+  parent,
+  task,
+  result,
+}: {
+  parent: RuntimeSessionSnapshot
+  task: BackgroundTask
+  result: AgentRuntimeTurnResult
+}): Promise<BackgroundTask> {
+  const outputSummary =
+    result.finalMessage || result.report.finalMessage || 'Subagent resume finished without a final message.'
+  const status = mapSubagentResumeTaskStatus(result.report.status)
+  const updatedTask: BackgroundTask = {
+    ...task,
+    status,
+    completedAt: createTimestamp(),
+    terminalReason: `subagent_resume_${result.report.status}`,
+    outputSummary,
+  }
+  const retainedById = new Map(
+    (parent.sessionState.retainedTasks ?? []).map(existing => [existing.id, existing]),
+  )
+  retainedById.set(updatedTask.id, updatedTask)
+  const retainedTasks = Array.from(retainedById.values())
+  const backgroundTasks = parent.sessionState.backgroundTasks.filter(
+    existing => existing.id !== updatedTask.id,
+  )
+  parent.sessionState.backgroundTasks = backgroundTasks
+  parent.sessionState.retainedTasks = retainedTasks
+
+  const parentTranscript = new JsonlTranscriptStore({
+    transcriptPath: parent.transcriptPath,
+    sessionId: parent.sessionId,
+  })
+  await parentTranscript.append({
+    type: 'session-state',
+    phase: parent.sessionState.phase,
+    permissionMode: parent.sessionState.permissionMode,
+    prePlanPermissionMode: parent.sessionState.prePlanPermissionMode ?? null,
+    todos: parent.sessionState.todos.map(todo => ({ ...todo })),
+    approvedPlan: parent.sessionState.approvedPlan ?? null,
+    pendingPlan: parent.sessionState.pendingPlan ?? null,
+    handoffReport: parent.sessionState.handoffReport
+      ? {
+          finalMessage: parent.sessionState.handoffReport.finalMessage,
+          changes: [...parent.sessionState.handoffReport.changes],
+          verified: [...parent.sessionState.handoffReport.verified],
+          unverified: [...parent.sessionState.handoffReport.unverified],
+          risks: [...parent.sessionState.handoffReport.risks],
+        }
+      : null,
+    verificationNotes: [...parent.sessionState.verificationNotes],
+    backgroundTasks: backgroundTasks.map(existing => ({ ...existing })),
+    retainedTasks: retainedTasks.map(existing => ({ ...existing })),
+    discoveredToolNames: [...parent.sessionState.discoveredToolNames],
+    toolReferenceDeltas: [...parent.sessionState.toolReferenceDeltas],
+    mcpInstructions: [...parent.sessionState.mcpInstructions],
+    activeSkill: parent.sessionState.activeSkill
+      ? { ...parent.sessionState.activeSkill }
+      : null,
+    memoryFreshness: parent.sessionState.memoryFreshness ?? null,
+    systemPrompt: parent.sessionState.systemPrompt ?? null,
+    toolSchema: parent.sessionState.toolSchema ?? null,
+    modelParams: parent.sessionState.modelParams ?? null,
+    timestamp: createTimestamp(),
+  })
+  return updatedTask
+}
+
+async function applyAgentTask(
+  args: string[],
+  output: Pick<NodeJS.WriteStream, 'write'>,
+  env: NodeJS.ProcessEnv,
+): Promise<void> {
+  const parentSessionId = args[0]
+  const taskId = args[1]
+  if (!parentSessionId || parentSessionId.startsWith('-') || !taskId || taskId.startsWith('-')) {
+    throw new Error('agents apply requires: <parent-session-id> <task-id>')
+  }
+  const applyOptions = parseAgentApplyArgs(args.slice(2))
+  const parsed = await resolveOptions(
+    parseOptions(applyOptions.optionArgs, { requirePrompt: false }),
+    env,
+  )
+  try {
+    const parent = await resumeSessionById({
+      sessionId: parentSessionId,
+      cwd: parsed.cwd,
+      sessionsDir: parsed.sessionsDir,
+    })
+    const task = findSubagentTask(parent.sessionState, taskId)
+    const diff = requireSubagentWorktreeDiff(task)
+    const apply = await applySubagentWorktreeDiff(diff, applyOptions)
+    const updatedTask = await appendAppliedSubagentTaskState({
+      parent,
+      task,
+      apply,
+    })
+    writeJson(output, {
+      parentSessionId: parent.sessionId,
+      taskId: task.id,
+      agentName: task.agentName,
+      status: apply.status,
+      applied: apply.status === 'applied' || apply.status === 'clean' || apply.status === 'rolled_back',
+      apply,
+      task: updatedTask,
+    })
+  } finally {
+    parsed.mcp.close()
+  }
+}
+
+async function stopPersistedAgentTask(
+  args: string[],
+  output: Pick<NodeJS.WriteStream, 'write'>,
+  env: NodeJS.ProcessEnv,
+): Promise<void> {
+  const parentSessionId = args[0]
+  const taskId = args[1]
+  if (!parentSessionId || parentSessionId.startsWith('-') || !taskId || taskId.startsWith('-')) {
+    throw new Error('agents stop requires: <parent-session-id> <task-id>')
+  }
+  const parsed = await resolveOptions(
+    parseOptions(args.slice(2), { requirePrompt: false }),
+    env,
+  )
+  try {
+    const parent = await resumeSessionById({
+      sessionId: parentSessionId,
+      cwd: parsed.cwd,
+      sessionsDir: parsed.sessionsDir,
+    })
+    const task = findSubagentTask(parent.sessionState, taskId)
+    if (task.status && task.status !== 'running') {
+      writeJson(output, {
+        parentSessionId: parent.sessionId,
+        taskId: task.id,
+        agentName: task.agentName,
+        status: task.status,
+        requested: false,
+        message: `subagent task is already ${task.status}`,
+        task,
+      })
+      return
+    }
+    const stop = await writeTaskStopRequest(task, {
+      requester: 'cli',
+      reason: 'agents stop requested from a separate runtime process',
+    })
+    const updatedTask = await appendStopRequestedSubagentTaskState({
+      parent,
+      task,
+      stopRequestPath: stop.path,
+      stopRequestedAt: stop.request.requestedAt,
+    })
+    writeJson(output, {
+      parentSessionId: parent.sessionId,
+      taskId: task.id,
+      agentName: task.agentName,
+      status: 'requested',
+      requested: true,
+      stopRequest: {
+        path: stop.path,
+        requestedAt: stop.request.requestedAt,
+        requester: stop.request.requester,
+      },
+      message: `stop requested for subagent task ${task.id}`,
+      task: updatedTask,
+    })
+  } finally {
+    parsed.mcp.close()
+  }
+}
+
+type AgentApplyOptions = {
+  optionArgs: string[]
+  mode: 'check' | 'apply' | 'rollback'
+  threeWay: boolean
+  files?: string[]
+}
+
+function parseAgentApplyArgs(args: string[]): AgentApplyOptions {
+  const optionArgs: string[] = []
+  let mode: AgentApplyOptions['mode'] = 'apply'
+  let threeWay = false
+  let files: string[] | undefined
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index]
+    if (arg === '--check') {
+      mode = 'check'
+      continue
+    }
+    if (arg === '--rollback') {
+      mode = 'rollback'
+      continue
+    }
+    if (arg === '--3way') {
+      threeWay = true
+      continue
+    }
+    if (arg === '--files') {
+      const value = requireValue(args, (index += 1), '--files')
+      files = value
+        .split(',')
+        .map(file => file.trim())
+        .filter(Boolean)
+      continue
+    }
+    optionArgs.push(arg)
+  }
+  return { optionArgs, mode, threeWay, files }
+}
+
+async function appendAppliedSubagentTaskState({
+  parent,
+  task,
+  apply,
+}: {
+  parent: RuntimeSessionSnapshot
+  task: BackgroundTask
+  apply: SubagentWorktreeApply
+}): Promise<BackgroundTask> {
+  const worktreeDiff = {
+    ...task.worktreeDiff,
+    sourceApply: apply,
+  } as SubagentWorktreeDiff
+  const updatedTask: BackgroundTask = {
+    ...task,
+    worktreeDiff,
+  }
+  const retainedById = new Map(
+    (parent.sessionState.retainedTasks ?? []).map(existing => [existing.id, existing]),
+  )
+  retainedById.set(updatedTask.id, updatedTask)
+  const retainedTasks = Array.from(retainedById.values())
+  const backgroundTasks = parent.sessionState.backgroundTasks.map(existing =>
+    existing.id === updatedTask.id ? updatedTask : existing,
+  )
+  parent.sessionState.backgroundTasks = backgroundTasks
+  parent.sessionState.retainedTasks = retainedTasks
+
+  const parentTranscript = new JsonlTranscriptStore({
+    transcriptPath: parent.transcriptPath,
+    sessionId: parent.sessionId,
+  })
+  await parentTranscript.append({
+    type: 'session-state',
+    phase: parent.sessionState.phase,
+    permissionMode: parent.sessionState.permissionMode,
+    prePlanPermissionMode: parent.sessionState.prePlanPermissionMode ?? null,
+    todos: parent.sessionState.todos.map(todo => ({ ...todo })),
+    approvedPlan: parent.sessionState.approvedPlan ?? null,
+    pendingPlan: parent.sessionState.pendingPlan ?? null,
+    handoffReport: parent.sessionState.handoffReport
+      ? {
+          finalMessage: parent.sessionState.handoffReport.finalMessage,
+          changes: [...parent.sessionState.handoffReport.changes],
+          verified: [...parent.sessionState.handoffReport.verified],
+          unverified: [...parent.sessionState.handoffReport.unverified],
+          risks: [...parent.sessionState.handoffReport.risks],
+        }
+      : null,
+    verificationNotes: [
+      ...parent.sessionState.verificationNotes,
+      `subagent worktree apply ${apply.status}: ${task.id} (${apply.filesChanged} files)`,
+    ],
+    backgroundTasks: backgroundTasks.map(existing => ({ ...existing })),
+    retainedTasks: retainedTasks.map(existing => ({ ...existing })),
+    discoveredToolNames: [...parent.sessionState.discoveredToolNames],
+    toolReferenceDeltas: [...parent.sessionState.toolReferenceDeltas],
+    mcpInstructions: [...parent.sessionState.mcpInstructions],
+    activeSkill: parent.sessionState.activeSkill
+      ? { ...parent.sessionState.activeSkill }
+      : null,
+    memoryFreshness: parent.sessionState.memoryFreshness ?? null,
+    systemPrompt: parent.sessionState.systemPrompt ?? null,
+    toolSchema: parent.sessionState.toolSchema ?? null,
+    modelParams: parent.sessionState.modelParams ?? null,
+    timestamp: createTimestamp(),
+  })
+  return updatedTask
+}
+
+async function appendStopRequestedSubagentTaskState({
+  parent,
+  task,
+  stopRequestPath,
+  stopRequestedAt,
+}: {
+  parent: RuntimeSessionSnapshot
+  task: BackgroundTask
+  stopRequestPath: string
+  stopRequestedAt: string
+}): Promise<BackgroundTask> {
+  const updatedTask: BackgroundTask = {
+    ...task,
+    stopRequestPath,
+    stopRequestedAt,
+  }
+  const backgroundTasks = parent.sessionState.backgroundTasks.map(existing =>
+    existing.id === updatedTask.id ? updatedTask : existing,
+  )
+  parent.sessionState.backgroundTasks = backgroundTasks
+
+  const parentTranscript = new JsonlTranscriptStore({
+    transcriptPath: parent.transcriptPath,
+    sessionId: parent.sessionId,
+  })
+  await parentTranscript.append({
+    type: 'session-state',
+    phase: parent.sessionState.phase,
+    permissionMode: parent.sessionState.permissionMode,
+    prePlanPermissionMode: parent.sessionState.prePlanPermissionMode ?? null,
+    todos: parent.sessionState.todos.map(todo => ({ ...todo })),
+    approvedPlan: parent.sessionState.approvedPlan ?? null,
+    pendingPlan: parent.sessionState.pendingPlan ?? null,
+    handoffReport: parent.sessionState.handoffReport
+      ? {
+          finalMessage: parent.sessionState.handoffReport.finalMessage,
+          changes: [...parent.sessionState.handoffReport.changes],
+          verified: [...parent.sessionState.handoffReport.verified],
+          unverified: [...parent.sessionState.handoffReport.unverified],
+          risks: [...parent.sessionState.handoffReport.risks],
+        }
+      : null,
+    verificationNotes: [
+      ...parent.sessionState.verificationNotes,
+      `subagent stop requested: ${task.id}`,
+    ],
+    backgroundTasks: backgroundTasks.map(existing => ({ ...existing })),
+    retainedTasks: (parent.sessionState.retainedTasks ?? []).map(existing => ({ ...existing })),
+    discoveredToolNames: [...parent.sessionState.discoveredToolNames],
+    toolReferenceDeltas: [...parent.sessionState.toolReferenceDeltas],
+    mcpInstructions: [...parent.sessionState.mcpInstructions],
+    activeSkill: parent.sessionState.activeSkill
+      ? { ...parent.sessionState.activeSkill }
+      : null,
+    memoryFreshness: parent.sessionState.memoryFreshness ?? null,
+    systemPrompt: parent.sessionState.systemPrompt ?? null,
+    toolSchema: parent.sessionState.toolSchema ?? null,
+    modelParams: parent.sessionState.modelParams ?? null,
+    timestamp: createTimestamp(),
+  })
+  return updatedTask
+}
+
+function requireSubagentWorktreeDiff(task: BackgroundTask): SubagentWorktreeDiff {
+  if (task.type !== 'subagent') {
+    throw new Error(`task is not a subagent task: ${task.id}`)
+  }
+  if (!task.worktreeDiff) {
+    throw new Error(`subagent task has no worktree diff: ${task.id}`)
+  }
+  if (task.worktreeDiff.status === 'failed') {
+    throw new Error(`subagent worktree diff failed: ${task.worktreeDiff.error ?? task.id}`)
+  }
+  return task.worktreeDiff
+}
+
+async function applySubagentWorktreeDiff(
+  diff: SubagentWorktreeDiff,
+  options: Pick<AgentApplyOptions, 'mode' | 'threeWay' | 'files'>,
+): Promise<SubagentWorktreeApply> {
+  const appliedAt = createTimestamp()
+  const requestedFiles = options.files?.length ? [...new Set(options.files)] : undefined
+  const selected = selectWorktreeDiffFiles(diff, requestedFiles)
+  const checkedFiles = selected.selectedFiles.map(file => file.path)
+  const base = {
+    strategy: 'git-apply-after-baseline-check' as const,
+    mode: options.mode,
+    sourceCwd: diff.sourceCwd,
+    baselinePath: diff.baselinePath,
+    baselineRef: diff.baselineRef,
+    worktreePath: diff.worktreePath,
+    patchPath: diff.patchPath,
+    gitWorktree: diff.gitWorktree,
+    threeWay: options.threeWay,
+    filesChanged: checkedFiles.length,
+    checkedFiles,
+    requestedFiles,
+    appliedFiles: [] as string[],
+    skippedFiles: selected.skippedFiles,
+    appliedAt,
+  }
+  if (selected.missingFiles.length > 0) {
+    return {
+      ...base,
+      status: 'failed',
+      conflicts: selected.missingFiles,
+      conflictDetails: selected.missingFiles.map(file => ({
+        path: file,
+        reason: 'missing_from_diff',
+        detail: 'requested file is not present in the subagent worktree diff',
+      })),
+      error: `requested files are not present in worktree diff: ${selected.missingFiles.join(', ')}`,
+    }
+  }
+  if (diff.status === 'clean' || checkedFiles.length === 0) {
+    return {
+      ...base,
+      status: 'clean',
+    }
+  }
+
+  const invalidPaths = checkedFiles.filter(file => !isSafeRelativePatchPath(file))
+  if (invalidPaths.length > 0) {
+    return {
+      ...base,
+      status: 'failed',
+      conflicts: invalidPaths,
+      conflictDetails: invalidPaths.map(file => ({
+        path: file,
+        reason: 'unsafe_path',
+        detail: 'patch path is absolute or contains parent traversal',
+      })),
+      error: `worktree diff contains unsafe paths: ${invalidPaths.join(', ')}`,
+    }
+  }
+
+  const conflicts = await findSourceBaselineConflicts(diff, checkedFiles, options.mode)
+  if (conflicts.length > 0) {
+    return {
+      ...base,
+      status: 'conflict',
+      conflicts,
+      conflictDetails: conflicts.map(file => ({
+        path: file,
+        reason: 'source_changed_from_baseline',
+        detail: 'source cwd no longer matches the subagent baseline for this file',
+      })),
+      error: 'source cwd no longer matches the subagent baseline for changed files',
+    }
+  }
+
+  const checkArgs = buildGitApplyArgs(diff, {
+    mode: options.mode === 'rollback' ? 'rollback-check' : 'check',
+    files: checkedFiles,
+    threeWay: options.threeWay,
+  })
+  const applyArgs = buildGitApplyArgs(diff, {
+    mode: options.mode === 'rollback' ? 'rollback' : 'apply',
+    files: checkedFiles,
+    threeWay: options.threeWay,
+  })
+  try {
+    await execFileStrict('git', checkArgs, {
+      cwd: diff.sourceCwd,
+    })
+    if (options.mode === 'check') {
+      return {
+        ...base,
+        status: 'checked',
+      }
+    }
+    await execFileStrict('git', applyArgs, {
+      cwd: diff.sourceCwd,
+    })
+    return {
+      ...base,
+      status: options.mode === 'rollback' ? 'rolled_back' : 'applied',
+      appliedFiles: checkedFiles,
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    return {
+      ...base,
+      status: 'failed',
+      conflicts: checkedFiles,
+      conflictDetails: checkedFiles.map(file => ({
+        path: file,
+        reason: 'apply_check_failed',
+        detail: message,
+      })),
+      error: message,
+    }
+  }
+}
+
+function selectWorktreeDiffFiles(
+  diff: SubagentWorktreeDiff,
+  requestedFiles: string[] | undefined,
+): {
+  selectedFiles: SubagentWorktreeDiff['changedFiles']
+  skippedFiles: string[]
+  missingFiles: string[]
+} {
+  if (!requestedFiles?.length) {
+    return {
+      selectedFiles: diff.changedFiles,
+      skippedFiles: [],
+      missingFiles: [],
+    }
+  }
+  const requested = new Set(requestedFiles)
+  const selectedFiles = diff.changedFiles.filter(file => requested.has(file.path))
+  const selected = new Set(selectedFiles.map(file => file.path))
+  return {
+    selectedFiles,
+    skippedFiles: diff.changedFiles
+      .map(file => file.path)
+      .filter(file => !selected.has(file)),
+    missingFiles: requestedFiles.filter(file => !selected.has(file)),
+  }
+}
+
+function buildGitApplyArgs(
+  diff: SubagentWorktreeDiff,
+  options: {
+    mode: 'check' | 'apply' | 'rollback-check' | 'rollback'
+    files: string[]
+    threeWay: boolean
+  },
+): string[] {
+  const args = ['apply', '--whitespace=nowarn']
+  if (options.mode === 'check' || options.mode === 'rollback-check') args.push('--check')
+  if (options.mode === 'rollback' || options.mode === 'rollback-check') args.push('-R')
+  if (options.threeWay && options.mode !== 'rollback' && options.mode !== 'rollback-check') {
+    args.push('--3way')
+  }
+  if (options.files.length < diff.changedFiles.length) {
+    for (const file of options.files) args.push(`--include=${file}`)
+    args.push('--exclude=*')
+  }
+  args.push(diff.patchPath)
+  return args
+}
+
+async function findSourceBaselineConflicts(
+  diff: SubagentWorktreeDiff,
+  checkedFiles: string[],
+  mode: AgentApplyOptions['mode'],
+): Promise<string[]> {
+  if (diff.strategy === 'git-worktree-diff' && diff.baselineRef) {
+    return findGitSourceBaselineConflicts(diff, checkedFiles, mode)
+  }
+  const conflicts: string[] = []
+  const byPath = new Map(diff.changedFiles.map(file => [file.path, file]))
+  for (const relativePath of checkedFiles) {
+    const file = byPath.get(relativePath)
+    if (!file) continue
+    const baselineFile = path.join(diff.baselinePath, relativePath)
+    const sourceFile = path.join(diff.sourceCwd, relativePath)
+    if (file.status === 'added') {
+      if (mode === 'rollback') {
+        if (!await pathExists(sourceFile)) conflicts.push(relativePath)
+        continue
+      }
+      if (await pathExists(sourceFile)) conflicts.push(relativePath)
+      continue
+    }
+    const [baseline, source] = await Promise.all([
+      readOptionalFile(baselineFile),
+      readOptionalFile(sourceFile),
+    ])
+    if (!baseline || !source || Buffer.compare(baseline, source) !== 0) {
+      conflicts.push(relativePath)
+    }
+  }
+  return conflicts
+}
+
+async function findGitSourceBaselineConflicts(
+  diff: SubagentWorktreeDiff,
+  checkedFiles: string[],
+  mode: AgentApplyOptions['mode'],
+): Promise<string[]> {
+  const conflicts: string[] = []
+  const byPath = new Map(diff.changedFiles.map(file => [file.path, file]))
+  for (const relativePath of checkedFiles) {
+    const file = byPath.get(relativePath)
+    if (!file) continue
+    if (file.status === 'added') {
+      if (mode === 'rollback') {
+        if (!await pathExists(path.join(diff.sourceCwd, relativePath))) conflicts.push(relativePath)
+        continue
+      }
+      if (await pathExists(path.join(diff.sourceCwd, relativePath))) conflicts.push(relativePath)
+      continue
+    }
+    try {
+      await execFileStrict('git', ['diff', '--quiet', diff.baselineRef as string, '--', relativePath], {
+        cwd: diff.sourceCwd,
+      })
+    } catch {
+      conflicts.push(relativePath)
+    }
+  }
+  return conflicts
+}
+
+function isSafeRelativePatchPath(value: string): boolean {
+  return Boolean(value) &&
+    !path.isAbsolute(value) &&
+    !value.split(/[\\/]/).includes('..')
+}
+
+async function readOptionalFile(filePath: string): Promise<Buffer | null> {
+  try {
+    return await readFile(filePath)
+  } catch {
+    return null
+  }
+}
+
+async function pathExists(filePath: string): Promise<boolean> {
+  try {
+    await access(filePath, constants.F_OK)
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function execFileStrict(
+  file: string,
+  args: string[],
+  options: { cwd: string },
+): Promise<{ stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    execFile(file, args, { cwd: options.cwd, maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
+      if (error) {
+        const message = stderr.trim() || error.message
+        reject(new Error(message))
+        return
+      }
+      resolve({ stdout, stderr })
+    })
+  })
+}
+
+function mapSubagentResumeTaskStatus(
+  status: AgentRuntimeTurnResult['report']['status'],
+): NonNullable<BackgroundTask['status']> {
+  if (status === 'completed') return 'completed'
+  if (status === 'stopped') return 'stopped'
+  return 'failed'
+}
+
+function findSubagentTask(
+  sessionState: RuntimeSessionSnapshot['sessionState'],
+  taskId: string,
+): BackgroundTask {
+  const candidates = [
+    ...sessionState.backgroundTasks,
+    ...(sessionState.retainedTasks ?? []),
+  ].filter(task => task.type === 'subagent')
+  const exact = candidates.find(task => task.id === taskId)
+  if (exact) return exact
+  const prefixMatches = candidates.filter(task => task.id.startsWith(taskId))
+  if (prefixMatches.length === 1 && prefixMatches[0]) return prefixMatches[0]
+  if (prefixMatches.length > 1) {
+    throw new Error(`subagent task selector is ambiguous: ${taskId}`)
+  }
+  throw new Error(`subagent task not found: ${taskId}`)
+}
+
+function requireSubagentTranscriptPath(task: BackgroundTask): string {
+  if (task.type !== 'subagent') {
+    throw new Error(`task is not a subagent task: ${task.id}`)
+  }
+  if (!task.transcriptPath) {
+    throw new Error(`subagent task has no transcript path: ${task.id}`)
+  }
+  return task.transcriptPath
+}
+
+function buildSubagentOutputStream(
+  events: Awaited<ReturnType<typeof readTranscriptFile>>,
+): Array<Record<string, unknown>> {
+  const stream: Array<Record<string, unknown>> = []
+  for (const [index, event] of events.entries()) {
+    const base = {
+      index,
+      timestamp: 'timestamp' in event ? event.timestamp : undefined,
+    }
+    switch (event.type) {
+      case 'user':
+        stream.push({
+          ...base,
+          kind: 'prompt',
+          content: truncateText(event.content, 500),
+        })
+        break
+      case 'assistant':
+        stream.push({
+          ...base,
+          kind: 'assistant',
+          content: event.content,
+          toolCalls: event.toolCalls?.map(call => ({
+            id: call.id,
+            name: call.name,
+          })) ?? [],
+        })
+        break
+      case 'tool-call':
+        stream.push({
+          ...base,
+          kind: 'tool-call',
+          tool: event.call.name,
+          toolCallId: event.call.id,
+          input: event.call.input,
+        })
+        break
+      case 'tool-result':
+        stream.push({
+          ...base,
+          kind: 'tool-result',
+          toolCallId: event.result.toolCallId,
+          ok: event.result.ok,
+          content: truncateText(event.result.content, 2000),
+          metadata: event.result.metadata,
+        })
+        break
+      case 'permission':
+        stream.push({
+          ...base,
+          kind: 'permission',
+          action: event.request.action,
+          subject: event.request.subject,
+          allowed: event.decision.allowed,
+          origin: event.request.origin,
+          policy: event.request.policy,
+        })
+        break
+      case 'llm-response':
+        stream.push({
+          ...base,
+          kind: 'llm-response',
+          status: event.status,
+          stopReason: event.stopReason,
+          toolCallCount: event.toolCallCount,
+        })
+        break
+      case 'subagent-lifecycle':
+        stream.push({
+          ...base,
+          kind: 'subagent-lifecycle',
+          event: event.event,
+        })
+        break
+      default:
+        break
+    }
+  }
+  return stream
+}
+
+function escapePromptAttribute(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
 }
 
 async function summarizeSession(
@@ -302,7 +1470,13 @@ async function summarizeSession(
     sessionId: snapshot.sessionId,
     transcriptPath: snapshot.transcriptPath,
   })
-  await writeSessionMemory(memoryPath, memory)
+  await writeSessionMemory(memoryPath, memory, {
+    transcriptPath: snapshot.transcriptPath,
+    sourceLastEvent: getSessionMemoryEventPointer(
+      snapshot.events,
+      memory.sourceEventCount,
+    ),
+  })
   writeJson(output, {
     sessionId: snapshot.sessionId,
     transcriptPath: snapshot.transcriptPath,
@@ -312,6 +1486,389 @@ async function summarizeSession(
     generatedAt: memory.generatedAt,
   })
   parsed.mcp.close()
+}
+
+async function manageSessionMemory(
+  args: string[],
+  output: Pick<NodeJS.WriteStream, 'write'>,
+  env: NodeJS.ProcessEnv,
+  deps: CliDeps = {},
+): Promise<void> {
+  const operation = args[0]
+  const sessionId = args[1]
+  if (
+    !operation ||
+    !['status', 'view', 'write', 'edit', 'delete', 'refresh', 'validate', 'promote'].includes(operation) ||
+    !sessionId ||
+    sessionId.startsWith('-')
+  ) {
+    throw new Error('memory requires: <status|view|write|edit|delete|refresh|validate|promote> <session-id>')
+  }
+
+  const { optionArgs, content, memoryKind, topic, background, refreshBeforeValidate } = parseMemoryOperationArgs(args.slice(2))
+  const parsed = await resolveOptions(
+    parseOptions(optionArgs, { requirePrompt: false }),
+    env,
+  )
+  try {
+    const snapshot = await resumeSessionById({
+      sessionId,
+      cwd: parsed.cwd,
+      sessionsDir: parsed.sessionsDir,
+    })
+    const memoryPath = getSessionMemoryPath({
+      cwd: parsed.cwd,
+      sessionsDir: parsed.sessionsDir,
+      sessionId: snapshot.sessionId,
+      transcriptPath: snapshot.transcriptPath,
+    })
+
+    if (operation === 'promote') {
+      if (!content?.trim()) {
+        throw new Error('memory promote requires --content')
+      }
+      if (!memoryKind) {
+        throw new Error('memory promote requires --type')
+      }
+      if (!topic?.trim()) {
+        throw new Error('memory promote requires --topic')
+      }
+      const result = await promoteLongTermMemory({
+        cwd: parsed.cwd,
+        kind: memoryKind,
+        topic,
+        content,
+        source: {
+          sessionId: snapshot.sessionId,
+          transcriptPath: snapshot.transcriptPath,
+          sourceEventCount: snapshot.events.length,
+        },
+      })
+      writeJson(output, {
+        sessionId: snapshot.sessionId,
+        promoted: result.promoted,
+        decision: result.decision,
+        entry: result.entry,
+        manifestPath: result.manifest.manifestPath,
+        indexPath: result.manifest.indexPath,
+        entryCount: result.manifest.entries.length,
+      })
+      return
+    }
+
+    if (operation === 'delete') {
+      await deleteSessionMemory(memoryPath)
+      writeJson(output, {
+        sessionId: snapshot.sessionId,
+        memoryPath,
+        deleted: true,
+      })
+      return
+    }
+
+    if (operation === 'refresh') {
+      const scheduled = await scheduleSessionMemoryExtraction({
+        snapshot,
+        cwd: parsed.cwd,
+        sessionsDir: parsed.sessionsDir,
+        trigger: 'manual',
+        force: true,
+      })
+      if (background) {
+        writeJson(output, {
+          sessionId: snapshot.sessionId,
+          queued: true,
+          background: true,
+          extraction: scheduled.job,
+        })
+        return
+      }
+      const extraction = await scheduled.completion
+      writeJson(output, {
+        sessionId: snapshot.sessionId,
+        queued: false,
+        background: false,
+        extraction,
+        memory: await inspectSessionMemory({
+          snapshot,
+          cwd: parsed.cwd,
+          sessionsDir: parsed.sessionsDir,
+          includeContent: true,
+        }),
+      })
+      return
+    }
+
+    if (operation === 'validate') {
+      const groundingModel =
+        deps.createModelClient?.(env) ??
+        createDeepSeekModelClient({
+          apiKey: env.DEEPSEEK_API_KEY,
+          baseUrl: parsed.deepseekBaseUrl ?? env.DEEPSEEK_BASE_URL,
+          model: parsed.model ?? env.DEEPSEEK_MODEL,
+        })
+      if (refreshBeforeValidate) {
+        const ensured = await ensureFreshSessionMemory({
+          snapshot,
+          cwd: parsed.cwd,
+          sessionsDir: parsed.sessionsDir,
+          trigger: 'manual',
+          groundingModel,
+        })
+        writeJson(output, {
+          sessionId: snapshot.sessionId,
+          validated: Boolean(ensured.after.groundingValidation),
+          providerGrounded: true,
+          readiness: ensured.readiness,
+          memory: ensured.after,
+        })
+        return
+      }
+
+      const before = await inspectSessionMemory({
+        snapshot,
+        cwd: parsed.cwd,
+        sessionsDir: parsed.sessionsDir,
+        includeContent: false,
+      })
+      const after = await inspectSessionMemory({
+        snapshot,
+        cwd: parsed.cwd,
+        sessionsDir: parsed.sessionsDir,
+        includeContent: true,
+        groundingModel,
+      })
+      const extraction = await readSessionMemoryExtractionStatus(memoryPath)
+      const readiness = buildCompactMemoryReadiness({
+        before,
+        after,
+        refreshed: false,
+        extraction,
+      })
+      writeJson(output, {
+        sessionId: snapshot.sessionId,
+        validated: Boolean(after.groundingValidation),
+        providerGrounded: true,
+        readiness,
+        memory: after,
+      })
+      return
+    }
+
+    if (operation === 'write' || operation === 'edit') {
+      if (!content?.trim()) {
+        throw new Error(`memory ${operation} requires --content`)
+      }
+      const memory = {
+        sessionId: snapshot.sessionId,
+        generatedAt: createTimestamp(),
+        sourceEventCount: snapshot.events.length,
+        content,
+      }
+      await writeSessionMemory(memoryPath, memory, {
+        transcriptPath: snapshot.transcriptPath,
+        sourceLastEvent: getSessionMemoryEventPointer(
+          snapshot.events,
+          memory.sourceEventCount,
+        ),
+      })
+    }
+
+    const inspection = await inspectSessionMemory({
+      snapshot,
+      cwd: parsed.cwd,
+      sessionsDir: parsed.sessionsDir,
+      includeContent: operation === 'view' || operation === 'write' || operation === 'edit',
+    })
+    writeJson(output, {
+      ...inspection,
+      extraction: await readSessionMemoryExtractionStatus(memoryPath),
+    })
+  } finally {
+    parsed.mcp.close()
+  }
+}
+
+async function compactSession(
+  args: string[],
+  output: Pick<NodeJS.WriteStream, 'write'>,
+  env: NodeJS.ProcessEnv,
+  deps: CliDeps = {},
+): Promise<void> {
+  const sessionId = args[0]
+  if (!sessionId || sessionId.startsWith('-')) {
+    throw new Error('compact requires a session id')
+  }
+  const {
+    optionArgs,
+    summary,
+    reactiveEventCount,
+    tokenBudget,
+    contextWindowTokens,
+    reservedOutputTokens,
+    reservedSystemTokens,
+    reservedToolSchemaTokens,
+    safetyMarginTokens,
+    pressureThreshold,
+    validateMemory,
+  } = parseCompactOperationArgs(args.slice(1))
+  const parsed = await resolveOptions(
+    parseOptions(optionArgs, { requirePrompt: false }),
+    env,
+  )
+  try {
+    const memoryGroundingModel = validateMemory
+      ? deps.createModelClient?.(env) ??
+        createDeepSeekModelClient({
+          apiKey: env.DEEPSEEK_API_KEY,
+          baseUrl: parsed.deepseekBaseUrl ?? env.DEEPSEEK_BASE_URL,
+          model: parsed.model ?? env.DEEPSEEK_MODEL,
+        })
+      : undefined
+    const snapshot = await resumeSessionById({
+      sessionId,
+      cwd: parsed.cwd,
+      sessionsDir: parsed.sessionsDir,
+    })
+    const memoryPath = getSessionMemoryPath({
+      cwd: parsed.cwd,
+      sessionsDir: parsed.sessionsDir,
+      sessionId: snapshot.sessionId,
+      transcriptPath: snapshot.transcriptPath,
+    })
+    const beforeMemory = await inspectSessionMemory({
+      snapshot,
+      cwd: parsed.cwd,
+      sessionsDir: parsed.sessionsDir,
+      includeContent: true,
+    })
+
+    let compactSummary = summary?.trim()
+    let summarySource: 'operator-summary' | 'fresh-session-memory' | 'refreshed-session-memory'
+    let refreshedMemory = false
+    let ensuredMemoryResult: Awaited<ReturnType<typeof ensureFreshSessionMemory>> | undefined
+
+    if (compactSummary) {
+      summarySource = 'operator-summary'
+    } else if (
+      beforeMemory.exists &&
+      beforeMemory.freshness === 'fresh' &&
+      beforeMemory.content?.trim()
+    ) {
+      compactSummary = beforeMemory.content
+      summarySource = 'fresh-session-memory'
+    } else {
+      const ensuredMemory = await ensureFreshSessionMemory({
+        snapshot,
+        cwd: parsed.cwd,
+        sessionsDir: parsed.sessionsDir,
+        trigger: 'compact',
+        groundingModel: memoryGroundingModel,
+      })
+      if (!ensuredMemory.record?.content.trim()) {
+        throw new Error('compact could not obtain fresh session memory')
+      }
+      compactSummary = ensuredMemory.record.content
+      summarySource = 'refreshed-session-memory'
+      refreshedMemory = true
+      ensuredMemoryResult = ensuredMemory
+    }
+
+    const compactStore = new JsonlTranscriptStore({
+      transcriptPath: snapshot.transcriptPath,
+      sessionId: snapshot.sessionId,
+    })
+    const compactEvents = await compactStore.readAll()
+    const contextBudget =
+      tokenBudget !== undefined || contextWindowTokens !== undefined
+        ? resolveCompactContextWindowBudget({
+            tokenBudget,
+            modelId: parsed.model ?? parsed.settings.settings.model ?? 'deepseek-v4-flash',
+            provider: 'deepseek',
+            contextWindowTokens,
+            reservedOutputTokens,
+            reservedSystemTokens,
+            reservedToolSchemaTokens,
+            safetyMarginTokens,
+            pressureThreshold,
+          })
+        : undefined
+    const tokenPressure =
+      contextBudget !== undefined
+        ? estimateCompactTokenPressure(compactEvents, {
+            contextBudget,
+          })
+        : undefined
+    const afterMemory =
+      ensuredMemoryResult?.after ??
+      await inspectSessionMemory({
+        snapshot,
+        cwd: parsed.cwd,
+        sessionsDir: parsed.sessionsDir,
+        includeContent: true,
+        groundingModel: memoryGroundingModel,
+      })
+    const extraction =
+      ensuredMemoryResult?.extraction ?? await readSessionMemoryExtractionStatus(memoryPath)
+    const memoryReadiness =
+      ensuredMemoryResult?.readiness ??
+      buildCompactMemoryReadiness({
+        before: beforeMemory,
+        after: afterMemory,
+        refreshed: refreshedMemory,
+        extraction,
+      })
+    if (
+      validateMemory &&
+      summarySource !== 'operator-summary' &&
+      !memoryReadiness.ready
+    ) {
+      throw new Error(
+        `compact memory readiness blocked: ${memoryReadiness.blockingReasons.join(', ') || 'unknown'}`,
+      )
+    }
+    const boundary = await compactTranscript({
+      transcript: compactStore,
+      summary: compactSummary,
+      trigger: 'manual',
+      querySource: 'main',
+      userContext: summarySource === 'operator-summary' ? compactSummary : undefined,
+      reactiveEventCount,
+      sessionState: {
+        ...snapshot.sessionState,
+        memoryFreshness: afterMemory.freshness ?? snapshot.sessionState.memoryFreshness,
+      },
+      tokenPressure,
+      memoryReadiness,
+    })
+    const compactedEvents = await compactStore.readAll()
+
+    writeJson(output, {
+      sessionId: snapshot.sessionId,
+      transcriptPath: snapshot.transcriptPath,
+      compacted: true,
+      summarySource,
+      memoryReadiness: {
+        ...memoryReadiness,
+      },
+      boundary: {
+        timestamp: boundary.timestamp,
+        trigger: boundary.metadata.trigger,
+        route: boundary.metadata.compactRoute,
+        preEventCount: boundary.metadata.preEventCount,
+        messagesSummarized: boundary.metadata.messagesSummarized,
+        preservedSegment: boundary.metadata.preservedSegment,
+        postCompactCleanup: boundary.metadata.postCompactCleanup,
+        tokenPressure: boundary.metadata.tokenPressure,
+        contextBudget: boundary.metadata.tokenPressure?.contextBudget,
+        memoryReadiness: boundary.metadata.memoryReadiness,
+        memoryFreshness: boundary.metadata.memoryFreshness,
+      },
+      eventCount: compactedEvents.length,
+    })
+  } finally {
+    parsed.mcp.close()
+  }
 }
 
 async function runWorkbench(
@@ -470,6 +2027,7 @@ function formatSessionRows(sessions: RuntimeSessionSummary[]): string[] {
       `todos=${session.remainingTodoCount}`,
       `verify=${session.verificationCount}`,
       `bg=${session.backgroundTaskCount}`,
+      `retained=${session.retainedTaskCount}`,
       session.hasHandoffReport ? 'handoff=yes' : 'handoff=no',
     ].join('  ')
     return [
@@ -655,6 +2213,7 @@ function createWorkbenchPermissionGate({
   getMode(): PermissionMode
 } {
   let currentMode = mode
+  const coordinator = createPermissionResolutionCoordinator()
   return {
     setMode(nextMode: PermissionMode) {
       currentMode = nextMode
@@ -663,21 +2222,42 @@ function createWorkbenchPermissionGate({
       return currentMode
     },
     async requestPermission(request: PermissionRequest): Promise<PermissionDecision> {
-      let decision = decidePermission(currentMode, request)
-      if (!decision.allowed) {
-        const prompt = await promptWorkbenchPermission(request, reader, output)
-        if (prompt === 'allow-similar') {
-          currentMode = deriveSimilarPermissionMode(request)
-          decision = {
-            allowed: true,
-            reason: `operator approved and promoted session permission mode to ${currentMode}`,
+      const decision = await coordinator.resolve(request, async currentRequest => {
+        let decision = decidePermission(currentMode, currentRequest)
+        if (!decision.allowed) {
+          const prompt = await promptWorkbenchPermission(currentRequest, reader, output)
+          if (prompt === 'allow-similar') {
+            currentMode = deriveSimilarPermissionMode(currentRequest)
+            decision = {
+              allowed: true,
+              reason: `operator approved and promoted session permission mode to ${currentMode}`,
+              ...(currentRequest.origin ? { origin: currentRequest.origin } : {}),
+              ...(currentRequest.policy ? { policy: currentRequest.policy } : {}),
+            }
+          } else if (prompt === 'allow') {
+            decision = {
+              allowed: true,
+              reason: 'operator approved in workbench',
+              ...(currentRequest.origin ? { origin: currentRequest.origin } : {}),
+              ...(currentRequest.policy ? { policy: currentRequest.policy } : {}),
+            }
+          } else {
+            decision = {
+              allowed: false,
+              reason: 'operator denied in workbench',
+              ...(currentRequest.origin ? { origin: currentRequest.origin } : {}),
+              ...(currentRequest.policy ? { policy: currentRequest.policy } : {}),
+            }
           }
-        } else if (prompt === 'allow') {
-          decision = { allowed: true, reason: 'operator approved in workbench' }
-        } else {
-          decision = { allowed: false, reason: 'operator denied in workbench' }
+          return { decision, source: 'operator' }
         }
-      }
+        return {
+          decision,
+          source: currentRequest.policy?.sandboxDecision === 'denied'
+            ? 'safety-policy'
+            : 'permission-mode',
+        }
+      })
       await transcript.append({
         type: 'permission',
         request,
@@ -1117,6 +2697,8 @@ function formatTranscriptEvent(event: Awaited<ReturnType<typeof readTranscriptFi
       return `- llm-response: ${event.status} ${event.stopReason}`
     case 'request-stability':
       return `- stability: ${event.classification}`
+    case 'subagent-lifecycle':
+      return `- subagent: ${event.event.agentName} ${event.event.status} ${truncateText(event.event.summary ?? event.event.finalMessage, 100)}`
     case 'lsp-diagnostics':
       return `- lsp-diagnostics: ${event.serverName} (${event.files.length} files)`
     case 'hook':
@@ -1142,6 +2724,8 @@ function formatRuntimeEvent(event: AgentRuntimeEvent): string {
       return `[tool:start] ${event.call.name} ${truncateText(JSON.stringify(event.call.input), 120)}`
     case 'tool-finished':
       return `[tool:${event.result.ok ? 'ok' : 'error'}] ${truncateText(event.result.content, 140)}`
+    case 'subagent-lifecycle':
+      return `[subagent:${event.event.status}] ${event.event.agentName} ${truncateText(event.event.summary ?? event.event.finalMessage, 120)}`
     case 'turn-finished':
       return `[turn] ${event.result.report.status} turns=${event.result.turns}`
     default:
@@ -1300,6 +2884,210 @@ function parseOptions(
   }
 }
 
+function parseInitOptions(
+  args: string[],
+  env: NodeJS.ProcessEnv,
+): {
+  cwd: string
+  force: boolean
+  model: string
+  permissionMode: PermissionMode
+} {
+  let cwd = process.cwd()
+  let force = false
+  let model = env.DEEPSEEK_MODEL ?? 'deepseek-v4-flash'
+  let permissionMode: PermissionMode = 'ask'
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index]
+    if (arg === '--cwd') {
+      cwd = requireValue(args, ++index, '--cwd')
+      continue
+    }
+    if (arg === '--force') {
+      force = true
+      continue
+    }
+    if (arg === '--model') {
+      model = requireValue(args, ++index, '--model')
+      continue
+    }
+    if (arg === '--permission-mode') {
+      const value = requireValue(args, ++index, '--permission-mode')
+      if (!PERMISSION_MODES.has(value as PermissionMode)) {
+        throw new Error(`Unsupported permission mode: ${value}`)
+      }
+      permissionMode = value as PermissionMode
+      continue
+    }
+    throw new Error(`Unknown option: ${arg}`)
+  }
+  return { cwd, force, model, permissionMode }
+}
+
+function parseMemoryOperationArgs(args: string[]): {
+  optionArgs: string[]
+  content?: string
+  memoryKind?: LongTermMemoryKind
+  topic?: string
+  background: boolean
+  refreshBeforeValidate: boolean
+} {
+  const optionArgs: string[] = []
+  let content: string | undefined
+  let memoryKind: LongTermMemoryKind | undefined
+  let topic: string | undefined
+  let background = false
+  let refreshBeforeValidate = false
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index]
+    if (arg === '--background') {
+      background = true
+      continue
+    }
+    if (arg === '--refresh') {
+      refreshBeforeValidate = true
+      continue
+    }
+    if (arg === '--content') {
+      const value = args[index + 1]
+      if (value === undefined) {
+        throw new Error('--content requires a value')
+      }
+      content = value
+      index += 1
+      continue
+    }
+    if (arg === '--type') {
+      const value = args[index + 1]
+      if (value === undefined) {
+        throw new Error('--type requires a value')
+      }
+      if (!['user', 'feedback', 'project', 'reference'].includes(value)) {
+        throw new Error(`Unsupported long-term memory type: ${value}`)
+      }
+      memoryKind = value as LongTermMemoryKind
+      index += 1
+      continue
+    }
+    if (arg === '--topic') {
+      const value = args[index + 1]
+      if (value === undefined) {
+        throw new Error('--topic requires a value')
+      }
+      topic = value
+      index += 1
+      continue
+    }
+    optionArgs.push(arg)
+  }
+  return { optionArgs, content, memoryKind, topic, background, refreshBeforeValidate }
+}
+
+function parseCompactOperationArgs(args: string[]): {
+  optionArgs: string[]
+  summary?: string
+  validateMemory: boolean
+  reactiveEventCount: number
+  tokenBudget?: number
+  contextWindowTokens?: number
+  reservedOutputTokens?: number
+  reservedSystemTokens?: number
+  reservedToolSchemaTokens?: number
+  safetyMarginTokens?: number
+  pressureThreshold?: number
+} {
+  const optionArgs: string[] = []
+  let summary: string | undefined
+  let validateMemory = false
+  let reactiveEventCount = 12
+  let tokenBudget: number | undefined
+  let contextWindowTokens: number | undefined
+  let reservedOutputTokens: number | undefined
+  let reservedSystemTokens: number | undefined
+  let reservedToolSchemaTokens: number | undefined
+  let safetyMarginTokens: number | undefined
+  let pressureThreshold: number | undefined
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index]
+    if (arg === '--summary') {
+      const value = args[index + 1]
+      if (value === undefined) {
+        throw new Error('--summary requires a value')
+      }
+      summary = value
+      index += 1
+      continue
+    }
+    if (arg === '--validate-memory') {
+      validateMemory = true
+      continue
+    }
+    if (arg === '--reactive-events') {
+      reactiveEventCount = parseNonNegativeInteger(
+        requireValue(args, (index += 1), '--reactive-events'),
+      )
+      continue
+    }
+    if (arg === '--token-budget') {
+      tokenBudget = parsePositiveInteger(
+        requireValue(args, (index += 1), '--token-budget'),
+      )
+      continue
+    }
+    if (arg === '--context-window') {
+      contextWindowTokens = parsePositiveInteger(
+        requireValue(args, (index += 1), '--context-window'),
+      )
+      continue
+    }
+    if (arg === '--output-reserve') {
+      reservedOutputTokens = parseNonNegativeInteger(
+        requireValue(args, (index += 1), '--output-reserve'),
+      )
+      continue
+    }
+    if (arg === '--system-reserve') {
+      reservedSystemTokens = parseNonNegativeInteger(
+        requireValue(args, (index += 1), '--system-reserve'),
+      )
+      continue
+    }
+    if (arg === '--tool-schema-reserve') {
+      reservedToolSchemaTokens = parseNonNegativeInteger(
+        requireValue(args, (index += 1), '--tool-schema-reserve'),
+      )
+      continue
+    }
+    if (arg === '--safety-margin') {
+      safetyMarginTokens = parseNonNegativeInteger(
+        requireValue(args, (index += 1), '--safety-margin'),
+      )
+      continue
+    }
+    if (arg === '--pressure-threshold') {
+      pressureThreshold = parsePositiveRatio(
+        requireValue(args, (index += 1), '--pressure-threshold'),
+      )
+      continue
+    }
+    optionArgs.push(arg)
+  }
+  return {
+    optionArgs,
+    summary,
+    validateMemory,
+    reactiveEventCount,
+    tokenBudget,
+    contextWindowTokens,
+    reservedOutputTokens,
+    reservedSystemTokens,
+    reservedToolSchemaTokens,
+    safetyMarginTokens,
+    pressureThreshold,
+  }
+}
+
 function buildCliOperatorGuidance(parsed: ResolvedOptions): string {
   const guidance = [
     'CLI task protocol:',
@@ -1320,6 +3108,10 @@ function buildCliOperatorGuidance(parsed: ResolvedOptions): string {
       `Current ignored path patterns: ${parsed.projectConfig.ignore.join(', ')}`,
     )
   }
+  const projectInstructions = buildProjectInstructionsGuidance(parsed.projectInstructions)
+  if (projectInstructions) {
+    guidance.push(projectInstructions)
+  }
   return guidance.join('\n')
 }
 
@@ -1339,6 +3131,7 @@ async function resolveOptions(
     servers: settings.settings.mcpServers,
   })
   const projectConfig = normalizeProjectConfig(settings.settings.project)
+  const projectInstructions = await loadProjectInstructions({ cwd: parsed.cwd })
   return {
     ...parsed,
     sessionsDir: parsed.sessionsDir ?? settings.settings.sessionsDir,
@@ -1350,6 +3143,7 @@ async function resolveOptions(
     skills,
     mcp,
     projectConfig,
+    projectInstructions,
     preToolUseHooks: createSettingsPreToolUseHooks(settings.settings),
   }
 }
@@ -1368,6 +3162,103 @@ function parsePositiveInteger(value: string): number {
     throw new Error(`Expected a positive integer, got: ${value}`)
   }
   return parsed
+}
+
+function parseNonNegativeInteger(value: string): number {
+  const parsed = Number.parseInt(value, 10)
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(`Expected a non-negative integer, got: ${value}`)
+  }
+  return parsed
+}
+
+function parsePositiveRatio(value: string): number {
+  const parsed = Number.parseFloat(value)
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`Expected a positive ratio, got: ${value}`)
+  }
+  return parsed
+}
+
+async function detectDefaultCommands(cwd: string): Promise<Record<string, string>> {
+  const packageJsonPath = path.join(cwd, 'package.json')
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(await readFile(packageJsonPath, 'utf8'))
+  } catch {
+    return {}
+  }
+  if (!isRecord(parsed) || !isRecord(parsed.scripts)) return {}
+  const runner = await detectPackageRunner(cwd)
+  const commands: Record<string, string> = {}
+  for (const name of ['test', 'typecheck', 'build', 'lint']) {
+    if (typeof parsed.scripts[name] === 'string') {
+      commands[name] = `${runner} ${name}`
+    }
+  }
+  return commands
+}
+
+async function detectPackageRunner(cwd: string): Promise<string> {
+  if (await fileExists(path.join(cwd, 'pnpm-lock.yaml'))) return 'pnpm'
+  if (await fileExists(path.join(cwd, 'yarn.lock'))) return 'yarn'
+  if (await fileExists(path.join(cwd, 'bun.lockb'))) return 'bun run'
+  if (await fileExists(path.join(cwd, 'package-lock.json'))) return 'npm run'
+  return 'npm run'
+}
+
+async function writeTextFileIfAllowed(
+  filePath: string,
+  content: string,
+  force: boolean,
+): Promise<{ created: string[]; skipped: string[] }> {
+  if (!force && await fileExists(filePath)) {
+    return { created: [], skipped: [filePath] }
+  }
+  await mkdir(path.dirname(filePath), { recursive: true })
+  await writeFile(filePath, content, 'utf8')
+  return { created: [filePath], skipped: [] }
+}
+
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await access(filePath, constants.F_OK)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function buildDefaultAgentsInstructions(): string {
+  return [
+    '# Project Agent Instructions',
+    '',
+    '- Prefer small, evidence-backed changes over broad rewrites.',
+    '- Use project-local tools and scripts before inventing new workflows.',
+    '- Respect `.vigilon/settings.json` ignore patterns and permission mode.',
+    '- Verify meaningful code changes with the narrowest relevant command first.',
+    '',
+  ].join('\n')
+}
+
+function formatToolForListing(tool: Tool): {
+  name: string
+  description: string
+  readOnly: boolean
+  deferred: boolean
+  searchTerms: readonly string[]
+} {
+  return {
+    name: tool.name,
+    description: tool.description,
+    readOnly: tool.readOnly === true,
+    deferred: tool.deferred === true,
+    searchTerms: tool.searchTerms ?? [],
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function writeJson(output: Pick<NodeJS.WriteStream, 'write'>, value: unknown): void {

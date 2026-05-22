@@ -1,5 +1,7 @@
 # 三项目源码深度调研报告（Claude Code / OpenClaw / Hermes Agent）
 
+> 归档说明：本报告是历史研究记录。原始 source mirrors 已在 Whiteboard Agent Alpha 清理中从 Git 工作树移除，并压缩到本机 `.local-archives/vigilon-reference-mirrors-20260522-2132.tar.gz`。文中的 `sources/...` 路径是归档期证据路径，不再保证是当前仓库中的可打开路径。
+>
 > 本报告聚焦：**Agent 规划/执行机制**。  
 > 版本锁定见：[notes/sources-lock.md](notes/sources-lock.md)；对比矩阵见：[comparison-matrix.md](comparison-matrix.md)；关键索引见：[notes/projects/claude-code.md](notes/projects/claude-code.md) / [openclaw.md](notes/projects/openclaw.md) / [hermes-agent.md](notes/projects/hermes-agent.md)（通用总目录见：[notes/catalog.md](notes/catalog.md)）。
 >

@@ -1,5 +1,7 @@
 # 三项目对比矩阵（聚焦：Agent 规划/执行机制）
 
+> 归档说明：原始 source mirrors 已从 Git 工作树移除，并压缩到本机 `.local-archives/vigilon-reference-mirrors-20260522-2132.tar.gz`。下方 `sources/...` 路径只表示历史研究证据路径。
+>
 > 项目根：  
 > - Claude Code：`research/sources/claude-code/`  
 > - OpenClaw：`research/sources/openclaw/`  
@@ -67,4 +69,3 @@
 | Claude Code | tools/agents/skills 均作为一级扩展面；Enter/Exit plan mode prompt 把“先澄清→计划→审批→执行”固化为流程。 | `sources/claude-code/src/tools/AgentTool/`；`sources/claude-code/src/tools/EnterPlanModeTool/prompt.ts` |
 | OpenClaw | 强 plugin SDK 合同 + contracts 测试护栏；runtime seam/lazy-load 防止扩展污染 core；文档与 AGENTS 强约束架构边界。 | `sources/openclaw/src/plugins/contracts/`；`sources/openclaw/src/plugin-sdk/`；`sources/openclaw/AGENTS.md` |
 | Hermes Agent | skills 系统是产品核心（自生成/自改进）；toolsets 作为配置化能力门控；同时提供多终端后端/网关/cron 等工程化能力。 | `sources/hermes-agent/tools/skill_manager_tool.py`；`sources/hermes-agent/toolsets.py`；`sources/hermes-agent/tools/environments/`；`sources/hermes-agent/tools/cronjob_tools.py` |
-

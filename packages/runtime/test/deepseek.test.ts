@@ -63,6 +63,9 @@ describe('createDeepSeekModelClient', () => {
             usage: {
               prompt_tokens: 11,
               completion_tokens: 7,
+              total_tokens: 18,
+              prompt_cache_hit_tokens: 8,
+              prompt_cache_miss_tokens: 3,
             },
           }),
           { status: 200 },
@@ -123,6 +126,9 @@ describe('createDeepSeekModelClient', () => {
       model: 'deepseek-v4-pro',
       tool_choice: 'auto',
       stream: true,
+      stream_options: {
+        include_usage: true,
+      },
       messages: [
         { role: 'user', content: 'hello' },
         {
@@ -166,7 +172,130 @@ describe('createDeepSeekModelClient', () => {
       content: '',
       toolCalls: [{ id: 'call_1', name: 'echo', input: { text: 'ok' } }],
       stopReason: 'tool_use',
-      usage: { inputTokens: 11, outputTokens: 7 },
+      usage: {
+        inputTokens: 11,
+        outputTokens: 7,
+        totalTokens: 18,
+        cacheReadInputTokens: 8,
+        cacheCreationInputTokens: 3,
+        cacheHitRatio: 8 / 11,
+      },
+    })
+  })
+
+  it('counts input tokens through DeepSeek chat completion usage', async () => {
+    let requestBody: unknown
+    const client = createDeepSeekModelClient({
+      apiKey: 'test-key',
+      model: 'deepseek-v4-flash',
+      fetch: async (_input, init) => {
+        requestBody = JSON.parse(String(init?.body))
+        return new Response(
+          JSON.stringify({
+            choices: [
+              {
+                finish_reason: 'length',
+                message: { content: 'x' },
+              },
+            ],
+            usage: {
+              prompt_tokens: 1234,
+              completion_tokens: 1,
+              total_tokens: 1235,
+              prompt_cache_hit_tokens: 1000,
+              prompt_cache_miss_tokens: 234,
+            },
+          }),
+          { status: 200 },
+        )
+      },
+    })
+    const tool: Tool = {
+      name: 'echo',
+      description: 'Echo input',
+      inputJsonSchema: {
+        type: 'object',
+        properties: { text: { type: 'string' } },
+        required: ['text'],
+        additionalProperties: false,
+      },
+      async invoke() {
+        return { toolCallId: 'call_1', ok: true, content: 'unused' }
+      },
+    }
+
+    await expect(
+      client.countInputTokens?.({
+        messages: [
+          {
+            type: 'user',
+            content: 'hello',
+            timestamp: '2026-05-17T00:00:00Z',
+          },
+        ],
+        tools: [tool],
+        abortSignal: new AbortController().signal,
+      }),
+    ).resolves.toEqual({
+      ok: true,
+      source: 'provider-chat-completion-usage',
+      inputTokens: 1234,
+      usage: {
+        inputTokens: 1234,
+        outputTokens: 1,
+        totalTokens: 1235,
+        cacheReadInputTokens: 1000,
+        cacheCreationInputTokens: 234,
+        cacheHitRatio: 1000 / 1234,
+      },
+    })
+    expect(requestBody).toMatchObject({
+      model: 'deepseek-v4-flash',
+      stream: false,
+      max_tokens: 1,
+      tool_choice: 'auto',
+      messages: [{ role: 'user', content: 'hello' }],
+      tools: [
+        {
+          type: 'function',
+          function: {
+            name: 'echo',
+          },
+        },
+      ],
+    })
+  })
+
+  it('reports context overflow during DeepSeek input token preflight', async () => {
+    const client = createDeepSeekModelClient({
+      apiKey: 'test-key',
+      fetch: async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              message: 'This model maximum context length is exceeded.',
+            },
+          }),
+          { status: 400 },
+        ),
+    })
+
+    await expect(
+      client.countInputTokens?.({
+        messages: [
+          {
+            type: 'user',
+            content: 'too much',
+            timestamp: '2026-05-17T00:00:00Z',
+          },
+        ],
+        tools: [],
+        abortSignal: new AbortController().signal,
+      }),
+    ).resolves.toMatchObject({
+      ok: false,
+      source: 'provider-chat-completion-usage',
+      errorKind: 'context_overflow',
     })
   })
 
@@ -391,6 +520,9 @@ describe('createDeepSeekModelClient', () => {
 
     expect(requestBody).toMatchObject({
       stream: true,
+      stream_options: {
+        include_usage: true,
+      },
       messages: [
         { role: 'user', content: 'read file' },
         {
@@ -554,6 +686,9 @@ describe('createDeepSeekModelClient', () => {
               usage: {
                 prompt_tokens: 9,
                 completion_tokens: 4,
+                total_tokens: 13,
+                prompt_cache_hit_tokens: 5,
+                prompt_cache_miss_tokens: 4,
               },
             },
           ]),
@@ -576,7 +711,14 @@ describe('createDeepSeekModelClient', () => {
       content: 'Hello world',
       toolCalls: [{ id: 'call_1', name: 'echo', input: { text: 'ok' } }],
       stopReason: 'tool_use',
-      usage: { inputTokens: 9, outputTokens: 4 },
+      usage: {
+        inputTokens: 9,
+        outputTokens: 4,
+        totalTokens: 13,
+        cacheReadInputTokens: 5,
+        cacheCreationInputTokens: 4,
+        cacheHitRatio: 5 / 9,
+      },
     })
   })
 

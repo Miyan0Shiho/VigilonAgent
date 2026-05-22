@@ -10,6 +10,8 @@ import type {
   TuiSessionSummary,
 } from '../runtime/types.js'
 import {
+  renderAgentView,
+  renderCompactResult,
   renderDoctor,
   renderHelp,
   renderRuntimeEvent,
@@ -235,6 +237,72 @@ async function runScriptCommand(input: {
   if (parsedCommand?.definition.name === 'open') {
     const detail = await adapter.openSession(parsedCommand.args)
     io.stdout.write(detail ? `${renderSessionDetail(detail)}\n` : `No session matched.\n`)
+    return false
+  }
+  if (parsedCommand?.definition.name === 'agents') {
+    const [subcommand, sessionSelector, taskId, ...promptParts] = parsedCommand.args.split(' ').filter(Boolean)
+    if (!subcommand) {
+      io.stdout.write(renderAgentView(await adapter.listAgents()) + '\n')
+      return false
+    }
+    if (subcommand === 'inspect') {
+      if (!sessionSelector || !taskId) {
+        io.stdout.write('/agents inspect requires <session> <task-id>\n')
+        return false
+      }
+      const view = await adapter.inspectAgentTask(sessionSelector, taskId)
+      io.stdout.write(view ? `${renderAgentView(view)}\n` : 'No subagent task matched.\n')
+      return false
+    }
+    if (subcommand === 'resume') {
+      if (!sessionSelector || !taskId) {
+        io.stdout.write('/agents resume requires <session> <task-id> <prompt>\n')
+        return false
+      }
+      const view = await adapter.resumeAgentTask({
+        sessionSelector,
+        taskId,
+        prompt: promptParts.join(' ').trim() || 'Continue from the parent retained task state.',
+      })
+      io.stdout.write(view ? `${renderAgentView(view)}\n` : 'No subagent task matched.\n')
+      input.setSessions(await adapter.listSessions())
+      return false
+    }
+    if (subcommand === 'stop') {
+      if (!sessionSelector || !taskId) {
+        io.stdout.write('/agents stop requires <session> <task-id>\n')
+        return false
+      }
+      const view = await adapter.stopAgentTask(sessionSelector, taskId)
+      io.stdout.write(view ? `${renderAgentView(view)}\n` : 'No subagent task matched.\n')
+      input.setSessions(await adapter.listSessions())
+      return false
+    }
+    if (subcommand === 'apply') {
+      if (!sessionSelector || !taskId) {
+        io.stdout.write('/agents apply requires <session> <task-id>\n')
+        return false
+      }
+      const view = await adapter.applyAgentTask(sessionSelector, taskId, promptParts)
+      io.stdout.write(view ? `${renderAgentView(view)}\n` : 'No subagent task matched.\n')
+      input.setSessions(await adapter.listSessions())
+      return false
+    }
+    io.stdout.write(`/agents ${subcommand} is not supported; use /agents, /agents inspect, /agents resume, /agents apply, or /agents stop\n`)
+    return false
+  }
+  if (parsedCommand?.definition.name === 'compact') {
+    const [sessionSelector, ...compactArgs] = parsedCommand.args.split(' ').filter(Boolean)
+    if (!sessionSelector) {
+      io.stdout.write('/compact requires <session> or <index>\n')
+      return false
+    }
+    const result = await adapter.compactSession({
+      sessionSelector,
+      args: compactArgs,
+    })
+    io.stdout.write(result ? `${renderCompactResult(result)}\n` : 'No session matched.\n')
+    input.setSessions(await adapter.listSessions())
     return false
   }
   if (parsedCommand?.definition.name === 'resume' || parsedCommand?.definition.name === 'approve') {

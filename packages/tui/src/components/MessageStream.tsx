@@ -1,7 +1,16 @@
 import React from 'react'
 import { Box, Text } from 'ink'
 import type { PendingPrompt } from '../runtime/lineReader.js'
-import type { TuiRuntimeEvent, TuiSessionDetail, TuiSessionSummary } from '../runtime/types.js'
+import type {
+  TuiAgentDefinitionRow,
+  TuiAgentTaskRow,
+  TuiAgentView,
+  TuiCompactResult,
+  TuiPermissionOriginSummary,
+  TuiRuntimeEvent,
+  TuiSessionDetail,
+  TuiSessionSummary,
+} from '../runtime/types.js'
 import { buildSessionViewModel, type TuiSessionRow, type TuiSessionTone } from '../runtime/sessionView.js'
 import { buildTurnViewModel, type TuiTurnTimelineItem, type TuiTurnTimelineTone } from '../runtime/turnView.js'
 import { Markdown } from './Markdown.js'
@@ -12,6 +21,8 @@ export function MessageStream({
   sessions = [],
   showSessions = false,
   sessionDetail = null,
+  agentView = null,
+  compactResult = null,
   doctor = null,
   pendingPrompt = null,
 }: {
@@ -20,6 +31,8 @@ export function MessageStream({
   sessions?: TuiSessionSummary[]
   showSessions?: boolean
   sessionDetail?: TuiSessionDetail | null
+  agentView?: TuiAgentView | null
+  compactResult?: TuiCompactResult | null
   doctor?: Record<string, unknown> | null
   pendingPrompt?: PendingPrompt | null
 }): React.ReactElement {
@@ -29,7 +42,7 @@ export function MessageStream({
   })
   const { overview } = model
   const sessionModel = buildSessionViewModel(sessions, { limit: 8 })
-  const hasInlinePayload = Boolean(sessionDetail || doctor || showSessions)
+  const hasInlinePayload = Boolean(sessionDetail || agentView || compactResult || doctor || showSessions)
   const showStreamStatus = detailMode || overview.needsAttention
   const timelineMarginTop = showStreamStatus || model.hiddenTimelineCount > 0 ? 1 : 0
   const hasVisibleContent = showStreamStatus ||
@@ -56,8 +69,129 @@ export function MessageStream({
         </Box>
       ) : null}
       {sessionDetail ? <InlineSessionDetail detail={sessionDetail} /> : null}
+      {agentView ? <InlineAgents view={agentView} /> : null}
+      {compactResult ? <InlineCompact result={compactResult} /> : null}
       {doctor ? <InlineDoctor doctor={doctor} /> : null}
       {showSessions ? <InlineSessions rows={sessionModel.visibleRows} hiddenCount={sessionModel.hiddenCount} headline={sessionModel.headline} /> : null}
+    </Box>
+  )
+}
+
+function InlineCompact({ result }: { result: TuiCompactResult }): React.ReactElement {
+  const readiness = result.memoryReadiness
+  const grounding = readiness?.groundingValidation
+  const tokenPressure = result.boundary?.tokenPressure
+  return (
+    <Box flexDirection="column" marginTop={1}>
+      <Text>
+        <Text color="cyan">compact   </Text>
+        <Text>{result.sessionId}</Text>
+        <Text color="gray"> · {result.summarySource ?? 'unknown-summary'} · events {result.eventCount ?? 'unknown'}</Text>
+      </Text>
+      <Text color={readiness?.ready === false ? 'yellow' : 'gray'}>
+        {'  '}memory {readiness?.after ?? 'missing'} · ready {readiness?.ready === false ? 'no' : 'yes'} · refreshed {readiness?.refreshed ? 'yes' : 'no'}
+        {readiness?.blockingReasons?.length ? ` · blocks ${readiness.blockingReasons.join(', ')}` : ''}
+      </Text>
+      {grounding ? (
+        <Text color={grounding.status === 'supported' ? 'green' : 'yellow'}>
+          {'  '}grounding {grounding.status} · {grounding.modelId ?? 'unknown-model'} · {(grounding.reason ?? '').slice(0, 120)}
+        </Text>
+      ) : null}
+      {tokenPressure ? (
+        <Text color="gray">
+          {'  '}tokens {tokenPressure.tokenCountSource ?? 'unknown'} · {tokenPressure.estimatedTokens ?? '?'} / {tokenPressure.tokenBudget ?? '?'} · {tokenPressure.reason ?? 'unknown'}
+        </Text>
+      ) : null}
+      <Text color="gray">
+        {'  '}route {result.boundary?.route?.strategy ?? 'unknown'} · cleanup {result.boundary?.postCompactCleanup?.completed ? 'complete' : 'unknown'} · transcript {result.transcriptPath ?? 'unknown'}
+      </Text>
+    </Box>
+  )
+}
+
+function InlineAgents({ view }: { view: TuiAgentView }): React.ReactElement {
+  const activeDefinitions = view.definitions.filter(definition => definition.active)
+  return (
+    <Box flexDirection="column" marginTop={1}>
+      <Text>
+        <Text color="cyan">agents    </Text>
+        <Text>{activeDefinitions.length} active definitions · {view.tasks.length} subagent tasks</Text>
+      </Text>
+      <Text color="gray">{'  '}sources {view.sourcePrecedence.join(' < ')}</Text>
+      {activeDefinitions.slice(0, 8).map(definition => <InlineAgentDefinition key={`${definition.source}:${definition.name}`} definition={definition} />)}
+      {view.tasks.length === 0 ? <Text color="gray">{'  '}no retained or background subagent tasks</Text> : null}
+      {view.tasks.slice(0, 8).map(task => <InlineAgentTask key={`${task.sessionId}:${task.id}`} task={task} />)}
+      {view.detail ? <InlineAgentDetail view={view} /> : null}
+    </Box>
+  )
+}
+
+function InlineAgentDefinition({ definition }: { definition: TuiAgentDefinitionRow }): React.ReactElement {
+  return (
+    <Text color="gray">
+      {'  '}{definition.name} · {definition.source} · {definition.host ?? 'local'}{definition.background ? ' · background' : ''} · {(definition.allowedTools ?? []).join(', ') || 'no tools'}
+    </Text>
+  )
+}
+
+function InlineAgentTask({ task }: { task: TuiAgentTaskRow }): React.ReactElement {
+  return (
+    <Box flexDirection="column">
+      <Text>
+        <Text color={task.status === 'running' ? 'cyan' : task.status === 'completed' ? 'green' : 'yellow'}>
+          {'  '}{task.id.slice(0, 12).padEnd(12, ' ')}
+        </Text>
+        <Text>{task.agentName ?? 'subagent'}</Text>
+        <Text color="gray"> · {task.status ?? 'unknown'} · /agents inspect {task.sessionId.slice(0, 8)} {task.id.slice(0, 8)}</Text>
+      </Text>
+      {task.outputSummary ? <Text color="gray">{'     '}{task.outputSummary.slice(0, 120)}</Text> : null}
+      {task.worktreeDiff ? <Text color="gray">{'     '}worktree diff {task.worktreeDiff.status} · {task.worktreeDiff.filesChanged} files · +{task.worktreeDiff.additions} -{task.worktreeDiff.deletions}</Text> : null}
+      {task.worktreeDiff?.sourceApply ? <Text color="gray">{'     '}source apply {task.worktreeDiff.sourceApply.status} · {task.worktreeDiff.sourceApply.filesChanged} files</Text> : null}
+    </Box>
+  )
+}
+
+function InlineAgentDetail({ view }: { view: TuiAgentView }): React.ReactElement {
+  const detail = view.detail
+  if (!detail) return <Box />
+  return (
+    <Box flexDirection="column" marginTop={1}>
+      <Text><Text color="cyan">agent     </Text>Task detail <Text color="gray">{detail.task.id}</Text></Text>
+      <Text color="gray">{'  '}parent {detail.parentSessionId} · status {detail.task.status ?? 'unknown'} · transcript {detail.transcriptPath ?? 'missing'}</Text>
+      {detail.permissionSummary ? <InlinePermissionSummary summary={detail.permissionSummary} /> : null}
+      {detail.task.worktreeDiff ? <Text color="gray">{'  '}worktree diff {detail.task.worktreeDiff.status} · {detail.task.worktreeDiff.filesChanged} files · +{detail.task.worktreeDiff.additions} -{detail.task.worktreeDiff.deletions}{detail.task.worktreeDiff.patchPath ? ` · patch ${detail.task.worktreeDiff.patchPath}` : ''}</Text> : null}
+      {detail.task.worktreeDiff?.sourceApply ? <Text color="gray">{'  '}source apply {detail.task.worktreeDiff.sourceApply.status} · {detail.task.worktreeDiff.sourceApply.filesChanged} files{detail.task.worktreeDiff.sourceApply.conflicts?.length ? ` · conflicts ${detail.task.worktreeDiff.sourceApply.conflicts.join(', ')}` : ''}</Text> : null}
+      {detail.resumeResult ? <Text color="gray">{'  '}resume {detail.resumeResult.status}: {detail.resumeResult.finalMessage.slice(0, 120)}</Text> : null}
+      {detail.stopResult ? <Text color={detail.stopResult.ok ? 'green' : 'yellow'}>{'  '}stop {detail.stopResult.ok ? 'ok' : 'unavailable'}: {detail.stopResult.message.slice(0, 120)}</Text> : null}
+      {detail.applyResult ? <Text color={detail.applyResult.status === 'applied' || detail.applyResult.status === 'clean' ? 'green' : 'yellow'}>{'  '}apply {detail.applyResult.status}: {detail.applyResult.message.slice(0, 120)}</Text> : null}
+      {detail.lifecycleEvents.slice(-6).map((event, index) => <Text color="gray" key={`lifecycle:${index}`}>{'  '}lifecycle {event}</Text>)}
+      {detail.recentEvents.slice(-6).map((event, index) => <Text color="gray" key={`recent:${index}`}>{'  '}{event}</Text>)}
+    </Box>
+  )
+}
+
+function InlinePermissionSummary({ summary }: { summary: TuiPermissionOriginSummary }): React.ReactElement {
+  if (summary.totalRequests === 0) {
+    return <Text color="gray">{'  '}permissions none</Text>
+  }
+  const origins = summary.agents
+    .map(agent => {
+      const parent = agent.parentAgentId ? `<-${agent.parentAgentId}` : ''
+      const tools = agent.tools.length ? ` · ${agent.tools.join(',')}` : ''
+      return `${agent.agentRole}:${agent.agentId}${parent} ${agent.count}/${agent.allowed}/${agent.denied}${tools}`
+    })
+    .join('; ')
+  const actions = summary.actions
+    .map(action => `${action.action}:${action.count}`)
+    .join(', ')
+  const latest = summary.latest
+    ? `${summary.latest.action} ${summary.latest.allowed ? 'allow' : 'deny'} ${summary.latest.subject}`
+    : undefined
+  return (
+    <Box flexDirection="column">
+      <Text color="gray">{'  '}permissions {summary.totalRequests} · allow {summary.allowed} · deny {summary.denied}{actions ? ` · ${actions}` : ''}</Text>
+      {origins ? <Text color="gray">{'  '}origins {origins}</Text> : null}
+      {latest ? <Text color="gray">{'  '}latest permission {latest}</Text> : null}
     </Box>
   )
 }

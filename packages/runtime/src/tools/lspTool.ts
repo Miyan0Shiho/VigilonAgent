@@ -1,4 +1,5 @@
 import type { Tool, ToolResult, ToolUseContext } from '../runtime/contracts.js';
+import { withToolPermissionOrigin } from '../runtime/permissionOrigins.js';
 import { formatLocation, formatHover, formatSymbol, formatDiagnostic } from './lsp/formatters.js';
 import { resolveToolPath, isUncPath, isBlockedDevicePath } from './path.js';
 import { readFile, stat } from 'node:fs/promises';
@@ -81,12 +82,13 @@ export const LspTool: Tool = {
     let resolvedPathForFallback: string | undefined;
     try {
       if (action === 'workspace_symbol') {
-        const permission = await context.permissionGate.requestPermission({
-          action: 'read',
-          subject: context.cwd,
-          risk: 'low',
-          reason: 'LSP workspace symbol search',
-        });
+	        const permission = await context.permissionGate.requestPermission({
+	          action: 'read',
+	          subject: context.cwd,
+	          risk: 'low',
+	          reason: 'LSP workspace symbol search',
+	          origin: withToolPermissionOrigin(context.permissionOrigin, 'LSP'),
+	        });
         if (!permission.allowed) return failed(permission.reason);
         const symbols = await context.lspServerManager.workspaceSymbol(query ?? '');
         if (!symbols || symbols.length === 0) {
@@ -319,12 +321,13 @@ async function resolveReadableFilePath({
     };
   }
 
-  const permission = await context.permissionGate.requestPermission({
-    action: 'read',
-    subject: filePath,
-    risk: 'low',
-    reason: `LSP ${action} on file`,
-  });
+	  const permission = await context.permissionGate.requestPermission({
+	    action: 'read',
+	    subject: filePath,
+	    risk: 'low',
+	    reason: `LSP ${action} on file`,
+	    origin: withToolPermissionOrigin(context.permissionOrigin, 'LSP'),
+	  });
   if (!permission.allowed) {
     return {
       ok: false,

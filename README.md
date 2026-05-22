@@ -1,63 +1,85 @@
 # Vigilon Agent
 
-> **DeepSeek V4 内核 + Claude Code 架构秩序 + Codex 产品级体验**
+Vigilon Agent is an open-source local whiteboard Agent runtime. The v0.1.0 goal is a clean, runnable, extensible base system: enough core agent behavior to operate as an independent local coding/task agent, while keeping the codebase open for future specialized agents.
 
-Vigilon Agent 是一个任务优先的超级个人助手。用户交给它目标，它负责在可控边界内调动代码编写、代码库理解、资料调研、本地电脑操作、外部工具和多 Agent 协作，把任务推进到可验证的完成状态。
+This repository is no longer treated as a Claude Code reference mirror. Historical reference source mirrors have been removed from the tracked tree; ignored local archives are not required to build or use v0.1.0.
 
-它的第一阶段落点是一个优秀的代码代理（Coding Agent）产品：先以 Claude Code 源码和架构秩序为成熟骨架，复刻面向个人开发者的可用、可信、可恢复的本地 agent runtime；再在此基础上迭代出 Codex 级体验和 Vigilon 自己的个人助手能力。
+## What Works Now
 
-这个项目不是简单的拼装，而是在工程实践基础上的一种价值取向选择：
+- CLI runtime for local agent turns, transcripts, resume, memory, compact, permissions, and tool execution.
+- TUI operator shell for validating real agent flow and inspecting runtime state.
+- DeepSeek provider integration, defaulting to `deepseek-v4-flash` unless overridden.
+- Core tools for read/search/edit/write/bash/web fetch/notebook/LSP/task control/config/session operations.
+- Project instructions from `AGENTS.md`, `VIGILON.md`, and `.vigilon/instructions.md`.
+- Skills, MCP servers, subagents, task hosts, safety policy, sandbox decisions, and governance probes.
 
-1.  **模型能力 (Core)**: 以 **DeepSeek V4** 为核心，利用其在代码推理、长上下文及高性价比方面的卓越表现。
-2.  **架构秩序 (Architecture)**: 继承 **Claude Code** 的工作流骨架，将“思考（Plan）”与“执行（Execute）”明确分离，建立严格的权限与反馈闭环。
-3.  **产品叙事 (Experience)**: 追求 **Codex** 级的前端交互感，让 Agent 的执行过程透明、可感、具有极高的“产品化”完成度。
-4.  **Agent 社会 (Society)**: 在基础 runtime 站稳后，发展可治理、可审计、可停止、可恢复的多 Agent 协作。
+## Quickstart
 
----
+```bash
+pnpm install
+pnpm build
+export DEEPSEEK_API_KEY=...
 
-## 🏗️ 目录结构 (Workspace)
-
-本项目采用 Monorepo 架构，以确保核心逻辑与展示层的深度解耦。
-
-```text
-VigilonAgent/
-├── packages/
-│   ├── runtime/        # Vigilon Phase 1 干净 runtime 主线
-│   └── claude-code/    # Claude Code 源码参考镜像，不作为默认开发入口
-├── docs/
-│   ├── product/        # 产品定位、能力边界与预产品化基线
-│   ├── claudecode-research/ # Claude Code 源码研究与机制索引
-│   ├── archived-research/   # OpenClaw / Hermes 等早期对比调研
-│   └── superpowers/    # 项目核心设计文档 (Specs & Designs)
-└── README.md
+pnpm start -- init --cwd .
+pnpm start -- doctor
+pnpm start -- run "inspect this repository and report the main runtime entrypoints" --permission-mode ask
+pnpm tui
 ```
 
-## 🚀 愿景与策略
+## Commands
 
-我们不希望从零发明基础秩序，而是选择：
-- **先继承**: 站在 Claude Code 验证过的成熟骨架上，避免在底层工作流试错。
-- **再产品化**: 以 Codex 级体验把任务入口、执行过程、权限等待、错误恢复和结果交付做清楚。
-- **后扩展**: 从 Coding Agent 扩展为能调研、写代码、操作本地电脑、协调 Agent 社会的超级个人助手。
+```bash
+pnpm start -- --help
+pnpm start -- doctor
+pnpm start -- init --cwd .
+pnpm start -- tools --cwd .
+pnpm start -- run "your task" --cwd . --permission-mode ask
+pnpm start -- sessions --cwd .
+pnpm start -- resume <session-id> --cwd .
+pnpm start -- memory --cwd .
+pnpm start -- compact --cwd .
+pnpm start -- agents --cwd .
+pnpm tui
+```
 
-## 🧭 产品定位
+## Project Layout
 
-预产品化基线见 [docs/product/README.md](docs/product/README.md)。
+- `packages/runtime` - core Agent runtime, CLI, tools, session state, memory, permissions, MCP, subagents, and probes.
+- `packages/tui` - terminal operator interface built on the runtime adapter boundary.
+- `docs/product` - product direction, stage boundaries, readiness reports, and roadmaps.
+- `docs/archived-research` - historical notes and comparison artifacts; source mirrors were removed from Git.
+- `docs/superpowers` - implementation and research notes that remain part of the project.
 
-当前硬决策：
+## v0.1.0 Boundary
 
-- Vigilon 的最终定位是任务优先的超级个人助手，不是普通聊天产品。
-- Phase 1 的硬目标是 Claude Code Core Parity for Solo Runtime，优先复刻成熟本地 runtime，而不是过早追求差异化。
-- Phase 1 的具体功能设计必须 copy-first：搜索、上下文压缩、记忆和工具实现先按 Claude Code 源码机制复刻，再做 Vigilon 改写和优化。
-- Phase 1 从 `packages/runtime` 的干净地基开始开发；`packages/claude-code` 只作为机制参考。
-- Phase 1 当前最小开发门禁是 `pnpm phase1:baseline`，后续随 Solo Runtime 主链成熟逐步扩展。
-- Coding workflow 是基础形态，不是最终边界。
-- 所有后续能力都必须服务于任务闭环、权限治理、可恢复性和可验证性。
-- 当前明确不做 remote / bridge / multi-user / enterprise / admin / billing / telemetry / marketplace。
+The v0.1.0 target is not to prove feature parity with any existing product. The target is a whiteboard Agent with enough base capabilities to run, inspect, edit, ask for permission, preserve state, recover sessions, and support future specialization.
 
----
+Near-term work should focus on making that foundation easier to install, verify, and extend. Product surfaces such as remote execution, multi-user teams, enterprise governance, billing, telemetry, and marketplaces are intentionally out of scope.
 
-## 📂 历史调研
+## Development Gates
 
-关于 Claude Code 的源码研究主入口，请参阅 [docs/claudecode-research/README.md](docs/claudecode-research/README.md)。
+```bash
+pnpm --filter @vigilon/runtime test
+pnpm --filter @vigilon/tui exec vitest run
+pnpm build
+pnpm phase2.5:baseline
+```
 
-关于 Claude Code、OpenClaw 和 Hermes Agent 的早期对比调研，请参阅 [docs/archived-research/report.md](docs/archived-research/report.md)。
+The release-facing gate is:
+
+```bash
+pnpm release:check
+```
+
+It runs workspace typecheck, runtime tests, TUI tests, build, version smoke, the runtime governance baseline, and package pack checks.
+
+## Release Artifacts
+
+- Runtime package: `@vigilon/runtime`
+- TUI package: `@vigilon/tui`
+- Changelog: `CHANGELOG.md`
+- Release record: `docs/product/2026-05-22-open-source-v0-1-0-release.md`
+
+## License
+
+MIT
