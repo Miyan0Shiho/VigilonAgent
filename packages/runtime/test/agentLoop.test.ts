@@ -1369,7 +1369,7 @@ describe('createVigilonAgentRuntime', () => {
     expect(result).toMatchObject({
       turns: 4,
       stopReason: 'max_turns',
-      finalMessage: expect.stringContaining('Circuit breaker'),
+      finalMessage: expect.stringContaining('safety limit'),
       report: { status: 'stopped' },
     })
   })
@@ -1514,7 +1514,7 @@ describe('createVigilonAgentRuntime', () => {
     expect(result).toMatchObject({
       turns: 4,
       stopReason: 'max_turns',
-      finalMessage: expect.stringContaining('Circuit breaker'),
+      finalMessage: expect.stringContaining('safety limit'),
       report: {
         status: 'stopped',
       },

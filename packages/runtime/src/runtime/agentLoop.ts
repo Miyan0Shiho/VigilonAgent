@@ -259,8 +259,8 @@ export function createVigilonAgentRuntime(
           projectInstructions: options.operatorGuidance,
         })
 
-        const maxTurnsCircuitBreaker = maxTurns !== undefined ? maxTurns + 2 : undefined
-      while (!maxTurnsCircuitBreaker || turns < maxTurnsCircuitBreaker) {
+        // Circuit breaker at 50 turns — only catches true infinite loops
+      while (turns < (maxTurns !== undefined ? maxTurns + 2 : 50)) {
         turns += 1
         // Check for and append LSP diagnostics
         const pendingLspDiagnostics = checkForLSPDiagnostics()
@@ -765,7 +765,7 @@ export function createVigilonAgentRuntime(
 
       if (maxTurns !== undefined && turns >= maxTurns + 2 && stopReason === 'tool_use') {
         finalMessage =
-          finalMessage || `Circuit breaker: exceeded ${turns} turns without completing.`
+          finalMessage || 'Task stopped: safety limit reached.'
         stopReason = 'max_turns'
       }
 
