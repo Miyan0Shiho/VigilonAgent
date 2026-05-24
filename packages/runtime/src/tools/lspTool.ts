@@ -166,16 +166,6 @@ export const LspTool: Tool = {
         );
       }
 
-      if (action === 'diagnostics') {
-        const diagnostics = await context.lspServerManager.getDiagnostics(resolvedPath);
-        return ok(
-          diagnostics.length > 0
-            ? budgetResult(['diagnostics:', ...diagnostics.map(formatDiagnostic)].join('\n'))
-            : 'No diagnostics found.',
-          { count: diagnostics.length, budgeted: diagnostics.length > 0 },
-        );
-      }
-
       const server = context.lspServerManager.getServerForFile(resolvedPath);
       if (!server) {
         return failed(`No LSP server found for file: ${rawPath}`);
@@ -186,6 +176,7 @@ export const LspTool: Tool = {
       // Track LSP-opened files separately from Read cache. A file being present
       // in readFileState only means the model has seen it, not that the LSP
       // server received textDocument/didOpen.
+      let didSendOpen = false
       if (!context.lspOpenFileState?.has(resolvedPath)) {
         const fileStat = await stat(resolvedPath);
         const content =
@@ -205,6 +196,21 @@ export const LspTool: Tool = {
           fullRead: true,
         });
         context.lspOpenFileState?.add(resolvedPath);
+        didSendOpen = true
+      }
+
+      if (action === 'diagnostics') {
+        // Wait briefly for async diagnostics to arrive after didOpen
+        if (didSendOpen) {
+          await new Promise(resolve => setTimeout(resolve, 500))
+        }
+        const diagnostics = await context.lspServerManager.getDiagnostics(resolvedPath);
+        return ok(
+          diagnostics.length > 0
+            ? budgetResult(['diagnostics:', ...diagnostics.map(formatDiagnostic)].join('\n'))
+            : 'No diagnostics found.',
+          { count: diagnostics.length, budgeted: diagnostics.length > 0 },
+        );
       }
 
       switch (action) {
