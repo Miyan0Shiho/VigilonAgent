@@ -54,6 +54,7 @@ export function InteractiveOperatorShell({
   const [doctor, setDoctor] = useState<Record<string, unknown> | null>(null)
   const [detailMode, setDetailMode] = useState(false)
   const [sessionListVisible, setSessionListVisible] = useState(false)
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
 
   useEffect(() => promptController.subscribe(setPendingPrompt), [promptController])
   useEffect(() => adapter.subscribeAgentTaskNotifications(event => {
@@ -277,7 +278,13 @@ export function InteractiveOperatorShell({
       setStatus('/new requires a prompt')
       return
     }
-    await runTurn({ prompt })
+    if (parsedCommand?.definition.name === 'new') {
+      setActiveSessionId(null)
+    }
+    await runTurn({
+      prompt,
+      sessionSelector: parsedCommand?.definition.name === 'new' ? undefined : activeSessionId ?? undefined,
+    })
   }
 
   async function runTurn(input: {
@@ -292,12 +299,13 @@ export function InteractiveOperatorShell({
     setCompactResult(null)
     setDoctor(null)
     try {
-      await adapter.runTask({
+      const result = await adapter.runTask({
         ...input,
         onEvent: event => {
           setEvents(current => [...current, event])
         },
       })
+      setActiveSessionId(result.sessionId)
       const nextSessions = await adapter.listSessions()
       setSessions(nextSessions)
       setStatus('ready')

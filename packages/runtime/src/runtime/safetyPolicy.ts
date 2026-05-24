@@ -266,24 +266,34 @@ function flagsAreSafe(executable: string, words: readonly string[]): boolean {
 }
 
 function parseSedEdit(words: readonly string[]): BashSedEditSurrogate | undefined {
-  const expression = words.find(word => word.startsWith('s') && word.length >= 4)
+  const expression = words.find(word => findSedSubstitution(word) !== undefined)
   const filePath = [...words].reverse().find(word => !word.startsWith('-') && word !== expression)
   if (!expression || !filePath) return undefined
-  const parsed = parseSedSubstitution(expression)
-  if (!parsed) return undefined
+  const match = findSedSubstitution(expression)
+  if (!match) return undefined
   return {
     kind: 'sed-edit',
     filePath,
-    pattern: parsed.pattern,
-    replacement: parsed.replacement,
-    global: parsed.flags === 'g',
+    pattern: match.pattern,
+    replacement: match.replacement,
+    global: match.flags.includes('g'),
   }
+}
+
+function findSedSubstitution(word: string): { pattern: string; replacement: string; flags: string } | undefined {
+  // Find 's' followed by a non-alphanumeric delimiter, skipping address prefixes like "1s/.../" or "2,5s/.../"
+  const match = word.match(/s([^a-zA-Z0-9])/)
+  if (!match || match.index === undefined) return undefined
+  // Reject if 's' is preceded by a letter (e.g. "basename/test")
+  if (match.index > 0 && /[a-zA-Z]/.test(word[match.index - 1] ?? '')) return undefined
+  const expression = word.slice(match.index)
+  return parseSedSubstitution(expression)
 }
 
 function parseSedSubstitution(expression: string): {
   pattern: string
   replacement: string
-  flags: '' | 'g'
+  flags: string
 } | undefined {
   if (!expression.startsWith('s')) return undefined
   const delimiter = expression[1]
@@ -310,12 +320,10 @@ function parseSedSubstitution(expression: string): {
     current += char
   }
   if (parts.length !== 2) return undefined
-  const flags = current
-  if (flags !== '' && flags !== 'g') return undefined
   return {
     pattern: parts[0] ?? '',
     replacement: parts[1] ?? '',
-    flags,
+    flags: current,
   }
 }
 

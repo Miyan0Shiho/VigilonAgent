@@ -332,6 +332,7 @@ export async function createNodeRuntimeAdapter(input: {
           'Do not keep re-checking once the task is answered or verified.',
           'When you have a user-facing conclusion, answer directly in the final assistant message.',
           'Use ResultReport only when a structured audit handoff is useful; it is optional for ordinary answers.',
+          'Do not re-read files already read in this session. Reference earlier results directly.',
           buildRuntimeProjectInstructionsGuidance(runtime, resolved.projectInstructions) ?? '',
         ].join('\n'),
         stopAfterResultReport: true,

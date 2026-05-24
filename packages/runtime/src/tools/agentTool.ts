@@ -19,6 +19,10 @@ export const AgentTool: Tool = {
         type: 'string',
         description: 'Focused subtask for the delegated agent to complete.',
       },
+      maxTurns: {
+        type: 'number',
+        description: 'Optional max turns override for this subagent run. Use for investigation tasks that need more turns than the agent default.',
+      },
     },
     required: ['agent', 'task'],
     additionalProperties: false,
@@ -38,6 +42,10 @@ export const AgentTool: Tool = {
       return failed(`Local agent not found: ${parsed.agent}`)
     }
 
+    const effectiveDefinition = parsed.maxTurns !== undefined
+      ? { ...definition, maxTurns: parsed.maxTurns }
+      : definition
+
     const parentOrigin = withToolPermissionOrigin(context.permissionOrigin, 'Agent')
     const permission = await context.permissionGate.requestPermission({
       action: 'external-tool',
@@ -50,11 +58,11 @@ export const AgentTool: Tool = {
       return failed(`Agent permission denied: ${permission.reason}`)
     }
 
-    const memorySnapshot = definition.memory === 'none'
+    const memorySnapshot = effectiveDefinition.memory === 'none'
       ? undefined
       : await buildSubagentMemorySnapshot(context)
     const result = await context.runSubagent({
-      definition,
+      definition: effectiveDefinition,
       task: parsed.task,
       cwd: context.cwd,
       catalog,
@@ -187,7 +195,7 @@ async function persistBackgroundTaskSnapshot(context: ToolUseContext): Promise<v
   })
 }
 
-function parseAgentInput(input: unknown): { agent?: string; task?: string } {
+function parseAgentInput(input: unknown): { agent?: string; task?: string; maxTurns?: number } {
   if (!input || typeof input !== 'object') return {}
   const value = input as Record<string, unknown>
   return {
@@ -199,25 +207,39 @@ function parseAgentInput(input: unknown): { agent?: string; task?: string } {
       typeof value.task === 'string' && value.task.trim()
         ? value.task.trim()
         : undefined,
+    maxTurns:
+      typeof value.maxTurns === 'number' && Number.isInteger(value.maxTurns) && value.maxTurns > 0
+        ? value.maxTurns
+        : undefined,
   }
 }
 
 function buildAgentResultContent(result: SubagentRunResult): string {
-  if (result.status === 'running') {
-    return [
-      'Subagent started in background.',
+  const base = result.status === 'running'
+    ? [
+        'Subagent started in background.',
+        '',
+        `Final message: ${result.finalMessage}`,
+        `Task ID: ${result.taskHost.taskId}`,
+        `Transcript: ${result.transcriptPath}`,
+      ]
+    : [
+        'Subagent completed the delegated task.',
+        '',
+        `Final message: ${result.finalMessage}`,
+        `Transcript: ${result.transcriptPath}`,
+      ]
+  if (
+    result.status === 'stopped' &&
+    result.finalMessage.includes('maxTurns')
+  ) {
+    base.push(
       '',
-      `Final message: ${result.finalMessage}`,
-      `Task ID: ${result.taskHost.taskId}`,
-      `Transcript: ${result.transcriptPath}`,
-    ].join('\n')
+      'The subagent ran out of turns before completing. Dispatch another Agent call',
+      'with the same task and a higher maxTurns override to continue.',
+    )
   }
-  return [
-    'Subagent completed the delegated task.',
-    '',
-    `Final message: ${result.finalMessage}`,
-    `Transcript: ${result.transcriptPath}`,
-  ].join('\n')
+  return base.join('\n')
 }
 
 function failed(content: string): ToolResult {
