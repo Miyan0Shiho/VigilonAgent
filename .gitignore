@@ -33,3 +33,10 @@ coverage/
 # 临时文件
 tmp/
 temp/
+
+# Claude Code 本地配置与工作树
+.claude/
+
+# 参考材料 (本地保留，不入库)
+docs/claudecode-research/
+packages/claude-code/
