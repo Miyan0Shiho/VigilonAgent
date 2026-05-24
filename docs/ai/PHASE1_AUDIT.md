@@ -6,21 +6,25 @@
 
 ---
 
-## 1. Modified (Tracked) 文件分类
+## 1. Preflight 处理结论
 
-| 文件 | 变更量 | 来源 | Phase 2 处理 |
-|------|--------|------|-------------|
-| `packages/runtime/src/cli.ts` | 708 lines | 分支预存在，非 Phase 1 | 需要 code review 后合并或丢弃 |
-| `packages/runtime/src/tools/webFetchTool.ts` | 100 lines | 分支预存在 | 同上 |
-| `packages/runtime/src/runtime/requestCache.ts` | 18 lines | 分支预存在 | 同上 |
-| `package.json` | 14 lines | 分支预存在 | 同上 |
-| `pnpm-lock.yaml` | 3478 lines | 分支预存在 | 随 package.json 变更 |
+| 项 | 处理 |
+|------|------|
+| `packages/runtime/src/cli.ts` | 保留。该文件已引用 `src/cli/display.ts`，属于 CLI 展示逻辑拆分。 |
+| `packages/runtime/src/cli/display.ts` | 入库。否则干净 clone 后 `cli.ts` 引用缺文件。 |
+| `packages/runtime/src/runtime/subagent-runner.ts` | 入库。否则 `agentLoop.ts` 引用缺文件。 |
+| `packages/runtime/src/runtime/contracts/permission.ts` | 入库。否则 `contracts.ts` 引用缺文件。 |
+| `packages/runtime/src/tools/webFetchTool.ts` | 保留。新增私有/本地地址拦截，避免 WebFetch 访问非公共 host。 |
+| `packages/runtime/src/runtime/requestCache.ts` | 保留。移除未使用的 `injectRequestCachePrefix` 空实现。 |
+| `package.json` | 清理。移除本地 Claude Code 参考包脚本残留。 |
+| `pnpm-lock.yaml` | 清理。恢复为不包含 `packages/claude-code` importer 的锁文件。 |
+| `pnpm-workspace.yaml` | 更新。显式排除 `packages/claude-code`，避免本地参考镜像再次污染 workspace。 |
 
-**结论**: 以上 5 个文件均非 Phase 1 改动。Phase 1 的 20 个 commit 全部已提交，无遗漏。
+**结论**: Phase 1 的 20 个 implementation commit 已提交；closure/preflight 变更已归类并准备作为 Phase 2 入口提交。
 
 ---
 
-## 2. Untracked 文件分类
+## 2. 本地忽略内容分类
 
 | 路径 | 分类 | 处置 |
 |------|------|------|
@@ -33,12 +37,15 @@
 
 ---
 
-## 3. .gitignore 修正
+## 3. Ignore / Workspace 修正
 
-需新增忽略项:
+已新增忽略项:
 - `docs/claudecode-research/` — Claude Code 源码参考
 - `packages/claude-code/` — Claude Code 镜像
 - `.claude/worktrees/` — Worktree 产物
+
+已新增 workspace exclude:
+- `!packages/claude-code` — 避免本地参考镜像参与 pnpm workspace 与 lockfile 生成
 
 ---
 

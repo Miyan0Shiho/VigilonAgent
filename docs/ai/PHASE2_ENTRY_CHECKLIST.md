@@ -3,31 +3,29 @@
 ## 已满足的条件 ✅
 
 - [x] Phase 1 所有改动已提交 (20 commits)
+- [x] Phase 1 closure / preflight 文档已提交
 - [x] 核心能力综述文档就绪 (`docs/ai/PHASE1_CAPABILITY_OVERVIEW.md`)
 - [x] 交接文档就绪 (`docs/ai/HANDOFF.md`)
 - [x] 仓库审计完成 (`docs/ai/PHASE1_AUDIT.md`)
 - [x] .gitignore 修正 (排除参考材料和 worktree 产物)
+- [x] `pnpm-workspace.yaml` 排除本地 `packages/claude-code` 参考镜像
+- [x] 缺失源码拆分文件已入库 (`cli/display.ts`, `runtime/subagent-runner.ts`, `runtime/contracts/permission.ts`)
 - [x] 210/211 测试通过 (1 known flaky)
 - [x] 44/44 TUI 测试通过
 - [x] Typecheck 0 错误
 - [x] Build 成功
 - [x] 6/6 真实任务端到端通过 (v4-pro)
 
-## 阻塞项 ❌
-
-- [ ] **分支预存在修改需 review**:
-  - `packages/runtime/src/cli.ts` (708 lines) — 大型重构, 需要评估是否保留
-  - `packages/runtime/src/tools/webFetchTool.ts` (100 lines)
-  - `packages/runtime/src/runtime/requestCache.ts` (18 lines)
-  - `package.json` (14 lines)
-  - `pnpm-lock.yaml` (3478 lines)
-  
-  **建议**: 在 Phase 2 开始前 review 这些变更，决定合并、丢弃或单独 PR。
+## 非阻塞已知项
 
 - [ ] **Worktree 测试 flaky** (test-only, 非 product bug):
   - 根因: 测试假设子代理一定产生文件变更，但 worktree setup 有时序不确定性
   - 修复方案: 测试使用 retry loop 或 mock 固定 worktree diff
   - 不阻塞 Phase 2 — 记录在已知限制中
+
+- [ ] **本轮 preflight 未重跑测试**:
+  - 原因: 用户明确要求不需要跑测试
+  - Phase 2 开发第一步如要改 runtime 行为，再跑最窄相关验证即可
 
 ## Phase 2 第一个能力点建议
 

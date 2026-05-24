@@ -104,13 +104,6 @@ export function buildRequestCachePrefixEvent(timestamp: string): Extract<Transcr
   }
 }
 
-export function injectRequestCachePrefix(
-  events: readonly TranscriptEvent[],
-  _timestamp: string,
-): TranscriptEvent[] {
-  return [...events]
-}
-
 type CanonicalVisibleEvent =
   | { type: 'user'; content: string }
   | { type: 'assistant'; content: string; reasoningContent?: string; toolCalls?: unknown }
