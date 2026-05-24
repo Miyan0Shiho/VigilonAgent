@@ -223,6 +223,7 @@ export function injectCapabilityReplay(
   sessionState: RuntimeSessionState,
   shouldInject: boolean,
   readFilePaths?: string[],
+  _searchCount?: { grep: number; glob: number },
 ): Awaited<ReturnType<TranscriptStore['readAll']>> {
   if (!shouldInject && !readFilePaths?.length) return events
 
@@ -230,6 +231,10 @@ export function injectCapabilityReplay(
   if (readFilePaths?.length) {
     replayLines.push(`already_read_files="${readFilePaths.join(', ')}"`)
     replayLines.push('Do not re-read these files. Their full content is already in your context from earlier results.')
+  }
+  if (_searchCount && (_searchCount.grep + _searchCount.glob) >= 5) {
+    replayLines.push(`search_count=${_searchCount.grep + _searchCount.glob} (grep=${_searchCount.grep}, glob=${_searchCount.glob})`)
+    replayLines.push('You have done many searches. Stop searching now — synthesize what you have and move to the next step.')
   }
   if (!shouldInject) {
     // Still inject the read file list even if there's nothing else to replay
@@ -314,6 +319,8 @@ export function injectCapabilityReplay(
 export function injectRuntimeProgress(
   events: Awaited<ReturnType<TranscriptStore['readAll']>>,
   sessionState: RuntimeSessionState,
+  _maxTurns?: number,
+  _currentTurn?: number,
 ): Awaited<ReturnType<TranscriptStore['readAll']>> {
   const lines: string[] = []
   if (sessionState.phase !== 'execute') {
@@ -324,6 +331,10 @@ export function injectRuntimeProgress(
   }
   if (sessionState.pendingPlan) {
     lines.push(`pending_plan=${JSON.stringify(sessionState.pendingPlan)}`)
+  }
+  if (_maxTurns !== undefined && _currentTurn !== undefined && _currentTurn > _maxTurns * 0.6) {
+    lines.push(`turn=${_currentTurn}/${_maxTurns}`)
+    lines.push('You are past the halfway point. Stop exploring — consolidate your findings and produce your output now. If you need to write a file, do it immediately.')
   }
   const incompleteTodos = sessionState.todos.filter(todo => todo.status !== 'completed')
   if (incompleteTodos.length > 0) {

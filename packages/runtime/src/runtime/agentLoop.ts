@@ -204,6 +204,7 @@ export function createVigilonAgentRuntime(
   const permissionGate = options.permissionGate ?? mutablePermissionGate
   const maxTurns = options.maxTurns
   const readFileState = new Map()
+  const searchCount = { grep: 0, glob: 0 }
   const lspOpenFileState = new Set<string>()
   syncPermissionModeFromSession(sessionState, permissionGate)
   const runSubagent = createSubagentRunner({
@@ -321,12 +322,14 @@ export function createVigilonAgentRuntime(
                   ),
                   sessionState,
                   Boolean(options.resume),
-                  [...readFileState.keys()],
+                  [...readFileState.keys()], searchCount,
                 ),
                 input.prompt,
                 turnProjectConfig,
               ),
               sessionState,
+              maxTurns,
+              turns,
             ),
             options.skills ?? [],
           )
@@ -419,12 +422,14 @@ export function createVigilonAgentRuntime(
                 ),
                 sessionState,
                 Boolean(options.resume),
-                  [...readFileState.keys()],
+                  [...readFileState.keys()], searchCount,
               ),
               input.prompt,
               turnProjectConfig,
             ),
             sessionState,
+            maxTurns,
+            turns,
           ),
           options.skills ?? [],
         )
@@ -694,6 +699,11 @@ export function createVigilonAgentRuntime(
             result = await toolPromise
           } else {
             result = createFailedToolResult(call.id, `Unknown tool: ${call.name}`)
+          }
+
+          if (result.ok) {
+            if (call.name === 'Grep') searchCount.grep += 1
+            if (call.name === 'Glob') searchCount.glob += 1
           }
 
           await transcript.append({
