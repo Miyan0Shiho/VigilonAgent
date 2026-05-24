@@ -104,6 +104,29 @@ const REACTIVE_EVENT_COUNT = 10
 const AUTO_COMPACT_TOKEN_BUDGET = 24_000
 const AUTO_COMPACT_PRESSURE_THRESHOLD = 0.85
 
+const MUTATING_TOOLS = new Set(['Write', 'Edit', 'Bash', 'ApplyPatch'])
+
+async function saveAutoSnapshot(cwd: string): Promise<void> {
+  const snapDir = path.join(cwd, '.vigilon', 'snapshots', 'auto')
+  await mkdir(snapDir, { recursive: true })
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '_')
+  const patchPath = path.join(snapDir, `${timestamp}.patch`)
+  try {
+    const { execFile } = await import('node:child_process')
+    const { promisify } = await import('node:util')
+    const execFileAsync = promisify(execFile)
+    const { stdout } = await execFileAsync('git', ['diff', '--binary', 'HEAD'], {
+      cwd, maxBuffer: 10 * 1024 * 1024, timeout: 5_000,
+    })
+    if (stdout) {
+      const { writeFile } = await import('node:fs/promises')
+      await writeFile(patchPath, stdout, 'utf8')
+    }
+  } catch {
+    // Auto-snapshot is best-effort — never block the tool
+  }
+}
+
 class AsyncEventQueue<T> {
   private readonly items: T[] = []
   private readonly waiters: Array<(value: T | undefined) => void> = []
@@ -680,6 +703,11 @@ export function createVigilonAgentRuntime(
               },
             }
             const toolPromise = invokeTool(tool.invoke(call.input, toolContext), call.id)
+
+            // Auto-save git snapshot before mutating tools
+            if (MUTATING_TOOLS.has(call.name)) {
+              saveAutoSnapshot(input.cwd).catch(() => {})
+            }
             let toolSettled = false
             void toolPromise.then(
               () => {
