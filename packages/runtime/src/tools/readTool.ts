@@ -124,22 +124,31 @@ export const ReadTool: Tool = {
       })
     }
 
-    // If we already have a full read of this file, short-circuit partial re-reads
+    // If we already have a full read of this file, serve requested range from cache
     if (
       previous &&
       previous.mtimeMs === fileStat.mtimeMs &&
       previous.fullRead &&
       hadExplicitRange
     ) {
-      return ok(
-        `You already read this entire file (${previous.content.split(/\r?\n/).length} lines). ` +
-        'Reference the content from your earlier full-file Read result — do not re-read sections.',
-        {
+      const cachedLines = previous.content.split(/\r?\n/)
+      const startIndex = offset - 1
+      const selected = cachedLines.slice(startIndex, startIndex + limit)
+      if (selected.length > 0) {
+        const formatted = addLineNumbers(selected, offset)
+        const isComplete = startIndex + selected.length >= cachedLines.length
+        const suffix = isComplete
+          ? '\n[End of file]'
+          : `\n[Lines ${offset}-${offset + selected.length - 1} of ${cachedLines.length}]`
+        return ok(formatted + suffix, {
           filePath,
-          type: 'file_unchanged',
-          fullFileAvailable: true,
-        },
-      )
+          type: 'text',
+          startLine: offset,
+          numLines: selected.length,
+          totalLines: cachedLines.length,
+          servedFromCache: true,
+        })
+      }
     }
 
     const buffer = await readFile(filePath)
@@ -160,10 +169,20 @@ export const ReadTool: Tool = {
       fullRead: offset === 1 && startIndex + selected.length >= lines.length,
     })
 
-    const suffix =
-      hadExplicitRange && startIndex + selected.length < lines.length
-        ? `\n\n[Showing lines ${offset}-${offset + selected.length - 1} of ${lines.length}. Use offset and limit to continue.]`
-        : ''
+    const isComplete = startIndex + selected.length >= lines.length
+    if (isComplete) {
+      return ok(`[Read full file: ${lines.length} lines]\n\n${formatted}`, {
+        filePath,
+        type: 'text',
+        startLine: offset,
+        numLines: selected.length,
+        totalLines: lines.length,
+      })
+    }
+
+    const suffix = hadExplicitRange
+      ? `\n\n[Showing lines ${offset}-${offset + selected.length - 1} of ${lines.length}. Use offset and limit to continue.]`
+      : `\n\n[Truncated at ${lines.length} lines. ${lines.length - (offset + selected.length - 1)} lines remaining. Use offset and limit to continue.]`
     return ok(formatted + suffix, {
       filePath,
       type: 'text',
