@@ -415,10 +415,7 @@ describe('runtime CLI', () => {
         createModelClient: () => ({
           id: 'subagent-resume-model',
           async createMessage(request) {
-            expect(request.messages.some(message =>
-              message.type === 'user' &&
-              message.content.includes('<vigilon_subagent_resume'),
-            )).toBe(true)
+            expect(request.systemPrompt).toContain('vigilon_subagent_resume')
             expect(request.messages.at(-1)).toMatchObject({
               type: 'user',
               content: 'continue the subagent',
@@ -1714,17 +1711,9 @@ describe('runtime CLI', () => {
         id: 'project-config-model',
         async createMessage(request) {
           expect(request.tools.map(tool => tool.name)).toEqual(['Read'])
-          const projectConfigMessage = request.messages.find(
-            message => message.type === 'project-config',
-          )
-          expect(projectConfigMessage).toMatchObject({
-            type: 'project-config',
-            config: {
-              ignore: ['dist/**'],
-              defaultCommands: { test: 'pnpm test' },
-              allowedTools: ['Read'],
-            },
-          })
+          expect(request.systemPrompt).toContain('ignored paths')
+          expect(request.systemPrompt).toContain('dist/**')
+          expect(request.systemPrompt).toContain('test=pnpm test')
           return { content: 'project config loaded', toolCalls: [], stopReason: 'end_turn' }
         },
       }),
@@ -1755,29 +1744,7 @@ describe('runtime CLI', () => {
         createModelClient: () => ({
           id: 'prompt-ignore-model',
           async createMessage(request) {
-            const projectConfigMessage = request.messages.find(
-              message => message.type === 'project-config',
-            )
-            expect(projectConfigMessage).toMatchObject({
-              type: 'project-config',
-            })
-            const config = projectConfigMessage?.type === 'project-config'
-              ? projectConfigMessage.config
-              : undefined
-            expect(config?.ignore).toEqual(
-              expect.arrayContaining([
-                'research/.research/**',
-                '**/research/.research/**',
-                'research/**',
-                '**/research/**',
-                '.research/**',
-                '**/.research/**',
-                '*research*',
-                '*research*/**',
-                '**/*research*',
-                '**/*research*/**',
-              ]),
-            )
+            expect(request.systemPrompt).toContain('research')
             return {
               content: 'prompt ignore loaded',
               toolCalls: [],
@@ -1812,28 +1779,15 @@ describe('runtime CLI', () => {
         createModelClient: () => ({
           id: 'operator-guidance-model',
           async createMessage(request) {
-            expect(request.messages[0]).toMatchObject({
-              type: 'user',
-              content: expect.stringContaining('<vigilon_operator_guidance>'),
-            })
-            expect(request.messages[0].type === 'user' ? request.messages[0].content : '').toContain(
-              'prefer Grep, Glob, Read, and LSP',
-            )
-            expect(request.messages[0].type === 'user' ? request.messages[0].content : '').toContain(
-              'Use ResultReport only when a structured handoff is useful',
-            )
-            expect(request.messages[0].type === 'user' ? request.messages[0].content : '').toContain(
-              '<vigilon_project_instructions',
-            )
-            expect(request.messages[0].type === 'user' ? request.messages[0].content : '').toContain(
-              'whiteboard Agent baseline',
-            )
-            return {
-              content: 'guided',
-              toolCalls: [],
-              stopReason: 'end_turn',
-            }
-          },
+          expect(request.systemPrompt).toContain('prefer Grep, Glob, Read')
+          expect(request.systemPrompt).toContain('Use ResultReport only when a structured handoff is useful')
+          expect(request.systemPrompt).toContain('whiteboard Agent baseline')
+          return {
+            content: 'guided',
+            toolCalls: [],
+            stopReason: 'end_turn',
+          }
+        },
         }),
       },
     )

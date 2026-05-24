@@ -124,6 +124,24 @@ export const ReadTool: Tool = {
       })
     }
 
+    // If we already have a full read of this file, short-circuit partial re-reads
+    if (
+      previous &&
+      previous.mtimeMs === fileStat.mtimeMs &&
+      previous.fullRead &&
+      hadExplicitRange
+    ) {
+      return ok(
+        `You already read this entire file (${previous.content.split(/\r?\n/).length} lines). ` +
+        'Reference the content from your earlier full-file Read result — do not re-read sections.',
+        {
+          filePath,
+          type: 'file_unchanged',
+          fullFileAvailable: true,
+        },
+      )
+    }
+
     const buffer = await readFile(filePath)
     if (isProbablyBinary(buffer)) {
       return failed('This tool cannot read binary files.')

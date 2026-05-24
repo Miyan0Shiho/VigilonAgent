@@ -16,6 +16,10 @@ export type DeepSeekModelClientOptions = {
 
 type DeepSeekMessage =
   | {
+      role: 'system'
+      content: string
+    }
+  | {
       role: 'user'
       content: string
     }
@@ -113,7 +117,7 @@ export function createDeepSeekModelClient(
         }
       }
 
-      const messages = transcriptToDeepSeekMessages(request.messages)
+      const messages = transcriptToDeepSeekMessages(request.messages, request.systemPrompt)
       const apiTools = request.tools.map(toolToDeepSeekTool)
       let allowSpecificToolChoice = true
       let lastError: string | undefined
@@ -234,7 +238,7 @@ export function createDeepSeekModelClient(
         }
       }
 
-      const messages = transcriptToDeepSeekMessages(request.messages)
+      const messages = transcriptToDeepSeekMessages(request.messages, request.systemPrompt)
       const apiTools = request.tools.map(toolToDeepSeekTool)
       let allowSpecificToolChoice = true
 
@@ -543,8 +547,12 @@ function normalizeContextOverflowMessage(message: string): string {
 
 function transcriptToDeepSeekMessages(
   events: readonly TranscriptEvent[],
+  systemPrompt?: string,
 ): DeepSeekMessage[] {
   const messages: DeepSeekMessage[] = []
+  if (systemPrompt) {
+    messages.push({ role: 'system', content: systemPrompt })
+  }
   let pendingToolCalls: DeepSeekToolCall[] = []
   const seenToolCallIds = new Set<string>()
 
