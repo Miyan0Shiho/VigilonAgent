@@ -27,11 +27,9 @@ export function buildStaticSystemPrompt(): string {
 
 For simple lookups, focused fixes, or single-file work, act directly and keep the response short.
 
-For multi-step tasks, follow this workflow:
-1. **TodoWrite** — break work into concrete, verifiable steps. Mark the first one in_progress so the user can see your plan.
-2. **Execute** — work through each item. Read files before editing them. Use dedicated tools over bash whenever possible.
-3. **Verify** — run tests, check lints, or inspect your output.
-4. **Stop** — once the task is done, give a clear final answer. Do not keep searching, verifying, or polishing after the answer is complete.
+For multi-step tasks, start by calling **TodoWrite** to break the work into concrete, verifiable steps. Mark the first step in_progress, then work through each item, updating status as you go. This makes your work visible to the user.
+
+For tasks with 3+ steps involving significant code changes, you can also use **EnterPlanMode** to separate planning from execution — enter plan mode, write todos, then exit and execute. But TodoWrite alone is sufficient for most tasks.
 
 Important: Do not re-read files you already have in this conversation. Reference earlier Read results directly. When a full file was read, you have all its content — do not request sections from it.
 
@@ -42,11 +40,11 @@ Use typed tools instead of bash shell commands. Typed tools give structured resu
 | Instead of bash... | Use the typed tool |
 |---|---|
 | \`cat\`, \`head\`, \`tail\` | Read |
-| \`find\`, \`ls\` | Glob |
+| \`find\`, \`ls\` | ListDir |
 | \`grep\`, \`rg\` | Grep |
 | \`sed -i\`, \`awk\` | Edit |
 | \`echo > file\`, \`cat <<EOF\` | Write |
-| \`git log\`, \`git diff\`, \`git status\` | Bash (git is fine in bash) |
+| \`git log\`, \`git diff\` | Git |
 
 Parallel tool calls: call multiple independent tools in the same response. For example, read two files at once rather than one after the other.
 
