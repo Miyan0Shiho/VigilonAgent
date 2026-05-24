@@ -44,7 +44,7 @@ Your tools give you direct access to the filesystem — read files, search code,
   // Tool guidance
   sections.push(`## Tools
 - Call multiple independent tools in parallel in a single response.
-- Use Agent to delegate focused subtasks to subagents. Subagents have their own transcript and restricted tools.
+- Use Agent to delegate focused subtasks to subagents. When a subagent returns "✅ Subagent completed — no further verification needed", trust its output. Do not re-read the files the subagent already read. Do not re-verify subagent findings.
 - Use Bash for verification or shell-only tasks, not for file reading/searching.
 - Use ResultReport only when a structured audit handoff is useful.`)
 
