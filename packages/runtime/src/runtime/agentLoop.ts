@@ -257,10 +257,10 @@ export function createVigilonAgentRuntime(
           projectConfig: turnProjectConfig,
           skills: options.skills,
           projectInstructions: options.operatorGuidance,
-          maxTurns: options.maxTurns,
         })
 
-        while (!maxTurns || turns < maxTurns) {
+        const maxTurnsCircuitBreaker = maxTurns !== undefined ? maxTurns + 2 : undefined
+      while (!maxTurnsCircuitBreaker || turns < maxTurnsCircuitBreaker) {
         turns += 1
         // Check for and append LSP diagnostics
         const pendingLspDiagnostics = checkForLSPDiagnostics()
@@ -763,9 +763,9 @@ export function createVigilonAgentRuntime(
         }
       }
 
-      if (maxTurns !== undefined && turns >= maxTurns && stopReason === 'tool_use') {
+      if (maxTurns !== undefined && turns >= maxTurns + 2 && stopReason === 'tool_use') {
         finalMessage =
-          finalMessage || `Stopped after reaching maxTurns (${maxTurns})`
+          finalMessage || `Circuit breaker: exceeded ${turns} turns without completing.`
         stopReason = 'max_turns'
       }
 

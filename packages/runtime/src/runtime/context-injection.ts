@@ -332,9 +332,15 @@ export function injectRuntimeProgress(
   if (sessionState.pendingPlan) {
     lines.push(`pending_plan=${JSON.stringify(sessionState.pendingPlan)}`)
   }
-  if (_maxTurns !== undefined && _currentTurn !== undefined && _currentTurn > _maxTurns * 0.6) {
-    lines.push(`turn=${_currentTurn}/${_maxTurns}`)
-    lines.push('You are past the halfway point. Stop exploring — consolidate your findings and produce your output now. If you need to write a file, do it immediately.')
+  if (_maxTurns !== undefined && _currentTurn !== undefined) {
+    const remaining = _maxTurns - _currentTurn
+    if (remaining <= 2) {
+      lines.push(`turn=${_currentTurn}/${_maxTurns} (${remaining > 0 ? remaining : 0} turns past limit)`)
+      lines.push('URGENT: You MUST produce your final answer or write your output file NOW. Do not make any more tool calls unless absolutely necessary to complete the task. Call ResultReport or provide a final assistant message immediately.')
+    } else if (_currentTurn > _maxTurns * 0.6) {
+      lines.push(`turn=${_currentTurn}/${_maxTurns}`)
+      lines.push('You are past the halfway point. Stop exploring — consolidate your findings and produce your output now. If you need to write a file, do it immediately.')
+    }
   }
   const incompleteTodos = sessionState.todos.filter(todo => todo.status !== 'completed')
   if (incompleteTodos.length > 0) {
