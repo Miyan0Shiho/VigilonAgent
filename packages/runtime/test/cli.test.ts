@@ -1711,7 +1711,7 @@ describe('runtime CLI', () => {
         id: 'project-config-model',
         async createMessage(request) {
           expect(request.tools.map(tool => tool.name)).toEqual(['Read'])
-          expect(request.systemPrompt).toContain('Ignored paths')
+          expect(request.systemPrompt).toContain('ignored paths')
           expect(request.systemPrompt).toContain('dist/**')
           expect(request.systemPrompt).toContain('test=pnpm test')
           return { content: 'project config loaded', toolCalls: [], stopReason: 'end_turn' }

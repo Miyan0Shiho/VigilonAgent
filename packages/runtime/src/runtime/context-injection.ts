@@ -18,17 +18,10 @@ import type {
   FileReadingLimits,
 } from './contracts.js'
 
-export function buildSystemPrompt(options: {
-  cwd: string
-  permissionMode?: string
-  projectConfig?: RuntimeProjectConfig
-  skills?: readonly RuntimeSkill[]
-  projectInstructions?: string
-}): string {
-  const sections: string[] = []
-
-  // Identity — DeepSeek-aware, establishes the agent is the tool itself
-  sections.push(`You are Vigilon, a local coding agent running inside the terminal. You help users with software engineering tasks.
+// Static system prompt — byte-identical across turns for DeepSeek prefix cache.
+// Never include session-specific data (cwd, skills, permissions, project config).
+export function buildStaticSystemPrompt(): string {
+  return `You are Vigilon, a local coding agent running inside the terminal. You help users with software engineering tasks.
 
 ## How You Work
 
@@ -72,37 +65,45 @@ When NOT to use a sub-agent: simple lookups, reading one known file, or tasks th
 
 ## Context
 
-You have a large context window. If the conversation grows very long and the system compacts earlier turns, a compact summary will appear — use it to stay oriented. The compaction happens automatically; you do not need to trigger it.`)
+You have a large context window. If the conversation grows very long and the system compacts earlier turns, a compact summary will appear — use it to stay oriented. The compaction happens automatically; you do not need to trigger it.
 
-  // Output formatting — terminal-aware
-  sections.push(`## Output Format
+## Output Format
 
-You are rendering into a terminal. Markdown tables rarely render correctly with mixed-width content (especially CJK characters). Prefer bullet lists, code blocks, or \`- **Label**: value\` pairs over tables.`)
+You are rendering into a terminal. Markdown tables rarely render correctly with mixed-width content (especially CJK characters). Prefer bullet lists, code blocks, or \`- **Label**: value\` pairs over tables.
 
-  // Code rules (condensed)
-  sections.push(`## Code Rules
+## Code Rules
 - Only change what the task requires. No extra refactoring, abstractions, or config.
 - Follow the existing code style in each file.
 - Write secure code. No command injection, XSS, or SQL injection.
-- Do not add error handling for scenarios that cannot happen.`)
+- Do not add error handling for scenarios that cannot happen.`
+}
 
-  // Project context
-  const projectLines: string[] = []
-  projectLines.push(`Workspace: ${options.cwd}`)
+// Dynamic context — may change per session or configuration.
+// Injected as a user message to avoid breaking the static system prompt prefix cache.
+export function buildDynamicContext(options: {
+  cwd: string
+  permissionMode?: string
+  projectConfig?: RuntimeProjectConfig
+  skills?: readonly RuntimeSkill[]
+  projectInstructions?: string
+}): string {
+  const lines: string[] = []
+
+  // Workspace
+  lines.push(`## Workspace\ncwd: ${options.cwd}`)
   if (options.permissionMode) {
-    projectLines.push(`Permission mode: ${options.permissionMode}`)
+    lines.push(`permission mode: ${options.permissionMode}`)
   }
   if (options.projectConfig?.ignore.length) {
-    projectLines.push(`Ignored paths: ${options.projectConfig.ignore.join(', ')}`)
+    lines.push(`ignored paths: ${options.projectConfig.ignore.join(', ')}`)
   }
   if (options.projectConfig?.defaultCommands && Object.keys(options.projectConfig.defaultCommands).length > 0) {
-    projectLines.push(`Project commands: ${Object.entries(options.projectConfig.defaultCommands).map(([k, v]) => `${k}=${v}`).join(', ')}`)
+    lines.push(`project commands: ${Object.entries(options.projectConfig.defaultCommands).map(([k, v]) => `${k}=${v}`).join(', ')}`)
   }
-  sections.push(`## Workspace\n${projectLines.join('\n')}`)
 
   // Project instructions (AGENTS.md, VIGILON.md)
   if (options.projectInstructions?.trim()) {
-    sections.push(`## Project\n${options.projectInstructions.trim()}`)
+    lines.push(`\n## Project\n${options.projectInstructions.trim()}`)
   }
 
   // Skills
@@ -111,11 +112,22 @@ You are rendering into a terminal. Markdown tables rarely render correctly with 
       .filter(s => !s.disableModelInvocation)
       .map(s => `- **${s.name}**: ${s.description}`)
     if (skillLines.length > 0) {
-      sections.push(`## Available Skills\n${skillLines.join('\n')}\n\nTo use a skill, call the Skill tool with its exact name.`)
+      lines.push(`\n## Available Skills\n${skillLines.join('\n')}\n\nTo use a skill, call the Skill tool with its exact name.`)
     }
   }
 
-  return sections.join('\n\n')
+  return lines.join('\n')
+}
+
+// Legacy wrapper — builds full prompt for callers that need a single string.
+export function buildSystemPrompt(options: {
+  cwd: string
+  permissionMode?: string
+  projectConfig?: RuntimeProjectConfig
+  skills?: readonly RuntimeSkill[]
+  projectInstructions?: string
+}): string {
+  return buildStaticSystemPrompt() + '\n\n' + buildDynamicContext(options)
 }
 
 export function injectProjectConfig(

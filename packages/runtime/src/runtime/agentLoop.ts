@@ -83,6 +83,8 @@ import {
   loadSessionMemory,
   getTranscriptPathForStore,
   buildSystemPrompt,
+  buildStaticSystemPrompt,
+  buildDynamicContext,
 } from './context-injection.js'
 
 import { createLSPServerManager, type LSPServerManager } from '../services/lsp/LSPServerManager.js'
@@ -251,7 +253,9 @@ export function createVigilonAgentRuntime(
       try {
         await lspServerManager.initialize(DEFAULT_LSP_CONFIGS)
 
-        const systemPrompt = buildSystemPrompt({
+        // Static prefix + dynamic suffix in one system message.
+        // DeepSeek's prefix cache keeps the static part across turns.
+        const systemPrompt = buildStaticSystemPrompt() + '\n\n' + buildDynamicContext({
           cwd: input.cwd,
           permissionMode: options.permissionMode,
           projectConfig: turnProjectConfig,
