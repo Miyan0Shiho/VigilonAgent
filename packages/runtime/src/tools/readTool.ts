@@ -71,7 +71,10 @@ export const ReadTool: Tool = {
       return failed(`Refusing to read blocked device path: ${filePath}`)
     }
     const relativePath = toRelativeToolPath(context.cwd, filePath)
+    // Allow reading subagent transcripts even if they match project ignore patterns
+    const isSubagentTranscript = /subagents[/\\]/.test(relativePath)
     if (
+      !isSubagentTranscript &&
       isProjectIgnored(relativePath, [
         ...DEFAULT_READ_IGNORE_PATTERNS,
         ...(context.projectConfig?.ignore ?? []),
