@@ -52,6 +52,7 @@ describe('execution tools', () => {
       'ApplyPatch',
       'RunTests',
       'Note',
+      'Snapshot',
     ])
   })
 

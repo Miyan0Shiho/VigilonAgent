@@ -192,6 +192,7 @@ export { GitTool } from './tools/gitTool.js'
 export { ApplyPatchTool } from './tools/applyPatchTool.js'
 export { RunTestsTool } from './tools/runTestsTool.js'
 export { NoteTool } from './tools/noteTool.js'
+export { SnapshotTool } from './tools/snapshotTool.js'
 export type {
   AskUserQuestionInput,
   AskUserQuestionOutput,

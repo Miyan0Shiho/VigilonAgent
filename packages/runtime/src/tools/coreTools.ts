@@ -27,6 +27,7 @@ import { GitTool } from './gitTool.js'
 import { ApplyPatchTool } from './applyPatchTool.js'
 import { RunTestsTool } from './runTestsTool.js'
 import { NoteTool } from './noteTool.js'
+import { SnapshotTool } from './snapshotTool.js'
 
 export const CORE_TOOLS = [
   ReadTool,
@@ -53,6 +54,7 @@ export const CORE_TOOLS = [
   ApplyPatchTool,
   RunTestsTool,
   NoteTool,
+  SnapshotTool,
 ] as const
 
 export function createCoreToolRegistry(options: {

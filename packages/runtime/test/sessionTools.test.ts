@@ -54,6 +54,7 @@ describe('session tools', () => {
       'ApplyPatch',
       'RunTests',
       'Note',
+      'Snapshot',
     ])
   })
 
