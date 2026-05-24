@@ -44,6 +44,8 @@ export type ModelRequest = {
   cachePrefix?: RequestCachePrefixMetadata
   abortSignal: AbortSignal
   systemPrompt?: string
+  model?: string
+  thinking?: 'off' | 'high'
 }
 
 export type ModelTokenCountRequest = ModelRequest

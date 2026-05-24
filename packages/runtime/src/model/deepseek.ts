@@ -6,11 +6,12 @@ import type {
   ToolCall,
   TranscriptEvent,
 } from '../runtime/contracts.js'
+import { createFinRouter, createFinModelClient } from './finRouter.js'
 
 export type DeepSeekModelClientOptions = {
   apiKey?: string
   baseUrl?: string
-  model?: 'deepseek-v4-flash' | 'deepseek-v4-pro' | (string & {})
+  model?: 'deepseek-v4-flash' | 'deepseek-v4-pro' | 'auto' | (string & {})
   fetch?: typeof fetch
 }
 
@@ -105,7 +106,8 @@ export function createDeepSeekModelClient(
     options.model ?? process.env.DEEPSEEK_MODEL ?? 'deepseek-v4-flash'
   const fetchImpl = options.fetch ?? fetch
 
-  return {
+  // Build base client
+  const baseClient: ModelClient = {
     id: `deepseek:${model}`,
     async countInputTokens(request: ModelRequest) {
       if (!apiKey) {
@@ -244,8 +246,9 @@ export function createDeepSeekModelClient(
 
       let lastError: string | undefined
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+        const effectiveModel = request.model ?? model
         const requestBody = JSON.stringify({
-          model,
+          model: effectiveModel,
           messages,
           tools: apiTools,
           tool_choice: toDeepSeekToolChoice(request, allowSpecificToolChoice),
@@ -253,6 +256,7 @@ export function createDeepSeekModelClient(
           stream_options: {
             include_usage: true,
           },
+          ...(request.thinking === 'high' ? { thinking: { type: 'enabled' } } : {}),
         })
         try {
           const response = await fetchImpl(`${baseUrl}/chat/completions`, {
@@ -340,6 +344,14 @@ export function createDeepSeekModelClient(
       }
     },
   }
+
+  // Fin auto-routing: when model is 'auto', wrap with a per-request router
+  if (model === 'auto') {
+    const finRouter = createFinRouter({ apiKey, baseUrl })
+    return createFinModelClient(baseClient, finRouter)
+  }
+
+  return baseClient
 }
 
 function mapDeepSeekUsage(
