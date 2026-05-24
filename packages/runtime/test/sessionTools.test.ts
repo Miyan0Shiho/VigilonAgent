@@ -49,6 +49,11 @@ describe('session tools', () => {
       'Edit',
       'Bash',
       'ResultReport',
+      'ListDir',
+      'Git',
+      'ApplyPatch',
+      'RunTests',
+      'Note',
     ])
   })
 

@@ -119,7 +119,6 @@ export {
   buildRequestCachePrefixEvent,
   buildRequestCachePrefixMetadata,
   buildRequestCacheSnapshot,
-  injectRequestCachePrefix,
   isRequestCachePrefixContent,
   selectRequestCacheTools,
   REQUEST_CACHE_PREFIX_TAG,
@@ -186,6 +185,11 @@ export { TaskStopTool } from './tools/taskStopTool.js'
 export { ToolSearchTool } from './tools/toolSearchTool.js'
 export { WebFetchTool } from './tools/webFetchTool.js'
 export { WriteTool } from './tools/writeTool.js'
+export { ListDirTool } from './tools/listDirTool.js'
+export { GitTool } from './tools/gitTool.js'
+export { ApplyPatchTool } from './tools/applyPatchTool.js'
+export { RunTestsTool } from './tools/runTestsTool.js'
+export { NoteTool } from './tools/noteTool.js'
 export type {
   AskUserQuestionInput,
   AskUserQuestionOutput,
