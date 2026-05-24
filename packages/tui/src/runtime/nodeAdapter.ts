@@ -349,6 +349,9 @@ export async function createNodeRuntimeAdapter(input: {
           onEvent({ type: 'working', content: 'model request started' })
         }
         if (event.type === 'model-response-received') {
+          if (event.response.usage?.cacheHitRatio !== undefined) {
+            onEvent({ type: 'cache', ratio: event.response.usage.cacheHitRatio })
+          }
           if (event.response.reasoningContent) {
             onEvent({
               type: 'assistant',

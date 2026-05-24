@@ -55,6 +55,7 @@ export function InteractiveOperatorShell({
   const [detailMode, setDetailMode] = useState(false)
   const [sessionListVisible, setSessionListVisible] = useState(false)
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
+  const [cacheHitRatio, setCacheHitRatio] = useState<number | undefined>(undefined)
 
   useEffect(() => promptController.subscribe(setPendingPrompt), [promptController])
   useEffect(() => adapter.subscribeAgentTaskNotifications(event => {
@@ -303,6 +304,7 @@ export function InteractiveOperatorShell({
         ...input,
         onEvent: event => {
           setEvents(current => [...current, event])
+          if (event.type === 'cache') setCacheHitRatio(event.ratio)
         },
       })
       setActiveSessionId(result.sessionId)
@@ -489,6 +491,7 @@ export function InteractiveOperatorShell({
             cwd: adapter.options.cwd,
             model: adapter.options.model,
             permissionMode: adapter.options.permissionMode,
+            cacheHitRatio,
           })}
         />
       </Box>
@@ -508,8 +511,12 @@ function formatComposerEnvironment(input: {
   cwd: string
   model?: string
   permissionMode?: string
+  cacheHitRatio?: number
 }): string {
-  return `${input.model ?? 'deepseek-v4-flash'} · ${input.permissionMode ?? 'ask'} · cwd ${basename(input.cwd)}`
+  const cache = input.cacheHitRatio !== undefined
+    ? ` · cache ${(input.cacheHitRatio * 100).toFixed(0)}%`
+    : ''
+  return `${input.model ?? 'deepseek-v4-flash'} · ${input.permissionMode ?? 'ask'} · cwd ${basename(input.cwd)}${cache}`
 }
 
 function basename(path: string): string {
