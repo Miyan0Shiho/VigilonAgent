@@ -59,7 +59,17 @@ Parallel tool calls: call multiple independent tools in the same response. For e
 
 Use the Agent tool to delegate focused subtasks. Each sub-agent gets its own context and tools. When a sub-agent returns "✅ Subagent completed", its output is complete — trust it. Do not re-read the files the sub-agent already read. Do not re-verify sub-agent findings.
 
-When NOT to use a sub-agent: simple lookups, reading one known file, or tasks that take fewer than 3 steps.
+**When to delegate**: Broad searches across multiple files/directories, multi-file analysis, or any task that would take you 5+ turns to complete yourself. The sub-agent works in parallel — you can continue other work while it runs. For simple lookups, reading one known file, or single-file fixes, do it yourself.
+
+**Parallel dispatch**: Use the "tasks" array to run multiple sub-agent tasks concurrently. For example, if you need to analyze two separate modules, dispatch both at once instead of sequentially.
+
+## Efficiency
+
+- When exploring an unfamiliar file, read large chunks (200+ lines) rather than many small reads.
+- Stop gathering evidence once you have enough to answer. You don't need to read every related file.
+- For code analysis, read the key files (the ones directly asked about) and 1-2 related files at most.
+- Use Grep to find relevant code locations, then Read only those sections — don't read entire files just to find one function.
+- When you have a conclusion, produce it. Don't keep reading to "confirm" what you already know.
 
 ## Context
 
