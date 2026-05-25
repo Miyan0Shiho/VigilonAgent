@@ -261,15 +261,15 @@ html, body {
     <div class="detail-section" id="detail-section">
       <!-- Default: agent summary -->
       <div class="agent-summary" id="agent-summary">
-        <div class="agent-summary-card" data-agent="worker">
+        <div class="agent-summary-card" data-agent="agent-executor">
           <div class="shape hex"></div>
           <div class="info"><div class="name">执行者</div><div class="status">负责执行任务</div></div>
         </div>
-        <div class="agent-summary-card" data-agent="critic">
+        <div class="agent-summary-card" data-agent="agent-reviewer">
           <div class="shape diamond"></div>
           <div class="info"><div class="name">审查者</div><div class="status">负责质疑和审查</div></div>
         </div>
-        <div class="agent-summary-card" data-agent="steward">
+        <div class="agent-summary-card" data-agent="agent-guide">
           <div class="shape circle"></div>
           <div class="info"><div class="name">引导者</div><div class="status">关注用户能力和意图</div></div>
         </div>
@@ -300,6 +300,15 @@ html, body {
           <div class="detail-block-title">关系</div>
           <div class="detail-block-text" id="d-rels"></div>
         </div>
+      </div>
+
+      <!-- Scenario detail (hidden by default) -->
+      <div id="scenario-detail" style="display:none;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div id="sc-title" style="font-weight:600;font-size:14px;color:#e0d8d0"></div>
+          <span style="font-size:9px;color:#605848;letter-spacing:1px" id="sc-source"></span>
+        </div>
+        <div id="sc-body"></div>
       </div>
     </div>
 
@@ -409,33 +418,53 @@ class Agent {
   }
 
   initBeliefs() {
-    if (this.id === 'worker') {
-      this.beliefs = [
-        { text: '任务：重构 auth 模块', status: 'ok', note: '有测试覆盖，安全' },
-        { text: '假设：Node 版本 ≥ 18', status: 'warn', note: '未经验证' },
-      ];
-      this.memory = [
-        { text: '用户偏好 pnpm 而非 npm', source: '用户确认' },
-      ];
-      this.relationships = { critic: 65, steward: 85 };
-    } else if (this.id === 'critic') {
-      this.beliefs = [
-        { text: '计划：删除目录重建', status: 'warn', note: '可能存在子模块风险' },
-      ];
-      this.memory = [
-        { text: '上次执行者未检查 .git 子模块', source: '观察记录' },
-      ];
-      this.relationships = { worker: 55, steward: 70 };
-    } else {
-      this.beliefs = [
-        { text: '用户文件系统操作：中级', status: 'ok', note: '适当降低引导密度' },
-        { text: '用户意图：项目清理', status: 'ok', note: '已确认' },
-      ];
-      this.memory = [
-        { text: '用户请求帮助进行项目清理', source: '用户确认' },
-      ];
-      this.relationships = { worker: 85, critic: 70 };
+    const t = dTrust();
+    // Build relationships from trust graph
+    const rels = {};
+    if (t[this.id]) {
+      for (const [target, trust] of Object.entries(t[this.id])) {
+        if (target !== this.id) rels[target] = trust;
+      }
     }
+    // Add relationship changes from sleep
+    if (dSleep()) {
+      for (const rc of dSleep().packet?.relationshipChanges ?? []) {
+        if (rc.fromId === this.id) rels[rc.toId] = rc.after;
+      }
+    }
+
+    // Build beliefs from dream cross-analysis + wake constraints
+    const beliefs = [];
+    const ca = dDream()?.crossAnalysis ?? [];
+    for (const c of ca) {
+      if (c.insight) beliefs.push({ text: c.insight, status: c.pattern?.includes('风险') ? 'warn' : 'ok', note: `证据: ${(c.evidence ?? []).slice(0, 2).join(', ')}` });
+    }
+    for (const c of dWake()?.summary?.constraints ?? []) {
+      beliefs.push({ text: c, status: 'warn', note: '从争议中学习' });
+    }
+    // Fallback: use resume anchor context
+    if (beliefs.length === 0 && dSleep()?.packet?.resumeAnchor?.context) {
+      beliefs.push({ text: dSleep().packet.resumeAnchor.context, status: 'ok', note: '上次会话摘要' });
+    }
+
+    // Build memory from dream changes
+    const mems = [];
+    const dr = dDream();
+    for (const u of dr?.updated ?? []) {
+      mems.push({ text: `${u.oldContent} → ${u.newContent}`, source: `更新: ${u.reason}` });
+    }
+    for (const c of dr?.cleaned ?? []) {
+      mems.push({ text: c.content, source: `清理: ${c.reason}` });
+    }
+    for (const m of dr?.merged ?? []) {
+      mems.push({ text: m.into, source: `合并: ${m.reason}` });
+    }
+    // Fallback memory
+    if (mems.length === 0) {
+      mems.push({ text: dSleep()?.packet?.resumeAnchor?.context ?? '等待首次工作周期', source: '会话摘要' });
+    }
+
+    this.beliefs = beliefs; this.memory = mems; this.relationships = rels;
   }
 
   walkTo(x, y) {
@@ -479,9 +508,9 @@ class Agent {
 // Create agents
 // ═══════════════════════════════════════════
 const agents = [
-  new Agent('worker', '执行者', '负责执行任务', '#e87850', 'rgba(232,120,80,0.35)', 'hex', 0),
-  new Agent('critic', '审查者', '负责质疑和审查', '#5098b8', 'rgba(80,152,184,0.35)', 'diamond', 2),
-  new Agent('steward', '引导者', '关注用户能力和意图', '#68a878', 'rgba(104,168,120,0.35)', 'circle', 3),
+  new Agent('agent-executor', '执行者', '负责执行任务', '#e87850', 'rgba(232,120,80,0.35)', 'hex', 0),
+  new Agent('agent-reviewer', '审查者', '负责质疑和审查', '#5098b8', 'rgba(80,152,184,0.35)', 'diamond', 2),
+  new Agent('agent-guide', '引导者', '关注用户能力和意图', '#68a878', 'rgba(104,168,120,0.35)', 'circle', 3),
 ];
 
 let selectedAgent = null;
@@ -493,6 +522,19 @@ let sleepActive = false;
 let toastVisible = false;
 const events = [];
 let particles = [];
+
+// ═══════════════════════════════════════════
+// Prototype data layer
+// ═══════════════════════════════════════════
+const DATA = window.__DEMO_DATA__ || null;
+function hasData() { return !!DATA; }
+function dSleep() { return DATA?.sleep; }
+function dSkills() { return DATA?.skillsRules; }
+function dWake() { return DATA?.wake; }
+function dTrust() { return DATA?.trustGraph ?? {}; }
+function dDispute(idx = 0) { return dSleep()?.packet?.resolvedDisputes?.[idx]; }
+function dDream() { return dSleep()?.packet?.dream; }
+function dLabel(agentId) { const a = DATA?.agents?.find(a => a.id === agentId); return a?.label ?? agentId; }
 
 // ═══════════════════════════════════════════
 // Particles
@@ -817,19 +859,36 @@ function initiateDispute() {
   agents[0].disputing = true; agents[1].disputing = true;
   agents[0].walkTo(640, 180); agents[1].walkTo(695, 180);
   agents[2].walkTo(665, 250);
-  agents[1].relationships.worker = Math.max(20, agents[1].relationships.worker - 15);
-  addEvent('red', '审查者质疑：该目录可能包含 git 子模块');
-  addEvent('red', '执行者回应：这是初始化脚本创建的目录');
-  showToast('审查者质疑删除计划：存在子模块风险');
+
+  const disp = dDispute();
+  if (disp) {
+    addEvent('red', `[${disp.resolution}] ${disp.reason} — 裁决: ${disp.decision}`);
+    for (const ti of disp.trustImpacts ?? []) {
+      addEvent('dim', `${dLabel(ti.fromId)}→${dLabel(ti.toId)} 信任 ${ti.delta > 0 ? '+' + ti.delta : ti.delta}%: ${ti.reason}`);
+    }
+    showToast(`[${disp.resolution}] ${disp.reason}`);
+  } else {
+    addEvent('red', '审查者质疑：该目录可能包含 git 子模块');
+    addEvent('red', '执行者回应：这是初始化脚本创建的目录');
+    showToast('审查者质疑删除计划：存在子模块风险');
+  }
   document.getElementById('status-dot').classList.add('warn');
+  showScenarioDetail('dispute');
 }
 
 function resolveDispute() {
   if (!disputeActive) return;
   disputeActive = false;
   agents.forEach(a => { a.disputing = false; });
-  agents[1].relationships.worker = Math.min(85, agents[1].relationships.worker + 10);
-  addEvent('grn', '争论解决——执行者增加 .git 检查步骤');
+
+  const disp = dDispute();
+  if (disp?.decision === 'modify') {
+    addEvent('grn', `协商解决 — ${disp.modifiedPlan ?? '各让一步'}`);
+  } else if (disp?.decision === 'block') {
+    addEvent('red', `被阻止 — ${disp.reason}`);
+  } else {
+    addEvent('grn', '争论解决——执行者增加 .git 检查步骤');
+  }
   document.getElementById('status-dot').classList.remove('warn');
 }
 
@@ -838,7 +897,17 @@ function goToSleep() {
   sleepActive = true;
   if (disputeActive) resolveDispute();
   agents.forEach(a => { a.resting = true; a.walkTo(620 + Math.random() * 110, 420 + Math.random() * 40); });
-  addEvent('dim', '所有 Agent 进入休息——正在整理本轮经验');
+
+  const ds = dSleep();
+  if (ds) {
+    addEvent('dim', `Dream 整理: ${ds.summary.dreamCleaned}清理 ${ds.summary.dreamUpdated}更新 ${ds.summary.dreamMerged}合并 ${ds.summary.dreamCrossAnalysis}交叉分析`);
+    for (const rc of ds.summary.relationshipChanges ?? []) {
+      addEvent('grn', `关系: ${rc}`);
+    }
+    showScenarioDetail('sleep');
+  } else {
+    addEvent('dim', '所有 Agent 进入休息——正在整理本轮经验');
+  }
 }
 
 function wakeUp() {
@@ -848,7 +917,26 @@ function wakeUp() {
   agents[0].walkTo(agents[0].homeDesk.x + agents[0].homeDesk.w / 2, agents[0].homeDesk.y + agents[0].homeDesk.h / 2);
   agents[1].walkTo(560, 120);
   agents[2].walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
-  addEvent('grn', 'Agent 醒来——带着新约束和调整后的关系');
+
+  const dw = dWake();
+  const sk = dSkills();
+  if (dw) {
+    addEvent('grn', `醒来 — 身份: ${dw.summary.stillSameAgent ? '同一 Agent ✅' : '变化 ⚠️'}`);
+    for (const c of dw.summary.constraints ?? []) {
+      addEvent('dim', `新约束: ${c.slice(0, 60)}`);
+    }
+    if (sk) {
+      for (const s of sk.newSkills ?? []) {
+        addEvent('grn', `学习: ${s.name} (信心: ${(s.confidence * 100).toFixed(0)}%)`);
+      }
+      for (const r of sk.newRules ?? []) {
+        addEvent('red', `规则: [${r.type}] ${r.rule?.slice(0, 50) ?? ''}`);
+      }
+    }
+    showScenarioDetail('wake');
+  } else {
+    addEvent('grn', 'Agent 醒来——带着新约束和调整后的关系');
+  }
 }
 
 function showToast(msg) {
@@ -889,6 +977,7 @@ function setScenario(sc) {
       agents[0].walkTo(agents[0].homeDesk.x + agents[0].homeDesk.w / 2, agents[0].homeDesk.y + agents[0].homeDesk.h / 2);
       agents[1].walkTo(560, 120);
       agents[2].walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
+      showScenarioDetail('work');
       break;
     case 'dispute': if (sleepActive) wakeUp(); initiateDispute(); break;
     case 'sleep': goToSleep(); break;
@@ -899,7 +988,97 @@ function setScenario(sc) {
   window._scTimeout = setTimeout(() => {
     scenarioOverride = null;
     document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+    if (selectedAgent) selectAgent(selectedAgent);
+    else deselectAgent();
   }, 6000);
+}
+
+// ═══════════════════════════════════════════
+// Scenario detail in sidebar
+// ═══════════════════════════════════════════
+function showScenarioDetail(sc) {
+  const el = document.getElementById('scenario-detail');
+  const title = document.getElementById('sc-title');
+  const body = document.getElementById('sc-body');
+  if (!el || !title || !body) return;
+
+  document.getElementById('agent-summary').style.display = 'none';
+  const ad = document.getElementById('agent-detail');
+  if (ad) ad.style.display = 'none';
+  el.style.display = 'flex';
+
+  switch (sc) {
+    case 'work': {
+      title.textContent = '📋 工作状态';
+      const ctx = dSleep()?.packet?.resumeAnchor?.context ?? '执行者进行 auth 重构，审查者复盘，引导者监测用户意图';
+      body.innerHTML = `<div class="detail-block"><div class="detail-block-title">当前上下文</div><div class="detail-block-text">${ctx}</div></div>
+        <div class="detail-block"><div class="detail-block-title">信任网络</div><div class="detail-block-text">${renderTrustGraph()}</div></div>`;
+      break;
+    }
+    case 'dispute': {
+      const disp = dDispute();
+      if (disp) {
+        title.textContent = `⚡ 争议: ${disp.resolution}`;
+        body.innerHTML = `<div class="detail-block"><div class="detail-block-title">裁决</div><div class="detail-block-text"><span class="${disp.decision === 'block' ? 'warn' : 'ok'}">${disp.decision}</span> · ${disp.resolvedBy}</div></div>
+          <div class="detail-block"><div class="detail-block-title">理由</div><div class="detail-block-text">${disp.reason}</div></div>
+          ${disp.modifiedPlan ? `<div class="detail-block"><div class="detail-block-title">修改方案</div><div class="detail-block-text">${disp.modifiedPlan}</div></div>` : ''}
+          <div class="detail-block"><div class="detail-block-title">信任影响</div><div class="detail-block-text">${(disp.trustImpacts ?? []).map(ti => `${dLabel(ti.fromId)}→${dLabel(ti.toId)}: ${ti.delta > 0 ? '+' + ti.delta : ti.delta}%`).join('<br>')}</div></div>`;
+      } else {
+        title.textContent = '⚡ 争议 (无数据)';
+        body.innerHTML = `<div class="detail-block-text"><span class="warn">运行 demo 服务器加载真实数据</span></div>`;
+      }
+      break;
+    }
+    case 'sleep': {
+      const ds = dSleep();
+      const dr = dDream();
+      if (ds && dr) {
+        title.textContent = `💤 Dream 整理`;
+        const parts = [];
+        if (dr.cleaned?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">清理 (${dr.cleaned.length})</div><div class="detail-block-text">${dr.cleaned.map(c => `· ${c.content?.slice(0, 60)}<br><span class="dim">  ${c.reason}</span>`).join('<br>')}</div></div>`);
+        if (dr.updated?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">更新 (${dr.updated.length})</div><div class="detail-block-text">${dr.updated.map(u => `· ${u.oldContent?.slice(0, 40)} → ${u.newContent?.slice(0, 40)}<br><span class="dim">  ${u.reason}</span>`).join('<br>')}</div></div>`);
+        if (dr.merged?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">合并 (${dr.merged.length})</div><div class="detail-block-text">${dr.merged.map(m => `· ${m.into?.slice(0, 60)}<br><span class="dim">  ${m.reason}</span>`).join('<br>')}</div></div>`);
+        if (dr.crossAnalysis?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">交叉分析 (${dr.crossAnalysis.length})</div><div class="detail-block-text">${dr.crossAnalysis.map(c => `· <span class="ok">${c.pattern}</span><br><span class="dim">  ${c.insight?.slice(0, 80)}</span>`).join('<br>')}</div></div>`);
+        body.innerHTML = parts.join('') || '<div class="detail-block-text">无变化</div>';
+      } else {
+        title.textContent = '💤 Dream (无数据)';
+        body.innerHTML = `<div class="detail-block-text"><span class="dim">运行 demo 服务器加载真实数据</span></div>`;
+      }
+      break;
+    }
+    case 'wake': {
+      const dw = dWake();
+      const sk = dSkills();
+      if (dw) {
+        title.textContent = `🌅 醒来`;
+        const parts = [];
+        parts.push(`<div class="detail-block"><div class="detail-block-title">身份</div><div class="detail-block-text"><span class="${dw.summary.stillSameAgent ? 'ok' : 'warn'}">${dw.summary.stillSameAgent ? '同一 Agent ✅' : '变化 ⚠️'}</span></div></div>`);
+        if (dw.summary.constraints?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">约束 (${dw.summary.constraints.length})</div><div class="detail-block-text">${dw.summary.constraints.map(c => `· <span class="warn">${c.slice(0, 80)}</span>`).join('<br>')}</div></div>`);
+        if (dw.summary.attentionItems?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">关注事项</div><div class="detail-block-text">${dw.summary.attentionItems.map(a => `· [${a.priority}] ${a.text}`).join('<br>')}</div></div>`);
+        if (sk) {
+          if (sk.newSkills?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">新技能 (${sk.newSkills.length})</div><div class="detail-block-text">${sk.newSkills.map(s => `· <span class="ok">${s.name}</span> (信心:${(s.confidence * 100).toFixed(0)}%)`).join('<br>')}</div></div>`);
+          if (sk.newRules?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">新规则 (${sk.newRules.length})</div><div class="detail-block-text">${sk.newRules.map(r => `· <span class="warn">[${r.type}] ${r.rule?.slice(0, 60)}</span>`).join('<br>')}</div></div>`);
+        }
+        body.innerHTML = parts.join('');
+      } else {
+        title.textContent = '🌅 醒来 (无数据)';
+        body.innerHTML = `<div class="detail-block-text"><span class="dim">运行 demo 服务器加载真实数据</span></div>`;
+      }
+      break;
+    }
+  }
+}
+
+function renderTrustGraph() {
+  const t = dTrust();
+  if (!t || Object.keys(t).length === 0) return '无数据';
+  return Object.entries(t).map(([from, targets]) => {
+    const entries = Object.entries(targets).filter(([to]) => to !== from);
+    return entries.map(([to, v]) => {
+      const cls = v >= 70 ? 'ok' : v >= 45 ? '' : 'warn';
+      return `<span class="${cls}">${dLabel(from)}→${dLabel(to)}: ${v}%</span>`;
+    }).join('<br>');
+  }).join('<br>');
 }
 
 // ═══════════════════════════════════════════
@@ -910,6 +1089,7 @@ function selectAgent(a) {
   a.selected = true; selectedAgent = a;
 
   document.getElementById('agent-summary').style.display = 'none';
+  document.getElementById('scenario-detail').style.display = 'none';
   const detail = document.getElementById('agent-detail');
   detail.style.display = 'flex';
 
@@ -932,24 +1112,26 @@ function selectAgent(a) {
   }
 
   document.getElementById('detail-name').textContent = a.name;
-  document.getElementById('detail-role').textContent = a.role;
+  document.getElementById('detail-role').textContent = `${a.role} · ${hasData() ? '已加载数据' : '无数据'}`;
   document.getElementById('d-beliefs').innerHTML = a.beliefs.map(b =>
-    `<span class="${b.status === 'warn' ? 'warn' : 'ok'}">${b.text}</span> · ${b.note}`
-  ).join('<br>');
+    `<span class="${b.status === 'warn' ? 'warn' : 'ok'}">${b.text.slice(0, 80)}</span> · ${b.note.slice(0, 40)}`
+  ).join('<br>') || '<span class="dim">无信念数据</span>';
   document.getElementById('d-memory').innerHTML = a.memory.map(m =>
-    `"${m.text}" <span class="ok">[${m.source}]</span>`
-  ).join('<br>');
-  const names = { worker: '执行者', critic: '审查者', steward: '引导者' };
+    `"${m.text.slice(0, 60)}" <span class="ok">[${m.source}]</span>`
+  ).join('<br>') || '<span class="dim">无记忆数据</span>';
+  const agentLabelMap = {};
+  agents.forEach(ag => { agentLabelMap[ag.id] = ag.name; });
   document.getElementById('d-rels').innerHTML = Object.entries(a.relationships).map(([k, v]) => {
     const cls = v >= 70 ? 'ok' : v >= 45 ? '' : 'warn';
-    return `→${names[k] || k}: <span class="${cls}">${v}%（${a.getRelLabel(k)}）</span>`;
-  }).join('<br>');
+    return `→${agentLabelMap[k] ?? dLabel(k)}: <span class="${cls}">${v}%（${a.getRelLabel(k)}）</span>`;
+  }).join('<br>') || '<span class="dim">无关系数据</span>';
 }
 
 function deselectAgent() {
   agents.forEach(a => a.selected = false);
   selectedAgent = null;
   document.getElementById('agent-detail').style.display = 'none';
+  document.getElementById('scenario-detail').style.display = 'none';
   document.getElementById('agent-summary').style.display = 'flex';
   updateAgentSummaries();
 }
@@ -998,7 +1180,7 @@ document.getElementById('toast-allow').addEventListener('click', () => {
   hideToast();
   if (disputeActive) {
     agents.forEach(a => { a.disputing = false; });
-    agents[1].relationships.worker = Math.min(85, agents[1].relationships.worker + 15);
+    agents[1].relationships['agent-executor'] = Math.min(85, agents[1].relationships['agent-executor'] + 15);
     addEvent('grn', '用户放行——审查者认可，信任 +15%');
     disputeActive = false;
     document.getElementById('status-dot').classList.remove('warn');
@@ -1012,7 +1194,7 @@ document.getElementById('toast-block').addEventListener('click', () => {
   hideToast();
   if (disputeActive) {
     agents.forEach(a => { a.disputing = false; });
-    agents[1].relationships.worker = Math.min(90, agents[1].relationships.worker + 20);
+    agents[1].relationships['agent-executor'] = Math.min(90, agents[1].relationships['agent-executor'] + 20);
     agents[0].memory.push({ text: '删除目录前必须检查 .git 子模块', source: '事故/用户阻止' });
     addEvent('red', '用户维持质疑——计划被阻止，审查者信誉 +20%');
     disputeActive = false;
@@ -1039,7 +1221,9 @@ function loop(ts) {
 // ═══════════════════════════════════════════
 // Init
 // ═══════════════════════════════════════════
-addEvent('dim', '数字工作社会启动——3 个 Agent 在线');
+addEvent('dim', hasData()
+  ? `数字工作社会启动 — 3 Agent 在线 · ${DATA.source === 'live' ? '实时数据' : DATA.source === 'cached' ? '缓存数据' : '演示数据'}`
+  : '数字工作社会启动——3 个 Agent 在线');
 addEvent('grn', '引导者已读取用户上下文，引导密度：中等');
 updateEvents();
 resize();
