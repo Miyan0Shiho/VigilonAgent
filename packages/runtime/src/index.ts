@@ -7,6 +7,8 @@ export {
 } from './runtime/baseline.js'
 export { runCli } from './cli.js'
 export { createDeepSeekModelClient } from './model/deepseek.js'
+export { createFinRouter, createFinModelClient } from './model/finRouter.js'
+export type { FinDecision } from './model/finRouter.js'
 export {
   compactTranscript,
   estimateCompactTokenPressure,
@@ -119,7 +121,6 @@ export {
   buildRequestCachePrefixEvent,
   buildRequestCachePrefixMetadata,
   buildRequestCacheSnapshot,
-  injectRequestCachePrefix,
   isRequestCachePrefixContent,
   selectRequestCacheTools,
   REQUEST_CACHE_PREFIX_TAG,
@@ -186,6 +187,12 @@ export { TaskStopTool } from './tools/taskStopTool.js'
 export { ToolSearchTool } from './tools/toolSearchTool.js'
 export { WebFetchTool } from './tools/webFetchTool.js'
 export { WriteTool } from './tools/writeTool.js'
+export { ListDirTool } from './tools/listDirTool.js'
+export { GitTool } from './tools/gitTool.js'
+export { ApplyPatchTool } from './tools/applyPatchTool.js'
+export { RunTestsTool } from './tools/runTestsTool.js'
+export { NoteTool } from './tools/noteTool.js'
+export { SnapshotTool } from './tools/snapshotTool.js'
 export type {
   AskUserQuestionInput,
   AskUserQuestionOutput,

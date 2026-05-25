@@ -37,13 +37,20 @@ export const WebFetchTool: Tool = {
       parsedUrl = new URL(parsedUrl.toString().replace(/^http:/, 'https:'))
     }
 
-	    const permission = await context.permissionGate.requestPermission({
-	      action: 'network',
-	      subject: `domain:${parsedUrl.hostname}`,
-	      risk: 'medium',
-	      reason: `Fetch public webpage ${parsedUrl.origin}`,
-	      origin: withToolPermissionOrigin(context.permissionOrigin, 'WebFetch'),
-	    })
+    if (isBlockedHost(parsedUrl.hostname)) {
+      return failed(`WebFetch blocked: ${parsedUrl.hostname} is not a public host`, {
+        code: 'BLOCKED_HOST',
+        hostname: parsedUrl.hostname,
+      })
+    }
+
+    const permission = await context.permissionGate.requestPermission({
+      action: 'network',
+      subject: `domain:${parsedUrl.hostname}`,
+      risk: 'medium',
+      reason: `Fetch public webpage ${parsedUrl.origin}`,
+      origin: withToolPermissionOrigin(context.permissionOrigin, 'WebFetch'),
+    })
     if (!permission.allowed) {
       return failed(`WebFetch permission denied: ${permission.reason}`, {
         code: 'DOMAIN_BLOCKED',
@@ -51,7 +58,7 @@ export const WebFetchTool: Tool = {
       })
     }
 
-  try {
+    try {
       const cacheKey = parsedUrl.toString()
       const cached = context.webFetch?.cache?.get(cacheKey)
       if (cached) {
@@ -115,6 +122,20 @@ async function fetchWithRedirects(
         `REDIRECT DETECTED: ${url.toString()} -> ${nextUrl.toString()}`,
         'This redirect crosses the allowed host boundary.',
         'Call WebFetch again with the redirect target if you want to continue.',
+      ].join('\n')
+      return {
+        url: url.toString(),
+        code: response.status,
+        codeText: response.statusText || defaultStatusText(response.status),
+        bytes: Buffer.byteLength(message),
+        durationMs,
+        result: message,
+      }
+    }
+    if (isBlockedHost(nextUrl.hostname)) {
+      const message = [
+        `REDIRECT BLOCKED: ${url.toString()} -> ${nextUrl.toString()}`,
+        `The redirect target ${nextUrl.hostname} is not a public host.`,
       ].join('\n')
       return {
         url: url.toString(),
@@ -224,6 +245,37 @@ function defaultStatusText(status: number): string {
   if (status === 308) return 'Permanent Redirect'
   if (status === 200) return 'OK'
   return String(status)
+}
+
+const BLOCKED_HOSTNAMES = new Set([
+  'localhost',
+  '127.0.0.1',
+  '0.0.0.0',
+  '[::1]',
+  '[::]',
+  '169.254.169.254',
+  'metadata.google.internal',
+])
+
+function isBlockedHost(hostname: string): boolean {
+  const lower = hostname.toLowerCase()
+  if (BLOCKED_HOSTNAMES.has(lower)) return true
+  if (lower.endsWith('.local')) return true
+  if (lower.endsWith('.internal')) return true
+  return isPrivateIPv4(lower)
+}
+
+function isPrivateIPv4(hostname: string): boolean {
+  const ipv4Match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(hostname)
+  if (!ipv4Match) return false
+  const b0 = Number(ipv4Match[1])
+  const b1 = Number(ipv4Match[2])
+  if (b0 === 10) return true
+  if (b0 === 172 && b1 >= 16 && b1 <= 31) return true
+  if (b0 === 192 && b1 === 168) return true
+  if (b0 === 127) return true
+  if (b0 === 169 && b1 === 254) return true
+  return false
 }
 
 function ok(content: string, metadata?: Record<string, unknown>): ToolResult {

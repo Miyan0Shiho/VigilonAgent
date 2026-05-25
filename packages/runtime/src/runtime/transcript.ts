@@ -98,13 +98,14 @@ export function getDefaultSessionsDir(): string {
 
 export function getProjectSessionDir(
   cwd: string,
-  sessionsDir = getDefaultSessionsDir(),
+  sessionsDir?: string,
 ): string {
   const resolved = path.resolve(cwd)
   const sanitized = resolved
     .replace(/[^a-zA-Z0-9._-]+/g, '-')
     .replace(/^-+|-+$/g, '')
-  return path.join(sessionsDir, sanitized || 'root')
+  const base = sessionsDir ?? path.join(resolved, '.vigilon', 'sessions')
+  return path.join(base, sanitized || 'root')
 }
 
 export function getTranscriptPath({

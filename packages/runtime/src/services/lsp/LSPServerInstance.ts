@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { existsSync } from 'fs';
 import { pathToFileURL } from 'url';
 import type { InitializeParams, ServerCapabilities, InitializeResult, PublishDiagnosticsParams } from 'vscode-languageserver-protocol';
 import { createLSPClient, type LSPClient } from './LSPClient.js';
@@ -71,7 +72,9 @@ export function createLSPServerInstance(
     try {
       state = 'starting';
 
-      await client.start(config.command, config.args || [], {
+      const resolvedCommand = resolveLspCommand(config.command, config.workspaceFolder);
+
+      await client.start(resolvedCommand, config.args || [], {
         env: config.env,
         cwd: config.workspaceFolder,
       });
@@ -264,6 +267,33 @@ export function createLSPServerInstance(
     onNotification,
     onRequest,
   };
+}
+
+function resolveLspCommand(command: string, workspaceFolder?: string): string {
+  if (path.isAbsolute(command)) return command
+  if (command.includes('/')) {
+    return workspaceFolder ? path.resolve(workspaceFolder, command) : path.resolve(command)
+  }
+
+  // Resolve from project node_modules/.bin if not in PATH
+  const root = findWorkspaceRoot(workspaceFolder ?? process.cwd())
+  if (root) {
+    const binName = process.platform === 'win32' ? `${command}.cmd` : command
+    const resolved = path.join(root, 'node_modules', '.bin', binName)
+    if (existsSync(resolved)) return resolved
+  }
+
+  return command
+}
+
+function findWorkspaceRoot(start: string): string | undefined {
+  let current = path.resolve(start)
+  while (true) {
+    if (existsSync(path.join(current, 'pnpm-workspace.yaml'))) return current
+    const parent = path.dirname(current)
+    if (parent === current) return undefined
+    current = parent
+  }
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {

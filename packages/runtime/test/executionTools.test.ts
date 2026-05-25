@@ -47,6 +47,12 @@ describe('execution tools', () => {
       'Edit',
       'Bash',
       'ResultReport',
+      'ListDir',
+      'Git',
+      'ApplyPatch',
+      'RunTests',
+      'Note',
+      'Snapshot',
     ])
   })
 

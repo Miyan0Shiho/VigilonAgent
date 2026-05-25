@@ -270,6 +270,7 @@ export type TuiRuntimeEvent =
   | { type: 'hook'; lines: string[] }
   | { type: 'error'; content: string }
   | { type: 'handoff'; handoff: TuiHandoff }
+  | { type: 'cache'; ratio: number }
 
 export type TuiTurnResult = {
   sessionId: string

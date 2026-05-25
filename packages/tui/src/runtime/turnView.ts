@@ -410,6 +410,8 @@ function timelineItemForEvent(event: TuiRuntimeEvent, index: number, detailMode:
           : event.handoff.missing ? event.handoff.nextAction : undefined,
         tone: event.handoff.missing ? 'warning' : 'success',
       }]
+    case 'cache':
+      return []
   }
 }
 

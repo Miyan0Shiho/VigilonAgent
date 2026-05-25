@@ -183,6 +183,12 @@ describe('LspTool', () => {
     const mockContext = {
       cwd,
       lspServerManager: {
+        getServerForFile: vi.fn(() => ({
+          config: { languages: ['typescript'] },
+          start: vi.fn(async () => {}),
+          sendNotification: vi.fn(async () => {}),
+        })),
+        getFileContent: vi.fn(async () => 'content'),
         getDiagnostics: vi.fn(async () => [
           {
             severity: 1,
@@ -197,6 +203,7 @@ describe('LspTool', () => {
       permissionGate: {
         requestPermission: vi.fn(async () => ({ allowed: true })),
       },
+      lspOpenFileState: new Set(),
     } as unknown as ToolUseContext;
 
     const result = await LspTool.invoke(
@@ -270,7 +277,6 @@ describe('LspTool', () => {
       permissionGate: {
         requestPermission: vi.fn(async () => ({ allowed: true })),
       },
-      readFileState: new Map(),
     } as unknown as ToolUseContext;
 
     const result = await LspTool.invoke(

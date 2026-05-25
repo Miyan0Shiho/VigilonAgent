@@ -54,6 +54,8 @@ export function InteractiveOperatorShell({
   const [doctor, setDoctor] = useState<Record<string, unknown> | null>(null)
   const [detailMode, setDetailMode] = useState(false)
   const [sessionListVisible, setSessionListVisible] = useState(false)
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
+  const [cacheHitRatio, setCacheHitRatio] = useState<number | undefined>(undefined)
 
   useEffect(() => promptController.subscribe(setPendingPrompt), [promptController])
   useEffect(() => adapter.subscribeAgentTaskNotifications(event => {
@@ -277,7 +279,13 @@ export function InteractiveOperatorShell({
       setStatus('/new requires a prompt')
       return
     }
-    await runTurn({ prompt })
+    if (parsedCommand?.definition.name === 'new') {
+      setActiveSessionId(null)
+    }
+    await runTurn({
+      prompt,
+      sessionSelector: parsedCommand?.definition.name === 'new' ? undefined : activeSessionId ?? undefined,
+    })
   }
 
   async function runTurn(input: {
@@ -292,12 +300,14 @@ export function InteractiveOperatorShell({
     setCompactResult(null)
     setDoctor(null)
     try {
-      await adapter.runTask({
+      const result = await adapter.runTask({
         ...input,
         onEvent: event => {
           setEvents(current => [...current, event])
+          if (event.type === 'cache') setCacheHitRatio(event.ratio)
         },
       })
+      setActiveSessionId(result.sessionId)
       const nextSessions = await adapter.listSessions()
       setSessions(nextSessions)
       setStatus('ready')
@@ -481,6 +491,7 @@ export function InteractiveOperatorShell({
             cwd: adapter.options.cwd,
             model: adapter.options.model,
             permissionMode: adapter.options.permissionMode,
+            cacheHitRatio,
           })}
         />
       </Box>
@@ -500,8 +511,12 @@ function formatComposerEnvironment(input: {
   cwd: string
   model?: string
   permissionMode?: string
+  cacheHitRatio?: number
 }): string {
-  return `${input.model ?? 'deepseek-v4-flash'} · ${input.permissionMode ?? 'ask'} · cwd ${basename(input.cwd)}`
+  const cache = input.cacheHitRatio !== undefined
+    ? ` · cache ${(input.cacheHitRatio * 100).toFixed(0)}%`
+    : ''
+  return `${input.model ?? 'deepseek-v4-flash'} · ${input.permissionMode ?? 'ask'} · cwd ${basename(input.cwd)}${cache}`
 }
 
 function basename(path: string): string {

@@ -22,6 +22,12 @@ import { ToolSearchTool } from './toolSearchTool.js'
 import { WebFetchTool } from './webFetchTool.js'
 import { TaskStopTool } from './taskStopTool.js'
 import { WriteTool } from './writeTool.js'
+import { ListDirTool } from './listDirTool.js'
+import { GitTool } from './gitTool.js'
+import { ApplyPatchTool } from './applyPatchTool.js'
+import { RunTestsTool } from './runTestsTool.js'
+import { NoteTool } from './noteTool.js'
+import { SnapshotTool } from './snapshotTool.js'
 
 export const CORE_TOOLS = [
   ReadTool,
@@ -43,6 +49,12 @@ export const CORE_TOOLS = [
   EditTool,
   BashTool,
   ResultReportTool,
+  ListDirTool,
+  GitTool,
+  ApplyPatchTool,
+  RunTestsTool,
+  NoteTool,
+  SnapshotTool,
 ] as const
 
 export function createCoreToolRegistry(options: {

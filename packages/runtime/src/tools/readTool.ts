@@ -71,7 +71,10 @@ export const ReadTool: Tool = {
       return failed(`Refusing to read blocked device path: ${filePath}`)
     }
     const relativePath = toRelativeToolPath(context.cwd, filePath)
+    // Allow reading subagent transcripts even if they match project ignore patterns
+    const isSubagentTranscript = /subagents[/\\]/.test(relativePath)
     if (
+      !isSubagentTranscript &&
       isProjectIgnored(relativePath, [
         ...DEFAULT_READ_IGNORE_PATTERNS,
         ...(context.projectConfig?.ignore ?? []),
@@ -124,6 +127,33 @@ export const ReadTool: Tool = {
       })
     }
 
+    // If we already have a full read of this file, serve requested range from cache
+    if (
+      previous &&
+      previous.mtimeMs === fileStat.mtimeMs &&
+      previous.fullRead &&
+      hadExplicitRange
+    ) {
+      const cachedLines = previous.content.split(/\r?\n/)
+      const startIndex = offset - 1
+      const selected = cachedLines.slice(startIndex, startIndex + limit)
+      if (selected.length > 0) {
+        const formatted = addLineNumbers(selected, offset)
+        const isComplete = startIndex + selected.length >= cachedLines.length
+        const suffix = isComplete
+          ? '\n[End of file]'
+          : `\n[Lines ${offset}-${offset + selected.length - 1} of ${cachedLines.length}]`
+        return ok(formatted + suffix, {
+          filePath,
+          type: 'text',
+          startLine: offset,
+          numLines: selected.length,
+          totalLines: cachedLines.length,
+          servedFromCache: true,
+        })
+      }
+    }
+
     const buffer = await readFile(filePath)
     if (isProbablyBinary(buffer)) {
       return failed('This tool cannot read binary files.')
@@ -142,10 +172,20 @@ export const ReadTool: Tool = {
       fullRead: offset === 1 && startIndex + selected.length >= lines.length,
     })
 
-    const suffix =
-      hadExplicitRange && startIndex + selected.length < lines.length
-        ? `\n\n[Showing lines ${offset}-${offset + selected.length - 1} of ${lines.length}. Use offset and limit to continue.]`
-        : ''
+    const isComplete = startIndex + selected.length >= lines.length
+    if (isComplete) {
+      return ok(`[Read full file: ${lines.length} lines]\n\n${formatted}`, {
+        filePath,
+        type: 'text',
+        startLine: offset,
+        numLines: selected.length,
+        totalLines: lines.length,
+      })
+    }
+
+    const suffix = hadExplicitRange
+      ? `\n\n[Showing lines ${offset}-${offset + selected.length - 1} of ${lines.length}. Use offset and limit to continue.]`
+      : `\n\n[Truncated at ${lines.length} lines. ${lines.length - (offset + selected.length - 1)} lines remaining. Use offset and limit to continue.]`
     return ok(formatted + suffix, {
       filePath,
       type: 'text',
