@@ -328,6 +328,33 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   } else if (url === '/api/refresh') {
     const data = await loadData(true)
     serveJSON(res, data)
+  } else if (url === '/test') {
+    const data = await loadData()
+    serveHTML(res, `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>Vigilon Data Diagnostic</title>
+<style>body{font-family:system-ui;background:#1c1814;color:#c8c0b8;padding:20px;line-height:1.6}
+h1{color:#c89840} .ok{color:#78b888} .warn{color:#d09060} .dim{color:#706860}
+.card{background:rgba(32,28,22,0.95);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:16px;margin:12px 0}
+pre{background:#141210;padding:12px;border-radius:4px;overflow-x:auto;font-size:12px}</style></head><body>
+<h1>🏢 Vigilon Phase 2 — Data Diagnostic</h1>
+<p>source: <span class="ok">${data.source}</span> · generated: ${data.generatedAt}</p>
+<div class="card"><h3>Agents (${data.agents.length})</h3>
+${data.agents.map(a => `<p><b>${a.label}</b> (${a.id}) · ${a.shape} · ${a.modelId}</p>`).join('')}</div>
+<div class="card"><h3>Trust Graph</h3>
+<pre>${JSON.stringify(data.trustGraph, null, 2)}</pre></div>
+<div class="card"><h3>Sleep Summary</h3>
+<pre>${JSON.stringify(data.sleep.summary, null, 2)}</pre>
+<p>Dispute: <span class="warn">${JSON.stringify(data.sleep.packet.resolvedDisputes?.[0] ?? {})}</span></p></div>
+<div class="card"><h3>Dream</h3>
+<p>cleaned: ${data.sleep.packet.dream?.cleaned?.length ?? 0} · updated: ${data.sleep.packet.dream?.updated?.length ?? 0} · merged: ${data.sleep.packet.dream?.merged?.length ?? 0} · crossAnalysis: ${data.sleep.packet.dream?.crossAnalysis?.length ?? 0}</p>
+${(data.sleep.packet.dream?.crossAnalysis ?? []).map(c => `<p>· <span class="ok">${c.pattern}</span><br><span class="dim">${c.insight}</span></p>`).join('')}</div>
+<div class="card"><h3>Skills/Rules</h3>
+<p>newSkills: ${data.skillsRules.newSkills.length} · newRules: ${data.skillsRules.newRules.length} · updatedSkills: ${data.skillsRules.updatedSkills.length}</p>
+${data.skillsRules.newSkills.map(s => `<p>· <span class="ok">${s.name || '(empty)'}</span> (confidence: ${s.confidence ?? 0})</p>`).join('')}
+${data.skillsRules.newRules.map(r => `<p>· <span class="warn">[${r.type}] ${r.rule?.slice(0, 80) ?? ''}</span></p>`).join('')}</div>
+<div class="card"><h3>Wake Summary</h3>
+<pre>${JSON.stringify(data.wake.summary, null, 2)}</pre></div>
+<p class="dim">→ <a href="/" style="color:#c89840">Back to main page</a></p>
+</body></html>`)
   } else {
     res.writeHead(404)
     res.end('Not found')

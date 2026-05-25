@@ -750,6 +750,22 @@ function drawAgent(a) {
     drawAgentBody(a, false);
     drawAgentEyes(a);
   }
+
+  // Data label: show trust summary from prototype data
+  if (hasData() && !isResting) {
+    const rels = a.relationships;
+    const entries = Object.entries(rels).filter(([, v]) => typeof v === 'number');
+    if (entries.length > 0) {
+      const label = entries.map(([k, v]) => `${dLabel(k)} ${v}%`).join(' · ');
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.font = '9px "Noto Sans SC", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, 0, 14);
+      ctx.fillStyle = 'rgba(200,152,64,0.50)';
+      ctx.fillText(label, 0, 13);
+    }
+  }
+
   ctx.restore();
 }
 
@@ -819,6 +835,21 @@ function draw() {
     ctx.lineWidth = 0.8; ctx.setLineDash([2, 10]);
     ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(s.x, s.y);
     ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // Data badge — visible indicator that prototype data is loaded
+  if (hasData()) {
+    const badgeW = 130, badgeH = 20;
+    ctx.fillStyle = 'rgba(20,16,12,0.82)';
+    ctx.beginPath(); roundRect(W - badgeW - 10, 10, badgeW, badgeH, 4); ctx.fill();
+    ctx.strokeStyle = 'rgba(200,152,64,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); roundRect(W - badgeW - 10, 10, badgeW, badgeH, 4); ctx.stroke();
+    ctx.fillStyle = '#c89840';
+    ctx.font = '9px "Space Mono", monospace';
+    ctx.textAlign = 'right';
+    const src = DATA.source === 'live' ? 'LIVE' : DATA.source === 'cached' ? 'CACHED' : 'DEMO';
+    ctx.fillText(`data: ${src} · ${dSleep()?.summary?.disputesResolved ?? 0} disputes`, W - 16, 24);
   }
 }
 
