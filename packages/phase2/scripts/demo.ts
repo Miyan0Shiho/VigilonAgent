@@ -11,11 +11,12 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { readFileSync, existsSync, writeFileSync, unlinkSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { loadWorkspace, saveWorkspace, addEvent, setSleepPacket, setWakeDeclaration, summarizeWorkspace, type WorkspaceState } from '../src/workspace.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
 const HTML_PATH = join(ROOT, '..', '..', 'docs', 'product', 'phase2-agent-society', 'society-room-mockup.html')
-const CACHE_PATH = join(ROOT, '.demo-cache.json')
+const WORKSPACE_DIR = join(ROOT, 'workspace')
 const PORT = 3100
 
 // ═══════════════════════════════════════════════════════════════
@@ -251,36 +252,108 @@ async function generateLiveData(): Promise<DemoData> {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Caching
+// Workspace-based data loading
 // ═══════════════════════════════════════════════════════════════
 
+function workspaceToDemoData(ws: WorkspaceState): DemoData {
+  const lastSleep = ws.lastSleep ?? {}
+  const lastWake = ws.lastWake ?? {}
+  const dream = (lastSleep as any)?.dream ?? {}
+  const resolvedDisputes = (lastSleep as any)?.resolvedDisputes ?? []
+  const relationshipChanges = (lastSleep as any)?.relationshipChanges ?? []
+  const resumeAnchor = (lastSleep as any)?.resumeAnchor ?? {}
+
+  return {
+    generatedAt: ws.updatedAt,
+    source: 'workspace',
+    agents: ws.agents.map(a => ({
+      id: a.id, label: a.label, modelId: a.modelId,
+      shape: (a.id === 'agent-executor' ? 'hex' : a.id === 'agent-reviewer' ? 'diamond' : 'circle') as 'hex' | 'diamond' | 'circle',
+      color: a.id === 'agent-executor' ? '#e87850' : a.id === 'agent-reviewer' ? '#5098b8' : '#68a878',
+      glowColor: a.id === 'agent-executor' ? 'rgba(232,120,80,0.35)' : a.id === 'agent-reviewer' ? 'rgba(80,152,184,0.35)' : 'rgba(104,168,120,0.35)',
+      homeDeskIdx: a.id === 'agent-executor' ? 0 : a.id === 'agent-reviewer' ? 2 : 3,
+    })),
+    trustGraph: ws.trustGraph,
+    sleep: {
+      packet: lastSleep,
+      summary: {
+        disputesResolved: resolvedDisputes.length,
+        dreamCleaned: (dream as any)?.cleaned?.length ?? 0,
+        dreamUpdated: (dream as any)?.updated?.length ?? 0,
+        dreamMerged: (dream as any)?.merged?.length ?? 0,
+        dreamCrossAnalysis: (dream as any)?.crossAnalysis?.length ?? 0,
+        relationshipChanges: relationshipChanges.map((rc: any) => `${rc.fromId}→${rc.toId}: ${rc.before}→${rc.after}%`),
+      },
+    },
+    skillsRules: {
+      newSkills: ws.skills.map((s: any) => ({ name: s.name ?? '', trigger: s.trigger ?? '', approach: s.approach ?? '', confidence: s.confidence ?? 0 })),
+      newRules: ws.rules.map((r: any) => ({ rule: r.rule ?? '', type: r.type ?? 'soft-guideline', priority: r.priority ?? 'medium' })),
+      updatedSkills: [],
+    },
+    wake: {
+      declaration: lastWake,
+      summary: {
+        stillSameAgent: (lastWake as any)?.identity?.stillSameAgent ?? true,
+        constraints: (lastWake as any)?.constraints ?? [],
+        attentionItems: ((lastWake as any)?.userAttention?.items ?? []).map((i: any) => ({ priority: i.priority ?? 'medium', text: i.text ?? '' })),
+        relationshipState: (lastWake as any)?.relationshipState?.trustLevels ?? {},
+      },
+    },
+  }
+}
+
 async function loadData(forceRefresh = false): Promise<DemoData> {
-  if (forceRefresh && existsSync(CACHE_PATH)) {
-    unlinkSync(CACHE_PATH)
-  }
-  if (existsSync(CACHE_PATH)) {
+  let ws: WorkspaceState
+
+  // Check if workspace exists and has sleep data
+  ws = loadWorkspace(WORKSPACE_DIR)
+
+  if (forceRefresh || !ws.lastSleep) {
+    const apiKey = process.env.DEEPSEEK_API_KEY
+    if (!apiKey) {
+      console.log('[demo] No API key, using workspace as-is')
+      if (!ws.lastSleep) {
+        const fb = fallbackData()
+        // Populate workspace with fallback data
+        ws.agents = fb.agents.map(a => ({ id: a.id, label: a.label, modelId: a.modelId, instructionsHash: 'fb', toolHash: 'v2' }))
+        ws.trustGraph = fb.trustGraph
+        ws = saveAndReload(ws)
+      }
+      return workspaceToDemoData(ws)
+    }
+
     try {
-      const raw = readFileSync(CACHE_PATH, 'utf-8')
-      const data = JSON.parse(raw) as DemoData
-      data.source = 'cached'
+      console.log('[demo] Running e2e scenario → workspace...')
+      const data = await generateLiveData()
+      // Persist to workspace
+      ws.agents = data.agents.map(a => ({ id: a.id, label: a.label, modelId: a.modelId, instructionsHash: 'live', toolHash: 'v2' }))
+      ws.trustGraph = data.trustGraph
+      ws = setSleepPacket(ws, data.sleep.packet)
+      ws = setWakeDeclaration(ws, data.wake.declaration)
+      for (const s of data.skillsRules.newSkills) ws.skills.push(s as unknown as Record<string, unknown>)
+      for (const r of data.skillsRules.newRules) ws.rules.push(r as unknown as Record<string, unknown>)
+      ws = addEvent(ws, { phase: 'sleep', summary: `Dream: ${data.sleep.summary.dreamCleaned}c/${data.sleep.summary.dreamUpdated}u/${data.sleep.summary.dreamMerged}m/${data.sleep.summary.dreamCrossAnalysis}x` })
+      ws = addEvent(ws, { phase: 'wake', summary: `醒来: ${data.wake.summary.stillSameAgent ? '身份不变' : '身份变化'} · ${data.wake.summary.constraints.length} 约束` })
+      ws = saveAndReload(ws)
+      console.log('[demo] Workspace saved:', summarizeWorkspace(ws))
       return data
-    } catch { /* corrupt cache, regenerate */ }
+    } catch (err) {
+      console.error('[demo] Live generation failed:', err instanceof Error ? err.message : String(err))
+      const fb = fallbackData()
+      ws.agents = fb.agents.map(a => ({ id: a.id, label: a.label, modelId: a.modelId, instructionsHash: 'fb', toolHash: 'v2' }))
+      ws.trustGraph = fb.trustGraph
+      ws = saveAndReload(ws)
+      return workspaceToDemoData(ws)
+    }
   }
-  const apiKey = process.env.DEEPSEEK_API_KEY
-  if (!apiKey) {
-    console.log('[demo] DEEPSEEK_API_KEY not set, using fallback data')
-    return fallbackData()
-  }
-  try {
-    console.log('[demo] Generating live data via DeepSeek API...')
-    const data = await generateLiveData()
-    writeFileSync(CACHE_PATH, JSON.stringify(data, null, 2))
-    console.log('[demo] Live data cached to .demo-cache.json')
-    return data
-  } catch (err) {
-    console.error('[demo] Live generation failed, using fallback:', err instanceof Error ? err.message : String(err))
-    return fallbackData()
-  }
+
+  console.log('[demo] Loaded from workspace:', summarizeWorkspace(ws))
+  return workspaceToDemoData(ws)
+}
+
+function saveAndReload(ws: WorkspaceState): WorkspaceState {
+  saveWorkspace(WORKSPACE_DIR, ws)
+  return loadWorkspace(WORKSPACE_DIR)
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -328,6 +401,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   } else if (url === '/api/refresh') {
     const data = await loadData(true)
     serveJSON(res, data)
+  } else if (url === '/workspace') {
+    const ws = loadWorkspace(WORKSPACE_DIR)
+    serveJSON(res, { ...summarizeWorkspace(ws), agents: ws.agents, trustGraph: ws.trustGraph, events: ws.events.slice(-20) })
   } else if (url === '/test') {
     const data = await loadData()
     serveHTML(res, `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>Vigilon Data Diagnostic</title>
@@ -363,9 +439,15 @@ ${data.skillsRules.newRules.map(r => `<p>· <span class="warn">[${r.type}] ${r.r
 
 const server = createServer(handleRequest)
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
+  // Initialize workspace on startup
+  await loadData()
+  const ws = loadWorkspace(WORKSPACE_DIR)
   console.log(`\n  🏢 Vigilon Phase 2 — Agent Society Demo\n`)
-  console.log(`  Open: http://localhost:${PORT}\n`)
-  console.log(`  API:  http://localhost:${PORT}/api/data`)
-  console.log(`  Refresh: http://localhost:${PORT}/api/refresh\n`)
+  console.log(`  Workspace: ${WORKSPACE_DIR}`)
+  console.log(`  State:     ${summarizeWorkspace(ws).agentCount} agents · ${summarizeWorkspace(ws).trustPairs} trust pairs · ${summarizeWorkspace(ws).skillCount} skills · ${summarizeWorkspace(ws).ruleCount} rules`)
+  console.log(`  Open:      http://localhost:${PORT}`)
+  console.log(`  Data:      http://localhost:${PORT}/api/data`)
+  console.log(`  Workspace: http://localhost:${PORT}/workspace`)
+  console.log(`  Refresh:   http://localhost:${PORT}/api/refresh\n`)
 })

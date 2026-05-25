@@ -848,7 +848,7 @@ function draw() {
     ctx.fillStyle = '#c89840';
     ctx.font = '9px "Space Mono", monospace';
     ctx.textAlign = 'right';
-    const src = DATA.source === 'live' ? 'LIVE' : DATA.source === 'cached' ? 'CACHED' : 'DEMO';
+    const src = DATA.source === 'live' ? 'LIVE' : DATA.source === 'workspace' ? 'WORKSPACE' : DATA.source === 'cached' ? 'CACHED' : 'DEMO';
     ctx.fillText(`data: ${src} · ${dSleep()?.summary?.disputesResolved ?? 0} disputes`, W - 16, 24);
   }
 }
@@ -1261,7 +1261,7 @@ function loop(ts) {
 // Init
 // ═══════════════════════════════════════════
 if (hasData()) {
-  const srcLabel = DATA.source === 'live' ? '实时' : DATA.source === 'cached' ? '缓存' : '演示';
+  const srcLabel = DATA.source === 'live' ? '实时' : DATA.source === 'cached' ? '缓存' : DATA.source === 'workspace' ? '工作区' : '演示';
   document.querySelector('.sidebar-title').textContent = `VIGILON · ${srcLabel}数据`;
   addEvent('dim', `数据已加载 — ${dSleep().summary.disputesResolved}争议 Dream(${dSleep().summary.dreamCleaned}c/${dSleep().summary.dreamUpdated}u/${dSleep().summary.dreamMerged}m/${dSleep().summary.dreamCrossAnalysis}x) ${dSkills().newRules.length}规则 ${dSkills().newSkills.length}技能`);
 } else {
