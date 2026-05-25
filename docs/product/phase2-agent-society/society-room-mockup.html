@@ -258,9 +258,7 @@ html, body {
       <button class="scenario-btn" data-sc="wake">醒来</button>
     </div>
 
-      <button class="scenario-btn" data-api="cooperate" style="color:#78b878">合作</button>
-      <button class="scenario-btn" data-api="delegate" style="color:#78a8d0">委托</button>
-      <button class="scenario-btn" data-api="consult" style="color:#c89840">咨询</button>
+      <button class="scenario-btn" data-api="evolve" style="color:#78b878">推进</button>
     </div>
 
     <div class="detail-section" id="detail-section">
@@ -500,18 +498,8 @@ const API = {
     return res.json();
   },
 
-  async cooperate() {
-    const res = await fetch('/api/cooperate', { method: 'POST' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-  },
-  async delegate() {
-    const res = await fetch('/api/delegate', { method: 'POST' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-  },
-  async consult() {
-    const res = await fetch('/api/consult', { method: 'POST' });
+  async evolve() {
+    const res = await fetch('/api/evolve', { method: 'POST' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   },
