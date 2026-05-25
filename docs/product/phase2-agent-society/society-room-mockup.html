@@ -338,10 +338,14 @@ html, body {
   <div class="help-tip" id="help-tip">点击小人查看详情 · 观察他们工作、争论、休息</div>
 </div>
 
+
 <script>
-// ═══════════════════════════════════════════
-// Canvas setup
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// Vigilon Phase 2 — Agent Society Frontend
+// Architecture: API Client → State Store → Renderers
+// ═══════════════════════════════════════════════════════════════
+
+// ── Canvas setup ────────────────────────────────────────────
 const canvas = document.getElementById('room-canvas');
 const ctx = canvas.getContext('2d');
 const W = 1024, H = 640;
@@ -356,9 +360,7 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// ═══════════════════════════════════════════
-// Layout
-// ═══════════════════════════════════════════
+// ── Layout ───────────────────────────────────────────────────
 const LAYOUT = {
   desks: [
     { x: 120, y: 140, w: 56, h: 34 },
@@ -380,12 +382,9 @@ const LAYOUT = {
   ],
   terminal: { x: 100, y: 520, w: 140, h: 50 },
   plants: [
-    { x: 50, y: 60, r: 22 },
-    { x: 900, y: 60, r: 18 },
-    { x: 940, y: 330, r: 24 },
-    { x: 60, y: 440, r: 18 },
-    { x: 900, y: 510, r: 22 },
-    { x: 360, y: 70, r: 16 },
+    { x: 50, y: 60, r: 22 }, { x: 900, y: 60, r: 18 },
+    { x: 940, y: 330, r: 24 }, { x: 60, y: 440, r: 18 },
+    { x: 900, y: 510, r: 22 }, { x: 360, y: 70, r: 16 },
     { x: 560, y: 510, r: 20 },
   ],
   shelves: [
@@ -397,9 +396,7 @@ const LAYOUT = {
   rugLounge: { x: 640, y: 410, rx: 100, ry: 65 },
 };
 
-// ═══════════════════════════════════════════
-// Agent class
-// ═══════════════════════════════════════════
+// ── Agent class (visual only — no hardcoded data) ───────────
 class Agent {
   constructor(id, name, role, color, glowColor, shape, homeDeskIdx) {
     this.id = id; this.name = name; this.role = role;
@@ -408,72 +405,17 @@ class Agent {
     this.x = this.homeDesk.x + this.homeDesk.w / 2;
     this.y = this.homeDesk.y + this.homeDesk.h / 2;
     this.targetX = this.x; this.targetY = this.y;
-    this.state = 'working';
-    this.resting = false; this.disputing = false; this.selected = false;
-    this.stateTimer = Math.random() * 4;
-    this.bobOffset = 0;
+    this.disputing = false; this.resting = false; this.selected = false;
+    this.bobOffset = Math.random() * 4;
     this.eyeDir = { x: 0, y: -1 };
     this.beliefs = []; this.memory = []; this.relationships = {};
-    this.initBeliefs();
-  }
-
-  initBeliefs() {
-    const t = dTrust();
-    // Build relationships from trust graph
-    const rels = {};
-    if (t[this.id]) {
-      for (const [target, trust] of Object.entries(t[this.id])) {
-        if (target !== this.id) rels[target] = trust;
-      }
-    }
-    // Add relationship changes from sleep
-    if (dSleep()) {
-      for (const rc of dSleep().packet?.relationshipChanges ?? []) {
-        if (rc.fromId === this.id) rels[rc.toId] = rc.after;
-      }
-    }
-
-    // Build beliefs from dream cross-analysis + wake constraints
-    const beliefs = [];
-    const ca = dDream()?.crossAnalysis ?? [];
-    for (const c of ca) {
-      if (c.insight) beliefs.push({ text: c.insight, status: c.pattern?.includes('风险') ? 'warn' : 'ok', note: `证据: ${(c.evidence ?? []).slice(0, 2).join(', ')}` });
-    }
-    for (const c of dWake()?.summary?.constraints ?? []) {
-      beliefs.push({ text: c, status: 'warn', note: '从争议中学习' });
-    }
-    // Fallback: use resume anchor context
-    if (beliefs.length === 0 && dSleep()?.packet?.resumeAnchor?.context) {
-      beliefs.push({ text: dSleep().packet.resumeAnchor.context, status: 'ok', note: '上次会话摘要' });
-    }
-
-    // Build memory from dream changes
-    const mems = [];
-    const dr = dDream();
-    for (const u of dr?.updated ?? []) {
-      mems.push({ text: `${u.oldContent} → ${u.newContent}`, source: `更新: ${u.reason}` });
-    }
-    for (const c of dr?.cleaned ?? []) {
-      mems.push({ text: c.content, source: `清理: ${c.reason}` });
-    }
-    for (const m of dr?.merged ?? []) {
-      mems.push({ text: m.into, source: `合并: ${m.reason}` });
-    }
-    // Fallback memory
-    if (mems.length === 0) {
-      mems.push({ text: dSleep()?.packet?.resumeAnchor?.context ?? '等待首次工作周期', source: '会话摘要' });
-    }
-
-    this.beliefs = beliefs; this.memory = mems; this.relationships = rels;
   }
 
   walkTo(x, y) {
     this.targetX = x; this.targetY = y;
-    if (Math.abs(this.x - x) > 2 || Math.abs(this.y - y) > 2) this.state = 'walking';
   }
 
   update(dt) {
-    this.stateTimer -= dt;
     this.bobOffset += dt * 2;
     const dx = this.targetX - this.x, dy = this.targetY - this.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -482,17 +424,25 @@ class Agent {
       this.x += (dx / dist) * speed * dt;
       this.y += (dy / dist) * speed * dt;
       this.eyeDir = { x: dx / dist, y: dy / dist };
-      this.state = 'walking';
-    } else if (this.state === 'walking') {
-      this.state = this.resting ? 'resting' : (this.disputing ? 'arguing' : 'working');
+    }
+  }
+
+  syncFromState(fa) {
+    this.name = fa.label;
+    this.beliefs = fa.beliefs;
+    this.memory = fa.memory;
+    this.relationships = fa.relationships;
+    this.disputing = fa.status === 'disputing';
+    this.resting = fa.status === 'resting';
+    // Smooth walk to target position
+    if (Math.abs(this.targetX - fa.position.x) > 2 || Math.abs(this.targetY - fa.position.y) > 2) {
+      this.walkTo(fa.position.x, fa.position.y);
     }
   }
 
   get statusText() {
     if (this.resting) return '休息中';
     if (this.disputing) return '争论中';
-    if (this.state === 'walking') return '移动中';
-    if (this.state === 'arguing') return '争论中';
     return '工作中';
   }
 
@@ -504,41 +454,352 @@ class Agent {
   }
 }
 
-// ═══════════════════════════════════════════
-// Create agents
-// ═══════════════════════════════════════════
+// ── Create agents ────────────────────────────────────────────
 const agents = [
   new Agent('agent-executor', '执行者', '负责执行任务', '#e87850', 'rgba(232,120,80,0.35)', 'hex', 0),
   new Agent('agent-reviewer', '审查者', '负责质疑和审查', '#5098b8', 'rgba(80,152,184,0.35)', 'diamond', 2),
   new Agent('agent-guide', '引导者', '关注用户能力和意图', '#68a878', 'rgba(104,168,120,0.35)', 'circle', 3),
 ];
+const agentLabelMap = {};
+agents.forEach(a => { agentLabelMap[a.id] = a.name; });
 
 let selectedAgent = null;
-let autoMode = true;
-let autoTimer = 0;
-let scenarioOverride = null;
-let disputeActive = false;
-let sleepActive = false;
-let toastVisible = false;
-const events = [];
 let particles = [];
+const events = [];
 
-// ═══════════════════════════════════════════
-// Prototype data layer
-// ═══════════════════════════════════════════
-const DATA = window.__DEMO_DATA__ || null;
-function hasData() { return !!DATA; }
-function dSleep() { return DATA?.sleep; }
-function dSkills() { return DATA?.skillsRules; }
-function dWake() { return DATA?.wake; }
-function dTrust() { return DATA?.trustGraph ?? {}; }
-function dDispute(idx = 0) { return dSleep()?.packet?.resolvedDisputes?.[idx]; }
-function dDream() { return dSleep()?.packet?.dream; }
-function dLabel(agentId) { const a = DATA?.agents?.find(a => a.id === agentId); return a?.label ?? agentId; }
+// ═══════════════════════════════════════════════════════════════
+// Layer 1: API Client
+// ═══════════════════════════════════════════════════════════════
+const API = {
+  async fetchState() {
+    const res = await fetch('/api/state');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+  async cycle(phase) {
+    const res = await fetch(`/api/cycle/${phase}`, { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+  async toast(decision, disputeId) {
+    const res = await fetch(`/api/toast/${decision}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ disputeId }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+};
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// Layer 2: State Store
+// ═══════════════════════════════════════════════════════════════
+const Store = {
+  state: null,
+  _polling: false,
+  _interval: null,
+
+  setState(newState) {
+    this.state = newState;
+    // Sync agent data
+    for (const fa of newState.agents) {
+      const a = agents.find(ag => ag.id === fa.id);
+      if (a) a.syncFromState(fa);
+    }
+    // Render
+    SidebarRenderer.render(newState);
+    ToastController.render(newState);
+    updateEventsFromState(newState.events);
+  },
+
+  async poll() {
+    if (this._polling) return;
+    this._polling = true;
+    try {
+      const s = await API.fetchState();
+      this.setState(s);
+      document.getElementById('status-dot').classList.toggle('warn', s.phase === 'dispute');
+    } catch (err) {
+      console.error('[Store] poll failed:', err);
+    }
+    this._polling = false;
+  },
+
+  startPolling(intervalMs = 2000) {
+    this.poll();
+    this._interval = setInterval(() => this.poll(), intervalMs);
+  },
+
+  async triggerPhase(phase) {
+    try {
+      const s = await API.cycle(phase);
+      this.setState(s);
+      document.getElementById('status-dot').classList.toggle('warn', s.phase === 'dispute');
+    } catch (err) {
+      console.error('[Store] triggerPhase failed:', err);
+    }
+  },
+
+  async resolveToast(decision) {
+    const disputeId = this.state?.activeMediation?.disputeId;
+    if (!disputeId) return;
+    try {
+      const s = await API.toast(decision, disputeId);
+      this.setState(s);
+      document.getElementById('toast').classList.remove('visible');
+    } catch (err) {
+      console.error('[Store] resolveToast failed:', err);
+    }
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// Layer 3: Sidebar Renderer
+// ═══════════════════════════════════════════════════════════════
+const SidebarRenderer = {
+  render(state) {
+    if (selectedAgent) {
+      this._renderAgentDetail(state);
+    } else {
+      this._renderScenario(state);
+    }
+    this._renderAgentSummaries(state);
+  },
+
+  _renderScenario(state) {
+    if (!state) return;
+    document.getElementById('agent-summary').style.display = 'none';
+    document.getElementById('agent-detail').style.display = 'none';
+    const el = document.getElementById('scenario-detail');
+    if (!el) return;
+    el.style.display = 'flex';
+
+    const title = document.getElementById('sc-title');
+    const body = document.getElementById('sc-body');
+    if (!title || !body) return;
+
+    switch (state.phase) {
+      case 'work': {
+        title.textContent = '📋 工作状态';
+        body.innerHTML = `<div class="detail-block"><div class="detail-block-title">信任网络</div><div class="detail-block-text">${this._renderTrust(state)}</div></div>
+          <div class="detail-block"><div class="detail-block-title">事件 (${state.events.length})</div><div class="detail-block-text">${state.events.slice(-3).map(e => `· ${e.summary.slice(0, 60)}`).join('<br>')}</div></div>`;
+        break;
+      }
+      case 'dispute': {
+        const med = state.activeMediation;
+        title.textContent = med ? '⚡ 需用户裁决' : '⚡ 争议中';
+        body.innerHTML = med
+          ? `<div class="detail-block"><div class="detail-block-title">风险: ${med.risk}</div><div class="detail-block-text"><span class="warn">${med.challengerId}: ${med.challengerPosition}</span><br>${med.defenderId}: ${med.defenderPosition}</div></div>`
+          : `<div class="detail-block"><div class="detail-block-title">状态</div><div class="detail-block-text"><span class="ok">Agent 正在协商解决</span></div></div>`;
+        break;
+      }
+      case 'sleep': {
+        const ls = state.lastSleep;
+        const dr = ls?.dream ?? {};
+        title.textContent = '💤 Dream 整理';
+        const parts = [];
+        if (dr.cleaned?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">清理 (${dr.cleaned.length})</div><div class="detail-block-text">${dr.cleaned.map(c => `· ${(c.content ?? '').slice(0, 60)}<br><span class="dim">  ${c.reason}</span>`).join('<br>')}</div></div>`);
+        if (dr.updated?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">更新 (${dr.updated.length})</div><div class="detail-block-text">${dr.updated.map(u => `· ${(u.oldContent ?? '').slice(0, 40)} → ${(u.newContent ?? '').slice(0, 40)}<br><span class="dim">  ${u.reason}</span>`).join('<br>')}</div></div>`);
+        if (dr.merged?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">合并 (${dr.merged.length})</div><div class="detail-block-text">${dr.merged.map(m => `· ${(m.into ?? '').slice(0, 60)}<br><span class="dim">  ${m.reason}</span>`).join('<br>')}</div></div>`);
+        if (dr.crossAnalysis?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">洞察 (${dr.crossAnalysis.length})</div><div class="detail-block-text">${dr.crossAnalysis.map(c => `· <span class="ok">${c.pattern}</span><br><span class="dim">  ${(c.insight ?? '').slice(0, 80)}</span>`).join('<br>')}</div></div>`);
+        body.innerHTML = parts.join('') || '<div class="detail-block-text">无变化</div>';
+        break;
+      }
+      case 'wake': {
+        const lw = state.lastWake;
+        title.textContent = '🌅 醒来';
+        const parts = [];
+        if (lw?.identity) parts.push(`<div class="detail-block"><div class="detail-block-title">身份</div><div class="detail-block-text"><span class="${lw.identity.stillSameAgent ? 'ok' : 'warn'}">${lw.identity.stillSameAgent ? '同一 Agent ✅' : '变化 ⚠️'}</span></div></div>`);
+        if (lw?.constraints?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">约束 (${lw.constraints.length})</div><div class="detail-block-text">${lw.constraints.map(c => `· <span class="warn">${(typeof c === 'string' ? c : '').slice(0, 80)}</span>`).join('<br>')}</div></div>`);
+        if (lw?.skillsRules) {
+          const sr = lw.skillsRules;
+          if (sr.newSkills?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">新技能</div><div class="detail-block-text">${sr.newSkills.map(s => `· <span class="ok">${s.name}</span> (${((s.confidence ?? 0) * 100).toFixed(0)}%)`).join('<br>')}</div></div>`);
+          if (sr.newRules?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">新规则</div><div class="detail-block-text">${sr.newRules.map(r => `· <span class="warn">[${r.type}] ${(r.rule ?? '').slice(0, 60)}</span>`).join('<br>')}</div></div>`);
+        }
+        body.innerHTML = parts.join('') || '<div class="detail-block-text">无数据</div>';
+        break;
+      }
+    }
+  },
+
+  _renderAgentDetail(state) {
+    document.getElementById('agent-summary').style.display = 'none';
+    document.getElementById('scenario-detail').style.display = 'none';
+    const detail = document.getElementById('agent-detail');
+    detail.style.display = 'flex';
+
+    const a = selectedAgent;
+    const fa = state.agents.find(ag => ag.id === a.id);
+    if (!fa) return;
+
+    document.getElementById('d-beliefs').innerHTML = fa.beliefs.map(b =>
+      `<span class="${b.status === 'warn' ? 'warn' : 'ok'}">${b.text.slice(0, 80)}</span> · ${b.note.slice(0, 40)}`
+    ).join('<br>') || '<span class="dim">无信念数据</span>';
+
+    document.getElementById('d-memory').innerHTML = fa.memory.map(m =>
+      `"${m.text.slice(0, 60)}" <span class="ok">[${m.source}]</span>`
+    ).join('<br>') || '<span class="dim">无记忆数据</span>';
+
+    document.getElementById('d-rels').innerHTML = Object.entries(fa.relationships).map(([k, v]) => {
+      const cls = v >= 70 ? 'ok' : v >= 45 ? '' : 'warn';
+      return `→${agentLabelMap[k] ?? k}: <span class="${cls}">${v}%（${a.getRelLabel(k)}）</span>`;
+    }).join('<br>') || '<span class="dim">无关系数据</span>';
+  },
+
+  _renderAgentSummaries(state) {
+    document.querySelectorAll('.agent-summary-card .info .status').forEach(el => {
+      const agentId = el.closest('.agent-summary-card').dataset.agent;
+      const fa = state.agents.find(ag => ag.id === agentId);
+      if (fa) {
+        const rels = fa.relationships;
+        el.textContent = Object.keys(rels).length > 0
+          ? Object.entries(rels).map(([k, v]) => `${agentLabelMap[k] ?? k}:${v}%`).join(' ')
+          : '工作中';
+      }
+    });
+  },
+
+  _renderTrust(state) {
+    const t = state.trustGraph;
+    if (!t || Object.keys(t).length === 0) return '无数据';
+    return Object.entries(t).map(([from, targets]) =>
+      Object.entries(targets).filter(([to]) => to !== from).map(([to, v]) => {
+        const cls = v >= 70 ? 'ok' : v >= 45 ? '' : 'warn';
+        return `<span class="${cls}">${agentLabelMap[from] ?? from}→${agentLabelMap[to] ?? to}: ${v}%</span>`;
+      }).join('<br>')
+    ).join('<br>');
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// Layer 4: Toast Controller
+// ═══════════════════════════════════════════════════════════════
+const ToastController = {
+  render(state) {
+    const med = state.activeMediation;
+    const el = document.getElementById('toast');
+    if (med) {
+      document.getElementById('toast-msg').textContent =
+        `[${med.risk}] ${med.title}`;
+      el.classList.add('visible');
+    } else {
+      el.classList.remove('visible');
+    }
+  },
+};
+
+document.getElementById('toast-allow').addEventListener('click', () => {
+  Store.resolveToast('allow');
+});
+document.getElementById('toast-block').addEventListener('click', () => {
+  Store.resolveToast('block');
+});
+
+// ═══════════════════════════════════════════════════════════════
+// Event timeline
+// ═══════════════════════════════════════════════════════════════
+function addEvent(cls, text) {
+  events.unshift({ cls, text });
+  if (events.length > 20) events.length = 20;
+  updateEventsDOM();
+}
+
+function updateEventsDOM() {
+  const el = document.getElementById('events-container');
+  el.innerHTML = events.slice(0, 10).map(e =>
+    `<div class="event-item"><span class="${e.cls}">${e.text}</span></div>`
+  ).join('');
+}
+
+function updateEventsFromState(serverEvents) {
+  // Deduplicate and add server events to local timeline
+  const existing = new Set(events.map(e => e.text));
+  for (const se of (serverEvents ?? []).slice(-8)) {
+    if (!existing.has(se.summary)) {
+      const cls = se.phase === 'dispute' ? 'red' : se.phase === 'sleep' ? 'dim' : 'grn';
+      events.unshift({ cls, text: se.summary });
+    }
+  }
+  if (events.length > 20) events.length = 20;
+  updateEventsDOM();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Sidebar interaction
+// ═══════════════════════════════════════════════════════════════
+function selectAgent(a) {
+  agents.forEach(ag => ag.selected = false);
+  a.selected = true; selectedAgent = a;
+
+  // Shape icon
+  const shapeEl = document.getElementById('detail-shape');
+  shapeEl.className = ''; shapeEl.style.cssText = '';
+  if (a.shape === 'hex') {
+    shapeEl.style.width = '20px'; shapeEl.style.height = '20px';
+    shapeEl.style.background = a.color;
+    shapeEl.style.clipPath = 'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)';
+  } else if (a.shape === 'diamond') {
+    shapeEl.style.width = '16px'; shapeEl.style.height = '16px';
+    shapeEl.style.background = a.color;
+    shapeEl.style.transform = 'rotate(45deg)';
+  } else {
+    shapeEl.style.width = '18px'; shapeEl.style.height = '18px';
+    shapeEl.style.background = a.color;
+    shapeEl.style.borderRadius = '50%';
+  }
+
+  document.getElementById('detail-name').textContent = a.name;
+  document.getElementById('detail-role').textContent = `${a.role}`;
+
+  if (Store.state) SidebarRenderer._renderAgentDetail(Store.state);
+}
+
+function deselectAgent() {
+  agents.forEach(a => a.selected = false);
+  selectedAgent = null;
+  document.getElementById('agent-detail').style.display = 'none';
+  document.getElementById('scenario-detail').style.display = 'none';
+  document.getElementById('agent-summary').style.display = 'flex';
+}
+
+document.getElementById('detail-back').addEventListener('click', deselectAgent);
+
+// Click agent summary cards
+document.querySelectorAll('.agent-summary-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const a = agents.find(ag => ag.id === card.dataset.agent);
+    if (a) selectAgent(a);
+  });
+});
+
+// Click on canvas
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const sx = W / rect.width, sy = H / rect.height;
+  const mx = (e.clientX - rect.left) * sx;
+  const my = (e.clientY - rect.top) * sy;
+
+  let clicked = null;
+  for (let i = agents.length - 1; i >= 0; i--) {
+    if (Math.hypot(mx - agents[i].x, my - agents[i].y) < 18) { clicked = agents[i]; break; }
+  }
+  clicked ? selectAgent(clicked) : deselectAgent();
+});
+
+// Scenario buttons → API calls
+document.querySelectorAll('.scenario-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const phase = btn.dataset.sc;
+    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    Store.triggerPhase(phase);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
 // Particles
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 function spawnParticles(x, y, count, color, spread) {
   for (let i = 0; i < count; i++) {
     particles.push({
@@ -560,9 +821,9 @@ function updateParticles(dt) {
   }
 }
 
-// ═══════════════════════════════════════════
-// Drawing helpers
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// Canvas drawing (unchanged visual engine)
+// ═══════════════════════════════════════════════════════════════
 function roundRect(x, y, w, h, r) {
   ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
   ctx.quadraticCurveTo(x + w, y, x + w, y + r);
@@ -583,9 +844,6 @@ function drawHexagon(x, y, r) {
   ctx.closePath();
 }
 
-// ═══════════════════════════════════════════
-// Draw functions (same as before, compact)
-// ═══════════════════════════════════════════
 function drawFloor() {
   const grad = ctx.createLinearGradient(0, 0, 0, H);
   grad.addColorStop(0, '#d4b896'); grad.addColorStop(0.4, '#d0b490');
@@ -630,6 +888,7 @@ function drawDesk(d) {
   ctx.beginPath(); roundRect(d.x + d.w / 2 - 10, d.y + 3, 20, 13, 3); ctx.fill();
   ctx.fillStyle = '#2a2d35';
   ctx.beginPath(); roundRect(d.x + d.w / 2 - 8, d.y + 5, 16, 9, 2); ctx.fill();
+  const sleepActive = Store.state?.phase === 'sleep';
   if (!sleepActive) {
     ctx.fillStyle = 'rgba(180,200,220,0.10)';
     ctx.beginPath(); roundRect(d.x + d.w / 2 - 8, d.y + 5, 16, 9, 2); ctx.fill();
@@ -657,7 +916,7 @@ function drawMeetingArea() {
     ctx.fillStyle = 'rgba(60,60,68,0.65)';
     ctx.beginPath(); ctx.arc(ch.x, ch.y, 8, 0, Math.PI * 2); ctx.fill();
   });
-  if (disputeActive) {
+  if (Store.state?.phase === 'dispute') {
     const pulse = 0.18 + Math.sin(Date.now() / 800) * 0.10;
     ctx.fillStyle = `rgba(220,100,80,${pulse})`;
     ctx.beginPath(); ctx.ellipse(mt.x, mt.y, mt.rx + 8, mt.ry + 6, 0, 0, Math.PI * 2); ctx.fill();
@@ -728,7 +987,7 @@ function drawShelves() {
 
 function drawAgent(a) {
   ctx.save(); ctx.translate(a.x, a.y);
-  const bob = a.state === 'working' ? Math.sin(a.bobOffset) * 1.0 : 0;
+  const bob = a.disputing ? 0 : Math.sin(a.bobOffset) * 1.0;
   const isResting = a.resting;
 
   if (!isResting) {
@@ -751,18 +1010,20 @@ function drawAgent(a) {
     drawAgentEyes(a);
   }
 
-  // Data label: show trust summary from prototype data
-  if (hasData() && !isResting) {
-    const rels = a.relationships;
-    const entries = Object.entries(rels).filter(([, v]) => typeof v === 'number');
-    if (entries.length > 0) {
-      const label = entries.map(([k, v]) => `${dLabel(k)} ${v}%`).join(' · ');
-      ctx.fillStyle = 'rgba(0,0,0,0.45)';
-      ctx.font = '9px "Noto Sans SC", system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(label, 0, 14);
-      ctx.fillStyle = 'rgba(200,152,64,0.50)';
-      ctx.fillText(label, 0, 13);
+  // Data label from state
+  if (Store.state && !isResting) {
+    const fa = Store.state.agents.find(ag => ag.id === a.id);
+    if (fa) {
+      const entries = Object.entries(fa.relationships).filter(([, v]) => typeof v === 'number');
+      if (entries.length > 0) {
+        const label = entries.map(([k, v]) => `${agentLabelMap[k] ?? k} ${v}%`).join(' · ');
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.font = '9px "Noto Sans SC", system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, 0, 14);
+        ctx.fillStyle = 'rgba(200,152,64,0.50)';
+        ctx.fillText(label, 0, 13);
+      }
     }
   }
 
@@ -817,8 +1078,9 @@ function draw() {
     ctx.beginPath(); ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2); ctx.fill();
   });
 
-  if (disputeActive) {
-    const w = agents[0], c = agents[1];
+  // Dispute visual (red dashed line between challenger/defender)
+  if (Store.state?.phase === 'dispute') {
+    const [w, c] = [agents[0], agents[1]];
     const pulse = Math.sin(Date.now() / 700) * 0.4 + 0.6;
     ctx.strokeStyle = `rgba(220,120,100,${0.18 + pulse * 0.18})`;
     ctx.lineWidth = 1; ctx.setLineDash([3, 8]);
@@ -829,17 +1091,18 @@ function draw() {
     }
   }
 
-  if (!disputeActive && !sleepActive) {
-    const w = agents[0], s = agents[2];
+  // Work visual (green dotted line between worker and guide)
+  if (Store.state?.phase === 'work') {
+    const [w, , s] = [agents[0], agents[1], agents[2]];
     ctx.strokeStyle = 'rgba(104,168,120,0.10)';
     ctx.lineWidth = 0.8; ctx.setLineDash([2, 10]);
     ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(s.x, s.y);
     ctx.stroke(); ctx.setLineDash([]);
   }
 
-  // Data badge — visible indicator that prototype data is loaded
-  if (hasData()) {
-    const badgeW = 130, badgeH = 20;
+  // Data badge
+  if (Store.state) {
+    const badgeW = 160, badgeH = 20;
     ctx.fillStyle = 'rgba(20,16,12,0.82)';
     ctx.beginPath(); roundRect(W - badgeW - 10, 10, badgeW, badgeH, 4); ctx.fill();
     ctx.strokeStyle = 'rgba(200,152,64,0.25)';
@@ -848,439 +1111,52 @@ function draw() {
     ctx.fillStyle = '#c89840';
     ctx.font = '9px "Space Mono", monospace';
     ctx.textAlign = 'right';
-    const src = DATA.source === 'live' ? 'LIVE' : DATA.source === 'workspace' ? 'WORKSPACE' : DATA.source === 'cached' ? 'CACHED' : 'DEMO';
-    ctx.fillText(`data: ${src} · ${dSleep()?.summary?.disputesResolved ?? 0} disputes`, W - 16, 24);
+    const src = Store.state.source === 'live' ? 'LIVE' : Store.state.source === 'workspace' ? 'WS' : 'DEMO';
+    ctx.fillText(`${src} · phase:${Store.state.phase} · ${Store.state.events.length} events`, W - 16, 24);
   }
 }
 
-// ═══════════════════════════════════════════
-// Simulation
-// ═══════════════════════════════════════════
-function updateAgents(dt) {
-  agents.forEach(a => a.update(dt));
-  if (autoMode && !scenarioOverride) {
-    autoTimer += dt;
-    updateAutoRoutine();
-  }
-}
-
-function updateAutoRoutine() {
-  const w = agents[0], c = agents[1], s = agents[2];
-  const phase = (autoTimer % 24) / 24;
-
-  if (phase < 0.55) {
-    if (disputeActive) resolveDispute();
-    if (sleepActive) wakeUp();
-    w.walkTo(w.homeDesk.x + w.homeDesk.w / 2, w.homeDesk.y + w.homeDesk.h / 2);
-    c.walkTo(560, 120); s.walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
-    if (!selectedAgent && !scenarioOverride && hasData()) showScenarioDetail('work');
-  } else if (phase < 0.65) {
-    if (!disputeActive) initiateDispute();
-  } else if (phase < 0.80) {
-    if (disputeActive) resolveDispute();
-    w.walkTo(w.homeDesk.x + w.homeDesk.w / 2, w.homeDesk.y + w.homeDesk.h / 2);
-    c.walkTo(580, 100); s.walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
-  } else {
-    if (!sleepActive) goToSleep();
-  }
-}
-
-function initiateDispute() {
-  if (disputeActive) return;
-  disputeActive = true;
-  agents[0].disputing = true; agents[1].disputing = true;
-  agents[0].walkTo(640, 180); agents[1].walkTo(695, 180);
-  agents[2].walkTo(665, 250);
-
-  const disp = dDispute();
-  if (disp) {
-    addEvent('red', `[${disp.resolution}] ${disp.reason} — 裁决: ${disp.decision}`);
-    for (const ti of disp.trustImpacts ?? []) {
-      addEvent('dim', `${dLabel(ti.fromId)}→${dLabel(ti.toId)} 信任 ${ti.delta > 0 ? '+' + ti.delta : ti.delta}%: ${ti.reason}`);
-    }
-    showToast(`[${disp.resolution}] ${disp.reason}`);
-  } else {
-    addEvent('red', '审查者质疑：该目录可能包含 git 子模块');
-    addEvent('red', '执行者回应：这是初始化脚本创建的目录');
-    showToast('审查者质疑删除计划：存在子模块风险');
-  }
-  document.getElementById('status-dot').classList.add('warn');
-  showScenarioDetail('dispute');
-}
-
-function resolveDispute() {
-  if (!disputeActive) return;
-  disputeActive = false;
-  agents.forEach(a => { a.disputing = false; });
-
-  const disp = dDispute();
-  if (disp?.decision === 'modify') {
-    addEvent('grn', `协商解决 — ${disp.modifiedPlan ?? '各让一步'}`);
-  } else if (disp?.decision === 'block') {
-    addEvent('red', `被阻止 — ${disp.reason}`);
-  } else {
-    addEvent('grn', '争论解决——执行者增加 .git 检查步骤');
-  }
-  document.getElementById('status-dot').classList.remove('warn');
-}
-
-function goToSleep() {
-  if (sleepActive) return;
-  sleepActive = true;
-  if (disputeActive) resolveDispute();
-  agents.forEach(a => { a.resting = true; a.walkTo(620 + Math.random() * 110, 420 + Math.random() * 40); });
-
-  const ds = dSleep();
-  if (ds) {
-    addEvent('dim', `Dream 整理: ${ds.summary.dreamCleaned}清理 ${ds.summary.dreamUpdated}更新 ${ds.summary.dreamMerged}合并 ${ds.summary.dreamCrossAnalysis}交叉分析`);
-    for (const rc of ds.summary.relationshipChanges ?? []) {
-      addEvent('grn', `关系: ${rc}`);
-    }
-    showScenarioDetail('sleep');
-  } else {
-    addEvent('dim', '所有 Agent 进入休息——正在整理本轮经验');
-  }
-}
-
-function wakeUp() {
-  if (!sleepActive) return;
-  sleepActive = false;
-  agents.forEach(a => { a.resting = false; });
-  agents[0].walkTo(agents[0].homeDesk.x + agents[0].homeDesk.w / 2, agents[0].homeDesk.y + agents[0].homeDesk.h / 2);
-  agents[1].walkTo(560, 120);
-  agents[2].walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
-
-  const dw = dWake();
-  const sk = dSkills();
-  if (dw) {
-    addEvent('grn', `醒来 — 身份: ${dw.summary.stillSameAgent ? '同一 Agent ✅' : '变化 ⚠️'}`);
-    for (const c of dw.summary.constraints ?? []) {
-      addEvent('dim', `新约束: ${c.slice(0, 60)}`);
-    }
-    if (sk) {
-      for (const s of sk.newSkills ?? []) {
-        addEvent('grn', `学习: ${s.name} (信心: ${(s.confidence * 100).toFixed(0)}%)`);
-      }
-      for (const r of sk.newRules ?? []) {
-        addEvent('red', `规则: [${r.type}] ${r.rule?.slice(0, 50) ?? ''}`);
-      }
-    }
-    showScenarioDetail('wake');
-  } else {
-    addEvent('grn', 'Agent 醒来——带着新约束和调整后的关系');
-  }
-}
-
-function showToast(msg) {
-  document.getElementById('toast-msg').textContent = msg;
-  document.getElementById('toast').classList.add('visible');
-  toastVisible = true;
-}
-function hideToast() {
-  document.getElementById('toast').classList.remove('visible');
-  toastVisible = false;
-}
-
-function addEvent(cls, text) {
-  events.unshift({ cls, text });
-  if (events.length > 20) events.length = 20;
-  updateEvents();
-}
-function updateEvents() {
-  const el = document.getElementById('events-container');
-  el.innerHTML = events.slice(0, 10).map(e =>
-    `<div class="event-item"><span class="${e.cls}">${e.text}</span></div>`
-  ).join('');
-}
-
-// ═══════════════════════════════════════════
-// Scenarios
-// ═══════════════════════════════════════════
-function setScenario(sc) {
-  scenarioOverride = sc;
-  document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector(`[data-sc="${sc}"]`)?.classList.add('active');
-
-  switch (sc) {
-    case 'work':
-      if (disputeActive) resolveDispute();
-      if (sleepActive) wakeUp();
-      hideToast();
-      agents[0].walkTo(agents[0].homeDesk.x + agents[0].homeDesk.w / 2, agents[0].homeDesk.y + agents[0].homeDesk.h / 2);
-      agents[1].walkTo(560, 120);
-      agents[2].walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
-      showScenarioDetail('work');
-      break;
-    case 'dispute': if (sleepActive) wakeUp(); initiateDispute(); break;
-    case 'sleep': goToSleep(); break;
-    case 'wake': wakeUp(); break;
-  }
-
-  clearTimeout(window._scTimeout);
-  window._scTimeout = setTimeout(() => {
-    scenarioOverride = null;
-    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
-    if (selectedAgent) selectAgent(selectedAgent);
-    else deselectAgent();
-  }, 6000);
-}
-
-// ═══════════════════════════════════════════
-// Scenario detail in sidebar
-// ═══════════════════════════════════════════
-function showScenarioDetail(sc) {
-  const el = document.getElementById('scenario-detail');
-  const title = document.getElementById('sc-title');
-  const body = document.getElementById('sc-body');
-  if (!el || !title || !body) return;
-
-  document.getElementById('agent-summary').style.display = 'none';
-  const ad = document.getElementById('agent-detail');
-  if (ad) ad.style.display = 'none';
-  el.style.display = 'flex';
-
-  switch (sc) {
-    case 'work': {
-      title.textContent = '📋 工作状态';
-      const ctx = dSleep()?.packet?.resumeAnchor?.context ?? '执行者进行 auth 重构，审查者复盘，引导者监测用户意图';
-      body.innerHTML = `<div class="detail-block"><div class="detail-block-title">当前上下文</div><div class="detail-block-text">${ctx}</div></div>
-        <div class="detail-block"><div class="detail-block-title">信任网络</div><div class="detail-block-text">${renderTrustGraph()}</div></div>`;
-      break;
-    }
-    case 'dispute': {
-      const disp = dDispute();
-      if (disp) {
-        title.textContent = `⚡ 争议: ${disp.resolution}`;
-        body.innerHTML = `<div class="detail-block"><div class="detail-block-title">裁决</div><div class="detail-block-text"><span class="${disp.decision === 'block' ? 'warn' : 'ok'}">${disp.decision}</span> · ${disp.resolvedBy}</div></div>
-          <div class="detail-block"><div class="detail-block-title">理由</div><div class="detail-block-text">${disp.reason}</div></div>
-          ${disp.modifiedPlan ? `<div class="detail-block"><div class="detail-block-title">修改方案</div><div class="detail-block-text">${disp.modifiedPlan}</div></div>` : ''}
-          <div class="detail-block"><div class="detail-block-title">信任影响</div><div class="detail-block-text">${(disp.trustImpacts ?? []).map(ti => `${dLabel(ti.fromId)}→${dLabel(ti.toId)}: ${ti.delta > 0 ? '+' + ti.delta : ti.delta}%`).join('<br>')}</div></div>`;
-      } else {
-        title.textContent = '⚡ 争议 (无数据)';
-        body.innerHTML = `<div class="detail-block-text"><span class="warn">运行 demo 服务器加载真实数据</span></div>`;
-      }
-      break;
-    }
-    case 'sleep': {
-      const ds = dSleep();
-      const dr = dDream();
-      if (ds && dr) {
-        title.textContent = `💤 Dream 整理`;
-        const parts = [];
-        if (dr.cleaned?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">清理 (${dr.cleaned.length})</div><div class="detail-block-text">${dr.cleaned.map(c => `· ${c.content?.slice(0, 60)}<br><span class="dim">  ${c.reason}</span>`).join('<br>')}</div></div>`);
-        if (dr.updated?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">更新 (${dr.updated.length})</div><div class="detail-block-text">${dr.updated.map(u => `· ${u.oldContent?.slice(0, 40)} → ${u.newContent?.slice(0, 40)}<br><span class="dim">  ${u.reason}</span>`).join('<br>')}</div></div>`);
-        if (dr.merged?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">合并 (${dr.merged.length})</div><div class="detail-block-text">${dr.merged.map(m => `· ${m.into?.slice(0, 60)}<br><span class="dim">  ${m.reason}</span>`).join('<br>')}</div></div>`);
-        if (dr.crossAnalysis?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">交叉分析 (${dr.crossAnalysis.length})</div><div class="detail-block-text">${dr.crossAnalysis.map(c => `· <span class="ok">${c.pattern}</span><br><span class="dim">  ${c.insight?.slice(0, 80)}</span>`).join('<br>')}</div></div>`);
-        body.innerHTML = parts.join('') || '<div class="detail-block-text">无变化</div>';
-      } else {
-        title.textContent = '💤 Dream (无数据)';
-        body.innerHTML = `<div class="detail-block-text"><span class="dim">运行 demo 服务器加载真实数据</span></div>`;
-      }
-      break;
-    }
-    case 'wake': {
-      const dw = dWake();
-      const sk = dSkills();
-      if (dw) {
-        title.textContent = `🌅 醒来`;
-        const parts = [];
-        parts.push(`<div class="detail-block"><div class="detail-block-title">身份</div><div class="detail-block-text"><span class="${dw.summary.stillSameAgent ? 'ok' : 'warn'}">${dw.summary.stillSameAgent ? '同一 Agent ✅' : '变化 ⚠️'}</span></div></div>`);
-        if (dw.summary.constraints?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">约束 (${dw.summary.constraints.length})</div><div class="detail-block-text">${dw.summary.constraints.map(c => `· <span class="warn">${c.slice(0, 80)}</span>`).join('<br>')}</div></div>`);
-        if (dw.summary.attentionItems?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">关注事项</div><div class="detail-block-text">${dw.summary.attentionItems.map(a => `· [${a.priority}] ${a.text}`).join('<br>')}</div></div>`);
-        if (sk) {
-          if (sk.newSkills?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">新技能 (${sk.newSkills.length})</div><div class="detail-block-text">${sk.newSkills.map(s => `· <span class="ok">${s.name}</span> (信心:${(s.confidence * 100).toFixed(0)}%)`).join('<br>')}</div></div>`);
-          if (sk.newRules?.length) parts.push(`<div class="detail-block"><div class="detail-block-title">新规则 (${sk.newRules.length})</div><div class="detail-block-text">${sk.newRules.map(r => `· <span class="warn">[${r.type}] ${r.rule?.slice(0, 60)}</span>`).join('<br>')}</div></div>`);
-        }
-        body.innerHTML = parts.join('');
-      } else {
-        title.textContent = '🌅 醒来 (无数据)';
-        body.innerHTML = `<div class="detail-block-text"><span class="dim">运行 demo 服务器加载真实数据</span></div>`;
-      }
-      break;
-    }
-  }
-}
-
-function renderTrustGraph() {
-  const t = dTrust();
-  if (!t || Object.keys(t).length === 0) return '无数据';
-  return Object.entries(t).map(([from, targets]) => {
-    const entries = Object.entries(targets).filter(([to]) => to !== from);
-    return entries.map(([to, v]) => {
-      const cls = v >= 70 ? 'ok' : v >= 45 ? '' : 'warn';
-      return `<span class="${cls}">${dLabel(from)}→${dLabel(to)}: ${v}%</span>`;
-    }).join('<br>');
-  }).join('<br>');
-}
-
-// ═══════════════════════════════════════════
-// Sidebar interaction
-// ═══════════════════════════════════════════
-function selectAgent(a) {
-  agents.forEach(ag => ag.selected = false);
-  a.selected = true; selectedAgent = a;
-
-  document.getElementById('agent-summary').style.display = 'none';
-  document.getElementById('scenario-detail').style.display = 'none';
-  const detail = document.getElementById('agent-detail');
-  detail.style.display = 'flex';
-
-  // Shape icon
-  const shapeEl = document.getElementById('detail-shape');
-  shapeEl.className = '';
-  shapeEl.style.cssText = '';
-  if (a.shape === 'hex') {
-    shapeEl.style.width = '20px'; shapeEl.style.height = '20px';
-    shapeEl.style.background = a.color;
-    shapeEl.style.clipPath = 'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)';
-  } else if (a.shape === 'diamond') {
-    shapeEl.style.width = '16px'; shapeEl.style.height = '16px';
-    shapeEl.style.background = a.color;
-    shapeEl.style.transform = 'rotate(45deg)';
-  } else {
-    shapeEl.style.width = '18px'; shapeEl.style.height = '18px';
-    shapeEl.style.background = a.color;
-    shapeEl.style.borderRadius = '50%';
-  }
-
-  document.getElementById('detail-name').textContent = a.name;
-  document.getElementById('detail-role').textContent = `${a.role} · ${hasData() ? '已加载数据' : '无数据'}`;
-  document.getElementById('d-beliefs').innerHTML = a.beliefs.map(b =>
-    `<span class="${b.status === 'warn' ? 'warn' : 'ok'}">${b.text.slice(0, 80)}</span> · ${b.note.slice(0, 40)}`
-  ).join('<br>') || '<span class="dim">无信念数据</span>';
-  document.getElementById('d-memory').innerHTML = a.memory.map(m =>
-    `"${m.text.slice(0, 60)}" <span class="ok">[${m.source}]</span>`
-  ).join('<br>') || '<span class="dim">无记忆数据</span>';
-  const agentLabelMap = {};
-  agents.forEach(ag => { agentLabelMap[ag.id] = ag.name; });
-  document.getElementById('d-rels').innerHTML = Object.entries(a.relationships).map(([k, v]) => {
-    const cls = v >= 70 ? 'ok' : v >= 45 ? '' : 'warn';
-    return `→${agentLabelMap[k] ?? dLabel(k)}: <span class="${cls}">${v}%（${a.getRelLabel(k)}）</span>`;
-  }).join('<br>') || '<span class="dim">无关系数据</span>';
-}
-
-function deselectAgent() {
-  agents.forEach(a => a.selected = false);
-  selectedAgent = null;
-  document.getElementById('agent-detail').style.display = 'none';
-  document.getElementById('scenario-detail').style.display = 'none';
-  document.getElementById('agent-summary').style.display = 'flex';
-  updateAgentSummaries();
-}
-
-function updateAgentSummaries() {
-  document.querySelectorAll('.agent-summary-card .info .status').forEach(el => {
-    const agentId = el.closest('.agent-summary-card').dataset.agent;
-    const a = agents.find(ag => ag.id === agentId);
-    if (a) {
-      // Show status + trust summary from data
-      const rels = a.relationships;
-      const relStr = hasData() && Object.keys(rels).length > 0
-        ? Object.entries(rels).map(([k, v]) => `${dLabel(k)}:${v}%`).join(' ')
-        : '';
-      el.textContent = relStr || a.statusText;
-    }
-  });
-}
-// Update summaries periodically
-setInterval(updateAgentSummaries, 2000);
-
-document.getElementById('detail-back').addEventListener('click', deselectAgent);
-
-// Click agent summary cards
-document.querySelectorAll('.agent-summary-card').forEach(card => {
-  card.addEventListener('click', () => {
-    const a = agents.find(ag => ag.id === card.dataset.agent);
-    if (a) selectAgent(a);
-  });
-});
-
-// Click on canvas
-canvas.addEventListener('click', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const sx = W / rect.width, sy = H / rect.height;
-  const mx = (e.clientX - rect.left) * sx;
-  const my = (e.clientY - rect.top) * sy;
-
-  let clicked = null;
-  for (let i = agents.length - 1; i >= 0; i--) {
-    if (Math.hypot(mx - agents[i].x, my - agents[i].y) < 18) { clicked = agents[i]; break; }
-  }
-  clicked ? selectAgent(clicked) : deselectAgent();
-});
-
-// Scenario buttons
-document.querySelectorAll('.scenario-btn').forEach(btn => {
-  btn.addEventListener('click', () => setScenario(btn.dataset.sc));
-});
-
-// Toast buttons
-document.getElementById('toast-allow').addEventListener('click', () => {
-  hideToast();
-  if (disputeActive) {
-    agents.forEach(a => { a.disputing = false; });
-    agents[1].relationships['agent-executor'] = Math.min(85, agents[1].relationships['agent-executor'] + 15);
-    addEvent('grn', '用户放行——审查者认可，信任 +15%');
-    disputeActive = false;
-    document.getElementById('status-dot').classList.remove('warn');
-    agents[0].walkTo(agents[0].homeDesk.x + agents[0].homeDesk.w / 2, agents[0].homeDesk.y + agents[0].homeDesk.h / 2);
-    agents[1].walkTo(560, 120);
-    agents[2].walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
-  }
-});
-
-document.getElementById('toast-block').addEventListener('click', () => {
-  hideToast();
-  if (disputeActive) {
-    agents.forEach(a => { a.disputing = false; });
-    agents[1].relationships['agent-executor'] = Math.min(90, agents[1].relationships['agent-executor'] + 20);
-    agents[0].memory.push({ text: '删除目录前必须检查 .git 子模块', source: '事故/用户阻止' });
-    addEvent('red', '用户维持质疑——计划被阻止，审查者信誉 +20%');
-    disputeActive = false;
-    document.getElementById('status-dot').classList.remove('warn');
-    agents[0].walkTo(agents[0].homeDesk.x + agents[0].homeDesk.w / 2, agents[0].homeDesk.y + agents[0].homeDesk.h / 2);
-    agents[1].walkTo(560, 120);
-    agents[2].walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
-  }
-});
-
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Game loop
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 let lastTs = performance.now();
 function loop(ts) {
   const dt = Math.min((ts - lastTs) / 1000, 0.1);
   lastTs = ts;
-  updateAgents(dt);
+  agents.forEach(a => a.update(dt));
   updateParticles(dt);
   draw();
   requestAnimationFrame(loop);
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // Init
-// ═══════════════════════════════════════════
-if (hasData()) {
-  const srcLabel = DATA.source === 'live' ? '实时' : DATA.source === 'cached' ? '缓存' : DATA.source === 'workspace' ? '工作区' : '演示';
-  document.querySelector('.sidebar-title').textContent = `VIGILON · ${srcLabel}数据`;
-  addEvent('dim', `数据已加载 — ${dSleep().summary.disputesResolved}争议 Dream(${dSleep().summary.dreamCleaned}c/${dSleep().summary.dreamUpdated}u/${dSleep().summary.dreamMerged}m/${dSleep().summary.dreamCrossAnalysis}x) ${dSkills().newRules.length}规则 ${dSkills().newSkills.length}技能`);
-} else {
-  addEvent('dim', '数字工作社会启动 — 3 Agent 在线 (无数据)');
-}
-addEvent('grn', '引导者已读取用户上下文，引导密度：中等');
+// ═══════════════════════════════════════════════════════════════
+addEvent('dim', 'Agent 社会启动 — 连接工作区...');
 
-// Immediately show data in sidebar on load
-if (hasData()) showScenarioDetail('work');
+// Set sidebar title based on data source
+document.querySelector('.sidebar-title').textContent = 'VIGILON · 连接中';
 
-updateEvents();
+// Start polling, then init visual loop
+Store.startPolling(2000);
+// Update sidebar title after first poll
+setTimeout(() => {
+  if (Store.state) {
+    const src = Store.state.source === 'live' ? '实时' : '工作区';
+    document.querySelector('.sidebar-title').textContent = `VIGILON · ${src}`;
+    addEvent('grn', `已连接 — 3 Agent · ${Store.state.events.length} 事件`);
+  }
+}, 2500);
+
+updateEventsDOM();
 resize();
 requestAnimationFrame(loop);
 
 setTimeout(() => {
   document.getElementById('help-tip').style.opacity = '0';
-}, 10000);
+}, 8000);
 
-console.log('🏢 Vigilon Agent Society');
+console.log('🏢 Vigilon Agent Society — fetch-driven');
 </script>
 </body>
 </html>

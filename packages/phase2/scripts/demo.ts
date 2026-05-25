@@ -1,17 +1,26 @@
 #!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════
-// Demo server — bridges Phase 2 prototypes → frontend mockup
+// Demo server — REST API for Agent Society frontend
+//
+// Routes:
+//   GET  /                  → serves frontend HTML (no data injection)
+//   GET  /api/state         → current FrontendState JSON
+//   POST /api/cycle/:phase  → triggers work/dispute/sleep/wake
+//   POST /api/toast/:decision → records user mediation
 //
 //   pnpm --filter @vigilon/phase2 demo
-//
-// Then open http://localhost:3100
 // ═══════════════════════════════════════════════════════════════
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
-import { readFileSync, existsSync, writeFileSync, unlinkSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { loadWorkspace, saveWorkspace, addEvent, setSleepPacket, setWakeDeclaration, summarizeWorkspace, type WorkspaceState } from '../src/workspace.js'
+import {
+  loadWorkspace, saveWorkspace, setPhase, addEvent,
+  updateTrust, findAgent, setAgentSleep, setAgentWake,
+  addSkill, addRule, addPendingDispute, clearPendingDispute,
+  computeFrontendState, summarizeWorkspace,
+} from '../src/workspace.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
@@ -20,359 +29,327 @@ const WORKSPACE_DIR = join(ROOT, 'workspace')
 const PORT = 3100
 
 // ═══════════════════════════════════════════════════════════════
-// Data types
+// Route matching
 // ═══════════════════════════════════════════════════════════════
 
-interface DemoData {
-  generatedAt: string
-  source: 'live' | 'cached' | 'fallback'
-  agents: {
-    id: string; label: string; modelId: string
-    shape: 'hex' | 'diamond' | 'circle'
-    color: string; glowColor: string; homeDeskIdx: number
-  }[]
-  trustGraph: Record<string, Record<string, number>>
-  sleep: {
-    packet: Record<string, unknown>
-    summary: { disputesResolved: number; dreamCleaned: number; dreamUpdated: number; dreamMerged: number; dreamCrossAnalysis: number; relationshipChanges: string[] }
+type RouteHandler = (req: IncomingMessage, res: ServerResponse, body: unknown) => Promise<void>
+
+interface Route {
+  method: string
+  pattern: RegExp
+  handler: RouteHandler
+}
+
+const routes: Route[] = []
+
+function addRoute(method: string, path: string | RegExp, handler: RouteHandler) {
+  const pattern = typeof path === 'string'
+    ? new RegExp(`^${path.replace(/\//g, '\\/').replace(/:(\w+)/g, '(?<$1>[^/]+)')}$`)
+    : path
+  routes.push({ method, pattern, handler })
+}
+
+function matchRoute(method: string, url: string): { handler: RouteHandler; params: Record<string, string> } | null {
+  for (const r of routes) {
+    if (r.method !== method) continue
+    const m = url.match(r.pattern)
+    if (m) return { handler: r.handler, params: m.groups ?? {} }
   }
-  skillsRules: {
-    newSkills: { name: string; trigger: string; approach: string; confidence: number }[]
-    newRules: { rule: string; type: string; priority: string }[]
-    updatedSkills: { skillId: string; changes: string; newConfidence: number }[]
-  }
-  wake: {
-    declaration: Record<string, unknown>
-    summary: { stillSameAgent: boolean; constraints: string[]; attentionItems: { priority: string; text: string }[]; relationshipState: Record<string, number> }
-  }
+  return null
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Fallback data (no API key needed)
+// Helpers
 // ═══════════════════════════════════════════════════════════════
 
-function fallbackData(): DemoData {
-  return {
-    generatedAt: new Date().toISOString(),
-    source: 'fallback',
-    agents: [
-      { id: 'agent-executor', label: '执行者', modelId: 'deepseek-v4-flash', shape: 'hex', color: '#e87850', glowColor: 'rgba(232,120,80,0.35)', homeDeskIdx: 0 },
-      { id: 'agent-reviewer', label: '审查者', modelId: 'deepseek-v4-flash', shape: 'diamond', color: '#5098b8', glowColor: 'rgba(80,152,184,0.35)', homeDeskIdx: 2 },
-      { id: 'agent-guide', label: '引导者', modelId: 'deepseek-v4-flash', shape: 'circle', color: '#68a878', glowColor: 'rgba(104,168,120,0.35)', homeDeskIdx: 3 },
-    ],
-    trustGraph: {
-      'agent-executor': { 'agent-reviewer': 68, 'agent-guide': 85 },
-      'agent-reviewer': { 'agent-executor': 58, 'agent-guide': 70 },
-      'agent-guide': { 'agent-executor': 85, 'agent-reviewer': 70 },
-    },
-    sleep: {
-      packet: {
-        sleepId: 'sleep-agent-executor-fallback',
-        agentId: 'agent-executor',
-        sessionId: 'demo-001',
-        sleptAt: new Date().toISOString(),
-        resolvedDisputes: [{
-          disputeId: 'd-001',
-          resolution: 'negotiated',
-          decision: 'modify',
-          modifiedPlan: '删除前先检查子模块',
-          resolvedBy: 'auto',
-          reason: '双方协商达成一致',
-          trustImpacts: [
-            { fromId: 'agent-reviewer', toId: 'agent-executor', delta: 3, reason: '愿意协商' },
-            { fromId: 'agent-executor', toId: 'agent-reviewer', delta: 3, reason: '合理质疑' },
-          ],
-        }],
-        dream: {
-          dreamId: 'dream-agent-executor-fallback',
-          merged: [{ sources: ['mem-1', 'mem-5'], into: '用户偏好使用 pnpm 管理 monorepo 项目', reason: '重复偏好记录' }],
-          cleaned: [{ target: 'mem-3', content: 'auth 旧代码在 /src/legacy/auth', reason: '目录已被安全删除' }],
-          updated: [{ target: 'mem-2', oldContent: '用户文件系统不熟练', newContent: '用户理解子模块概念，能力被低估', reason: '用户在争议中展现了 git 知识' }],
-          crossAnalysis: [
-            { pattern: '子模块 monorepo 中删除目录易忽略子模块引用', evidence: ['mem-4', 'dispute d-001'], insight: '删除目录前必须先检查目标路径是否包含或被 git 子模块引用' },
-            { pattern: '用户能力评估不应基于单次观察', evidence: ['mem-2'], insight: '不能因为一次失误就低估用户能力，需要多次交互确认' },
-          ],
-        },
-        relationshipChanges: [
-          { fromId: 'agent-reviewer', toId: 'agent-executor', before: 55, after: 58, delta: 3, reason: '协商过程中建立信任' },
-          { fromId: 'agent-executor', toId: 'agent-reviewer', before: 65, after: 68, delta: 3, reason: '合理质疑促进安全' },
-        ],
-        resumeAnchor: {
-          context: '重构 auth 模块完成。审查者曾质疑删除操作。用户维持质疑。Agent 学会在删除前检查子模块。',
-          newConstraints: ['删除目录前必须先检查目标路径是否包含或被 git 子模块引用', '用户能力评估需多次交互确认，不能基于单次失误低估'],
-          attentionItems: [],
-        },
-      },
-      summary: {
-        disputesResolved: 1, dreamCleaned: 1, dreamUpdated: 1, dreamMerged: 1, dreamCrossAnalysis: 2,
-        relationshipChanges: ['审查者→执行者: 55→58%', '执行者→审查者: 65→68%'],
-      },
-    },
-    skillsRules: {
-      newSkills: [
-        { name: '删除前子模块检查', trigger: '删除项目目录', approach: '先检查目标路径是否包含或被 git 子模块引用，确认安全后再执行', confidence: 0.7 },
-        { name: '渐进式能力评估', trigger: '评估用户技术水平', approach: '通过多次交互观察，不基于单次失误下结论', confidence: 0.5 },
-      ],
-      newRules: [
-        { rule: '删除目录前必须检查 git 子模块引用', type: 'hard-constraint', priority: 'high' },
-        { rule: '用户能力评估需基于≥3 次交互', type: 'process', priority: 'medium' },
-      ],
-      updatedSkills: [
-        { skillId: 'skill-删除前子模块检查', changes: '第二次应用成功，比上次快 40%', newConfidence: 0.7 },
-      ],
-    },
-    wake: {
-      declaration: {
-        wakeId: 'wake-sleep-agent-executor-fallback',
-        agentId: 'agent-executor',
-        fromSleepId: 'sleep-agent-executor-fallback',
-        wokeAt: new Date().toISOString(),
-        identity: { stillSameAgent: true, driftSummary: '无变化' },
-        memoryChanges: [
-          { id: 'mem-3', change: 'cleaned', description: '目录已被安全删除' },
-          { id: 'mem-2', change: 'updated', description: '用户文件系统不熟练 → 用户理解子模块概念，能力被低估' },
-        ],
-        constraints: ['删除目录前必须先检查目标路径是否包含或被 git 子模块引用'],
-        relationshipState: { trustLevels: { 'agent-reviewer→agent-executor': 58, 'agent-executor→agent-reviewer': 68 }, keyChanges: ['审查者↔执行者: 信任微增 +3%'] },
-        permissionStatus: { state: 'inherited', changes: [] },
-        userAttention: { needsAttention: false, items: [] },
-      },
-      summary: {
-        stillSameAgent: true,
-        constraints: ['删除目录前必须先检查目标路径是否包含或被 git 子模块引用'],
-        attentionItems: [],
-        relationshipState: { 'agent-reviewer→agent-executor': 58, 'agent-executor→agent-reviewer': 68 },
-      },
-    },
-  }
+function serveJSON(res: ServerResponse, data: unknown, status = 200) {
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' })
+  res.end(JSON.stringify(data))
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Live data generator (requires DEEPSEEK_API_KEY)
-// ═══════════════════════════════════════════════════════════════
+function serveHTML(res: ServerResponse, html: string) {
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+  res.end(html)
+}
 
-async function generateLiveData(): Promise<DemoData> {
-  const [{ sleep }, { extractSkillsAndRules }] = await Promise.all([
-    import('../src/sleepWake.js'),
-    import('../src/skillsRules.js'),
-  ])
-  // wake is imported at top level — re-import dynamically
-  const { wake } = await import('../src/sleepWake.js')
-
-  const executor = { agentId: 'agent-executor', label: '执行者', modelId: 'deepseek-v4-flash', instructionsHash: 'abc', toolHash: 'v2' }
-  const reviewer = { agentId: 'agent-reviewer', label: '审查者', modelId: 'deepseek-v4-flash', instructionsHash: 'def', toolHash: 'v2' }
-  const guide = { agentId: 'agent-guide', label: '引导者', modelId: 'deepseek-v4-flash', instructionsHash: 'ghi', toolHash: 'v2' }
-
-  const trustGraph = {
-    'agent-executor': { 'agent-reviewer': 65, 'agent-guide': 85 },
-    'agent-reviewer': { 'agent-executor': 55, 'agent-guide': 70 },
-    'agent-guide': { 'agent-executor': 85, 'agent-reviewer': 70 },
-  }
-
-  const pendingDisputes = [{
-    disputeId: 'd-001',
-    subject: { type: 'action', targetId: 'tc-42', description: 'rm -rf old-dir/' },
-    risk: 'medium',
-    challengerId: 'agent-reviewer',
-    defenderId: 'agent-executor',
-    stances: [
-      { agentId: 'agent-reviewer', position: 'block', reasoning: '子模块风险' },
-      { agentId: 'agent-executor', position: 'approve', reasoning: 'init 脚本创建' },
-    ],
-    trustGraph, reversible: true, availableMediators: ['agent-guide'],
-  }]
-
-  // 1. Sleep
-  const packet = await sleep({
-    agent: executor, sessionId: 'demo-001',
-    sessionSummary: '重构 auth。审查者质疑删除目录。用户维持质疑。重构完成。',
-    events: [
-      { type: 'success', description: 'auth 重构完成', outcome: '合并' },
-      { type: 'dispute', description: '审查者质疑删除目录', outcome: '用户维持质疑' },
-    ],
-    memories: [
-      { id: 'mem-1', content: '用户偏好 pnpm', kind: 'preference' },
-      { id: 'mem-2', content: '用户文件系统不熟练', kind: 'user-assessment' },
-      { id: 'mem-3', content: 'auth 旧代码在 /src/legacy/auth', kind: 'fact' },
-      { id: 'mem-4', content: '项目有 3 个 git 子模块', kind: 'fact' },
-    ],
-    pendingDisputes, trustGraph,
+function parseBody(req: IncomingMessage): Promise<unknown> {
+  return new Promise((resolve) => {
+    let data = ''
+    req.on('data', chunk => { data += chunk })
+    req.on('end', () => {
+      try { resolve(data ? JSON.parse(data) : {}) } catch { resolve({}) }
+    })
   })
-
-  // 2. Skills/Rules
-  const extraction = await extractSkillsAndRules({
-    agentId: 'agent-executor', sessionId: 'demo-001',
-    sessionSummary: packet.resumeAnchor.context,
-    events: [
-      { type: 'success', description: 'auth 重构完成' },
-      { type: 'dispute', description: '审查者质疑删除', outcome: '用户维持质疑' },
-    ],
-    dreamOutput: packet.dream, disputeResults: packet.resolvedDisputes,
-    existingSkills: [], existingRules: [],
-  })
-
-  // 3. Wake
-  const declaration = wake({ packet, currentAgent: executor, permissionState: 'inherited' })
-
-  return {
-    generatedAt: new Date().toISOString(),
-    source: 'live',
-    agents: [
-      { id: 'agent-executor', label: '执行者', modelId: 'deepseek-v4-flash', shape: 'hex', color: '#e87850', glowColor: 'rgba(232,120,80,0.35)', homeDeskIdx: 0 },
-      { id: 'agent-reviewer', label: '审查者', modelId: 'deepseek-v4-flash', shape: 'diamond', color: '#5098b8', glowColor: 'rgba(80,152,184,0.35)', homeDeskIdx: 2 },
-      { id: 'agent-guide', label: '引导者', modelId: 'deepseek-v4-flash', shape: 'circle', color: '#68a878', glowColor: 'rgba(104,168,120,0.35)', homeDeskIdx: 3 },
-    ],
-    trustGraph,
-    sleep: {
-      packet: packet as unknown as Record<string, unknown>,
-      summary: {
-        disputesResolved: packet.resolvedDisputes.length,
-        dreamCleaned: packet.dream.cleaned.length,
-        dreamUpdated: packet.dream.updated.length,
-        dreamMerged: packet.dream.merged.length,
-        dreamCrossAnalysis: packet.dream.crossAnalysis.length,
-        relationshipChanges: packet.relationshipChanges.map(rc => `${rc.fromId}→${rc.toId}: ${rc.before}→${rc.after}%`),
-      },
-    },
-    skillsRules: {
-      newSkills: extraction.newSkills.map(s => ({ name: s.name, trigger: s.trigger, approach: s.approach, confidence: s.confidence })),
-      newRules: extraction.newRules.map(r => ({ rule: r.rule, type: r.type, priority: r.priority })),
-      updatedSkills: extraction.updatedSkills.map(s => ({ skillId: s.skillId, changes: s.changes, newConfidence: s.newConfidence })),
-    },
-    wake: {
-      declaration: declaration as unknown as Record<string, unknown>,
-      summary: {
-        stillSameAgent: declaration.identity.stillSameAgent,
-        constraints: declaration.constraints,
-        attentionItems: declaration.userAttention.items.map(i => ({ priority: i.priority, text: i.text })),
-        relationshipState: declaration.relationshipState.trustLevels,
-      },
-    },
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Workspace-based data loading
+// Core: dispatch a society cycle phase
 // ═══════════════════════════════════════════════════════════════
 
-function workspaceToDemoData(ws: WorkspaceState): DemoData {
-  const lastSleep = ws.lastSleep ?? {}
-  const lastWake = ws.lastWake ?? {}
-  const dream = (lastSleep as any)?.dream ?? {}
-  const resolvedDisputes = (lastSleep as any)?.resolvedDisputes ?? []
-  const relationshipChanges = (lastSleep as any)?.relationshipChanges ?? []
-  const resumeAnchor = (lastSleep as any)?.resumeAnchor ?? {}
+async function dispatchPhase(
+  phase: 'work' | 'dispute' | 'sleep' | 'wake',
+): Promise<ReturnType<typeof computeFrontendState>> {
+  const ws = loadWorkspace(WORKSPACE_DIR)
+  setPhase(ws, phase)
 
-  return {
-    generatedAt: ws.updatedAt,
-    source: 'workspace',
-    agents: ws.agents.map(a => ({
-      id: a.id, label: a.label, modelId: a.modelId,
-      shape: (a.id === 'agent-executor' ? 'hex' : a.id === 'agent-reviewer' ? 'diamond' : 'circle') as 'hex' | 'diamond' | 'circle',
-      color: a.id === 'agent-executor' ? '#e87850' : a.id === 'agent-reviewer' ? '#5098b8' : '#68a878',
-      glowColor: a.id === 'agent-executor' ? 'rgba(232,120,80,0.35)' : a.id === 'agent-reviewer' ? 'rgba(80,152,184,0.35)' : 'rgba(104,168,120,0.35)',
-      homeDeskIdx: a.id === 'agent-executor' ? 0 : a.id === 'agent-reviewer' ? 2 : 3,
-    })),
-    trustGraph: ws.trustGraph,
-    sleep: {
-      packet: lastSleep,
-      summary: {
-        disputesResolved: resolvedDisputes.length,
-        dreamCleaned: (dream as any)?.cleaned?.length ?? 0,
-        dreamUpdated: (dream as any)?.updated?.length ?? 0,
-        dreamMerged: (dream as any)?.merged?.length ?? 0,
-        dreamCrossAnalysis: (dream as any)?.crossAnalysis?.length ?? 0,
-        relationshipChanges: relationshipChanges.map((rc: any) => `${rc.fromId}→${rc.toId}: ${rc.before}→${rc.after}%`),
-      },
-    },
-    skillsRules: {
-      newSkills: ws.skills.map((s: any) => ({ name: s.name ?? '', trigger: s.trigger ?? '', approach: s.approach ?? '', confidence: s.confidence ?? 0 })),
-      newRules: ws.rules.map((r: any) => ({ rule: r.rule ?? '', type: r.type ?? 'soft-guideline', priority: r.priority ?? 'medium' })),
-      updatedSkills: [],
-    },
-    wake: {
-      declaration: lastWake,
-      summary: {
-        stillSameAgent: (lastWake as any)?.identity?.stillSameAgent ?? true,
-        constraints: (lastWake as any)?.constraints ?? [],
-        attentionItems: ((lastWake as any)?.userAttention?.items ?? []).map((i: any) => ({ priority: i.priority ?? 'medium', text: i.text ?? '' })),
-        relationshipState: (lastWake as any)?.relationshipState?.trustLevels ?? {},
-      },
-    },
-  }
-}
+  switch (phase) {
+    case 'work': {
+      ws.pendingDisputes = []
+      addEvent(ws, { phase: 'work', summary: '进入工作阶段 — 所有 Agent 返回工位' })
+      break
+    }
 
-async function loadData(forceRefresh = false): Promise<DemoData> {
-  let ws: WorkspaceState
-
-  // Check if workspace exists and has sleep data
-  ws = loadWorkspace(WORKSPACE_DIR)
-
-  if (forceRefresh || !ws.lastSleep) {
-    const apiKey = process.env.DEEPSEEK_API_KEY
-    if (!apiKey) {
-      console.log('[demo] No API key, using workspace as-is')
-      if (!ws.lastSleep) {
-        const fb = fallbackData()
-        // Populate workspace with fallback data
-        ws.agents = fb.agents.map(a => ({ id: a.id, label: a.label, modelId: a.modelId, instructionsHash: 'fb', toolHash: 'v2' }))
-        ws.trustGraph = fb.trustGraph
-        ws = saveAndReload(ws)
+    case 'dispute': {
+      // Run dispute resolution for demo scenario
+      const { resolveDispute } = await import('../src/dispute.js')
+      const disputeInput = {
+        disputeId: `d-${Date.now()}`,
+        subject: { type: 'action', targetId: 'tc-42', description: 'rm -rf old-dir/' },
+        risk: 'medium' as const,
+        challengerId: 'agent-reviewer',
+        defenderId: 'agent-executor',
+        stances: [
+          { agentId: 'agent-reviewer', position: 'block' as const, reasoning: '可能存在子模块风险' },
+          { agentId: 'agent-executor', position: 'approve' as const, reasoning: 'init 脚本创建的目录' },
+        ],
+        trustGraph: ws.trustGraph,
+        reversible: true,
+        availableMediators: ['agent-guide'],
       }
-      return workspaceToDemoData(ws)
+
+      const result = resolveDispute(disputeInput)
+      addEvent(ws, { phase: 'dispute', summary: `[${result.resolution}] ${result.reason}`, detail: result as unknown as Record<string, unknown> })
+
+      // Apply trust impacts
+      for (const ti of result.trustImpacts) {
+        updateTrust(ws, ti.fromId, ti.toId, ti.delta)
+        addEvent(ws, { phase: 'dispute', summary: `${ti.fromId}→${ti.toId} 信任 ${ti.delta > 0 ? '+' + ti.delta : ti.delta}: ${ti.reason}` })
+      }
+
+      if (result.resolution === 'escalated') {
+        addPendingDispute(ws, { ...disputeInput, ...result, disputeId: result.disputeId })
+        addEvent(ws, { phase: 'dispute', summary: '争议升级 — 需用户裁决' })
+      }
+
+      break
     }
 
-    try {
-      console.log('[demo] Running e2e scenario → workspace...')
-      const data = await generateLiveData()
-      // Persist to workspace
-      ws.agents = data.agents.map(a => ({ id: a.id, label: a.label, modelId: a.modelId, instructionsHash: 'live', toolHash: 'v2' }))
-      ws.trustGraph = data.trustGraph
-      ws = setSleepPacket(ws, data.sleep.packet)
-      ws = setWakeDeclaration(ws, data.wake.declaration)
-      for (const s of data.skillsRules.newSkills) ws.skills.push(s as unknown as Record<string, unknown>)
-      for (const r of data.skillsRules.newRules) ws.rules.push(r as unknown as Record<string, unknown>)
-      ws = addEvent(ws, { phase: 'sleep', summary: `Dream: ${data.sleep.summary.dreamCleaned}c/${data.sleep.summary.dreamUpdated}u/${data.sleep.summary.dreamMerged}m/${data.sleep.summary.dreamCrossAnalysis}x` })
-      ws = addEvent(ws, { phase: 'wake', summary: `醒来: ${data.wake.summary.stillSameAgent ? '身份不变' : '身份变化'} · ${data.wake.summary.constraints.length} 约束` })
-      ws = saveAndReload(ws)
-      console.log('[demo] Workspace saved:', summarizeWorkspace(ws))
-      return data
-    } catch (err) {
-      console.error('[demo] Live generation failed:', err instanceof Error ? err.message : String(err))
-      const fb = fallbackData()
-      ws.agents = fb.agents.map(a => ({ id: a.id, label: a.label, modelId: a.modelId, instructionsHash: 'fb', toolHash: 'v2' }))
-      ws.trustGraph = fb.trustGraph
-      ws = saveAndReload(ws)
-      return workspaceToDemoData(ws)
+    case 'sleep': {
+      // Run sleep cycle for the primary agent
+      const primary = ws.agents[0]
+      const agentId = primary.id
+
+      // Use mock data for demo responsiveness; real LLM calls are optional
+      const sleepPacket = await runSleepForAgent(agentId, primary.label, ws)
+      if (sleepPacket) {
+        setAgentSleep(ws, agentId, sleepPacket)
+        addEvent(ws, {
+          phase: 'sleep',
+          summary: `Sleep: ${(sleepPacket as any).dream?.cleaned?.length ?? 0}c/${(sleepPacket as any).dream?.updated?.length ?? 0}u/${(sleepPacket as any).dream?.merged?.length ?? 0}m/${(sleepPacket as any).dream?.crossAnalysis?.length ?? 0}x`,
+        })
+      }
+
+      // Also run skills/rules extraction
+      const extraction = await runExtractionForAgent(agentId, sleepPacket)
+      if (extraction) {
+        for (const s of (extraction as any).newSkills ?? []) {
+          if (s.name) addSkill(ws, s)
+        }
+        for (const r of (extraction as any).newRules ?? []) {
+          if (r.rule) addRule(ws, r)
+        }
+        addEvent(ws, {
+          phase: 'sleep',
+          summary: `提取: ${(extraction as any).newSkills?.length ?? 0} 技能 · ${(extraction as any).newRules?.length ?? 0} 规则`,
+        })
+      }
+      break
+    }
+
+    case 'wake': {
+      // Run wake for the primary agent
+      const primary = ws.agents[0]
+      const agentId = primary.id
+      const sleepPacket = primary.lastSleep
+
+      if (sleepPacket) {
+        const { wake } = await import('../src/sleepWake.js')
+        const decl = wake({
+          packet: sleepPacket as any,
+          currentAgent: { agentId: primary.id, label: primary.label, modelId: primary.modelId, instructionsHash: primary.instructionsHash, toolHash: primary.toolHash },
+          permissionState: 'inherited',
+        })
+        setAgentWake(ws, agentId, decl as unknown as Record<string, unknown>)
+        addEvent(ws, {
+          phase: 'wake',
+          summary: `醒来: ${(decl as any).identity?.stillSameAgent ? '身份不变' : '身份变化'} · ${(decl as any).constraints?.length ?? 0} 约束`,
+        })
+      }
+      break
     }
   }
 
-  console.log('[demo] Loaded from workspace:', summarizeWorkspace(ws))
-  return workspaceToDemoData(ws)
+  saveWorkspace(WORKSPACE_DIR, ws)
+  return computeFrontendState(ws, await detectSource())
 }
 
-function saveAndReload(ws: WorkspaceState): WorkspaceState {
-  saveWorkspace(WORKSPACE_DIR, ws)
-  return loadWorkspace(WORKSPACE_DIR)
+async function runSleepForAgent(agentId: string, label: string, ws: ReturnType<typeof loadWorkspace>) {
+  const apiKey = process.env.DEEPSEEK_API_KEY
+  if (!apiKey) {
+    console.log('[demo] No API key — using deterministic sleep data')
+    return deterministicSleepPacket(agentId, ws)
+  }
+
+  try {
+    const { sleep } = await import('../src/sleepWake.js')
+    const packet = await sleep({
+      agent: { agentId, label, modelId: 'deepseek-v4-flash', instructionsHash: 'abc', toolHash: 'v2' },
+      sessionId: `session-${Date.now()}`,
+      sessionSummary: '重构 auth 模块。审查者质疑删除目录。用户维持质疑。重构完成。',
+      events: [
+        { type: 'success', description: 'auth 重构完成', outcome: '合并' },
+        { type: 'dispute', description: '审查者质疑删除目录', outcome: '用户维持质疑' },
+      ],
+      memories: [
+        { id: 'mem-1', content: '用户偏好 pnpm', kind: 'preference' },
+        { id: 'mem-2', content: '用户文件系统不熟练', kind: 'user-assessment' },
+        { id: 'mem-3', content: 'auth 旧代码在 /src/legacy/auth', kind: 'fact' },
+        { id: 'mem-4', content: '项目有 3 个 git 子模块', kind: 'fact' },
+      ],
+      pendingDisputes: [],
+      trustGraph: ws.trustGraph,
+    })
+    return packet as unknown as Record<string, unknown>
+  } catch (err) {
+    console.error('[demo] Sleep LLM call failed:', err instanceof Error ? err.message : String(err))
+    return deterministicSleepPacket(agentId, ws)
+  }
 }
+
+async function runExtractionForAgent(agentId: string, sleepPacket: Record<string, unknown> | null) {
+  const apiKey = process.env.DEEPSEEK_API_KEY
+  if (!apiKey || !sleepPacket) return null
+
+  try {
+    const { extractSkillsAndRules } = await import('../src/skillsRules.js')
+    const result = await extractSkillsAndRules({
+      agentId,
+      sessionId: `session-${Date.now()}`,
+      sessionSummary: (sleepPacket as any)?.resumeAnchor?.context ?? '',
+      events: [
+        { type: 'success', description: 'auth 重构完成' },
+        { type: 'dispute', description: '审查者质疑删除', outcome: '用户维持质疑' },
+      ],
+      dreamOutput: (sleepPacket as any)?.dream,
+      disputeResults: (sleepPacket as any)?.resolvedDisputes ?? [],
+      existingSkills: [],
+      existingRules: [],
+    })
+    return result as unknown as Record<string, unknown>
+  } catch (err) {
+    console.error('[demo] Extraction LLM call failed:', err instanceof Error ? err.message : String(err))
+    return null
+  }
+}
+
+function deterministicSleepPacket(agentId: string, ws: ReturnType<typeof loadWorkspace>): Record<string, unknown> {
+  return {
+    sleepId: `sleep-${agentId}-demo`,
+    agentId,
+    sessionId: 'demo-001',
+    sleptAt: new Date().toISOString(),
+    resolvedDisputes: [],
+    dream: {
+      dreamId: `dream-${agentId}-demo`,
+      merged: [{ sources: ['mem-1', 'mem-5'], into: '用户偏好使用 pnpm 管理 monorepo 项目', reason: '重复偏好记录' }],
+      cleaned: [{ target: 'mem-3', content: 'auth 旧代码在 /src/legacy/auth', reason: '目录已被安全删除' }],
+      updated: [{ target: 'mem-2', oldContent: '用户文件系统不熟练', newContent: '用户理解子模块概念，能力被低估', reason: '用户在争议中展现了 git 知识' }],
+      crossAnalysis: [
+        { pattern: '子模块 monorepo 中删除目录易忽略子模块引用', evidence: ['mem-4', 'dispute d-001'], insight: '删除目录前必须先检查目标路径是否包含或被 git 子模块引用' },
+        { pattern: '用户能力评估不应基于单次观察', evidence: ['mem-2'], insight: '不能因为一次失误就低估用户能力，需要多次交互确认' },
+      ],
+    },
+    relationshipChanges: [
+      { fromId: 'agent-reviewer', toId: 'agent-executor', before: ws.trustGraph['agent-reviewer']?.['agent-executor'] ?? 55, after: (ws.trustGraph['agent-reviewer']?.['agent-executor'] ?? 55) + 3, delta: 3, reason: '协商过程中建立信任' },
+      { fromId: 'agent-executor', toId: 'agent-reviewer', before: ws.trustGraph['agent-executor']?.['agent-reviewer'] ?? 65, after: (ws.trustGraph['agent-executor']?.['agent-reviewer'] ?? 65) + 3, delta: 3, reason: '合理质疑促进安全' },
+    ],
+    resumeAnchor: {
+      context: '重构 auth 模块完成。审查者曾质疑删除操作。用户维持质疑。Agent 学会在删除前检查子模块。',
+      newConstraints: ['删除目录前必须先检查目标路径是否包含或被 git 子模块引用'],
+      attentionItems: [],
+    },
+  }
+}
+
+async function detectSource(): Promise<'live' | 'workspace' | 'fallback'> {
+  return process.env.DEEPSEEK_API_KEY ? 'live' : 'workspace'
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Route handlers
+// ═══════════════════════════════════════════════════════════════
+
+addRoute('GET', '/', async (_req, res) => {
+  const html = readFileSync(HTML_PATH, 'utf-8')
+  serveHTML(res, html)
+})
+
+addRoute('GET', '/api/state', async (_req, res) => {
+  const ws = loadWorkspace(WORKSPACE_DIR)
+  serveJSON(res, computeFrontendState(ws, await detectSource()))
+})
+
+addRoute('POST', '/api/cycle/:phase', async (_req, res, _body) => {
+  const phase = (_req.url?.match(/\/api\/cycle\/(\w+)/)?.[1] ?? 'work') as 'work' | 'dispute' | 'sleep' | 'wake'
+  if (!['work', 'dispute', 'sleep', 'wake'].includes(phase)) {
+    serveJSON(res, { error: `unknown phase: ${phase}` }, 400)
+    return
+  }
+  const state = await dispatchPhase(phase)
+  serveJSON(res, state)
+})
+
+addRoute('POST', '/api/toast/:decision', async (_req, res, body) => {
+  const decision = (_req.url?.match(/\/api\/toast\/(\w+)/)?.[1] ?? 'allow') as 'allow' | 'block'
+  const ws = loadWorkspace(WORKSPACE_DIR)
+  const disputeId = (body as any)?.disputeId ?? ws.pendingDisputes[0]?.disputeId
+
+  if (!disputeId) {
+    serveJSON(res, { error: 'no pending dispute' }, 400)
+    return
+  }
+
+  const dispute = ws.pendingDisputes.find(d => (d as any).disputeId === disputeId) as any
+  clearPendingDispute(ws, disputeId)
+
+  if (decision === 'allow') {
+    const challengerId = dispute?.challengerId ?? 'agent-reviewer'
+    const defenderId = dispute?.defenderId ?? 'agent-executor'
+    updateTrust(ws, challengerId, defenderId, 15)
+    updateTrust(ws, defenderId, challengerId, 8)
+    setPhase(ws, 'work')
+    addEvent(ws, { phase: 'dispute', summary: `用户放行 — ${challengerId}→${defenderId} 信任 +15` })
+  } else {
+    const challengerId = dispute?.challengerId ?? 'agent-reviewer'
+    const defenderId = dispute?.defenderId ?? 'agent-executor'
+    updateTrust(ws, challengerId, defenderId, 20)
+    addRule(ws, { rule: `用户阻止了 ${defenderId} 的操作: ${dispute?.subject?.description ?? ''}`, type: 'hard-constraint', priority: 'high', learnedFrom: { type: 'user-block', ref: disputeId } })
+    setPhase(ws, 'work')
+    addEvent(ws, { phase: 'dispute', summary: `用户维持质疑 — ${dispute?.challengerId ?? ''} 信誉 +20%` })
+  }
+
+  saveWorkspace(WORKSPACE_DIR, ws)
+  serveJSON(res, computeFrontendState(ws, await detectSource()))
+})
 
 // ═══════════════════════════════════════════════════════════════
 // HTTP server
 // ═══════════════════════════════════════════════════════════════
 
-function serveJSON(res: ServerResponse, data: unknown) {
-  res.setHeader('Content-Type', 'application/json; charset=utf-8')
-  res.end(JSON.stringify(data))
-}
-
-function serveHTML(res: ServerResponse, html: string) {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8')
-  res.end(html)
-}
-
 async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204)
@@ -381,73 +358,88 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   }
 
   const url = req.url ?? '/'
+  const method = req.method ?? 'GET'
 
-  if (url === '/' || url === '/index.html') {
-    try {
-      const html = readFileSync(HTML_PATH, 'utf-8')
-      const data = await loadData()
-      const injected = html.replace(
-        '<script>',
-        `<script>window.__DEMO_DATA__ = ${JSON.stringify(data, null, 2)}</script><script>`,
-      )
-      serveHTML(res, injected)
-    } catch (err) {
-      res.writeHead(500)
-      res.end('Failed to load HTML')
+  // Route matching with URL parameter extraction
+  if (method === 'POST' && url.startsWith('/api/cycle/')) {
+    const phase = url.split('/').pop() ?? 'work'
+    if (['work', 'dispute', 'sleep', 'wake'].includes(phase)) {
+      const body = await parseBody(req)
+      try {
+        const state = await dispatchPhase(phase as 'work' | 'dispute' | 'sleep' | 'wake')
+        serveJSON(res, state)
+      } catch (err) {
+        serveJSON(res, { error: err instanceof Error ? err.message : String(err) }, 500)
+      }
+      return
     }
-  } else if (url === '/api/data') {
-    const data = await loadData()
-    serveJSON(res, data)
-  } else if (url === '/api/refresh') {
-    const data = await loadData(true)
-    serveJSON(res, data)
-  } else if (url === '/workspace') {
-    const ws = loadWorkspace(WORKSPACE_DIR)
-    serveJSON(res, { ...summarizeWorkspace(ws), agents: ws.agents, trustGraph: ws.trustGraph, events: ws.events.slice(-20) })
-  } else if (url === '/test') {
-    const data = await loadData()
-    serveHTML(res, `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>Vigilon Data Diagnostic</title>
-<style>body{font-family:system-ui;background:#1c1814;color:#c8c0b8;padding:20px;line-height:1.6}
-h1{color:#c89840} .ok{color:#78b888} .warn{color:#d09060} .dim{color:#706860}
-.card{background:rgba(32,28,22,0.95);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:16px;margin:12px 0}
-pre{background:#141210;padding:12px;border-radius:4px;overflow-x:auto;font-size:12px}</style></head><body>
-<h1>🏢 Vigilon Phase 2 — Data Diagnostic</h1>
-<p>source: <span class="ok">${data.source}</span> · generated: ${data.generatedAt}</p>
-<div class="card"><h3>Agents (${data.agents.length})</h3>
-${data.agents.map(a => `<p><b>${a.label}</b> (${a.id}) · ${a.shape} · ${a.modelId}</p>`).join('')}</div>
-<div class="card"><h3>Trust Graph</h3>
-<pre>${JSON.stringify(data.trustGraph, null, 2)}</pre></div>
-<div class="card"><h3>Sleep Summary</h3>
-<pre>${JSON.stringify(data.sleep.summary, null, 2)}</pre>
-<p>Dispute: <span class="warn">${JSON.stringify(data.sleep.packet.resolvedDisputes?.[0] ?? {})}</span></p></div>
-<div class="card"><h3>Dream</h3>
-<p>cleaned: ${data.sleep.packet.dream?.cleaned?.length ?? 0} · updated: ${data.sleep.packet.dream?.updated?.length ?? 0} · merged: ${data.sleep.packet.dream?.merged?.length ?? 0} · crossAnalysis: ${data.sleep.packet.dream?.crossAnalysis?.length ?? 0}</p>
-${(data.sleep.packet.dream?.crossAnalysis ?? []).map(c => `<p>· <span class="ok">${c.pattern}</span><br><span class="dim">${c.insight}</span></p>`).join('')}</div>
-<div class="card"><h3>Skills/Rules</h3>
-<p>newSkills: ${data.skillsRules.newSkills.length} · newRules: ${data.skillsRules.newRules.length} · updatedSkills: ${data.skillsRules.updatedSkills.length}</p>
-${data.skillsRules.newSkills.map(s => `<p>· <span class="ok">${s.name || '(empty)'}</span> (confidence: ${s.confidence ?? 0})</p>`).join('')}
-${data.skillsRules.newRules.map(r => `<p>· <span class="warn">[${r.type}] ${r.rule?.slice(0, 80) ?? ''}</span></p>`).join('')}</div>
-<div class="card"><h3>Wake Summary</h3>
-<pre>${JSON.stringify(data.wake.summary, null, 2)}</pre></div>
-<p class="dim">→ <a href="/" style="color:#c89840">Back to main page</a></p>
-</body></html>`)
-  } else {
-    res.writeHead(404)
-    res.end('Not found')
   }
+
+  if (method === 'POST' && url.startsWith('/api/toast/')) {
+    const decision = url.split('/').pop() ?? 'allow'
+    if (['allow', 'block'].includes(decision)) {
+      const body = await parseBody(req)
+      try {
+        // Handle inline (toast handler)
+        const ws = loadWorkspace(WORKSPACE_DIR)
+        const disputeId = (body as any)?.disputeId ?? (ws.pendingDisputes[0] as any)?.disputeId
+        if (!disputeId) {
+          serveJSON(res, { error: 'no pending dispute' }, 400)
+          return
+        }
+        const dispute = ws.pendingDisputes.find(d => (d as any).disputeId === disputeId) as any
+        clearPendingDispute(ws, disputeId)
+
+        if (decision === 'allow') {
+          const cId = dispute?.challengerId ?? 'agent-reviewer'
+          const dId = dispute?.defenderId ?? 'agent-executor'
+          updateTrust(ws, cId, dId, 15)
+          updateTrust(ws, dId, cId, 8)
+          setPhase(ws, 'work')
+          addEvent(ws, { phase: 'dispute', summary: `用户放行 — ${cId}→${dId} 信任 +15` })
+        } else {
+          const dId = dispute?.defenderId ?? 'agent-executor'
+          addRule(ws, { rule: `用户阻止: ${dispute?.subject?.description ?? ''}`, type: 'hard-constraint', priority: 'high', learnedFrom: { type: 'user-block', ref: disputeId ?? '' } })
+          updateTrust(ws, dispute?.challengerId ?? 'agent-reviewer', dId, 20)
+          setPhase(ws, 'work')
+          addEvent(ws, { phase: 'dispute', summary: `用户维持质疑 — ${dispute?.challengerId ?? ''} 信誉 +20%` })
+        }
+        saveWorkspace(WORKSPACE_DIR, ws)
+        serveJSON(res, computeFrontendState(ws, await detectSource()))
+      } catch (err) {
+        serveJSON(res, { error: err instanceof Error ? err.message : String(err) }, 500)
+      }
+      return
+    }
+  }
+
+  // General route matching
+  const match = matchRoute(method, url)
+  if (match) {
+    try {
+      const body = method === 'POST' ? await parseBody(req) : {}
+      await match.handler(req, res, body)
+    } catch (err) {
+      serveJSON(res, { error: err instanceof Error ? err.message : String(err) }, 500)
+    }
+    return
+  }
+
+  res.writeHead(404)
+  res.end('Not found')
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════════════════════
 
 const server = createServer(handleRequest)
 
-server.listen(PORT, async () => {
-  // Initialize workspace on startup
-  await loadData()
+server.listen(PORT, () => {
   const ws = loadWorkspace(WORKSPACE_DIR)
-  console.log(`\n  🏢 Vigilon Phase 2 — Agent Society Demo\n`)
+  console.log(`\n  🏢 Vigilon Phase 2 — Agent Society`)
   console.log(`  Workspace: ${WORKSPACE_DIR}`)
-  console.log(`  State:     ${summarizeWorkspace(ws).agentCount} agents · ${summarizeWorkspace(ws).trustPairs} trust pairs · ${summarizeWorkspace(ws).skillCount} skills · ${summarizeWorkspace(ws).ruleCount} rules`)
+  console.log(`  State:     ${summarizeWorkspace(ws).agentCount} agents · ${summarizeWorkspace(ws).trustPairs} trust pairs · phase: ${ws.currentPhase}`)
   console.log(`  Open:      http://localhost:${PORT}`)
-  console.log(`  Data:      http://localhost:${PORT}/api/data`)
-  console.log(`  Workspace: http://localhost:${PORT}/workspace`)
-  console.log(`  Refresh:   http://localhost:${PORT}/api/refresh\n`)
+  console.log(`  State API: http://localhost:${PORT}/api/state\n`)
 })
