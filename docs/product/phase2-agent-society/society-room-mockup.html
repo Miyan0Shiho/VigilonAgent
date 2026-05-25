@@ -258,6 +258,11 @@ html, body {
       <button class="scenario-btn" data-sc="wake">醒来</button>
     </div>
 
+      <button class="scenario-btn" data-api="cooperate" style="color:#78b878">合作</button>
+      <button class="scenario-btn" data-api="delegate" style="color:#78a8d0">委托</button>
+      <button class="scenario-btn" data-api="consult" style="color:#c89840">咨询</button>
+    </div>
+
     <div class="detail-section" id="detail-section">
       <!-- Default: agent summary -->
       <div class="agent-summary" id="agent-summary">
@@ -295,6 +300,10 @@ html, body {
         <div class="detail-block">
           <div class="detail-block-title">记忆</div>
           <div class="detail-block-text" id="d-memory"></div>
+        </div>
+        <div class="detail-block">
+          <div class="detail-block-title">声誉</div>
+          <div class="detail-block-text" id="d-reputation"></div>
         </div>
         <div class="detail-block">
           <div class="detail-block-title">关系</div>
@@ -490,6 +499,22 @@ const API = {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   },
+
+  async cooperate() {
+    const res = await fetch('/api/cooperate', { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+  async delegate() {
+    const res = await fetch('/api/delegate', { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+  async consult() {
+    const res = await fetch('/api/consult', { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -550,6 +575,15 @@ const Store = {
       document.getElementById('toast').classList.remove('visible');
     } catch (err) {
       console.error('[Store] resolveToast failed:', err);
+    }
+  },
+
+  async triggerBehavior(api) {
+    try {
+      const s = await API[api]();
+      this.setState(s);
+    } catch (err) {
+      console.error('[Store] triggerBehavior failed:', err);
     }
   },
 };
@@ -640,6 +674,17 @@ const SidebarRenderer = {
     document.getElementById('d-memory').innerHTML = fa.memory.map(m =>
       `"${m.text.slice(0, 60)}" <span class="ok">[${m.source}]</span>`
     ).join('<br>') || '<span class="dim">无记忆数据</span>';
+
+    // Reputation bars
+    const rep = fa.reputation ?? {};
+    const repDims = ['competence', 'reliability', 'cooperativeness', 'integrity', 'knowledge'];
+    const repLabels = { competence: '能力', reliability: '可靠', cooperativeness: '合作', integrity: '诚信', knowledge: '知识' };
+    document.getElementById('d-reputation').innerHTML = repDims.map(d => {
+      const v = rep[d] ?? 50;
+      const cls = v >= 65 ? 'ok' : v >= 45 ? '' : 'warn';
+      const bar = '█'.repeat(Math.round(v / 10)) + '░'.repeat(10 - Math.round(v / 10));
+      return `<span class="${cls}">${repLabels[d]}</span> <span class="dim">${bar} ${v}%</span>`;
+    }).join('<br>');
 
     document.getElementById('d-rels').innerHTML = Object.entries(fa.relationships).map(([k, v]) => {
       const cls = v >= 70 ? 'ok' : v >= 45 ? '' : 'warn';
@@ -750,7 +795,9 @@ function selectAgent(a) {
   }
 
   document.getElementById('detail-name').textContent = a.name;
-  document.getElementById('detail-role').textContent = `${a.role}`;
+  document.getElementById('detail-role').textContent = Store.state?.agents.find(ag => ag.id === a.id)?.roles?.length
+    ? Store.state.agents.find(ag => ag.id === a.id).roles.join(' · ')
+    : a.role;
 
   if (Store.state) SidebarRenderer._renderAgentDetail(Store.state);
 }
@@ -791,9 +838,16 @@ canvas.addEventListener('click', (e) => {
 document.querySelectorAll('.scenario-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const phase = btn.dataset.sc;
-    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    Store.triggerPhase(phase);
+    const api = btn.dataset.api;
+    if (api) {
+      document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      Store.triggerBehavior(api);
+    } else if (phase) {
+      document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      Store.triggerPhase(phase);
+    }
   });
 });
 
@@ -1088,6 +1142,31 @@ function draw() {
     ctx.stroke(); ctx.setLineDash([]);
     if (Math.random() < 0.04) {
       spawnParticles((w.x + c.x) / 2, (w.y + c.y) / 2, 1, 'rgba(240,140,120,0.7)', 6);
+    }
+  }
+
+  // Cooperation visual (green line between workers)
+  if (Store.state?.events?.slice(-1)[0]?.summary?.startsWith('[合作]')) {
+    const [a0, a2] = [agents[0], agents[2]];
+    ctx.strokeStyle = 'rgba(120,184,120,0.25)';
+    ctx.lineWidth = 1; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a2.x, a2.y);
+    ctx.stroke();
+    if (Math.random() < 0.06) {
+      spawnParticles((a0.x + a2.x) / 2, (a0.y + a2.y) / 2, 2, 'rgba(120,200,120,0.5)', 4);
+    }
+  }
+
+  // Consultation visual (blue line)
+  if (Store.state?.events?.slice(-1)[0]?.summary?.startsWith('[咨询]')) {
+    const [a0, a2] = [agents[0], agents[2]];
+    ctx.strokeStyle = 'rgba(120,168,208,0.25)';
+    ctx.lineWidth = 1; ctx.setLineDash([4, 6]);
+    ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a2.x, a2.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if (Math.random() < 0.06) {
+      spawnParticles((a0.x + a2.x) / 2, (a0.y + a2.y) / 2, 2, 'rgba(120,168,220,0.5)', 4);
     }
   }
 

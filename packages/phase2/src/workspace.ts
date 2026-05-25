@@ -5,6 +5,8 @@
 // society.json 包含: Agent、信任图、争议、技能、规则、事件
 // ═══════════════════════════════════════════════════════════════
 
+import type { ReputationState, ReputationScores } from './reputation.js'
+import type { BehaviorProfile } from './roles.js'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -57,6 +59,13 @@ export interface WorkspaceState {
 
   /** Recent society events (ring buffer, last N) */
   events: WorkspaceEvent[]
+
+  /** Public multi-dimensional reputation */
+  reputation: ReputationState
+  /** Per-agent behavior counters */
+  behaviorProfiles: Record<string, BehaviorProfile>
+  /** Detected emergent role labels */
+  emergentRoles: Record<string, string[]>
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -85,6 +94,8 @@ export interface FrontendAgent {
   beliefs: BeliefItem[]
   memory: MemoryItem[]
   relationships: Record<string, number>
+  reputation: ReputationScores
+  roles: string[]
   status: 'working' | 'disputing' | 'resting'
   position: { x: number; y: number }
 }
@@ -162,6 +173,9 @@ export function defaultWorkspace(name: string): WorkspaceState {
     rules: [],
     currentPhase: 'work',
     pendingDisputes: [],
+    reputation: {},
+    behaviorProfiles: {},
+    emergentRoles: {},
     events: [{ at: now, phase: 'work', summary: '工作区已创建' }],
   }
 }
@@ -190,6 +204,9 @@ export function loadWorkspace(dir: string): WorkspaceState {
   // Ensure fields added in later versions exist
   ws.currentPhase ??= 'work'
   ws.pendingDisputes ??= []
+  ws.reputation ??= {}
+  ws.behaviorProfiles ??= {}
+  ws.emergentRoles ??= {}
   if (!ws.agents?.length) ws.agents = buildDefaultAgents()
   if (!ws.trustGraph || Object.keys(ws.trustGraph).length === 0) {
     ws.trustGraph = {
@@ -345,6 +362,8 @@ function buildFrontendAgent(a: WorkspaceAgent, ws: WorkspaceState): FrontendAgen
     relationships,
     status,
     position: pos,
+    reputation: ws.reputation[a.id] ?? { competence: 50, reliability: 50, cooperativeness: 50, integrity: 50, knowledge: 50 },
+    roles: ws.emergentRoles[a.id] ?? [],
   }
 }
 

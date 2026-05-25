@@ -7,6 +7,10 @@
 //   GET  /api/state         → current FrontendState JSON
 //   POST /api/cycle/:phase  → triggers work/dispute/sleep/wake
 //   POST /api/toast/:decision → records user mediation
+//   POST /api/cooperate       → triggers cooperation between two agents
+//   POST /api/delegate         → triggers task delegation
+//   POST /api/consult          → triggers advice consultation
+//   POST /api/cycle/evolve      → full multi-behavior cycle
 //
 //   pnpm --filter @vigilon/phase2 demo
 // ═══════════════════════════════════════════════════════════════
@@ -21,6 +25,11 @@ import {
   addSkill, addRule, addPendingDispute, clearPendingDispute,
   computeFrontendState, summarizeWorkspace,
 } from '../src/workspace.js'
+import { initReputation, applyReputationImpacts } from '../src/reputation.js'
+import { proposeCooperation } from '../src/cooperation.js'
+import { delegateTask } from '../src/delegation.js'
+import { askAdvice } from '../src/consultation.js'
+import { initProfile, detectRoles, recordInteraction } from '../src/roles.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
@@ -411,6 +420,98 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       }
       return
     }
+  }
+
+  // New social behavior routes
+  if (method === 'POST' && url === '/api/cooperate') {
+    try {
+      const ws = loadWorkspace(WORKSPACE_DIR)
+      const result = proposeCooperation({
+        initiatorId: 'agent-executor', partnerId: 'agent-guide',
+        goal: '重构 auth 模块并保持测试通过',
+        division: { 'agent-executor': '实现重构逻辑', 'agent-guide': '审查安全性和边界条件' },
+        trustGraph: ws.trustGraph,
+      })
+      // Apply impacts
+      for (const ti of result.trustImpacts) updateTrust(ws, ti.fromId, ti.toId, ti.delta)
+      if (!ws.reputation) ws.reputation = initReputation(ws.agents.map(a => a.id))
+      applyReputationImpacts(ws.reputation, result.reputationImpacts)
+      // Record behavior
+      ws.behaviorProfiles['agent-executor'] ??= initProfile('agent-executor')
+      ws.behaviorProfiles['agent-guide'] ??= initProfile('agent-guide')
+      recordInteraction(ws.behaviorProfiles['agent-executor'], 'cooperation')
+      recordInteraction(ws.behaviorProfiles['agent-guide'], 'cooperation')
+      // Detect roles
+      for (const id of ['agent-executor', 'agent-guide'] as const) {
+        ws.emergentRoles[id] = detectRoles(ws.behaviorProfiles[id])
+      }
+      setPhase(ws, 'work')
+      addEvent(ws, { phase: 'work', summary: `[合作] ${result.outcome} · 信任 ${result.status === 'rejected' ? '未变' : '互信 +8'}` })
+      saveWorkspace(WORKSPACE_DIR, ws)
+      serveJSON(res, computeFrontendState(ws, await detectSource()))
+    } catch (err) {
+      serveJSON(res, { error: err instanceof Error ? err.message : String(err) }, 500)
+    }
+    return
+  }
+
+  if (method === 'POST' && url === '/api/delegate') {
+    try {
+      const ws = loadWorkspace(WORKSPACE_DIR)
+      if (!ws.reputation) ws.reputation = initReputation(ws.agents.map(a => a.id))
+      const result = delegateTask({
+        delegatorId: 'agent-executor', delegateId: 'agent-reviewer',
+        task: '审计 auth 模块的 SQL 注入风险',
+        reason: '审查者专注安全审查，能力匹配',
+        trustGraph: ws.trustGraph, reputation: ws.reputation,
+      })
+      for (const ti of result.trustImpacts) updateTrust(ws, ti.fromId, ti.toId, ti.delta)
+      applyReputationImpacts(ws.reputation, result.reputationImpacts)
+      ws.behaviorProfiles['agent-executor'] ??= initProfile('agent-executor')
+      ws.behaviorProfiles['agent-reviewer'] ??= initProfile('agent-reviewer')
+      recordInteraction(ws.behaviorProfiles['agent-executor'], 'delegation-given')
+      recordInteraction(ws.behaviorProfiles['agent-reviewer'], 'delegation-received')
+      for (const id of ['agent-executor', 'agent-reviewer'] as const) {
+        ws.emergentRoles[id] = detectRoles(ws.behaviorProfiles[id])
+      }
+      setPhase(ws, 'work')
+      addEvent(ws, { phase: 'work', summary: `[委托] ${result.outcome}` })
+      saveWorkspace(WORKSPACE_DIR, ws)
+      serveJSON(res, computeFrontendState(ws, await detectSource()))
+    } catch (err) {
+      serveJSON(res, { error: err instanceof Error ? err.message : String(err) }, 500)
+    }
+    return
+  }
+
+  if (method === 'POST' && url === '/api/consult') {
+    try {
+      const ws = loadWorkspace(WORKSPACE_DIR)
+      if (!ws.reputation) ws.reputation = initReputation(ws.agents.map(a => a.id))
+      const result = askAdvice({
+        consulterId: 'agent-guide', advisorId: 'agent-executor',
+        question: '如何评估用户对子模块概念的理解程度',
+        context: '用户在上次争议中展现了 git 知识，但不确定是否全面',
+        trustGraph: ws.trustGraph, reputation: ws.reputation,
+      })
+      for (const ti of result.trustImpacts) updateTrust(ws, ti.fromId, ti.toId, ti.delta)
+      applyReputationImpacts(ws.reputation, result.reputationImpacts)
+      ws.behaviorProfiles['agent-guide'] ??= initProfile('agent-guide')
+      ws.behaviorProfiles['agent-executor'] ??= initProfile('agent-executor')
+      recordInteraction(ws.behaviorProfiles['agent-guide'], 'consultation-taken')
+      recordInteraction(ws.behaviorProfiles['agent-executor'], 'consultation-given')
+      if (result.accepted) recordInteraction(ws.behaviorProfiles['agent-executor'], 'consultation-accepted')
+      for (const id of ['agent-guide', 'agent-executor'] as const) {
+        ws.emergentRoles[id] = detectRoles(ws.behaviorProfiles[id])
+      }
+      setPhase(ws, 'work')
+      addEvent(ws, { phase: 'work', summary: `[咨询] ${result.status === 'advised' ? (result.accepted ? '建议被采纳' : '建议未采纳') : '咨询被拒绝'} · ${result.outcome}` })
+      saveWorkspace(WORKSPACE_DIR, ws)
+      serveJSON(res, computeFrontendState(ws, await detectSource()))
+    } catch (err) {
+      serveJSON(res, { error: err instanceof Error ? err.message : String(err) }, 500)
+    }
+    return
   }
 
   // General route matching
