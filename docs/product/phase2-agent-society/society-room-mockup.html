@@ -842,6 +842,7 @@ function updateAutoRoutine() {
     if (sleepActive) wakeUp();
     w.walkTo(w.homeDesk.x + w.homeDesk.w / 2, w.homeDesk.y + w.homeDesk.h / 2);
     c.walkTo(560, 120); s.walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
+    if (!selectedAgent && !scenarioOverride && hasData()) showScenarioDetail('work');
   } else if (phase < 0.65) {
     if (!disputeActive) initiateDispute();
   } else if (phase < 0.80) {
@@ -1140,7 +1141,14 @@ function updateAgentSummaries() {
   document.querySelectorAll('.agent-summary-card .info .status').forEach(el => {
     const agentId = el.closest('.agent-summary-card').dataset.agent;
     const a = agents.find(ag => ag.id === agentId);
-    if (a) el.textContent = a.statusText;
+    if (a) {
+      // Show status + trust summary from data
+      const rels = a.relationships;
+      const relStr = hasData() && Object.keys(rels).length > 0
+        ? Object.entries(rels).map(([k, v]) => `${dLabel(k)}:${v}%`).join(' ')
+        : '';
+      el.textContent = relStr || a.statusText;
+    }
   });
 }
 // Update summaries periodically
@@ -1221,10 +1229,18 @@ function loop(ts) {
 // ═══════════════════════════════════════════
 // Init
 // ═══════════════════════════════════════════
-addEvent('dim', hasData()
-  ? `数字工作社会启动 — 3 Agent 在线 · ${DATA.source === 'live' ? '实时数据' : DATA.source === 'cached' ? '缓存数据' : '演示数据'}`
-  : '数字工作社会启动——3 个 Agent 在线');
+if (hasData()) {
+  const srcLabel = DATA.source === 'live' ? '实时' : DATA.source === 'cached' ? '缓存' : '演示';
+  document.querySelector('.sidebar-title').textContent = `VIGILON · ${srcLabel}数据`;
+  addEvent('dim', `数据已加载 — ${dSleep().summary.disputesResolved}争议 Dream(${dSleep().summary.dreamCleaned}c/${dSleep().summary.dreamUpdated}u/${dSleep().summary.dreamMerged}m/${dSleep().summary.dreamCrossAnalysis}x) ${dSkills().newRules.length}规则 ${dSkills().newSkills.length}技能`);
+} else {
+  addEvent('dim', '数字工作社会启动 — 3 Agent 在线 (无数据)');
+}
 addEvent('grn', '引导者已读取用户上下文，引导密度：中等');
+
+// Immediately show data in sidebar on load
+if (hasData()) showScenarioDetail('work');
+
 updateEvents();
 resize();
 requestAnimationFrame(loop);
