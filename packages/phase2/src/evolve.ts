@@ -28,7 +28,7 @@ type StepType = 'cooperation' | 'delegation' | 'consultation' | 'competition' | 
 interface StepResult {
   type: StepType
   summary: string
-  events: string[]
+  participants: { id: string; action: string }[] // who did what
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -51,14 +51,18 @@ export async function evolve(ws: WorkspaceState, workspaceDir: string, hasApiKey
   const step = pickNextStep(ws, stepsSinceSleep)
   const result = executeStep(ws, step)
 
-  // Update profiles and roles
-  updateProfiles(ws, step)
+  // Record single rich event
+  const phase = step === 'sleep' ? 'sleep' : step === 'dispute' ? 'dispute' : 'work'
+  addEvent(ws, { phase, summary: `[${stepLabel(step)}] ${result.summary}` })
 
-  // Record events
-  for (const evt of result.events) {
-    addEvent(ws, { phase: step === 'sleep' ? 'sleep' : step === 'dispute' ? 'dispute' : 'work', summary: evt })
+  // Update profiles with actual participants
+  for (const p of result.participants) {
+    ws.behaviorProfiles[p.id] ??= initProfile(p.id)
+    recordInteraction(ws.behaviorProfiles[p.id], p.action as Parameters<typeof recordInteraction>[1])
   }
-  addEvent(ws, { phase: 'work', summary: `[${stepLabel(step)}] ${result.summary}` })
+  for (const id of AGENT_IDS) {
+    ws.emergentRoles[id] = detectRoles(ws.behaviorProfiles[id] ?? initProfile(id))
+  }
 
   setPhase(ws, step === 'sleep' ? 'sleep' : step === 'dispute' ? 'dispute' : 'work')
   saveWorkspace(workspaceDir, ws)
@@ -141,7 +145,7 @@ function executeStep(ws: WorkspaceState, step: StepType): StepResult {
 
   switch (step) {
     case 'cooperation': {
-      const pair = pickPair(tg, 40)
+      const pair = pickPair(tg, 40, ws)
       const goal = sampleGoal()
       const result = proposeCooperation({
         initiatorId: pair[0], partnerId: pair[1], goal,
@@ -150,7 +154,17 @@ function executeStep(ws: WorkspaceState, step: StepType): StepResult {
       })
       for (const ti of result.trustImpacts) updateTrust(ws, ti.fromId, ti.toId, ti.delta)
       applyReputationImpacts(ws.reputation, result.reputationImpacts)
-      return { type: 'cooperation', summary: result.outcome, events: [result.outcome] }
+      const trustStr = result.trustImpacts.length > 0
+        ? `信任 ${result.trustImpacts.map(t => `${t.fromId.slice(-8)}→${t.toId.slice(-8)} +${t.delta}`).join(' ')}`
+        : ''
+      return {
+        type: 'cooperation',
+        summary: `${pair[0]} ↔ ${pair[1]} 合作「${goal}」· ${result.status} · ${trustStr}`,
+        participants: [
+          { id: pair[0], action: 'cooperation' },
+          { id: pair[1], action: 'cooperation' },
+        ],
+      }
     }
 
     case 'delegation': {
@@ -158,12 +172,20 @@ function executeStep(ws: WorkspaceState, step: StepType): StepResult {
       const task = sampleTask()
       const result = delegateTask({
         delegatorId: deleg.low, delegateId: deleg.high, task,
-        reason: `声誉显示 ${deleg.high} 更擅长此类任务`,
+        reason: `声誉分析: ${deleg.high} competence ${rep[deleg.high]?.competence ?? 50} > ${deleg.low} ${rep[deleg.low]?.competence ?? 50}`,
         trustGraph: tg, reputation: rep,
       })
       for (const ti of result.trustImpacts) updateTrust(ws, ti.fromId, ti.toId, ti.delta)
       applyReputationImpacts(ws.reputation, result.reputationImpacts)
-      return { type: 'delegation', summary: result.outcome, events: [result.outcome] }
+      const deltas = result.reputationImpacts.map(r => `${r.dimension} ${r.delta > 0 ? '+' + r.delta : r.delta}`).join(' ')
+      return {
+        type: 'delegation',
+        summary: `${deleg.low} 委托 → ${deleg.high}: ${task} · ${result.status} · ${deltas}`,
+        participants: [
+          { id: deleg.low, action: 'delegation-given' },
+          { id: deleg.high, action: 'delegation-received' },
+        ],
+      }
     }
 
     case 'consultation': {
@@ -176,7 +198,16 @@ function executeStep(ws: WorkspaceState, step: StepType): StepResult {
       })
       for (const ti of result.trustImpacts) updateTrust(ws, ti.fromId, ti.toId, ti.delta)
       applyReputationImpacts(ws.reputation, result.reputationImpacts)
-      return { type: 'consultation', summary: result.outcome, events: [result.outcome] }
+      const quality = result.accepted ? '采纳 ✅' : '未采纳'
+      return {
+        type: 'consultation',
+        summary: `${consult.low} 咨询 → ${consult.high}: "${question.slice(0, 40)}" · ${result.status} · ${quality}`,
+        participants: [
+          { id: consult.low, action: 'consultation-taken' },
+          { id: consult.high, action: 'consultation-given' },
+          ...(result.accepted ? [{ id: consult.high, action: 'consultation-accepted' as const }] : []),
+        ],
+      }
     }
 
     case 'competition': {
@@ -187,7 +218,7 @@ function executeStep(ws: WorkspaceState, step: StepType): StepResult {
         risks: ['执行复杂度'],
       }))
       if (proposals.length < 2) {
-        return { type: 'competition', summary: '参与竞争的 agent 不足', events: [] }
+        return { type: 'competition', summary: '参与竞争不足', participants: [] }
       }
       const result = runCompetition({
         goal: sampleGoal(), proposals,
@@ -195,21 +226,32 @@ function executeStep(ws: WorkspaceState, step: StepType): StepResult {
       })
       for (const ti of result.trustImpacts) updateTrust(ws, ti.fromId, ti.toId, ti.delta)
       applyReputationImpacts(ws.reputation, result.reputationImpacts)
-      return { type: 'competition', summary: result.outcome, events: [result.outcome] }
+      return {
+        type: 'competition',
+        summary: `🏆 ${result.winnerId} 胜出 (${result.scores[0].score}分) · ${proposals.length}方竞争`,
+        participants: proposals.map(p => ({ id: p.agentId, action: 'cooperation' as const })),
+      }
     }
 
     case 'endorsement': {
       const pair = pickPair(tg, 50)
-      const dims: Array<'competence' | 'reliability' | 'cooperativeness' | 'knowledge'> = ['competence', 'reliability', 'cooperativeness', 'knowledge']
+      const dims = ['competence', 'reliability', 'cooperativeness', 'knowledge'] as const
       const dim = dims[Math.floor(Math.random() * dims.length)]
       const result = endorse({
         endorserId: pair[0], endorseeId: pair[1], dimension: dim,
-        reason: `在近期工作中表现出色`,
+        reason: '在近期工作中表现出色',
         trustGraph: tg, reputation: rep,
       })
       for (const ti of result.trustImpacts) updateTrust(ws, ti.fromId, ti.toId, ti.delta)
       applyReputationImpacts(ws.reputation, result.reputationImpacts)
-      return { type: 'endorsement', summary: result.outcome, events: [result.outcome] }
+      return {
+        type: 'endorsement',
+        summary: `${pair[0]} 为 ${pair[1]} 的${dim}背书 · ${result.status}`,
+        participants: [
+          { id: pair[0], action: 'consultation-given' },
+          { id: pair[1], action: 'consultation-accepted' },
+        ],
+      }
     }
 
     case 'observation': {
@@ -218,7 +260,6 @@ function executeStep(ws: WorkspaceState, step: StepType): StepResult {
         '主动帮助其他 agent 解决问题',
         '按时交付了重构任务，质量良好',
         '在 code review 中指出了潜在的安全问题',
-        '拒绝了一次合作邀请，理由是信任不足',
         '接受了委托任务并提前完成',
         '在讨论中诚实承认了自己之前的设计缺陷',
       ]
@@ -230,11 +271,18 @@ function executeStep(ws: WorkspaceState, step: StepType): StepResult {
       })
       for (const ti of result.trustImpacts) updateTrust(ws, ti.fromId, ti.toId, ti.delta)
       applyReputationImpacts(ws.reputation, result.reputationImpacts)
-      return { type: 'observation', summary: result.outcome, events: [result.outcome] }
+      const deltaInfo = result.impact !== 'neutral'
+        ? `${result.impact === 'positive' ? '👍' : '👎'} ${result.finding.dimension} ${result.finding.delta > 0 ? '+' + result.finding.delta : result.finding.delta}`
+        : '➖'
+      return {
+        type: 'observation',
+        summary: `${observer} 观察 ${subject}: "${behavior}" · ${deltaInfo}`,
+        participants: [], // observation is passive — no active participation
+      }
     }
 
     case 'dispute': {
-      const pair = pickPair(tg, -1) //随机对，任意信任度
+      const pair = pickPair(tg, -1)
       const result = resolveDispute({
         disputeId: `d-${Date.now()}`,
         subject: { type: 'action', targetId: `task-${Math.floor(Math.random() * 100)}`, description: sampleGoal() },
@@ -251,13 +299,16 @@ function executeStep(ws: WorkspaceState, step: StepType): StepResult {
       for (const ti of result.trustImpacts) updateTrust(ws, ti.fromId, ti.toId, ti.delta)
       return {
         type: 'dispute',
-        summary: `[${result.resolution}] ${result.reason}`,
-        events: [result.reason],
+        summary: `${pair[0]} 质疑 ${pair[1]} · ${result.resolution} → ${result.decision} · ${result.reason}`,
+        participants: [
+          { id: pair[0], action: 'dispute-initiated' },
+          { id: pair[1], action: 'dispute-defended' },
+        ],
       }
     }
 
     default:
-      return { type: 'observation', summary: '无事发生', events: [] }
+      return { type: 'observation', summary: '无事发生', participants: [] }
   }
 }
 
@@ -296,11 +347,26 @@ async function runSleepWake(ws: WorkspaceState, workspaceDir: string, hasApiKey:
 // Helpers
 // ═══════════════════════════════════════════════════════════════
 
-function pickPair(tg: Record<string, Record<string, number>>, minTrust: number): [string, string] {
-  const pairs = AGENT_IDS.flatMap(a => AGENT_IDS.filter(b => b !== a).map(b => [a, b] as [string, string]))
+function pickPair(tg: Record<string, Record<string, number>>, minTrust: number, ws?: WorkspaceState): [string, string] {
+  const allPairs = AGENT_IDS.flatMap(a => AGENT_IDS.filter(b => b !== a).map(b => [a, b] as [string, string]))
   // Filter by min trust if needed
-  const valid = minTrust <= 0 ? pairs : pairs.filter(([a, b]) => (tg[a]?.[b] ?? 50) >= minTrust)
+  const valid = minTrust <= 0 ? allPairs : allPairs.filter(([a, b]) => (tg[a]?.[b] ?? 50) >= minTrust)
   if (valid.length === 0) return [AGENT_IDS[0], AGENT_IDS[1]]
+
+  // 20% chance: force pick the least-used agent to ensure diversity
+  if (Math.random() < 0.2) {
+    const agentFreq: Record<string, number> = {}
+    for (const id of AGENT_IDS) agentFreq[id] = 0
+    for (const e of ws.events.slice(-10)) {
+      for (const id of AGENT_IDS) {
+        if (e.summary.includes(id)) agentFreq[id]++
+      }
+    }
+    const leastUsed = AGENT_IDS.sort((a, b) => (agentFreq[a] ?? 0) - (agentFreq[b] ?? 0))[0]
+    const pairsWithLeast = valid.filter(([a, b]) => a === leastUsed || b === leastUsed)
+    if (pairsWithLeast.length > 0) return pairsWithLeast[Math.floor(Math.random() * pairsWithLeast.length)]
+  }
+
   return valid[Math.floor(Math.random() * valid.length)]
 }
 
@@ -333,46 +399,6 @@ function countRecentBehavior(ws: WorkspaceState, type: string, lookback: number)
   return ws.events.slice(-lookback).filter(e => e.summary.startsWith(`[${stepLabel(type as StepType)}]`)).length
 }
 
-function updateProfiles(ws: WorkspaceState, step: StepType): void {
-  const profileMap: Record<StepType, Array<{ id: string; action: Parameters<typeof recordInteraction>[1] }>> = {
-    cooperation: [
-      { id: AGENT_IDS[0], action: 'cooperation' },
-      { id: AGENT_IDS[2], action: 'cooperation' },
-    ],
-    delegation: [
-      { id: AGENT_IDS[0], action: 'delegation-given' },
-      { id: AGENT_IDS[1], action: 'delegation-received' },
-    ],
-    consultation: [
-      { id: AGENT_IDS[2], action: 'consultation-taken' },
-      { id: AGENT_IDS[0], action: 'consultation-given' },
-      { id: AGENT_IDS[0], action: 'consultation-accepted' },
-    ],
-    competition: [
-      { id: AGENT_IDS[0], action: 'dispute-initiated' },
-    ],
-    endorsement: [
-      { id: AGENT_IDS[0], action: 'consultation-given' },
-      { id: AGENT_IDS[1], action: 'consultation-accepted' },
-    ],
-    observation: [],
-    dispute: [
-      { id: AGENT_IDS[1], action: 'dispute-initiated' },
-      { id: AGENT_IDS[0], action: 'dispute-defended' },
-    ],
-    sleep: [],
-    wake: [],
-  }
-
-  for (const entry of profileMap[step] ?? []) {
-    ws.behaviorProfiles[entry.id] ??= initProfile(entry.id)
-    recordInteraction(ws.behaviorProfiles[entry.id], entry.action)
-  }
-
-  for (const id of AGENT_IDS) {
-    ws.emergentRoles[id] = detectRoles(ws.behaviorProfiles[id] ?? initProfile(id))
-  }
-}
 
 function stepLabel(step: StepType): string {
   const labels: Record<StepType, string> = {
@@ -418,19 +444,85 @@ async function runLiveSleep(agentId: string, label: string, ws: WorkspaceState):
 }
 
 function deterministicSleepPacket(agentId: string, ws: WorkspaceState): Record<string, unknown> {
+  // Analyze recent events for actual patterns
+  const recentEvents = ws.events.slice(-10)
+  const cooperations = recentEvents.filter(e => e.summary.includes('合作')).length
+  const disputes = recentEvents.filter(e => e.summary.includes('质疑')).length
+  const delegations = recentEvents.filter(e => e.summary.includes('委托')).length
+  const observations = recentEvents.filter(e => e.summary.includes('观察')).length
+
+  const crossAnalysis = []
+  if (cooperations >= 2) {
+    crossAnalysis.push({
+      pattern: `近期发生 ${cooperations} 次合作`,
+      evidence: recentEvents.filter(e => e.summary.includes('合作')).map(e => e.summary.slice(0, 50)),
+      insight: '高频率合作表明 agent 间信任已建立，可考虑更复杂的协作模式',
+    })
+  }
+  if (disputes > 0) {
+    crossAnalysis.push({
+      pattern: `发生 ${disputes} 次争议`,
+      evidence: recentEvents.filter(e => e.summary.includes('质疑')).map(e => e.summary.slice(0, 50)),
+      insight: disputes > 1 ? '多次争议提示需要更新社会规范或明确责任边界' : '单次争议已被解决，信任损伤可控',
+    })
+  }
+  if (delegations >= 2) {
+    crossAnalysis.push({
+      pattern: `发生 ${delegations} 次任务委托`,
+      evidence: recentEvents.filter(e => e.summary.includes('委托')).map(e => e.summary.slice(0, 50)),
+      insight: '委托模式表明 competence 声誉正在指导任务分配，这是健康的专业化信号',
+    })
+  }
+  if (observations >= 2) {
+    crossAnalysis.push({
+      pattern: `发生 ${observations} 次观察`,
+      evidence: recentEvents.filter(e => e.summary.includes('观察')).map(e => e.summary.slice(0, 50)),
+      insight: 'Agent 在主动评估彼此的行为，这是社会意识形成的早期信号',
+    })
+  }
+  if (crossAnalysis.length === 0) {
+    crossAnalysis.push({
+      pattern: '社会处于早期阶段',
+      evidence: recentEvents.map(e => e.summary.slice(0, 40)),
+      insight: '交互数据不足，需要更多互动才能形成有意义的社会洞察',
+    })
+  }
+
+  // Memory changes from recent events
+  const updated = recentEvents.filter(e => e.summary.includes('观察') && e.summary.includes('👍'))
+    .slice(0, 2)
+    .map(e => ({
+      target: `mem-${e.at ?? ''}`,
+      oldContent: '未评估',
+      newContent: e.summary.slice(0, 60),
+      reason: '正面观察更新了认知',
+    }))
+
+  // Constraints from disputes
+  const newConstraints: string[] = []
+  if (disputes > 0) {
+    newConstraints.push('在执行不可逆操作前，需获得至少一位其他 agent 的确认')
+  }
+  if (delegations >= 3) {
+    newConstraints.push('委托任务需明确验收标准，避免责任模糊')
+  }
+
   return {
     sleepId: `sleep-${agentId}-${Date.now()}`,
     agentId, sessionId: 'evolve-001', sleptAt: new Date().toISOString(),
     resolvedDisputes: [],
     dream: {
       dreamId: `dream-${agentId}`,
-      merged: [], cleaned: [], updated: [],
-      crossAnalysis: [
-        { pattern: '多次合作中信任稳定增长', evidence: ws.events.filter(e => e.summary.includes('合作')).map(e => e.summary.slice(0, 30)), insight: '建立信任需要至少 3 次成功互动' },
-        { pattern: 'competence 声誉分化明显', evidence: ['delegation events'], insight: '任务委托加速了能力声誉的分化' },
-      ],
+      merged: cooperations >= 2 ? [{ sources: ['多次合作记录'], into: `近 10 步内完成 ${cooperations} 次合作`, reason: '合并重复的合作模式' }] : [],
+      cleaned: observations > 0 ? [{ target: '过时观察', content: `${observations} 条历史观察`, reason: '更新的观察已覆盖旧判断' }] : [],
+      updated,
+      crossAnalysis,
     },
     relationshipChanges: [],
-    resumeAnchor: { context: `社会已运行 ${ws.events.length} 步`, newConstraints: [], attentionItems: [] },
+    resumeAnchor: {
+      context: `本轮周期: ${cooperations}合作 ${delegations}委托 ${disputes}争议 ${observations}观察`,
+      newConstraints,
+      attentionItems: disputes > 1 ? [{ priority: 'medium' as const, text: `${disputes} 次争议需关注社会规范` }] : [],
+    },
   }
 }
