@@ -27,18 +27,40 @@
   - 原因: 用户明确要求不需要跑测试
   - Phase 2 开发第一步如要改 runtime 行为，再跑最窄相关验证即可
 
-## Phase 2 第一个能力点建议
+## Phase 2 Product Doctrine
 
-根据与 DeepSeek-TUI 的差距分析，Phase 2 最有价值的第一个能力点：
+Phase 2 的 Agent Society 讨论线统一放在 `docs/product/phase2-agent-society/`。
 
-### 选项 A: 专业化 Agent 定义系统
-当前只有 `general-purpose` 内置 agent。Phase 2 可定义领域 agent (如 `code-reviewer`, `test-writer`, `doc-generator`)，每个有专门系统提示词和工具集。
+Phase 2 的核心精华已收束到 `docs/product/phase2-agent-society/PHASE2_CORE_ESSENCE.md`：
 
-### 选项 B: RLM (Recursive LM for large inputs)
-DeepSeek-TUI 最独特的能力——为超大文件/长文本提供 Python REPL 分析。对代码库分析场景实用。
+> Vigilon defines the life physics of digital working subjects by building an Agent Society runtime.
 
-### 选项 C: 体验打磨 (TUI 交互 + 错误恢复)
-完善 TUI 操作体验、中断恢复、后台任务可见性。让 agent 从"能用"到"好用"。
+Phase 2 的方向门禁已更新为 `docs/product/phase2-agent-society/PHASE2_PRODUCT_DOCTRINE.md`：
 
-### 推荐
-**A → C → B**。专业化 Agent 最能体现 Vigilon 的"可扩展 whiteboard Agent"定位，也是和通用 agent 工具拉开差距的关键。
+> Vigilon defines the life physics of digital working subjects.
+
+Phase 2 的问题地图记录在 `docs/product/phase2-agent-society/PHASE2_AGENT_ERA_PROBLEM_MAP.md`，细化版 Atlas 记录在 `docs/product/phase2-agent-society/PHASE2_AGENT_ERA_PROBLEM_ATLAS.md`。后续设计必须同时说明它回答了哪个 Agent 时代问题：意图形成、需求对齐、多主体治理、长程连续、幻觉、动态规划、环境适应、安全恢复、运行时攻击、知识代谢、成本归因、记忆治理、Agentic Web、劳动重组、评测可靠性、工具供应链、法律可委托边界、超级个体分化或合成内容证据信任。
+
+Phase 2 的问题细化记录在 `docs/product/phase2-agent-society/PHASE2_AGENT_ERA_PROBLEM_ATLAS.md`。后续 deep dive 应从影响对象、现有失败形态、大众化阻碍、单点功能不足、为什么需要 Agent 社会、以及 downstream design pressure 出发。
+
+Phase 2 的行为层 deep dive 记录在 `docs/product/phase2-agent-society/PHASE2_HUMAN_LIKE_WORK_BEHAVIORS.md`。后续设计必须说明它让用户看见了什么 human-like work behavior，并且该行为改变了哪些 runtime state：belief、memory、permission、identity、relation、cost、incident、evidence、capability 或 future plan。
+
+Phase 2 的前端表面记录在 `docs/product/phase2-agent-society/PHASE2_AGENT_SOCIETY_FRONTEND_SURFACE.md`。后续产品表面设计必须避免退回纯 chat / logs / task board；默认应把 Agent 社会做成可观察、可干预、可审计的数字工作社会沙盘，让用户通过小人、空间、对象和事件理解 runtime state。
+
+Phase 2 的产品回答记录在 `docs/product/phase2-agent-society/PHASE2_AGENT_SOCIETY_THESIS.md`：
+
+> Agent Society is the product form of Agent Life Physics.
+
+Agent 社会现在是 Phase 2 的产品组织框架；这不等于轻率承诺完整社会化产品面，而是要求后续设计说明它在 Agent 社会里建立了什么制度、关系或后果。
+
+此前基于 DeepSeek-TUI 差距分析提出的 `专业化 Agent 定义系统 → TUI 体验打磨 → RLM` 仍可作为历史候选能力参考，但不再是 Phase 2 的主线判断标准。
+
+后续任何 Phase 2 能力都必须先通过 Agent Life Physics doctrine：
+
+- 是否保留 agent 像工作主体一样沉淀、争论、协作、探索或批评的可见行为？
+- 是否来自 agent 的数字存在条件，而不是只照搬人类组织概念？
+- 是否在 Agent 社会里建立了制度、关系、责任或社会后果？
+- 是否处理复制、分叉、恢复、压缩、身份漂移、权限塑形或并行后果中的至少一个问题？
+- 是否避免落入普通 multi-agent orchestration、harness、workflow engine、trust score、role-based team 或 prompt roleplay？
+
+本文档仍只记录 Phase 2 入口状态；具体 MVP、工程拆解和验收任务需要在 doctrine 之后另写。

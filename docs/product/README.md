@@ -4,6 +4,14 @@
 
 ## 当前基线
 
+- [Phase 2 Agent Society Workspace](phase2-agent-society/README.md)
+- [Phase 2 Core Essence: Agent Society Runtime](phase2-agent-society/PHASE2_CORE_ESSENCE.md)
+- [Phase 2 Product Doctrine: Agent Life Physics](phase2-agent-society/PHASE2_PRODUCT_DOCTRINE.md)
+- [Phase 2 Agent Era Problem Map](phase2-agent-society/PHASE2_AGENT_ERA_PROBLEM_MAP.md)
+- [Phase 2 Agent Era Problem Atlas](phase2-agent-society/PHASE2_AGENT_ERA_PROBLEM_ATLAS.md)
+- [Phase 2 Human-Like Work Behaviors Deep Dive](phase2-agent-society/PHASE2_HUMAN_LIKE_WORK_BEHAVIORS.md)
+- [Phase 2 Agent Society Frontend Surface](phase2-agent-society/PHASE2_AGENT_SOCIETY_FRONTEND_SURFACE.md)
+- [Phase 2 Agent Society Thesis](phase2-agent-society/PHASE2_AGENT_SOCIETY_THESIS.md)
 - [2026-05-17 产品定位与能力边界](2026-05-17-product-positioning-and-boundary.md)
 - [2026-05-17 Phase 1 Solo Runtime Parity Checklist](2026-05-17-phase-1-solo-runtime-parity-checklist.md)
 - [2026-05-17 Phase 1 Copy-First Mechanism Map](2026-05-17-phase-1-copy-first-mechanism-map.md)
@@ -46,11 +54,20 @@
 - 项目默认 DeepSeek 模型固定为 `deepseek-v4-flash`，除非用户显式传入 `--model` 或设置 `DEEPSEEK_MODEL`。
 - v0.1.0 基础可用性新增 `vigilon init`、`vigilon tools` 和 project instructions 注入：runtime 会读取 `AGENTS.md`、`VIGILON.md`、`.vigilon/instructions.md` 并注入 CLI/TUI 模型上下文。
 - v0.1.0 仍应显式标注缺口，不用 Claude Code 深层对照遮蔽真实状态。
-- Phase 2 不做 daily-driver TUI、Codex 级桌面自动化或 Vigilon Agent 社会，这些分别后置到 P3、P4、P5。
+- Phase 2 的 Agent Society 讨论线统一放在 [Phase 2 Agent Society Workspace](phase2-agent-society/README.md)。
+- Phase 2 的核心精华以 [Phase 2 Core Essence: Agent Society Runtime](phase2-agent-society/PHASE2_CORE_ESSENCE.md) 为准：Vigilon 通过构建 Agent 社会运行时，定义数字工作主体的存在规律。
+- Phase 2 的最新产品哲学以 [Phase 2 Product Doctrine: Agent Life Physics](phase2-agent-society/PHASE2_PRODUCT_DOCTRINE.md) 为准：Vigilon 定义数字工作主体的存在规律。
+- Phase 2 的问题地图以 [Phase 2 Agent Era Problem Map](phase2-agent-society/PHASE2_AGENT_ERA_PROBLEM_MAP.md) 和 [Phase 2 Agent Era Problem Atlas](phase2-agent-society/PHASE2_AGENT_ERA_PROBLEM_ATLAS.md) 为准：Phase 2 需要回答 Agent 时代的意图形成、需求对齐、多主体治理、长程连续、幻觉、规划、环境适应、安全恢复、运行时攻击、知识代谢、成本归因、记忆治理、Agentic Web、劳动重组、评测可靠性、工具供应链、法律可委托边界、超级个体分化和合成内容证据信任问题。
+- Phase 2 的问题细化以 [Phase 2 Agent Era Problem Atlas](phase2-agent-society/PHASE2_AGENT_ERA_PROBLEM_ATLAS.md) 为准：它解释这些问题影响谁、为什么单点功能不足、为什么阻碍大众化、为什么需要 Agent 社会运行时，以及它们如何推导出 behaviors、life physics 和 institutions。
+- Phase 2 的行为层以 [Phase 2 Human-Like Work Behaviors Deep Dive](phase2-agent-society/PHASE2_HUMAN_LIKE_WORK_BEHAVIORS.md) 为准：human-like behavior 不是人格拟人化，而是会改变 belief、memory、permission、identity、cost、evidence、user capability 和 future plan 的可见社会动作。
+- Phase 2 的前端表面以 [Phase 2 Agent Society Frontend Surface](phase2-agent-society/PHASE2_AGENT_SOCIETY_FRONTEND_SURFACE.md) 为准：Agent Society 不能只被实现成 chat；chat 是 radio，主表面应是用户能看见小人、空间、对象和事件的数字工作社会沙盘。
+- Phase 2 的产品回答以 [Phase 2 Agent Society Thesis](phase2-agent-society/PHASE2_AGENT_SOCIETY_THESIS.md) 为准：Agent 社会是“数字工作主体存在规律”的产品形态。
+- 旧文档中“Agent 社会后置到 P5”的口径只表示完整社会化产品面不提前承诺；Phase 2 的战略主线已经切换为 Agent Life Physics + Agent Society runtime doctrine。
+- Phase 2 仍不做 daily-driver TUI 或 Codex 级桌面自动化；完整 Agent Society 产品面必须建立在可治理、可恢复、可审计的 runtime 基础上。
 - Phase 3.1 的 TUI 是内部 Agent-flow 验证面，不是最终用户产品面。
 - Coding workflow 是基础形态，不是最终产品边界。
 - Codex/Claude Code 只作为历史参照，不再是公开叙事的中心。
-- Agent 社会是后续扩展方向，必须建立在可治理、可恢复、可审计的基础上。
+- Agent Life Physics 是 Phase 2 的哲学门禁；Agent Society 是 Phase 2 的产品组织框架；完整 Agent 社会产品面仍必须建立在可治理、可恢复、可审计的基础上。
 - 当前明确不做 remote / bridge / multi-user / enterprise / admin / billing / telemetry / marketplace。
 - Claude Code / research 源码镜像已从 Git 工作树移除；本机临时归档为 `.local-archives/vigilon-reference-mirrors-20260522-2132.tar.gz`，该目录不进入仓库。
 
@@ -58,7 +75,9 @@
 
 1. 先读仓库根目录 `README.md`。
 2. 再读 [2026-05-22 Open Source v0.1.0 Release](2026-05-22-open-source-v0-1-0-release.md)。
-3. 再读 [2026-05-22 Whiteboard Agent Alpha Readiness](2026-05-22-whiteboard-agent-alpha-readiness.md)。
-4. 再读 [2026-05-19 P2.5 Runtime Governance](2026-05-19-p2-5-runtime-governance.md)。
-5. 再按任务需要读 Phase 1/2/3 历史文档，注意其中 Claude Code 对照和 closure 口径已是历史背景。
-6. 代码实现优先从 `packages/runtime` 和 `packages/tui` 进入；不要依赖已移除的 reference mirror。
+3. 再读 [Phase 2 Agent Society Workspace](phase2-agent-society/README.md) 和 [Phase 2 Core Essence: Agent Society Runtime](phase2-agent-society/PHASE2_CORE_ESSENCE.md)。
+4. 再按需要读 [Phase 2 Product Doctrine: Agent Life Physics](phase2-agent-society/PHASE2_PRODUCT_DOCTRINE.md)、[Phase 2 Agent Era Problem Map](phase2-agent-society/PHASE2_AGENT_ERA_PROBLEM_MAP.md)、[Phase 2 Agent Era Problem Atlas](phase2-agent-society/PHASE2_AGENT_ERA_PROBLEM_ATLAS.md)、[Phase 2 Human-Like Work Behaviors Deep Dive](phase2-agent-society/PHASE2_HUMAN_LIKE_WORK_BEHAVIORS.md)、[Phase 2 Agent Society Frontend Surface](phase2-agent-society/PHASE2_AGENT_SOCIETY_FRONTEND_SURFACE.md) 和 [Phase 2 Agent Society Thesis](phase2-agent-society/PHASE2_AGENT_SOCIETY_THESIS.md)。
+5. 再读 [2026-05-22 Whiteboard Agent Alpha Readiness](2026-05-22-whiteboard-agent-alpha-readiness.md)。
+6. 再读 [2026-05-19 P2.5 Runtime Governance](2026-05-19-p2-5-runtime-governance.md)。
+7. 再按任务需要读 Phase 1/2/3 历史文档，注意其中 Claude Code 对照、closure 口径和旧 P5 后置口径已是历史背景。
+8. 代码实现优先从 `packages/runtime` 和 `packages/tui` 进入；不要依赖已移除的 reference mirror。
