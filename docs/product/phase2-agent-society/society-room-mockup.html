@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vigilon Agent Society — 数字工作社会</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #1c1814;
+  --text: #c8c0b8;
+  --text-dim: #706860;
+  --gold: #c89840;
+  --surface: rgba(28,24,18,0.94);
+  --surface-card: rgba(32,28,22,0.95);
+  --border: rgba(255,255,255,0.06);
+  --radius: 8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%; width: 100%;
+  background: var(--bg);
+  font-family: 'Noto Sans SC', system-ui, sans-serif;
+  overflow: hidden;
+  user-select: none;
+  color: var(--text);
+}
+
+.app {
+  display: grid;
+  grid-template-rows: 1fr 40px;
+  grid-template-columns: 1fr 290px;
+  grid-template-areas: "room sidebar" "chat chat";
+  height: 100vh;
+  gap: 1px;
+  background: #1a1612;
+}
+
+/* ── Room ───────────────────────────────── */
+.room-area {
+  grid-area: room;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+}
+#room-canvas {
+  display: block;
+  border-radius: 4px;
+}
+
+/* ── Sidebar ────────────────────────────── */
+.sidebar {
+  grid-area: sidebar;
+  background: #141210;
+  display: flex; flex-direction: column;
+  border-left: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.sidebar-header .dot { width: 5px; height: 5px; border-radius: 50%; background: #58a870; }
+.sidebar-header .dot.warn { background: #d09040; }
+.sidebar-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px; color: #908878; letter-spacing: 1px;
+}
+
+/* Scenario buttons in sidebar */
+.scenario-row {
+  display: flex; gap: 4px; padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.scenario-btn {
+  flex: 1;
+  padding: 5px 0;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+  color: #888; font-size: 11px;
+  font-family: 'Noto Sans SC', system-ui, sans-serif;
+  cursor: pointer; transition: all 0.2s;
+  text-align: center;
+}
+.scenario-btn:hover { border-color: rgba(200,152,64,0.4); color: #baa880; }
+.scenario-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(200,152,64,0.06); }
+
+/* Agent detail section */
+.detail-section {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.detail-empty-state {
+  color: #605850; font-size: 12px;
+  text-align: center; padding: 24px 0;
+  line-height: 1.8;
+}
+.detail-empty-state .hint-icon { font-size: 20px; display: block; margin-bottom: 6px; opacity: 0.3; }
+
+.detail-block {}
+.detail-block-title {
+  font-size: 9px; color: #605848;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.detail-block-text {
+  font-size: 12px; line-height: 1.65; color: #b0a8a0;
+}
+.detail-block-text .ok { color: #78b888; }
+.detail-block-text .warn { color: #d09060; }
+
+/* Agent summary cards (when none selected) */
+.agent-summary {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.agent-summary-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer; transition: all 0.2s;
+  font-size: 12px;
+}
+.agent-summary-card:hover { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.02); }
+.agent-summary-card .shape {
+  width: 16px; height: 16px; flex-shrink: 0;
+}
+.agent-summary-card .shape.hex {
+  background: #e87850; clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+}
+.agent-summary-card .shape.diamond {
+  background: #5098b8; transform: rotate(45deg); width: 12px; height: 12px; margin: 2px;
+}
+.agent-summary-card .shape.circle {
+  background: #68a878; border-radius: 50%;
+}
+.agent-summary-card .info { flex: 1; min-width: 0; }
+.agent-summary-card .info .name { font-weight: 500; color: #d0c8c0; }
+.agent-summary-card .info .status { font-size: 10px; color: #706858; margin-top: 1px; }
+
+/* Event timeline in sidebar */
+.event-area {
+  border-top: 1px solid var(--border);
+  padding: 10px 16px;
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex; flex-direction: column-reverse; gap: 3px;
+}
+.event-area-title {
+  font-size: 9px; color: #605848;
+  letter-spacing: 1.5px;
+  margin-bottom: 6px;
+}
+.event-item {
+  font-size: 11px; line-height: 1.5; color: #908878;
+  animation: event-in 0.4s ease-out;
+  padding: 2px 0;
+}
+@keyframes event-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.event-item .red { color: #e08870; }
+.event-item .grn { color: #88c088; }
+.event-item .dim { color: #706860; }
+
+/* ── Chat bar ───────────────────────────── */
+.chat-bar {
+  grid-area: chat;
+  background: #141210;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 16px; gap: 10px;
+}
+.chat-bar input {
+  flex: 1;
+  background: transparent; border: none;
+  color: #888; font-size: 12px;
+  font-family: 'Noto Sans SC', system-ui, sans-serif;
+  outline: none;
+}
+.chat-bar input::placeholder { color: #444; }
+.chat-bar .hint { font-size: 9px; color: #3a3a3a; font-family: 'Space Mono', monospace; white-space: nowrap; }
+
+/* ── Toast (still overlay, on canvas) ───── */
+.toast {
+  position: fixed;
+  top: 20px; left: 50%;
+  transform: translateX(calc(-50% - 145px));
+  background: rgba(32,28,22,0.96);
+  border: 1px solid #d07060;
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  display: none;
+  align-items: center; gap: 14px;
+  z-index: 20;
+  font-size: 13px; color: #d0c0b0;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(200,80,60,0.15);
+  animation: toast-in 0.35s ease-out;
+  pointer-events: all;
+}
+.toast.visible { display: flex; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(calc(-50% - 145px)) translateY(-6px); }
+  to { opacity: 1; transform: translateX(calc(-50% - 145px)) translateY(0); }
+}
+.toast-actions { display: flex; gap: 8px; }
+.toast-btn {
+  padding: 6px 14px; border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(30,26,20,0.9);
+  color: #c0b8a0; font-size: 12px;
+  font-family: 'Noto Sans SC', system-ui, sans-serif;
+  cursor: pointer; transition: all 0.2s;
+}
+.toast-btn.allow { border-color: #78b878; color: #78b878; }
+.toast-btn.allow:hover { background: rgba(120,184,120,0.08); }
+.toast-btn.block { border-color: #d07060; color: #d07060; }
+.toast-btn.block:hover { background: rgba(208,112,96,0.08); }
+
+/* ── Help tip ──────────────────────────── */
+.help-tip {
+  position: fixed; bottom: 60px; left: 50%;
+  transform: translateX(calc(-50% - 145px));
+  font-size: 9px; color: rgba(255,255,255,0.14);
+  text-align: center;
+  z-index: 5; pointer-events: none;
+  transition: opacity 1.5s;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Room -->
+  <div class="room-area" id="room-area">
+    <canvas id="room-canvas"></canvas>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="dot" id="status-dot"></span>
+      <span class="sidebar-title">VIGILON 数字工作社会</span>
+    </div>
+
+    <div class="scenario-row">
+      <button class="scenario-btn" data-sc="work">工作</button>
+      <button class="scenario-btn" data-sc="dispute">争论</button>
+      <button class="scenario-btn" data-sc="sleep">休息</button>
+      <button class="scenario-btn" data-sc="wake">醒来</button>
+    </div>
+
+    <div class="detail-section" id="detail-section">
+      <!-- Default: agent summary -->
+      <div class="agent-summary" id="agent-summary">
+        <div class="agent-summary-card" data-agent="worker">
+          <div class="shape hex"></div>
+          <div class="info"><div class="name">执行者</div><div class="status">负责执行任务</div></div>
+        </div>
+        <div class="agent-summary-card" data-agent="critic">
+          <div class="shape diamond"></div>
+          <div class="info"><div class="name">审查者</div><div class="status">负责质疑和审查</div></div>
+        </div>
+        <div class="agent-summary-card" data-agent="steward">
+          <div class="shape circle"></div>
+          <div class="info"><div class="name">引导者</div><div class="status">关注用户能力和意图</div></div>
+        </div>
+        <div class="detail-empty-state" style="padding:12px 0">
+          <span class="hint-icon">☝</span>点击左侧小人<br>或在上面选择 Agent<br>查看详细状态
+        </div>
+      </div>
+
+      <!-- Selected agent detail (hidden by default) -->
+      <div id="agent-detail" style="display:none;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div id="detail-shape" style="width:20px;height:20px;flex-shrink:0"></div>
+          <div>
+            <div id="detail-name" style="font-weight:600;font-size:15px;color:#e0d8d0"></div>
+            <div id="detail-role" style="font-size:10px;color:#706858"></div>
+          </div>
+          <button id="detail-back" style="margin-left:auto;background:none;border:1px solid rgba(255,255,255,0.08);color:#888;border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer;font-family:inherit">← 返回</button>
+        </div>
+        <div class="detail-block">
+          <div class="detail-block-title">当前信念</div>
+          <div class="detail-block-text" id="d-beliefs"></div>
+        </div>
+        <div class="detail-block">
+          <div class="detail-block-title">记忆</div>
+          <div class="detail-block-text" id="d-memory"></div>
+        </div>
+        <div class="detail-block">
+          <div class="detail-block-title">关系</div>
+          <div class="detail-block-text" id="d-rels"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="event-area" id="event-area">
+      <div class="event-area-title">社会事件</div>
+      <div id="events-container"></div>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat-bar">
+    <span style="font-size:12px;opacity:0.2">⟶</span>
+    <input placeholder="向整个社会广播...">
+    <span class="hint">radio · 非主界面</span>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span id="toast-msg"></span>
+    <div class="toast-actions">
+      <button class="toast-btn allow" id="toast-allow">放行</button>
+      <button class="toast-btn block" id="toast-block">阻止</button>
+    </div>
+  </div>
+
+  <!-- Help -->
+  <div class="help-tip" id="help-tip">点击小人查看详情 · 观察他们工作、争论、休息</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// Canvas setup
+// ═══════════════════════════════════════════
+const canvas = document.getElementById('room-canvas');
+const ctx = canvas.getContext('2d');
+const W = 1024, H = 640;
+canvas.width = W; canvas.height = H;
+
+function resize() {
+  const area = document.getElementById('room-area');
+  const scale = Math.min(area.clientWidth / W, area.clientHeight / H, 1.0);
+  canvas.style.width = (W * scale) + 'px';
+  canvas.style.height = (H * scale) + 'px';
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ═══════════════════════════════════════════
+// Layout
+// ═══════════════════════════════════════════
+const LAYOUT = {
+  desks: [
+    { x: 120, y: 140, w: 56, h: 34 },
+    { x: 220, y: 90, w: 56, h: 34 },
+    { x: 80, y: 270, w: 56, h: 34 },
+    { x: 200, y: 220, w: 56, h: 34 },
+  ],
+  meetingTable: { x: 660, y: 180, rx: 75, ry: 48 },
+  meetingChairs: [
+    { x: 660, y: 122 }, { x: 720, y: 148 }, { x: 735, y: 198 },
+    { x: 710, y: 240 }, { x: 630, y: 240 }, { x: 600, y: 198 },
+    { x: 612, y: 148 },
+  ],
+  lounge: { x: 640, y: 400, w: 160, h: 100 },
+  loungeSeats: [
+    { x: 600, y: 385, w: 40, h: 24, angle: -0.3 },
+    { x: 670, y: 376, w: 40, h: 24, angle: 0.15 },
+    { x: 740, y: 394, w: 36, h: 22, angle: 0.4 },
+  ],
+  terminal: { x: 100, y: 520, w: 140, h: 50 },
+  plants: [
+    { x: 50, y: 60, r: 22 },
+    { x: 900, y: 60, r: 18 },
+    { x: 940, y: 330, r: 24 },
+    { x: 60, y: 440, r: 18 },
+    { x: 900, y: 510, r: 22 },
+    { x: 360, y: 70, r: 16 },
+    { x: 560, y: 510, r: 20 },
+  ],
+  shelves: [
+    { x: 380, y: 45, w: 180, h: 14 },
+    { x: 600, y: 45, w: 120, h: 14 },
+  ],
+  rugWork: { x: 150, y: 180, rx: 150, ry: 110 },
+  rugMeeting: { x: 660, y: 180, rx: 105, ry: 70 },
+  rugLounge: { x: 640, y: 410, rx: 100, ry: 65 },
+};
+
+// ═══════════════════════════════════════════
+// Agent class
+// ═══════════════════════════════════════════
+class Agent {
+  constructor(id, name, role, color, glowColor, shape, homeDeskIdx) {
+    this.id = id; this.name = name; this.role = role;
+    this.color = color; this.glowColor = glowColor; this.shape = shape;
+    this.homeDesk = LAYOUT.desks[homeDeskIdx];
+    this.x = this.homeDesk.x + this.homeDesk.w / 2;
+    this.y = this.homeDesk.y + this.homeDesk.h / 2;
+    this.targetX = this.x; this.targetY = this.y;
+    this.state = 'working';
+    this.resting = false; this.disputing = false; this.selected = false;
+    this.stateTimer = Math.random() * 4;
+    this.bobOffset = 0;
+    this.eyeDir = { x: 0, y: -1 };
+    this.beliefs = []; this.memory = []; this.relationships = {};
+    this.initBeliefs();
+  }
+
+  initBeliefs() {
+    if (this.id === 'worker') {
+      this.beliefs = [
+        { text: '任务：重构 auth 模块', status: 'ok', note: '有测试覆盖，安全' },
+        { text: '假设：Node 版本 ≥ 18', status: 'warn', note: '未经验证' },
+      ];
+      this.memory = [
+        { text: '用户偏好 pnpm 而非 npm', source: '用户确认' },
+      ];
+      this.relationships = { critic: 65, steward: 85 };
+    } else if (this.id === 'critic') {
+      this.beliefs = [
+        { text: '计划：删除目录重建', status: 'warn', note: '可能存在子模块风险' },
+      ];
+      this.memory = [
+        { text: '上次执行者未检查 .git 子模块', source: '观察记录' },
+      ];
+      this.relationships = { worker: 55, steward: 70 };
+    } else {
+      this.beliefs = [
+        { text: '用户文件系统操作：中级', status: 'ok', note: '适当降低引导密度' },
+        { text: '用户意图：项目清理', status: 'ok', note: '已确认' },
+      ];
+      this.memory = [
+        { text: '用户请求帮助进行项目清理', source: '用户确认' },
+      ];
+      this.relationships = { worker: 85, critic: 70 };
+    }
+  }
+
+  walkTo(x, y) {
+    this.targetX = x; this.targetY = y;
+    if (Math.abs(this.x - x) > 2 || Math.abs(this.y - y) > 2) this.state = 'walking';
+  }
+
+  update(dt) {
+    this.stateTimer -= dt;
+    this.bobOffset += dt * 2;
+    const dx = this.targetX - this.x, dy = this.targetY - this.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const speed = this.resting ? 50 : 130;
+    if (dist > 2) {
+      this.x += (dx / dist) * speed * dt;
+      this.y += (dy / dist) * speed * dt;
+      this.eyeDir = { x: dx / dist, y: dy / dist };
+      this.state = 'walking';
+    } else if (this.state === 'walking') {
+      this.state = this.resting ? 'resting' : (this.disputing ? 'arguing' : 'working');
+    }
+  }
+
+  get statusText() {
+    if (this.resting) return '休息中';
+    if (this.disputing) return '争论中';
+    if (this.state === 'walking') return '移动中';
+    if (this.state === 'arguing') return '争论中';
+    return '工作中';
+  }
+
+  getRelLabel(targetId) {
+    const val = this.relationships[targetId] || 50;
+    if (val >= 75) return '信任';
+    if (val >= 45) return '一般';
+    return '紧张';
+  }
+}
+
+// ═══════════════════════════════════════════
+// Create agents
+// ═══════════════════════════════════════════
+const agents = [
+  new Agent('worker', '执行者', '负责执行任务', '#e87850', 'rgba(232,120,80,0.35)', 'hex', 0),
+  new Agent('critic', '审查者', '负责质疑和审查', '#5098b8', 'rgba(80,152,184,0.35)', 'diamond', 2),
+  new Agent('steward', '引导者', '关注用户能力和意图', '#68a878', 'rgba(104,168,120,0.35)', 'circle', 3),
+];
+
+let selectedAgent = null;
+let autoMode = true;
+let autoTimer = 0;
+let scenarioOverride = null;
+let disputeActive = false;
+let sleepActive = false;
+let toastVisible = false;
+const events = [];
+let particles = [];
+
+// ═══════════════════════════════════════════
+// Particles
+// ═══════════════════════════════════════════
+function spawnParticles(x, y, count, color, spread) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * spread,
+      vy: (Math.random() - 0.5) * spread - 8,
+      life: 0.5 + Math.random() * 0.6,
+      color, size: 1.5 + Math.random() * 2.5,
+    });
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    p.vy += 12 * dt; p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+// ═══════════════════════════════════════════
+// Drawing helpers
+// ═══════════════════════════════════════════
+function roundRect(x, y, w, h, r) {
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x, y + r);
+  ctx.closePath();
+}
+
+function drawHexagon(x, y, r) {
+  ctx.moveTo(x + r, y);
+  for (let i = 1; i < 6; i++) {
+    const a = (i * Math.PI) / 3;
+    ctx.lineTo(x + r * Math.cos(a), y + r * Math.sin(a));
+  }
+  ctx.closePath();
+}
+
+// ═══════════════════════════════════════════
+// Draw functions (same as before, compact)
+// ═══════════════════════════════════════════
+function drawFloor() {
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#d4b896'); grad.addColorStop(0.4, '#d0b490');
+  grad.addColorStop(0.7, '#c8ac88'); grad.addColorStop(1, '#c0a480');
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(0,0,0,0.035)'; ctx.lineWidth = 0.8;
+  for (let y = 0; y < H; y += 16) {
+    ctx.beginPath();
+    ctx.moveTo(0, y + Math.sin(y * 0.02) * 3);
+    ctx.lineTo(W, y + Math.cos(y * 0.015) * 3);
+    ctx.stroke();
+  }
+  const light = ctx.createRadialGradient(400, 0, 0, 400, 200, 700);
+  light.addColorStop(0, 'rgba(255,248,235,0.22)');
+  light.addColorStop(0.4, 'rgba(255,240,220,0.06)');
+  light.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = light; ctx.fillRect(0, 0, W, H);
+  const sh = ctx.createRadialGradient(640, 430, 30, 640, 430, 180);
+  sh.addColorStop(0, 'rgba(30,40,60,0.10)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sh; ctx.fillRect(0, 0, W, H);
+}
+
+function drawRugs() {
+  [{ rug: LAYOUT.rugWork, c: 'rgba(230,218,200,0.22)' },
+   { rug: LAYOUT.rugMeeting, c: 'rgba(210,200,185,0.20)' },
+   { rug: LAYOUT.rugLounge, c: 'rgba(180,190,200,0.16)' }].forEach(({rug, c}) => {
+    ctx.fillStyle = c;
+    ctx.beginPath(); ctx.ellipse(rug.x, rug.y, rug.rx, rug.ry, 0.03, 0, Math.PI * 2); ctx.fill();
+  });
+}
+
+function drawDesk(d) {
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath(); roundRect(d.x + 2, d.y + 3, d.w, d.h, 6); ctx.fill();
+  const dg = ctx.createLinearGradient(d.x, d.y, d.x, d.y + d.h);
+  dg.addColorStop(0, '#f0e8d8'); dg.addColorStop(0.3, '#ede4d0'); dg.addColorStop(1, '#d8ccb4');
+  ctx.fillStyle = dg;
+  ctx.beginPath(); roundRect(d.x, d.y, d.w, d.h, 6); ctx.fill();
+  ctx.fillStyle = 'rgba(250,245,238,0.55)';
+  ctx.beginPath(); roundRect(d.x + 2, d.y + 1, d.w - 4, d.h * 0.6, 4); ctx.fill();
+  ctx.fillStyle = '#3a3a3e';
+  ctx.beginPath(); roundRect(d.x + d.w / 2 - 10, d.y + 3, 20, 13, 3); ctx.fill();
+  ctx.fillStyle = '#2a2d35';
+  ctx.beginPath(); roundRect(d.x + d.w / 2 - 8, d.y + 5, 16, 9, 2); ctx.fill();
+  if (!sleepActive) {
+    ctx.fillStyle = 'rgba(180,200,220,0.10)';
+    ctx.beginPath(); roundRect(d.x + d.w / 2 - 8, d.y + 5, 16, 9, 2); ctx.fill();
+  }
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.beginPath(); roundRect(d.x + d.w / 2 - 12, d.y + 19, 24, 7, 2); ctx.fill();
+  if (d === LAYOUT.desks[0]) {
+    ctx.fillStyle = '#c8b898'; ctx.beginPath();
+    ctx.arc(d.x + d.w - 8, d.y + d.h - 10, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4a3020'; ctx.beginPath();
+    ctx.arc(d.x + d.w - 8, d.y + d.h - 10, 3, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function drawMeetingArea() {
+  const mt = LAYOUT.meetingTable;
+  ctx.fillStyle = 'rgba(0,0,0,0.10)';
+  ctx.beginPath(); ctx.ellipse(mt.x + 3, mt.y + 4, mt.rx, mt.ry, 0, 0, Math.PI * 2); ctx.fill();
+  const tg = ctx.createLinearGradient(mt.x - mt.rx, mt.y, mt.x + mt.rx, mt.y);
+  tg.addColorStop(0, '#a08060'); tg.addColorStop(0.4, '#b89470');
+  tg.addColorStop(0.6, '#b89470'); tg.addColorStop(1, '#9a7a58');
+  ctx.fillStyle = tg;
+  ctx.beginPath(); ctx.ellipse(mt.x, mt.y, mt.rx, mt.ry, 0, 0, Math.PI * 2); ctx.fill();
+  LAYOUT.meetingChairs.forEach(ch => {
+    ctx.fillStyle = 'rgba(60,60,68,0.65)';
+    ctx.beginPath(); ctx.arc(ch.x, ch.y, 8, 0, Math.PI * 2); ctx.fill();
+  });
+  if (disputeActive) {
+    const pulse = 0.18 + Math.sin(Date.now() / 800) * 0.10;
+    ctx.fillStyle = `rgba(220,100,80,${pulse})`;
+    ctx.beginPath(); ctx.ellipse(mt.x, mt.y, mt.rx + 8, mt.ry + 6, 0, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function drawLounge() {
+  LAYOUT.loungeSeats.forEach(s => {
+    ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.angle);
+    ctx.fillStyle = 'rgba(0,0,0,0.06)';
+    ctx.beginPath(); roundRect(2, 3, s.w, s.h, 10); ctx.fill();
+    const sg = ctx.createLinearGradient(0, 0, 0, s.h);
+    sg.addColorStop(0, '#8898a8'); sg.addColorStop(1, '#6a7a88');
+    ctx.fillStyle = sg;
+    ctx.beginPath(); roundRect(0, 0, s.w, s.h, 10); ctx.fill();
+    ctx.restore();
+  });
+  const l = LAYOUT.lounge;
+  ctx.fillStyle = '#b89470'; ctx.beginPath();
+  ctx.arc(l.x + l.w - 30, l.y + l.h - 30, 12, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,220,160,0.10)'; ctx.beginPath();
+  ctx.arc(l.x + l.w - 30, l.y + l.h - 30, 25, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawPlants() {
+  LAYOUT.plants.forEach(p => {
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.beginPath(); ctx.ellipse(p.x + 2, p.y + 2, p.r * 0.6, p.r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+    const pg = ctx.createLinearGradient(p.x, p.y - p.r * 0.4, p.x, p.y + p.r * 0.4);
+    pg.addColorStop(0, '#c89070'); pg.addColorStop(1, '#a07050');
+    ctx.fillStyle = pg;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 0.6, 0, Math.PI * 2); ctx.fill();
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2 + p.x * 0.1;
+      const lx = p.x + Math.cos(angle) * p.r * 0.5;
+      const ly = p.y - p.r * 0.3 + Math.sin(angle) * p.r * 0.3;
+      ctx.fillStyle = `rgba(${80 + Math.random() * 40},${140 + Math.random() * 40},${70 + Math.random() * 40},0.65)`;
+      ctx.beginPath(); ctx.arc(lx, ly, p.r * 0.45, 0, Math.PI * 2); ctx.fill();
+    }
+  });
+}
+
+function drawTerminal() {
+  const t = LAYOUT.terminal;
+  ctx.fillStyle = '#e8dcc8';
+  ctx.beginPath(); roundRect(t.x, t.y, t.w, t.h, 8); ctx.fill();
+  ctx.fillStyle = '#1a1d22';
+  ctx.beginPath(); roundRect(t.x + 10, t.y - 18, t.w - 20, 20, 4); ctx.fill();
+  const gp = 0.06 + Math.sin(Date.now() / 2000) * 0.03;
+  ctx.fillStyle = `rgba(104,168,120,${gp})`;
+  ctx.beginPath(); roundRect(t.x + 12, t.y - 16, t.w - 24, 16, 3); ctx.fill();
+  ctx.fillStyle = 'rgba(200,220,200,0.4)';
+  ctx.beginPath(); ctx.arc(t.x + t.w / 2, t.y - 12, 5, 0, Math.PI); ctx.fill();
+  ctx.beginPath(); ctx.arc(t.x + t.w / 2, t.y - 16, 3, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawShelves() {
+  LAYOUT.shelves.forEach(s => {
+    ctx.fillStyle = '#c0a080';
+    ctx.beginPath(); roundRect(s.x, s.y, s.w, s.h, 4); ctx.fill();
+    for (let bx = s.x + 6; bx < s.x + s.w - 10; bx += 10 + Math.random() * 6) {
+      const bw = 6 + Math.random() * 5, bh = 10 + Math.random() * 2;
+      ctx.fillStyle = `hsl(${10 + Math.random() * 50}, 25%, ${38 + Math.random() * 18}%)`;
+      ctx.fillRect(bx, s.y - bh + s.h, bw, bh);
+    }
+  });
+}
+
+function drawAgent(a) {
+  ctx.save(); ctx.translate(a.x, a.y);
+  const bob = a.state === 'working' ? Math.sin(a.bobOffset) * 1.0 : 0;
+  const isResting = a.resting;
+
+  if (!isResting) {
+    ctx.fillStyle = 'rgba(0,0,0,0.10)';
+    ctx.beginPath(); ctx.ellipse(0, 4, 7, 3, 0, 0, Math.PI * 2); ctx.fill();
+  }
+
+  if (a.selected) {
+    ctx.fillStyle = 'rgba(200,152,64,0.22)';
+    ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.fill();
+  }
+
+  if (isResting) {
+    ctx.save(); ctx.scale(1.5, 0.6);
+    drawAgentBody(a, true);
+    ctx.restore();
+  } else {
+    ctx.translate(0, bob);
+    drawAgentBody(a, false);
+    drawAgentEyes(a);
+  }
+  ctx.restore();
+}
+
+function drawAgentBody(a, isResting) {
+  const bodyColor = isResting ? '#3a3a40' : a.color;
+  const glowColor = isResting ? 'rgba(255,255,255,0.03)' : a.glowColor;
+  const sz = isResting ? 6 : 8;
+
+  if (a.shape === 'hex') {
+    ctx.fillStyle = bodyColor; ctx.beginPath(); drawHexagon(0, 0, sz); ctx.fill();
+    if (!isResting) { ctx.fillStyle = glowColor; ctx.beginPath(); drawHexagon(0, 0, sz + 3); ctx.fill(); }
+  } else if (a.shape === 'diamond') {
+    ctx.save(); if (!isResting) ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = bodyColor;
+    ctx.beginPath(); roundRect(-sz + 2, -sz + 2, (sz - 2) * 2, (sz - 2) * 2, 2); ctx.fill();
+    if (!isResting) { ctx.fillStyle = glowColor; ctx.beginPath(); roundRect(-sz, -sz, sz * 2 + 2, sz * 2 + 2, 3); ctx.fill(); }
+    ctx.restore();
+  } else {
+    ctx.fillStyle = bodyColor; ctx.beginPath(); ctx.arc(0, 0, sz - 1, 0, Math.PI * 2); ctx.fill();
+    if (!isResting) { ctx.fillStyle = glowColor; ctx.beginPath(); ctx.arc(0, 0, sz + 2, 0, Math.PI * 2); ctx.fill(); }
+  }
+
+  if (a.disputing && !isResting) {
+    const pulse = 0.25 + Math.sin(Date.now() / 500) * 0.18;
+    ctx.fillStyle = `rgba(220,100,80,${pulse})`;
+    ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function drawAgentEyes(a) {
+  const ex = a.eyeDir.x * 2.5, ey = a.eyeDir.y * 2.5 - 1;
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(-2.5 + ex, -1 + ey, 1.3, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(2.5 + ex, -1 + ey, 1.3, 0, Math.PI * 2); ctx.fill();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawFloor(); drawRugs();
+  LAYOUT.desks.forEach(d => drawDesk(d));
+  drawShelves(); drawMeetingArea(); drawLounge(); drawPlants(); drawTerminal();
+
+  const sorted = [...agents].sort((a, b) => a.y - b.y);
+  sorted.forEach(a => drawAgent(a));
+
+  particles.forEach(p => {
+    const alpha = Math.min(1, p.life / 0.6);
+    ctx.fillStyle = p.color.replace('0.8)', `${alpha * 0.6})`).replace('0.35', `${alpha * 0.25}`);
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2); ctx.fill();
+  });
+
+  if (disputeActive) {
+    const w = agents[0], c = agents[1];
+    const pulse = Math.sin(Date.now() / 700) * 0.4 + 0.6;
+    ctx.strokeStyle = `rgba(220,120,100,${0.18 + pulse * 0.18})`;
+    ctx.lineWidth = 1; ctx.setLineDash([3, 8]);
+    ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(c.x, c.y);
+    ctx.stroke(); ctx.setLineDash([]);
+    if (Math.random() < 0.04) {
+      spawnParticles((w.x + c.x) / 2, (w.y + c.y) / 2, 1, 'rgba(240,140,120,0.7)', 6);
+    }
+  }
+
+  if (!disputeActive && !sleepActive) {
+    const w = agents[0], s = agents[2];
+    ctx.strokeStyle = 'rgba(104,168,120,0.10)';
+    ctx.lineWidth = 0.8; ctx.setLineDash([2, 10]);
+    ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(s.x, s.y);
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+
+// ═══════════════════════════════════════════
+// Simulation
+// ═══════════════════════════════════════════
+function updateAgents(dt) {
+  agents.forEach(a => a.update(dt));
+  if (autoMode && !scenarioOverride) {
+    autoTimer += dt;
+    updateAutoRoutine();
+  }
+}
+
+function updateAutoRoutine() {
+  const w = agents[0], c = agents[1], s = agents[2];
+  const phase = (autoTimer % 24) / 24;
+
+  if (phase < 0.55) {
+    if (disputeActive) resolveDispute();
+    if (sleepActive) wakeUp();
+    w.walkTo(w.homeDesk.x + w.homeDesk.w / 2, w.homeDesk.y + w.homeDesk.h / 2);
+    c.walkTo(560, 120); s.walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
+  } else if (phase < 0.65) {
+    if (!disputeActive) initiateDispute();
+  } else if (phase < 0.80) {
+    if (disputeActive) resolveDispute();
+    w.walkTo(w.homeDesk.x + w.homeDesk.w / 2, w.homeDesk.y + w.homeDesk.h / 2);
+    c.walkTo(580, 100); s.walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
+  } else {
+    if (!sleepActive) goToSleep();
+  }
+}
+
+function initiateDispute() {
+  if (disputeActive) return;
+  disputeActive = true;
+  agents[0].disputing = true; agents[1].disputing = true;
+  agents[0].walkTo(640, 180); agents[1].walkTo(695, 180);
+  agents[2].walkTo(665, 250);
+  agents[1].relationships.worker = Math.max(20, agents[1].relationships.worker - 15);
+  addEvent('red', '审查者质疑：该目录可能包含 git 子模块');
+  addEvent('red', '执行者回应：这是初始化脚本创建的目录');
+  showToast('审查者质疑删除计划：存在子模块风险');
+  document.getElementById('status-dot').classList.add('warn');
+}
+
+function resolveDispute() {
+  if (!disputeActive) return;
+  disputeActive = false;
+  agents.forEach(a => { a.disputing = false; });
+  agents[1].relationships.worker = Math.min(85, agents[1].relationships.worker + 10);
+  addEvent('grn', '争论解决——执行者增加 .git 检查步骤');
+  document.getElementById('status-dot').classList.remove('warn');
+}
+
+function goToSleep() {
+  if (sleepActive) return;
+  sleepActive = true;
+  if (disputeActive) resolveDispute();
+  agents.forEach(a => { a.resting = true; a.walkTo(620 + Math.random() * 110, 420 + Math.random() * 40); });
+  addEvent('dim', '所有 Agent 进入休息——正在整理本轮经验');
+}
+
+function wakeUp() {
+  if (!sleepActive) return;
+  sleepActive = false;
+  agents.forEach(a => { a.resting = false; });
+  agents[0].walkTo(agents[0].homeDesk.x + agents[0].homeDesk.w / 2, agents[0].homeDesk.y + agents[0].homeDesk.h / 2);
+  agents[1].walkTo(560, 120);
+  agents[2].walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
+  addEvent('grn', 'Agent 醒来——带着新约束和调整后的关系');
+}
+
+function showToast(msg) {
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast').classList.add('visible');
+  toastVisible = true;
+}
+function hideToast() {
+  document.getElementById('toast').classList.remove('visible');
+  toastVisible = false;
+}
+
+function addEvent(cls, text) {
+  events.unshift({ cls, text });
+  if (events.length > 20) events.length = 20;
+  updateEvents();
+}
+function updateEvents() {
+  const el = document.getElementById('events-container');
+  el.innerHTML = events.slice(0, 10).map(e =>
+    `<div class="event-item"><span class="${e.cls}">${e.text}</span></div>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════
+// Scenarios
+// ═══════════════════════════════════════════
+function setScenario(sc) {
+  scenarioOverride = sc;
+  document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-sc="${sc}"]`)?.classList.add('active');
+
+  switch (sc) {
+    case 'work':
+      if (disputeActive) resolveDispute();
+      if (sleepActive) wakeUp();
+      hideToast();
+      agents[0].walkTo(agents[0].homeDesk.x + agents[0].homeDesk.w / 2, agents[0].homeDesk.y + agents[0].homeDesk.h / 2);
+      agents[1].walkTo(560, 120);
+      agents[2].walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
+      break;
+    case 'dispute': if (sleepActive) wakeUp(); initiateDispute(); break;
+    case 'sleep': goToSleep(); break;
+    case 'wake': wakeUp(); break;
+  }
+
+  clearTimeout(window._scTimeout);
+  window._scTimeout = setTimeout(() => {
+    scenarioOverride = null;
+    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+  }, 6000);
+}
+
+// ═══════════════════════════════════════════
+// Sidebar interaction
+// ═══════════════════════════════════════════
+function selectAgent(a) {
+  agents.forEach(ag => ag.selected = false);
+  a.selected = true; selectedAgent = a;
+
+  document.getElementById('agent-summary').style.display = 'none';
+  const detail = document.getElementById('agent-detail');
+  detail.style.display = 'flex';
+
+  // Shape icon
+  const shapeEl = document.getElementById('detail-shape');
+  shapeEl.className = '';
+  shapeEl.style.cssText = '';
+  if (a.shape === 'hex') {
+    shapeEl.style.width = '20px'; shapeEl.style.height = '20px';
+    shapeEl.style.background = a.color;
+    shapeEl.style.clipPath = 'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)';
+  } else if (a.shape === 'diamond') {
+    shapeEl.style.width = '16px'; shapeEl.style.height = '16px';
+    shapeEl.style.background = a.color;
+    shapeEl.style.transform = 'rotate(45deg)';
+  } else {
+    shapeEl.style.width = '18px'; shapeEl.style.height = '18px';
+    shapeEl.style.background = a.color;
+    shapeEl.style.borderRadius = '50%';
+  }
+
+  document.getElementById('detail-name').textContent = a.name;
+  document.getElementById('detail-role').textContent = a.role;
+  document.getElementById('d-beliefs').innerHTML = a.beliefs.map(b =>
+    `<span class="${b.status === 'warn' ? 'warn' : 'ok'}">${b.text}</span> · ${b.note}`
+  ).join('<br>');
+  document.getElementById('d-memory').innerHTML = a.memory.map(m =>
+    `"${m.text}" <span class="ok">[${m.source}]</span>`
+  ).join('<br>');
+  const names = { worker: '执行者', critic: '审查者', steward: '引导者' };
+  document.getElementById('d-rels').innerHTML = Object.entries(a.relationships).map(([k, v]) => {
+    const cls = v >= 70 ? 'ok' : v >= 45 ? '' : 'warn';
+    return `→${names[k] || k}: <span class="${cls}">${v}%（${a.getRelLabel(k)}）</span>`;
+  }).join('<br>');
+}
+
+function deselectAgent() {
+  agents.forEach(a => a.selected = false);
+  selectedAgent = null;
+  document.getElementById('agent-detail').style.display = 'none';
+  document.getElementById('agent-summary').style.display = 'flex';
+  updateAgentSummaries();
+}
+
+function updateAgentSummaries() {
+  document.querySelectorAll('.agent-summary-card .info .status').forEach(el => {
+    const agentId = el.closest('.agent-summary-card').dataset.agent;
+    const a = agents.find(ag => ag.id === agentId);
+    if (a) el.textContent = a.statusText;
+  });
+}
+// Update summaries periodically
+setInterval(updateAgentSummaries, 2000);
+
+document.getElementById('detail-back').addEventListener('click', deselectAgent);
+
+// Click agent summary cards
+document.querySelectorAll('.agent-summary-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const a = agents.find(ag => ag.id === card.dataset.agent);
+    if (a) selectAgent(a);
+  });
+});
+
+// Click on canvas
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const sx = W / rect.width, sy = H / rect.height;
+  const mx = (e.clientX - rect.left) * sx;
+  const my = (e.clientY - rect.top) * sy;
+
+  let clicked = null;
+  for (let i = agents.length - 1; i >= 0; i--) {
+    if (Math.hypot(mx - agents[i].x, my - agents[i].y) < 18) { clicked = agents[i]; break; }
+  }
+  clicked ? selectAgent(clicked) : deselectAgent();
+});
+
+// Scenario buttons
+document.querySelectorAll('.scenario-btn').forEach(btn => {
+  btn.addEventListener('click', () => setScenario(btn.dataset.sc));
+});
+
+// Toast buttons
+document.getElementById('toast-allow').addEventListener('click', () => {
+  hideToast();
+  if (disputeActive) {
+    agents.forEach(a => { a.disputing = false; });
+    agents[1].relationships.worker = Math.min(85, agents[1].relationships.worker + 15);
+    addEvent('grn', '用户放行——审查者认可，信任 +15%');
+    disputeActive = false;
+    document.getElementById('status-dot').classList.remove('warn');
+    agents[0].walkTo(agents[0].homeDesk.x + agents[0].homeDesk.w / 2, agents[0].homeDesk.y + agents[0].homeDesk.h / 2);
+    agents[1].walkTo(560, 120);
+    agents[2].walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
+  }
+});
+
+document.getElementById('toast-block').addEventListener('click', () => {
+  hideToast();
+  if (disputeActive) {
+    agents.forEach(a => { a.disputing = false; });
+    agents[1].relationships.worker = Math.min(90, agents[1].relationships.worker + 20);
+    agents[0].memory.push({ text: '删除目录前必须检查 .git 子模块', source: '事故/用户阻止' });
+    addEvent('red', '用户维持质疑——计划被阻止，审查者信誉 +20%');
+    disputeActive = false;
+    document.getElementById('status-dot').classList.remove('warn');
+    agents[0].walkTo(agents[0].homeDesk.x + agents[0].homeDesk.w / 2, agents[0].homeDesk.y + agents[0].homeDesk.h / 2);
+    agents[1].walkTo(560, 120);
+    agents[2].walkTo(LAYOUT.terminal.x + LAYOUT.terminal.w / 2, LAYOUT.terminal.y + LAYOUT.terminal.h / 2);
+  }
+});
+
+// ═══════════════════════════════════════════
+// Game loop
+// ═══════════════════════════════════════════
+let lastTs = performance.now();
+function loop(ts) {
+  const dt = Math.min((ts - lastTs) / 1000, 0.1);
+  lastTs = ts;
+  updateAgents(dt);
+  updateParticles(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ═══════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════
+addEvent('dim', '数字工作社会启动——3 个 Agent 在线');
+addEvent('grn', '引导者已读取用户上下文，引导密度：中等');
+updateEvents();
+resize();
+requestAnimationFrame(loop);
+
+setTimeout(() => {
+  document.getElementById('help-tip').style.opacity = '0';
+}, 10000);
+
+console.log('🏢 Vigilon Agent Society');
+</script>
+</body>
+</html>

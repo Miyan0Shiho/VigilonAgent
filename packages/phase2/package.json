@@ -1,0 +1,23 @@
+{
+  "name": "@vigilon/phase2",
+  "version": "0.1.0",
+  "description": "Phase 2 Agent Society prototype — Dream, Dispute, Sleep/Wake, Skills/Rules",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@vigilon/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
