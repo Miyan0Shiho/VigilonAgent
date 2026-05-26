@@ -254,10 +254,6 @@ html, body {
     <div id="phase-indicator" style="display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border)">
       <span id="phase-dot" style="width:8px;height:8px;border-radius:50%;background:#58a870;flex-shrink:0"></span>
       <span id="phase-label" style="font-size:11px;color:#908878;flex:1">初始化中...</span>
-      <span id="evolve-controls" style="display:flex;gap:3px">
-        <button id="btn-pause" style="background:none;border:1px solid rgba(255,255,255,0.08);color:#888;border-radius:3px;padding:3px 7px;font-size:9px;cursor:pointer;font-family:inherit" title="暂停/恢复">⏯</button>
-        <button id="btn-step" style="background:none;border:1px solid rgba(255,255,255,0.08);color:#888;border-radius:3px;padding:3px 7px;font-size:9px;cursor:pointer;font-family:inherit" title="单步推进">⏭</button>
-      </span>
     </div>
 
     <div class="detail-section" id="detail-section">
@@ -497,32 +493,22 @@ const API = {
     return res.json();
   },
 
-  async evolve() {
-    const res = await fetch('/api/evolve', { method: 'POST' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-  },
 };
 
 // ═══════════════════════════════════════════════════════════════
-// Layer 2: State Store + Auto-evolve
+// Layer 2: State Store
 // ═══════════════════════════════════════════════════════════════
-let autoEvolveRunning = true;
-let autoEvolveInterval = 4000; // 4s between steps
-let autoEvolveTimer = null;
-
 const Store = {
   state: null,
   _polling: false,
+  _interval: null,
 
   setState(newState) {
     this.state = newState;
-    // Sync agent data
     for (const fa of newState.agents) {
       const a = agents.find(ag => ag.id === fa.id);
       if (a) a.syncFromState(fa);
     }
-    // Render
     SidebarRenderer.render(newState);
     ToastController.render(newState);
     updateEventsFromState(newState.events);
@@ -541,37 +527,9 @@ const Store = {
     this._polling = false;
   },
 
-  async evolve() {
-    try {
-      const s = await API.evolve();
-      this.setState(s);
-    } catch (err) {
-      console.error('[Store] evolve failed:', err);
-    }
-  },
-
-  startAutoEvolve() {
-    this.poll(); // initial load
-    autoEvolveTimer = setInterval(() => {
-      if (autoEvolveRunning) this.evolve();
-    }, autoEvolveInterval);
-  },
-
-  togglePause() {
-    autoEvolveRunning = !autoEvolveRunning;
-    document.getElementById('btn-pause').textContent = autoEvolveRunning ? '⏯' : '▶';
-  },
-
-  async step() {
-    // Single step — pause first, then step
-    const wasRunning = autoEvolveRunning;
-    autoEvolveRunning = false;
-    document.getElementById('btn-pause').textContent = '▶';
-    await this.evolve();
-    if (wasRunning) {
-      autoEvolveRunning = true;
-      document.getElementById('btn-pause').textContent = '⏯';
-    }
+  startPolling(intervalMs = 2000) {
+    this.poll();
+    this._interval = setInterval(() => this.poll(), intervalMs);
   },
 
   async resolveToast(decision) {
@@ -591,7 +549,6 @@ function updatePhaseIndicator(state) {
   const dot = document.getElementById('phase-dot');
   const label = document.getElementById('phase-label');
   if (!dot || !label) return;
-
   const phaseInfo = {
     work: { color: '#58a870', text: '工作中' },
     dispute: { color: '#d09040', text: '争议中' },
@@ -601,12 +558,8 @@ function updatePhaseIndicator(state) {
   const info = phaseInfo[state.phase] ?? phaseInfo.work;
   dot.style.background = info.color;
   dot.style.boxShadow = `0 0 6px ${info.color}`;
-  label.textContent = `${info.text} · 步骤 ${state.events.length}`;
+  label.textContent = `${info.text} · 事件 ${state.events.length}`;
 }
-
-// ── Auto-evolve controls ──
-document.getElementById('btn-pause').addEventListener('click', () => Store.togglePause());
-document.getElementById('btn-step').addEventListener('click', () => Store.step());
 
 // ═══════════════════════════════════════════════════════════════
 // Layer 3: Sidebar Renderer
@@ -1214,10 +1167,10 @@ function loop(ts) {
 // ═══════════════════════════════════════════════════════════════
 // Init — auto-evolve starts immediately
 // ═══════════════════════════════════════════════════════════════
-addEvent('dim', 'Agent 社会启动 — 自主演化模式');
-document.querySelector('.sidebar-title').textContent = 'VIGILON · 自主社会';
+addEvent('dim', 'Agent 内阁 — 等待团队就绪...');
+document.querySelector('.sidebar-title').textContent = 'VIGILON · 内阁';
 
-Store.startAutoEvolve();
+Store.startPolling(3000);
 // Update sidebar title after first state load
 setTimeout(() => {
   if (Store.state) {

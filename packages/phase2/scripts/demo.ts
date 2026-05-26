@@ -22,7 +22,6 @@ import {
   addSkill, addRule, addPendingDispute, clearPendingDispute,
   computeFrontendState, summarizeWorkspace,
 } from '../src/workspace.js'
-import { evolve } from '../src/evolve.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
@@ -413,19 +412,6 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       }
       return
     }
-  }
-
-  // Evolve — autonomous social step
-  if (method === 'POST' && url === '/api/evolve') {
-    try {
-      const ws = loadWorkspace(WORKSPACE_DIR)
-      const hasApiKey = !!process.env.DEEPSEEK_API_KEY
-      const result = await evolve(ws, WORKSPACE_DIR, hasApiKey)
-      serveJSON(res, computeFrontendState(ws, await detectSource()))
-    } catch (err) {
-      serveJSON(res, { error: err instanceof Error ? err.message : String(err) }, 500)
-    }
-    return
   }
 
   // General route matching
