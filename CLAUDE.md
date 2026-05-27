@@ -44,6 +44,7 @@ Phase 2 重新定义了 Vigilon 的产品核心。三个相互构成的目标：
 - **Model-Aware, Not Model-Locked**：架构需要感知模型特性（context window、capabilities、cost），但不绑定单一模型。
 
 完整产品文档入口：`docs/product/README.md`
+对标分析（Codex & Claude Code）：`docs/product/phase-2/competitive-analysis.md`
 
 ## Common Commands
 
