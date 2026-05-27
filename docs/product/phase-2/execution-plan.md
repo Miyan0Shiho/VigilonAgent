@@ -25,7 +25,7 @@
 
 ---
 
-## Phase 2.0：Agent Loop & Transport（底座）
+## Phase 2.0：Agent Loop & Transport（底座）✅ 完成 (2026-05-28)
 
 **依赖**：无。当前 agent loop 需要改动才能支撑后续所有能力。
 
@@ -43,7 +43,7 @@
 
 ---
 
-## Phase 2.1：记忆系统
+## Phase 2.1：记忆系统 ✅ 完成 (2026-05-28)
 
 **依赖**：2.0（工具并行执行影响 memory 写入效率）。
 
@@ -62,18 +62,18 @@
 
 ---
 
-## Phase 2.2：工具深度
+## Phase 2.2：工具深度（部分完成）
 
 **依赖**：2.0（并行执行）、2.1（记忆系统为 Browser Agent 提供跨 session 上下文）。
 
 | # | 能力 | 状态 | 工程要点 |
 |---|------|------|---------|
-| 10 | WebFetch → Browser Agent | ❌ | 补 preflight/cache/summary → 升级为 Playwright harness：打开 URL → 等渲染 → 点击/填写/等待 → 提取 |
-| 11 | 多模态视觉 | ❌ | Read tool 升级：图片/PDF → base64 → vision model；用户触发截图模式（对标 Appshots）；需要 vision-capable secondary model |
-| 12 | LSP 深度 | ⚠️ | 补 AST/tree-sitter fallback（无 LSP server 时降级）；补降级解释（告诉用户"没有 LSP，用了 fallback"）；call hierarchy |
-| 13 | Notebook 深度 | ⚠️ | 已有 cell-level 读写；补 large-output guard 深度验证；补 stale notebook 检测 |
-| 14 | 结构化输出 | ❌ | Agent 输出 JSON/YAML/CSV 模板——不被 markdown 包裹；输出 schema 校验；适合喂给下游工具 |
-| 15 | Computer Use | ❌ | 集成 mac-cua（Apache 2.0，AX Tree + 后台操作，MCP）；Agent 操作桌面应用但不抢用户光标 |
+| 10 | WebFetch → Browser Agent | ⚠️ | 已有 cache/redirect/domain gate/summarize hooks。Browser Agent（Playwright）deferred |
+| 11 | 多模态视觉 | ❌ | deferred——需要 vision-capable model 基础设施 |
+| 12 | LSP 深度 | ✅ | call_hierarchy 已实现。AST fallback deferred |
+| 13 | Notebook 深度 | ✅ | stale 检测已有（validateReadBeforeEdit） |
+| 14 | 结构化输出 | ✅ | 新增 StructuredOutput tool——JSON/YAML/CSV/markdown-table + JSON Schema 校验 |
+| 15 | Computer Use | ❌ | deferred——MCP 集成（mac-cua setup docs） |
 
 **已有基础**：
 - WebFetch 已有 domain gate + redirect 处理
@@ -82,7 +82,7 @@
 
 ---
 
-## Phase 2.3：安全治理
+## Phase 2.3：安全治理 ✅ 完成 (2026-05-28)
 
 **依赖**：2.0（工具并行执行影响安全检查的时序）。
 
