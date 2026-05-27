@@ -221,7 +221,7 @@ export function parseMemoryOperationArgs(args: string[]): {
       if (value === undefined) {
         throw new Error('--type requires a value')
       }
-      if (!['user', 'feedback', 'project', 'reference'].includes(value)) {
+      if (!['user', 'feedback', 'project', 'reference', 'organization', 'agent', 'tool'].includes(value)) {
         throw new Error(`Unsupported long-term memory type: ${value}`)
       }
       memoryKind = value as import('../runtime/projectMemory.js').LongTermMemoryKind

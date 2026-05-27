@@ -269,7 +269,7 @@ Usage:
   vigilon memory <status|view|write|edit|delete|refresh|validate> <session-id> [--content <markdown>] [--background] [--refresh] [--cwd <path>] [--sessions-dir <path>]
   vigilon memory refresh <session-id> [--background] [--cwd <path>] [--sessions-dir <path>]
   vigilon memory validate <session-id> [--refresh] [--model <name>] [--deepseek-base-url <url>] [--cwd <path>] [--sessions-dir <path>]
-  vigilon memory promote <session-id> --type <user|feedback|project|reference> --topic <name> --content <markdown> [--cwd <path>] [--sessions-dir <path>]
+  vigilon memory promote <session-id> --type <user|project|organization|agent|tool|feedback|reference> --topic <name> --content <markdown> [--cwd <path>] [--sessions-dir <path>]
   vigilon compact <session-id> [--summary <markdown>] [--validate-memory] [--reactive-events <n>] [--context-window <n>|--token-budget <n>] [--output-reserve <n>] [--system-reserve <n>] [--tool-schema-reserve <n>] [--safety-margin <n>] [--pressure-threshold <ratio>] [--cwd <path>] [--sessions-dir <path>]
   vigilon run <prompt...> [--cwd <path>] [--sessions-dir <path>] [--permission-mode <mode>] [--model <name>] [--deepseek-base-url <url>] [--max-turns <n>]
   vigilon resume <session-id> <prompt...> [--approve-plan] [--cwd <path>] [--sessions-dir <path>] [--permission-mode <mode>] [--model <name>] [--deepseek-base-url <url>] [--max-turns <n>]

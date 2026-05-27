@@ -571,7 +571,7 @@ export type SubagentMemorySnapshot = {
     entryCount: number
     entries: Array<{
       id: string
-      kind: 'user' | 'feedback' | 'project' | 'reference'
+      kind: 'user' | 'project' | 'organization' | 'agent' | 'tool' | 'feedback' | 'reference'
       topic: string
       content: string
       createdAt: string
