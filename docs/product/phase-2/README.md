@@ -41,10 +41,11 @@ Phase 2 的工程范围被组织为 7 个问题域，每个域回答一个核心
 
 ## 文档结构
 
-- [product-doctrine.md](product-doctrine.md) — 产品哲学与三目标框架
-- [problem-framework.md](problem-framework.md) — 七问题域详细定义
+- [product-doctrine.md](product-doctrine.md) — 产品哲学与三目标框架（Phase 3+ 愿景）
+- [problem-framework.md](problem-framework.md) — 七问题域详细定义（长期愿景）
+- [capability-alignment-plan.md](capability-alignment-plan.md) — **Phase 2 当前计划：能力对齐**
 - [competitive-analysis.md](competitive-analysis.md) — 对标分析（Codex & Claude Code 2026 年 5 月）
-- [perception-research.md](perception-research.md) — 用户感知机制深度调研（Appshots / Computer Use / Chronicle / Hooks）
+- [perception-research.md](perception-research.md) — 用户感知机制深度调研
 - [explorations/](explorations/) — 历史探索文档（19 问题域、Agent Society 讨论线）
 - [../roadmaps/](../roadmaps/) — 路线图
 
