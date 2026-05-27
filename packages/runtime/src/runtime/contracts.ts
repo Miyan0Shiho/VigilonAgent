@@ -813,6 +813,17 @@ export type BackgroundTask = {
   process?: any // For local process handle
 }
 
+export type GoalStatus = 'active' | 'paused' | 'budget_limited' | 'complete'
+
+export type GoalState = {
+  objective: string
+  tokenBudget?: number
+  tokensUsed: number
+  status: GoalStatus
+  createdAt: string
+  updatedAt: string
+}
+
 export type RuntimeSessionState = {
   phase: RuntimePhase
   prePlanPermissionMode?: PermissionMode
@@ -832,6 +843,7 @@ export type RuntimeSessionState = {
   systemPrompt?: string
   toolSchema?: string
   modelParams?: Record<string, unknown>
+  goal?: GoalState
 }
 
 export type ToolReferenceDelta = {

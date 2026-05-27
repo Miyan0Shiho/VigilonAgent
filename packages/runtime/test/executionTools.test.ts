@@ -54,6 +54,9 @@ describe('execution tools', () => {
       'Note',
       'Snapshot',
       'StructuredOutput',
+      'create_goal',
+      'get_goal',
+      'update_goal',
     ])
   })
 

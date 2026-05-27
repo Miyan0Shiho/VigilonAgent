@@ -571,7 +571,32 @@ export function createVigilonAgentRuntime(
         }
         yield { type: 'model-response-received', response }
 
+        // Track goal token usage
+        if (sessionState.goal?.status === 'active' && response.usage) {
+          sessionState.goal.tokensUsed +=
+            (response.usage.inputTokens ?? 0) + (response.usage.outputTokens ?? 0)
+          sessionState.goal.updatedAt = createTimestamp()
+          if (
+            sessionState.goal.tokenBudget != null &&
+            sessionState.goal.tokensUsed >= sessionState.goal.tokenBudget
+          ) {
+            sessionState.goal.status = 'budget_limited'
+          }
+        }
+
         if (response.toolCalls.length === 0) {
+          // Goal continuation: if goal is active and model stopped naturally,
+          // inject a minimal continuation prompt to keep it going.
+          const goal = sessionState.goal
+          if (goal?.status === 'active') {
+            await transcript.append({
+              type: 'user',
+              content:
+                'Continue working toward the goal. If complete, call update_goal with status complete.',
+              timestamp: createTimestamp(),
+            })
+            continue
+          }
           break
         }
 

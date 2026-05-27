@@ -16,6 +16,9 @@ import {
   ExitPlanModeTool,
   ResultReportTool,
   TodoWriteTool,
+  CreateGoalTool,
+  GetGoalTool,
+  UpdateGoalTool,
 } from './sessionTools.js'
 import { createSkillTool } from './skillTool.js'
 import { ToolSearchTool } from './toolSearchTool.js'
@@ -57,6 +60,9 @@ export const CORE_TOOLS = [
   NoteTool,
   SnapshotTool,
   StructuredOutputTool,
+  CreateGoalTool,
+  GetGoalTool,
+  UpdateGoalTool,
 ] as const
 
 export function createCoreToolRegistry(options: {

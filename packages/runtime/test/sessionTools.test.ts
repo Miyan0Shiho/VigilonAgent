@@ -56,6 +56,9 @@ describe('session tools', () => {
       'Note',
       'Snapshot',
       'StructuredOutput',
+      'create_goal',
+      'get_goal',
+      'update_goal',
     ])
   })
 
