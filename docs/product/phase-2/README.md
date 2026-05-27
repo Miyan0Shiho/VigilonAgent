@@ -43,7 +43,8 @@ Phase 2 的工程范围被组织为 7 个问题域，每个域回答一个核心
 
 - [product-doctrine.md](product-doctrine.md) — 产品哲学与三目标框架（Phase 3+ 愿景）
 - [problem-framework.md](problem-framework.md) — 七问题域详细定义（长期愿景）
-- [capability-alignment-plan.md](capability-alignment-plan.md) — Phase 2 能力对齐计划
+- [capability-inventory.md](capability-inventory.md) — Phase 2 能力对齐清单（25 个缺失能力）
+- [execution-plan.md](execution-plan.md) — **Phase 2 执行计划（7 个子阶段）**
 - [tool-composition-design.md](tool-composition-design.md) — 工具组合系统设计（分区并行执行）
 - [competitive-analysis.md](competitive-analysis.md) — 对标分析（Codex & Claude Code 2026 年 5 月）
 - [perception-research.md](perception-research.md) — 用户感知机制深度调研
