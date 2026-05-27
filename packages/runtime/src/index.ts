@@ -7,7 +7,7 @@ export {
 } from './runtime/baseline.js'
 export { runCli } from './cli.js'
 export { createDeepSeekModelClient } from './model/deepseek.js'
-export { createFinRouter, createFinModelClient } from './model/finRouter.js'
+export { createFinRouter, createFinModelClient, createFallbackModelClient } from './model/finRouter.js'
 export type { FinDecision } from './model/finRouter.js'
 export {
   compactTranscript,

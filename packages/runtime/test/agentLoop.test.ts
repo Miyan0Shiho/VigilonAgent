@@ -89,6 +89,7 @@ describe('createVigilonAgentRuntime', () => {
       'tool-started',
       'tool-finished',
       'model-request-started',
+      'cache-stability-change',
       'model-response-received',
       'turn-finished',
     ])

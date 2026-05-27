@@ -1132,6 +1132,10 @@ export type AgentRuntimeEvent =
   | { type: 'tool-finished'; result: ToolResult }
   | { type: 'subagent-lifecycle'; event: SubagentLifecycleEvent }
   | { type: 'turn-finished'; result: AgentRuntimeTurnResult }
+  | {
+      type: 'cache-stability-change'
+      event: Extract<TranscriptEvent, { type: 'request-stability' }>
+    }
 
 export type AgentRuntime = {
   runTurn(input: AgentRuntimeTurnInput): AsyncIterable<AgentRuntimeEvent>

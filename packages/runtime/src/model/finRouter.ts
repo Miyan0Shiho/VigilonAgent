@@ -100,3 +100,46 @@ export function createFinModelClient(
     },
   } satisfies ModelClient
 }
+
+/**
+ * Wraps a ModelClient with a fallback. When the primary client's createMessage
+ * throws, the wrapper retries once with the fallback client.
+ *
+ * Mirrors Claude Code's --fallback-model for resilience against provider
+ * outages, rate limits, and transient network errors.
+ */
+export function createFallbackModelClient(
+  primary: ModelClient,
+  fallback: ModelClient,
+): ModelClient {
+  return {
+    get id() {
+      return primary.id
+    },
+    countInputTokens: primary.countInputTokens,
+    async createMessage(request: ModelRequest): Promise<ModelResponse> {
+      try {
+        return await primary.createMessage(request)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        // Only fall back on transport/availability errors, not on
+        // content-filter or other logical refusals from the provider.
+        const isTransport =
+          msg.includes('fetch') ||
+          msg.includes('network') ||
+          msg.includes('timeout') ||
+          msg.includes('ECONNREFUSED') ||
+          msg.includes('ETIMEDOUT') ||
+          msg.includes('ENOTFOUND') ||
+          msg.includes('rate_limit') ||
+          msg.includes('overload') ||
+          msg.includes('503') ||
+          msg.includes('502') ||
+          msg.includes('504') ||
+          msg.includes('429')
+        if (!isTransport) throw err
+        return fallback.createMessage(request)
+      }
+    },
+  } satisfies ModelClient
+}

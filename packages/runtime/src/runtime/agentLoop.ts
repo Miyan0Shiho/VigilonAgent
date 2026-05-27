@@ -550,6 +550,7 @@ export function createVigilonAgentRuntime(
         })
         if (requestStabilityEvent) {
           await transcript.append(requestStabilityEvent)
+          yield { type: 'cache-stability-change', event: requestStabilityEvent }
         }
 
         stopReason = response.stopReason
