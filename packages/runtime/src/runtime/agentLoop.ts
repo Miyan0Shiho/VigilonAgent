@@ -194,6 +194,10 @@ export type VigilonAgentRuntimeOptions = {
   autoCompactTokenBudget?: number
   autoCompactPressureThreshold?: number
   forkRequestCacheSnapshot?: RequestCacheSnapshot
+  /** Shell command to run after mutating tools (Edit/Write/ApplyPatch).
+   *  If the command exits non-zero, its stderr is appended to the tool result
+   *  so the model can see and fix issues. Example: "pnpm typecheck --noEmit" */
+  harnessCommand?: string
 }
 
 export function createVigilonAgentRuntime(
@@ -648,6 +652,7 @@ export function createVigilonAgentRuntime(
                   searchCount,
                   transcript,
                   input,
+                  harnessCommand: options.harnessCommand,
                 }),
               ),
             )
@@ -670,6 +675,7 @@ export function createVigilonAgentRuntime(
               searchCount,
               transcript,
               input,
+              harnessCommand: options.harnessCommand,
             })
 
             for (const event of genResult.events) {
@@ -985,6 +991,7 @@ type ToolExecutionContext = {
   searchCount: { grep: number; glob: number }
   transcript: TranscriptStore
   input: AgentRuntimeTurnInput
+  harnessCommand?: string
 }
 
 /**
@@ -1132,6 +1139,34 @@ async function executeToolCall(
   if (result.ok) {
     if (call.name === 'Grep') searchCount.grep += 1
     if (call.name === 'Glob') searchCount.glob += 1
+
+    // Harness: run post-mutation validation command
+    if (ctx.harnessCommand && MUTATING_TOOLS.has(call.name)) {
+      try {
+        const { execFile } = await import('node:child_process')
+        const { stderr, stdout } = await new Promise<{ stdout: string; stderr: string }>(
+          (resolve, reject) => {
+            execFile('sh', ['-c', ctx.harnessCommand!], {
+              cwd: input.cwd,
+              timeout: 30_000,
+              env: { ...process.env },
+            }, (err, stdout, stderr) => {
+              if (err && err.killed) reject(new Error('Harness command timed out'))
+              else resolve({ stdout, stderr })
+            })
+          },
+        )
+        if (stderr.trim() || stdout.trim()) {
+          result = {
+            ...result,
+            content: result.content + '\n\n[harness] ' + ctx.harnessCommand + '\n' +
+              (stderr.trim() || stdout.trim()),
+          }
+        }
+      } catch {
+        // Harness failure is non-blocking — it's feedback, not a gate
+      }
+    }
   }
 
   await transcript.append({ type: 'tool-result', result, timestamp: createTimestamp() })
