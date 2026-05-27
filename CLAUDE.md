@@ -45,6 +45,7 @@ Phase 2 重新定义了 Vigilon 的产品核心。三个相互构成的目标：
 
 完整产品文档入口：`docs/product/README.md`
 对标分析（Codex & Claude Code）：`docs/product/phase-2/competitive-analysis.md`
+感知机制调研（Appshots / Computer Use / Chronicle）：`docs/product/phase-2/perception-research.md`
 
 ## Common Commands
 
