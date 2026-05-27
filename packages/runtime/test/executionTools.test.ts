@@ -53,6 +53,7 @@ describe('execution tools', () => {
       'RunTests',
       'Note',
       'Snapshot',
+      'StructuredOutput',
     ])
   })
 

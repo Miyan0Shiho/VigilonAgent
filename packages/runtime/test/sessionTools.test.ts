@@ -55,6 +55,7 @@ describe('session tools', () => {
       'RunTests',
       'Note',
       'Snapshot',
+      'StructuredOutput',
     ])
   })
 
