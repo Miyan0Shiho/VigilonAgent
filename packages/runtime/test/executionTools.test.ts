@@ -57,6 +57,7 @@ describe('execution tools', () => {
       'create_goal',
       'get_goal',
       'update_goal',
+      'self_verify',
     ])
   })
 

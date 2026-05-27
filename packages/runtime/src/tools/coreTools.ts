@@ -19,6 +19,7 @@ import {
   CreateGoalTool,
   GetGoalTool,
   UpdateGoalTool,
+  SelfVerifyTool,
 } from './sessionTools.js'
 import { createSkillTool } from './skillTool.js'
 import { ToolSearchTool } from './toolSearchTool.js'
@@ -63,6 +64,7 @@ export const CORE_TOOLS = [
   CreateGoalTool,
   GetGoalTool,
   UpdateGoalTool,
+  SelfVerifyTool,
 ] as const
 
 export function createCoreToolRegistry(options: {

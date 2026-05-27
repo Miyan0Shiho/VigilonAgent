@@ -510,3 +510,86 @@ export const UpdateGoalTool: Tool = {
     return ok(`Goal complete: "${goal.objective}" (${goal.tokensUsed.toLocaleString()} tokens used)`)
   },
 }
+
+// ---------------------------------------------------------------------------
+// Self-verification tool — Generator ≠ Evaluator pattern
+// Spawns an independent evaluator subagent to review the current work.
+// ---------------------------------------------------------------------------
+
+export const SelfVerifyTool: Tool = {
+  name: 'self_verify',
+  description:
+    'Spawns an independent evaluator subagent to review the current work. ' +
+    'The evaluator checks for bugs, missing edge cases, style issues, and ' +
+    'correctness. Always use this before claiming a task is complete.',
+  readOnly: true,
+  inputJsonSchema: {
+    type: 'object',
+    properties: {
+      context: {
+        type: 'string',
+        description: 'What was done — file paths changed, task completed, tests run.',
+      },
+      focus: {
+        type: 'string',
+        description: 'Specific areas to check (e.g. "error handling", "edge cases", "performance").',
+      },
+    },
+    required: ['context'],
+    additionalProperties: false,
+  },
+  async invoke(input: unknown, context: ToolUseContext): Promise<ToolResult> {
+    const { context: taskContext, focus } = input as { context: string; focus?: string }
+    if (!taskContext?.trim()) return failed('self_verify requires a context description.')
+
+    if (!context.runSubagent) {
+      return ok(
+        'Self-verification unavailable (no subagent runner configured).\n' +
+        'Manual review checklist:\n' +
+        '- Are all changed files syntactically correct?\n' +
+        '- Do edge cases have test coverage?\n' +
+        '- Is error handling explicit (no silent failures)?\n' +
+        '- Are there any leftover debug logs or TODO comments?',
+      )
+    }
+
+    const focusLine = focus ? `\nFocus especially on: ${focus}` : ''
+    const task = [
+      'You are an independent code reviewer. Your ONLY job is to find problems.',
+      'Do NOT suggest improvements that are merely cosmetic.',
+      'Review this work critically:',
+      '',
+      taskContext,
+      focusLine,
+      '',
+      'Report your findings as:',
+      '1. Bugs or potential bugs (severity: critical/high/medium/low)',
+      '2. Missing edge cases',
+      '3. Style or convention issues',
+      'If you find NO issues, say "No issues found." explicitly.',
+    ].join('\n')
+
+    const result = await context.runSubagent({
+      definition: {
+        name: 'evaluator',
+        description: 'Independent code reviewer. Finds problems, not praise.',
+        systemPrompt: 'You are an independent code reviewer. Find problems. Be specific.',
+        allowedTools: ['Read', 'Glob', 'Grep', 'Bash'],
+        maxTurns: 5,
+        source: 'built-in' as const,
+      },
+      task,
+      cwd: context.cwd,
+      parentAgentId: 'main',
+    })
+
+    if (result.status === 'completed') {
+      const msg = result.finalMessage || 'Evaluator completed.'
+      return ok(msg, {
+        evaluatorResult: msg,
+        hasIssues: !msg.includes('No issues found'),
+      })
+    }
+    return failed(`Evaluator failed: ${result.finalMessage || 'unknown error'}`)
+  },
+}
