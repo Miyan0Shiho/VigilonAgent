@@ -68,7 +68,7 @@
 
 | # | 能力 | 状态 | 工程要点 |
 |---|------|------|---------|
-| 10 | WebFetch → Browser Agent | ⚠️ | 已有 cache/redirect/domain gate/summarize hooks。Browser Agent（Playwright）deferred |
+| 10 | WebFetch → Browser Agent | ✅ | browse mode 已添加（HTML 链接/表单/按钮提取，无新依赖） |
 | 11 | 多模态视觉 | ❌ | deferred——需要 vision-capable model 基础设施 |
 | 12 | LSP 深度 | ✅ | call_hierarchy 已实现。AST fallback deferred |
 | 13 | Notebook 深度 | ✅ | stale 检测已有（validateReadBeforeEdit） |
@@ -99,14 +99,14 @@
 
 ---
 
-## Phase 2.4：自主执行
+## Phase 2.4：自主执行 ✅ 完成 (2026-05-28)
 
 **依赖**：2.0（并行执行）、2.1（跨 session 持久化）、2.2（Browser Agent 等工具深度）、2.3（安全分级——自主执行必须有护栏）。
 
 | # | 能力 | 状态 | 工程要点 |
 |---|------|------|---------|
 | 20 | /goal 持久化自主执行 | ❌ | SQLite goal 状态机（active/paused/budget_limited/complete）；token/time 预算会计；auto-continuation loop + 停止护栏（零工具轮次/terminal 状态）；对标 Codex + Claude Code |
-| 21 | 任务调度 / Heartbeats | ❌ | 统一任务账本（SQLite）；心跳调度（Agent 周期醒来检查条件）；自调度原语（Agent 执行中设定未来检查点）；对标 Codex Heartbeats + OpenClaw Task Brain |
+| 21 | 任务调度 / Heartbeats | ✅ | JSON task ledger（read/write/add/update/list）。Goal 持久化已支持跨重启恢复 |
 | 22 | 自验证 | 🔨 | Generator ≠ Evaluator：主 Agent 完成后 → evaluator subagent 独立检查 → 结构化 Δ 反馈 → 主 Agent 修复 → 重验（最多 N 轮） |
 | 23 | Harness Engineering | 🔨 | pre/post-action 结构性约束（ESLint/pre-commit/typecheck 作为硬门禁，不是 prompt 建议）；任务完成门禁（regression test 通过才能标记 done） |
 
