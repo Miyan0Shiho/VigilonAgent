@@ -275,7 +275,7 @@ Usage:
   vigilon resume <session-id> <prompt...> [--approve-plan] [--cwd <path>] [--sessions-dir <path>] [--permission-mode <mode>] [--model <name>] [--deepseek-base-url <url>] [--max-turns <n>]
 
 Permission modes: read-only, ask, accept-edits, bypass-local
-Interactive workbench: plain text starts a new task; /resume, /approve, /open, /doctor, /refresh, /quit manage sessions.
+Interactive workbench: plain text starts a new task; /resume, /approve, /open, /doctor, /refresh (reload skills), /quit manage sessions.
 Plan approval: resume <session-id> --approve-plan "continue..." promotes a pending plan from transcript state before running the next turn.
 Settings files: ~/.vigilon/settings.json, <cwd>/.vigilon/settings.json, <cwd>/.vigilon/settings.local.json
 Project instructions: AGENTS.md, VIGILON.md, <cwd>/.vigilon/instructions.md
@@ -1868,7 +1868,7 @@ async function runWorkbench(
     throw new Error('tui requires an interactive stdin surface')
   }
 
-  const parsed = await resolveOptions(
+  let parsed = await resolveOptions(
     parseOptions(args, { requirePrompt: false }),
     io.env,
   )
@@ -1890,7 +1890,18 @@ async function runWorkbench(
       }
       if (!raw) continue
       if (raw === '/quit' || raw === 'quit' || raw === 'exit') return
-      if (raw === '/refresh') continue
+      if (raw === '/refresh' || raw === '/reload') {
+        try {
+          parsed = await resolveOptions(
+            parseOptions(args, { requirePrompt: false }),
+            io.env,
+          )
+          io.stdout.write(`Skills reloaded (${parsed.skills.skills.length} skills)\n`)
+        } catch (err) {
+          io.stdout.write(`Reload failed: ${err instanceof Error ? err.message : String(err)}\n`)
+        }
+        continue
+      }
       if (raw === '/doctor') {
         renderDoctor(io.stdout, parsed, io.env)
         continue
@@ -1996,7 +2007,7 @@ function renderWorkbench(
     '  /resume <index|session-id> ...    continue an existing session',
     '  /approve <index|session-id> ...   approve pending plan and continue',
     '  /open <index|session-id>          inspect transcript preview',
-    '  /doctor | /refresh | /quit',
+    '  /doctor | /refresh (reload skills) | /quit',
   ]
   output.write(
     `\n${renderPanel('Vigilon Operator Workbench', body, 'ready')}\n`,

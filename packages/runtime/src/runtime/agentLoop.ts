@@ -207,6 +207,11 @@ export function createVigilonAgentRuntime(
   const transcript = options.transcript ?? new InMemoryTranscriptStore()
   const lspServerManager = options.lspServerManager ?? createLSPServerManager()
   const taskManager = options.taskManager ?? createTaskManager()
+
+  // Mutable skills container for /reload-skills support
+  const skillsRef: { current: readonly RuntimeSkill[] } = {
+    current: options.skills ?? [],
+  }
   
   // Initialize LSP manager if it hasn't been initialized
   if (lspServerManager.getAllServers().size === 0) {
@@ -247,13 +252,16 @@ export function createVigilonAgentRuntime(
     bashLimits: options.bashLimits,
     projectConfig: options.projectConfig,
     operator: options.operator,
-    skills: options.skills,
+    skills: skillsRef.current,
     toolResultReplacementLimit: options.toolResultReplacementLimit,
     taskManager,
     sessionState,
   })
 
   return {
+    reloadSkills(skills: readonly RuntimeSkill[]) {
+      skillsRef.current = skills
+    },
     async *runTurn(
       input: AgentRuntimeTurnInput,
     ): AsyncIterable<AgentRuntimeEvent> {
@@ -286,7 +294,7 @@ export function createVigilonAgentRuntime(
           cwd: input.cwd,
           permissionMode: options.permissionMode,
           projectConfig: turnProjectConfig,
-          skills: options.skills,
+          skills: skillsRef.current,
           projectInstructions: options.operatorGuidance,
         })
 
@@ -362,7 +370,7 @@ export function createVigilonAgentRuntime(
               maxTurns,
               turns,
             ),
-            options.skills ?? [],
+            skillsRef.current,
           )
           const preflightVisibleEvents = filterModelVisibleEvents(
             buildForkedRequestEvents({
@@ -462,7 +470,7 @@ export function createVigilonAgentRuntime(
             maxTurns,
             turns,
           ),
-          options.skills ?? [],
+          skillsRef.current,
         )
         const visibleEvents = filterModelVisibleEvents(
           buildForkedRequestEvents({
@@ -499,7 +507,7 @@ export function createVigilonAgentRuntime(
             memoryFreshness: sessionState.memoryFreshness,
           },
           projectConfig: turnProjectConfig,
-          skills: options.skills,
+          skills: skillsRef.current,
           cachePrefixSource: options.forkRequestCacheSnapshot
             ? 'fork-shared-prefix'
             : 'request',

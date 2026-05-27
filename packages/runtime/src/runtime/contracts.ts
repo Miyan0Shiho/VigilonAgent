@@ -1164,4 +1164,5 @@ export type AgentRuntimeEvent =
 
 export type AgentRuntime = {
   runTurn(input: AgentRuntimeTurnInput): AsyncIterable<AgentRuntimeEvent>
+  reloadSkills?(skills: readonly RuntimeSkill[]): void
 }
