@@ -868,11 +868,24 @@ export type FileReadingLimits = {
   maxLines?: number
 }
 
+export type ActionClass =
+  | 'reversible'       // Read-only, no side effects, always safe
+  | 'needs-confirmation' // Writes, network, moderate risk — confirm first
+  | 'needs-human'       // Email, payments, deployments — human must be present
+  | 'forbidden'          // Never allowed (rm -rf /, etc.)
+
+export type SecurityTier =
+  | 'silent'   // Allow automatically (low risk)
+  | 'confirm'  // Ask user to confirm (medium risk)
+  | 'block'    // Refuse execution (high risk)
+
 export type Tool = {
   readonly name: string
   readonly description: string
   readonly inputJsonSchema?: ToolInputJsonSchema
   readonly readOnly?: boolean
+  readonly actionClass?: ActionClass
+  readonly securityTier?: SecurityTier
   readonly deferred?: boolean
   readonly searchTerms?: readonly string[]
   invoke(input: unknown, context: ToolUseContext): Promise<ToolResult>
