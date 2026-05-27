@@ -49,6 +49,7 @@ export type ParsedOptions = {
   deepseekBaseUrl?: string
   approvePlan?: boolean
   prompt: string
+  effort?: 'low' | 'medium' | 'high'
 }
 
 export type ResolvedOptions = Omit<ParsedOptions, 'permissionMode'> & {
@@ -81,6 +82,7 @@ export function parseOptions(
   let model: string | undefined
   let deepseekBaseUrl: string | undefined
   let approvePlan = false
+  let effort: 'low' | 'medium' | 'high' | undefined
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]
@@ -106,6 +108,14 @@ export function parseOptions(
     }
     if (arg === '--model') {
       model = requireValue(args, (index += 1), '--model')
+      continue
+    }
+    if (arg === '--effort') {
+      const value = requireValue(args, (index += 1), '--effort')
+      if (!['low', 'medium', 'high'].includes(value)) {
+        throw new Error('--effort must be low, medium, or high')
+      }
+      effort = value as 'low' | 'medium' | 'high'
       continue
     }
     if (arg === '--deepseek-base-url') {
@@ -140,6 +150,7 @@ export function parseOptions(
     deepseekBaseUrl,
     approvePlan,
     prompt,
+    effort,
   }
 }
 
