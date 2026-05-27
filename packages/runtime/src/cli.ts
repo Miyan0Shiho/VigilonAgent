@@ -328,6 +328,20 @@ async function initProject(
       ],
       defaultCommands,
     },
+    // Uncomment to enable Computer Use (macOS desktop automation):
+    // mcpServers: {
+    //   'mac-cua': {
+    //     command: 'uvx',
+    //     args: ['mac-cua'],
+    //   },
+    // },
+    // Uncomment to enable visual memory (local screen context):
+    // mcpServers: {
+    //   'open-chronicle': {
+    //     command: 'npx',
+    //     args: ['open-chronicle'],
+    //   },
+    // },
   }
   const settingsWrite = await writeTextFileIfAllowed(
     settingsPath,
@@ -434,12 +448,27 @@ async function printSessions(
     parseOptions(args, { requirePrompt: false }),
     env,
   )
-  writeJson(output, {
-    sessions: await listSessions({
+  const sessions = await listSessions({
       cwd: parsed.cwd,
       sessionsDir: parsed.sessionsDir,
-    }),
-  })
+    })
+
+  if (sessions.length === 0) {
+    output.write('No sessions found.\n')
+    return
+  }
+
+  output.write(`${sessions.length} session(s):\n\n`)
+  for (const s of sessions) {
+    const id = s.sessionId.slice(0, 12)
+    const title = s.title ?? s.firstUserMessage?.slice(0, 80) ?? '(no title)'
+    const date = s.updatedAt?.slice(0, 16)?.replace('T', ' ') ?? 'unknown'
+    const marker = s.status === 'completed' ? '✓' : '○'
+    output.write(
+      `  ${marker} ${id}  ${date}  ${title.length > 60 ? title.slice(0, 57) + '...' : title}\n`,
+    )
+  }
+  output.write('\nUse /resume <id> to continue a session.\n')
 }
 
 async function printAgents(
@@ -2543,6 +2572,7 @@ async function runRuntimeTurn(
         stderr: io.stderr,
       }),
     maxTurns: parsed.maxTurns,
+    effort: parsed.effort,
     resume,
     operatorGuidance: buildCliOperatorGuidance(parsed),
     stopAfterResultReport: true,

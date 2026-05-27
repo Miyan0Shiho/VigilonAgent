@@ -194,10 +194,10 @@ export type VigilonAgentRuntimeOptions = {
   autoCompactTokenBudget?: number
   autoCompactPressureThreshold?: number
   forkRequestCacheSnapshot?: RequestCacheSnapshot
-  /** Shell command to run after mutating tools (Edit/Write/ApplyPatch).
-   *  If the command exits non-zero, its stderr is appended to the tool result
-   *  so the model can see and fix issues. Example: "pnpm typecheck --noEmit" */
+  /** Shell command to run after mutating tools. */
   harnessCommand?: string
+  /** Override reasoning depth. 'high' forces thinking=high on every model request. */
+  effort?: 'low' | 'medium' | 'high'
 }
 
 export function createVigilonAgentRuntime(
@@ -537,6 +537,7 @@ export function createVigilonAgentRuntime(
           cachePrefix: requestAuditEvent.cachePrefix ?? undefined,
           abortSignal: input.abortSignal,
           systemPrompt,
+          ...(options.effort === 'high' ? { thinking: 'high' as const } : {}),
         })
         const responseAuditEvent = buildLlmResponseEvent({
           request: requestAuditEvent,
