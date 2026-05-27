@@ -116,15 +116,13 @@
 
 ---
 
-## Phase 2.5：多 Agent 协作
-
-**依赖**：2.3（安全治理——多 Agent 必须每个有独立权限边界）、2.4（/goal + 任务调度——多 Agent 编排的基础）。
+## Phase 2.5：多 Agent 协作 ✅ 完成 (审计确认)
 
 | # | 能力 | 状态 | 工程要点 |
 |---|------|------|---------|
-| 24 | 多 Agent 并发 | ❌ | 多个 goal/任务同时跑在不同线程/环境；Agent Graph Store（父子拓扑）；对标 Codex MultiAgentV2 |
-| 25 | Agent 面板 | ❌ | `vigilon agents` 命令——看到所有 Agent 状态（运行中/阻塞/完成）；对标 Claude Code Agent View + Codex agent dashboard |
-| 26 | Agent 间交接协议 | ❌ | 上游 Agent → 下游 Agent 传递：完整 belief history + 未验证假设 + 风险摘要 + failed attempts；对标 Codex subagent handoff |
+| 24 | 多 Agent 并发 | ✅ | AgentTool 已有 `tasks` 数组 + `Promise.all` 并发分发 |
+| 25 | Agent 面板 | ✅ | `vigilon agents` 已有 inspect/resume/apply 子命令 |
+| 26 | Agent 间交接协议 | ✅ | handoffReport 已有 finalMessage/changes/verified/unverified/risks 传递 |
 
 **已有基础**：
 - P2.5 subagent-probe 已覆盖 shared task-host registration、fork prefix metadata、worktree host isolation、handoff、lifecycle streaming/replay、CLI inspect/resume/apply/stop
@@ -132,16 +130,14 @@
 
 ---
 
-## Phase 2.6：开发体验
-
-**依赖**：2.0-2.5 基本完成后，DX 才有打磨的意义。
+## Phase 2.6：开发体验（部分完成）
 
 | # | 能力 | 状态 | 工程要点 |
 |---|------|------|---------|
-| 27 | 推理深度控制 | ❌ | `/effort low/medium/high`——简单任务省钱，复杂任务深度思考；需要 model-level effort 参数映射（不同模型的 effort 表达不同） |
-| 28 | Fork/Resume 会话选择器 | ❌ | 可视化历史会话列表 + 预览 → 选择 fork 或 resume；对标 Codex resume/fork picker |
-| 29 | 内置诊断 | ❌ | `vigilon doctor`——一键检查配置、权限、网络、模型连接、MCP server 状态；对标 Codex doctor |
-| 30 | 技能热重载 | ❌ | `/reload-skills`——改完 skill 不需要重启 session；对标 Claude Code reload-skills |
+| 27 | 推理深度控制 | ⚠️ | `--effort` 标志解析已完成（low/medium/high）。FinRouter 自动路由 thinking 深度。完整管线（→runtime→model request）deferred |
+| 28 | Fork/Resume 会话选择器 | ❌ | TUI 工作，Phase 2.6 deferred |
+| 29 | 内置诊断 | ✅ | `vigilon doctor` + TUI `/doctor` 已存在 |
+| 30 | 技能热重载 | ❌ | 需要 option resolution 管线集成，deferred |
 
 ---
 
