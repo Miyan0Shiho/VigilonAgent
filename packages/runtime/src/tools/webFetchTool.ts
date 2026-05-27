@@ -7,7 +7,8 @@ const DEFAULT_MAX_REDIRECTS = 10
 export const WebFetchTool: Tool = {
   name: 'WebFetch',
   description:
-    'Fetches a public webpage with domain-level permission checks and safe redirect handling.',
+    'Fetches a public webpage. In "text" mode (default), returns markdown content. ' +
+    'In "browse" mode, returns structured page data (links, forms, buttons) for navigation.',
   inputJsonSchema: {
     type: 'object',
     properties: {
@@ -15,15 +16,22 @@ export const WebFetchTool: Tool = {
         type: 'string',
         description: 'The fully qualified URL to fetch.',
       },
+      mode: {
+        type: 'string',
+        enum: ['text', 'browse'],
+        description: '"text" returns page content (default). "browse" extracts links, forms, and buttons for navigation.',
+      },
     },
     required: ['url'],
     additionalProperties: false,
   },
   async invoke(input: unknown, context: ToolUseContext): Promise<ToolResult> {
-    const url = parseUrlInput(input)
-    if (!url) {
+    const { url, mode } = input as { url: unknown; mode?: string }
+    if (!url || typeof url !== 'string') {
       return failed('WebFetch requires a valid url string.')
     }
+
+    const browseMode = mode === 'browse'
 
     let parsedUrl: URL
     try {
@@ -72,6 +80,9 @@ export const WebFetchTool: Tool = {
         })
       }
       const response = await fetchWithRedirects(parsedUrl, context, 0)
+      // Browse mode: extract structured page data
+      const rawTextForBrowse = typeof response.rawText === 'string' ? response.rawText : ''
+      const browseMeta = browseMode ? extractBrowseData(rawTextForBrowse, parsedUrl) : undefined
       context.webFetch?.cache?.set(cacheKey, {
         url: String(response.url),
         fetchedAt: new Date().toISOString(),
@@ -80,7 +91,10 @@ export const WebFetchTool: Tool = {
         content: response.result,
         bytes: Number(response.bytes),
       })
-      return ok(response.result, response)
+      return ok(
+        browseMeta?.text ?? response.result,
+        { ...response, browseData: browseMeta },
+      )
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       return failed(`WebFetch failed: ${message}`, {
@@ -95,7 +109,7 @@ async function fetchWithRedirects(
   url: URL,
   context: ToolUseContext,
   redirectCount: number,
-): Promise<Record<string, unknown> & { result: string }> {
+): Promise<Record<string, unknown> & { result: string; rawText: string }> {
   const fetchImpl = context.webFetch?.fetch ?? fetch
   if (redirectCount === 0) {
     assertFetchableProtocol(url)
@@ -130,6 +144,7 @@ async function fetchWithRedirects(
         bytes: Buffer.byteLength(message),
         durationMs,
         result: message,
+        rawText: '',
       }
     }
     if (isBlockedHost(nextUrl.hostname)) {
@@ -144,6 +159,7 @@ async function fetchWithRedirects(
         bytes: Buffer.byteLength(message),
         durationMs,
         result: message,
+        rawText: '',
       }
     }
     return fetchWithRedirects(nextUrl, context, redirectCount + 1)
@@ -162,6 +178,7 @@ async function fetchWithRedirects(
           maxChars: context.webFetch?.maxContentChars ?? DEFAULT_MAX_CONTENT_CHARS,
         })
       : normalized
+
   return {
     url: url.toString(),
     code: response.status,
@@ -171,6 +188,7 @@ async function fetchWithRedirects(
     contentType: response.headers.get('content-type') ?? undefined,
     summarized: summarized !== normalized,
     result: summarized,
+    rawText,
   }
 }
 
@@ -284,4 +302,66 @@ function ok(content: string, metadata?: Record<string, unknown>): ToolResult {
 
 function failed(content: string, metadata?: Record<string, unknown>): ToolResult {
   return { toolCallId: '', ok: false, content, metadata }
+}
+
+/** Extract links, forms, and buttons from HTML for browse-mode navigation. */
+function extractBrowseData(
+  html: string,
+  baseUrl: URL,
+): { text: string; links: string[]; forms: string[]; buttons: string[] } {
+  const links: string[] = []
+  const forms: string[] = []
+  const buttons: string[] = []
+
+  // Extract <a href> links
+  const linkRegex = /<a\s[^>]*?href="([^"]*)"[^>]*?>([^<]*)<\/a>/gi
+  let match: RegExpExecArray | null
+  while ((match = linkRegex.exec(html)) !== null) {
+    const href = match[1]!
+    const text = match[2]?.trim() || href
+    try {
+      const resolved = new URL(href, baseUrl).toString()
+      links.push(`- [${text}](${resolved})`)
+    } catch {
+      links.push(`- ${text} (${href})`)
+    }
+    if (links.length >= 50) break
+  }
+
+  // Extract <form> elements
+  const formRegex = /<form\s[^>]*?(?:action="([^"]*)")?[^>]*?method="([^"]*)"[^>]*?>/gi
+  let formIdx = 0
+  while ((match = formRegex.exec(html)) !== null) {
+    formIdx++
+    const action = match[1] || ''
+    const method = (match[2] || 'get').toUpperCase()
+    try {
+      forms.push(`- Form #${formIdx}: ${method} ${new URL(action, baseUrl).toString()}`)
+    } catch {
+      forms.push(`- Form #${formIdx}: ${method} ${action || '(no action)'}`)
+    }
+    if (forms.length >= 20) break
+  }
+
+  // Extract <button> and <input type=submit>
+  const buttonRegex = /<(?:button|input\s[^>]*?type="submit")[^>]*?>(?:([^<]*?)<\/button>)?/gi
+  let btnIdx = 0
+  while ((match = buttonRegex.exec(html)) !== null) {
+    btnIdx++
+    const label = match[1]?.trim() || `button-${btnIdx}`
+    buttons.push(`- ${label}`)
+    if (buttons.length >= 20) break
+  }
+
+  const sections: string[] = []
+  if (links.length > 0) sections.push(`Links (${links.length}):\n${links.join('\n')}`)
+  if (forms.length > 0) sections.push(`Forms (${forms.length}):\n${forms.join('\n')}`)
+  if (buttons.length > 0) sections.push(`Buttons (${buttons.length}):\n${buttons.join('\n')}`)
+
+  return {
+    text: sections.length > 0 ? sections.join('\n\n') : '(No navigable elements found)',
+    links: links.map(l => l.replace(/^- \[([^\]]+)\]\(([^)]+)\)$/, '$2')),
+    forms: forms.map(f => f.replace(/^- Form #\d+: \w+ /, '')),
+    buttons: buttons.map(b => b.replace(/^- /, '')),
+  }
 }
