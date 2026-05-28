@@ -329,20 +329,17 @@ async function initProject(
       ],
       defaultCommands,
     },
-    // Uncomment to enable Computer Use (macOS desktop automation):
-    // mcpServers: {
-    //   'mac-cua': {
-    //     command: 'uvx',
-    //     args: ['mac-cua'],
-    //   },
-    // },
-    // Uncomment to enable visual memory (local screen context):
-    // mcpServers: {
-    //   'open-chronicle': {
-    //     command: 'npx',
-    //     args: ['open-chronicle'],
-    //   },
-    // },
+    // Computer Use (macOS desktop automation via mac-cua)
+    ...(parsed.withComputerUse
+      ? {
+          mcpServers: {
+            'mac-cua': {
+              command: 'uvx',
+              args: ['mac-cua'],
+            },
+          },
+        }
+      : {}),
   }
   const settingsWrite = await writeTextFileIfAllowed(
     settingsPath,

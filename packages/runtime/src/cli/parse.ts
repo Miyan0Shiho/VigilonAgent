@@ -162,11 +162,13 @@ export function parseInitOptions(
   force: boolean
   model: string
   permissionMode: PermissionMode
+  withComputerUse: boolean
 } {
   let cwd = process.cwd()
   let force = false
   let model = env.DEEPSEEK_MODEL ?? 'deepseek-v4-flash'
   let permissionMode: PermissionMode = 'ask'
+  let withComputerUse = false
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]
     if (arg === '--cwd') {
@@ -175,6 +177,10 @@ export function parseInitOptions(
     }
     if (arg === '--force') {
       force = true
+      continue
+    }
+    if (arg === '--with-computer-use') {
+      withComputerUse = true
       continue
     }
     if (arg === '--model') {
@@ -191,7 +197,7 @@ export function parseInitOptions(
     }
     throw new Error(`Unknown option: ${arg}`)
   }
-  return { cwd, force, model, permissionMode }
+  return { cwd, force, model, permissionMode, withComputerUse }
 }
 
 export function parseMemoryOperationArgs(args: string[]): {

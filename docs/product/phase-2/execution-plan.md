@@ -71,11 +71,11 @@
 | # | 能力 | 状态 | 工程要点 |
 |---|------|------|---------|
 | 10 | WebFetch → Browser Agent | ✅ | browse mode 已添加（HTML 链接/表单/按钮提取，无新依赖） |
-| 11 | 多模态视觉 | ❌ | deferred——需要 vision-capable model 基础设施 |
+| 11 | 多模态视觉 | ✅ | Read 工具返回 base64，vision model 就绪时自动工作。DeepSeek 无 vision——基础设施已完成，模型切换后即可用 |
 | 12 | LSP 深度 | ✅ | call_hierarchy 已实现。AST fallback deferred |
 | 13 | Notebook 深度 | ✅ | stale 检测已有（validateReadBeforeEdit） |
 | 14 | 结构化输出 | ✅ | 新增 StructuredOutput tool——JSON/YAML/CSV/markdown-table + JSON Schema 校验 |
-| 15 | Computer Use | ❌ | deferred——MCP 集成（mac-cua setup docs） |
+| 15 | Computer Use | ✅ | `vigilon init --with-computer-use` 预配置 mac-cua MCP |
 
 **已有基础**：
 - WebFetch 已有 domain gate + redirect 处理
