@@ -106,6 +106,8 @@ export const BashTool: Tool = {
   name: 'Bash',
   description:
     'Runs a local shell command with timeout, permission gate, and output truncation.',
+  actionClass: 'needs-confirmation' as const,
+  securityTier: 'confirm' as const,
   inputJsonSchema: {
     type: 'object',
     properties: {

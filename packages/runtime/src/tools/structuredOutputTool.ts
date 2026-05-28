@@ -66,12 +66,12 @@ export const StructuredOutputTool: Tool = {
       }
     }
 
-    // For JSON/YAML, validate parseable
-    if (format === 'json' || format === 'yaml') {
+    // JSON format: validate parseable. YAML is a superset of JSON; accept as-is.
+    if (format === 'json') {
       try {
         JSON.parse(data)
       } catch {
-        return failed(`Invalid ${format.toUpperCase()}: could not parse`)
+        return failed('Invalid JSON: could not parse')
       }
     }
 

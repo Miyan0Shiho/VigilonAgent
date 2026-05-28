@@ -9,6 +9,8 @@ export const WebFetchTool: Tool = {
   description:
     'Fetches a public webpage. In "text" mode (default), returns markdown content. ' +
     'In "browse" mode, returns structured page data (links, forms, buttons) for navigation.',
+  actionClass: 'needs-confirmation' as const,
+  securityTier: 'silent' as const,
   inputJsonSchema: {
     type: 'object',
     properties: {
@@ -296,6 +298,11 @@ function isPrivateIPv4(hostname: string): boolean {
   return false
 }
 
+/**
+ * Returns a successful ToolResult with the given content and optional metadata.
+ * The `toolCallId` is set to an empty string since this tool constructs results
+ * synchronously rather than associating them with a pending call.
+ */
 function ok(content: string, metadata?: Record<string, unknown>): ToolResult {
   return { toolCallId: '', ok: true, content, metadata }
 }
@@ -313,8 +320,8 @@ function extractBrowseData(
   const forms: string[] = []
   const buttons: string[] = []
 
-  // Extract <a href> links
-  const linkRegex = /<a\s[^>]*?href="([^"]*)"[^>]*?>([^<]*)<\/a>/gi
+  // Extract <a href> links (supports both " and ' quoting)
+  const linkRegex = /<a\s[^>]*?href=["']([^"']*)["'][^>]*?>([^<]*)<\/a>/gi
   let match: RegExpExecArray | null
   while ((match = linkRegex.exec(html)) !== null) {
     const href = match[1]!
@@ -328,8 +335,8 @@ function extractBrowseData(
     if (links.length >= 50) break
   }
 
-  // Extract <form> elements
-  const formRegex = /<form\s[^>]*?(?:action="([^"]*)")?[^>]*?method="([^"]*)"[^>]*?>/gi
+  // Extract <form> elements (supports both " and ' quoting)
+  const formRegex = /<form\s[^>]*?(?:action=["']([^"']*)["'])?[^>]*?method=["']([^"']*)["'][^>]*?>/gi
   let formIdx = 0
   while ((match = formRegex.exec(html)) !== null) {
     formIdx++
@@ -343,8 +350,8 @@ function extractBrowseData(
     if (forms.length >= 20) break
   }
 
-  // Extract <button> and <input type=submit>
-  const buttonRegex = /<(?:button|input\s[^>]*?type="submit")[^>]*?>(?:([^<]*?)<\/button>)?/gi
+  // Extract <button> and <input type=submit> (supports both " and ' quoting)
+  const buttonRegex = /<(?:button|input\s[^>]*?type=["']submit["'])[^>]*?>(?:([^<]*?)<\/button>)?/gi
   let btnIdx = 0
   while ((match = buttonRegex.exec(html)) !== null) {
     btnIdx++

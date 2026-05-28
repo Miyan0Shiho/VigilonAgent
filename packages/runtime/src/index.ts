@@ -10,6 +10,14 @@ export { createDeepSeekModelClient } from './model/deepseek.js'
 export { createFinRouter, createFinModelClient, createFallbackModelClient } from './model/finRouter.js'
 export type { FinDecision } from './model/finRouter.js'
 export {
+  readTaskLedger,
+  writeTaskLedger,
+  addTask,
+  updateTask,
+  listPendingTasks,
+} from './runtime/taskLedger.js'
+export type { ScheduledTask, TaskLedger } from './runtime/taskLedger.js'
+export {
   compactTranscript,
   estimateCompactTokenPressure,
   evaluateAutoCompactTranscript,
@@ -279,6 +287,12 @@ export type {
   TranscriptEvent,
   TranscriptStore,
   WebFetchRuntimeOptions,
+} from './runtime/contracts.js'
+export type {
+  GoalState,
+  GoalStatus,
+  ActionClass,
+  SecurityTier,
 } from './runtime/contracts.js'
 export type {
   LoadedRuntimeSettings,

@@ -822,6 +822,7 @@ export type GoalState = {
   status: GoalStatus
   createdAt: string
   updatedAt: string
+  ledgerTaskId?: string
 }
 
 export type RuntimeSessionState = {

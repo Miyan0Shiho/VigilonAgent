@@ -5,6 +5,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createInterface } from 'node:readline/promises'
 import { createDeepSeekModelClient } from './model/deepseek.js'
+import { createFallbackModelClient } from './model/finRouter.js'
 import { createVigilonAgentRuntime } from './runtime/agentLoop.js'
 import { createPhase1RuntimeBaseline } from './runtime/baseline.js'
 import type {
@@ -2550,8 +2551,22 @@ async function runRuntimeTurn(
       baseUrl: parsed.deepseekBaseUrl ?? env.DEEPSEEK_BASE_URL,
       model: parsed.model ?? env.DEEPSEEK_MODEL,
     })
+
+  // Wire fallback model for resilience against provider outages
+  const fallbackModel = env.DEEPSEEK_FALLBACK_MODEL
+  const effectiveModelClient = fallbackModel
+    ? createFallbackModelClient(
+        modelClient,
+        createDeepSeekModelClient({
+          apiKey: env.DEEPSEEK_API_KEY,
+          baseUrl: parsed.deepseekBaseUrl ?? env.DEEPSEEK_BASE_URL,
+          model: fallbackModel,
+        }),
+      )
+    : modelClient
+
   const runtime = createVigilonAgentRuntime({
-    modelClient,
+    modelClient: effectiveModelClient,
     tools: createCoreToolRegistry({
       skills: parsed.skills.skills,
       mcpTools: parsed.mcp.tools,

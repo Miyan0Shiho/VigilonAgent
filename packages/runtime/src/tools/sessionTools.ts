@@ -10,6 +10,7 @@ import type {
 } from '../runtime/contracts.js'
 import { withToolPermissionOrigin } from '../runtime/permissionOrigins.js'
 import { createTimestamp } from '../runtime/transcript.js'
+import { addTask, updateTask } from '../runtime/taskLedger.js'
 
 type TodoWriteInput = {
   todos?: TodoItem[]
@@ -449,6 +450,15 @@ export const CreateGoalTool: Tool = {
       updatedAt: now,
     }
 
+    // Persist to task ledger for cross-session durability
+    addTask(context.cwd, {
+      goal: objective.trim(),
+      status: 'running',
+      maxTokens: token_budget,
+    }).then(task => {
+      state.goal!.ledgerTaskId = task.id
+    }).catch(() => { /* best-effort, ledger is non-critical */ })
+
     const budgetMsg = token_budget ? ` (budget: ${token_budget.toLocaleString()} tokens)` : ''
     return ok(`Goal created: "${objective}"${budgetMsg}. The agent will continue working until complete or budget exhausted.`)
   },
@@ -507,6 +517,13 @@ export const UpdateGoalTool: Tool = {
     }
     goal.status = 'complete'
     goal.updatedAt = new Date().toISOString()
+
+    // Update task ledger
+    if (goal.ledgerTaskId) {
+      updateTask(context.cwd, goal.ledgerTaskId, { status: 'done' })
+        .catch(() => { /* best-effort */ })
+    }
+
     return ok(`Goal complete: "${goal.objective}" (${goal.tokensUsed.toLocaleString()} tokens used)`)
   },
 }

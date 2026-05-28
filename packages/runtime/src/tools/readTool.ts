@@ -38,6 +38,8 @@ export const ReadTool: Tool = {
   description:
     'Reads a local text file and returns cat -n style line-numbered content. Respects project ignore patterns. If the same unchanged file range was already read, returns a file_unchanged stub telling the model to use the earlier Read result.',
   readOnly: true,
+  actionClass: 'reversible' as const,
+  securityTier: 'silent' as const,
   inputJsonSchema: {
     type: 'object',
     properties: {
