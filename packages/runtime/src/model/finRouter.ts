@@ -122,21 +122,23 @@ export function createFallbackModelClient(
         return await primary.createMessage(request)
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
-        // Only fall back on transport/availability errors, not on
-        // content-filter or other logical refusals from the provider.
+        // Only fall back on transport/availability errors.
+        // Node.js fetch throws TypeError for network failures; provider
+        // errors may include HTTP status codes in the response body text.
+        const code = (err as any)?.cause?.code as string | undefined
         const isTransport =
-          msg.includes('fetch') ||
+          msg.includes('fetch failed') ||
           msg.includes('network') ||
           msg.includes('timeout') ||
           msg.includes('ECONNREFUSED') ||
           msg.includes('ETIMEDOUT') ||
           msg.includes('ENOTFOUND') ||
-          msg.includes('rate_limit') ||
-          msg.includes('overload') ||
-          msg.includes('503') ||
-          msg.includes('502') ||
-          msg.includes('504') ||
-          msg.includes('429')
+          msg.includes('EAI_AGAIN') ||
+          msg.includes('UND_ERR_') ||
+          code === 'ECONNREFUSED' ||
+          code === 'ETIMEDOUT' ||
+          code === 'ENOTFOUND' ||
+          code === 'UND_ERR_CONNECT_TIMEOUT'
         if (!isTransport) throw err
         return fallback.createMessage(request)
       }

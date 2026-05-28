@@ -644,7 +644,16 @@ export function createVigilonAgentRuntime(
         // Mirrors Claude Code StreamingToolExecutor partition model.
         const partitions = partitionToolCalls(response.toolCalls, tools)
 
+        // Shared event queue for real-time subagent lifecycle streaming.
+        // executeToolCall pushes events here; the main loop drains and yields them.
+        const liveEvents: AgentRuntimeEvent[] = []
+        const onEvent = (event: AgentRuntimeEvent) => { liveEvents.push(event) }
+
         for (const partition of partitions) {
+          // Drain any live events before executing the partition
+          while (liveEvents.length > 0) {
+            yield liveEvents.shift()!
+          }
           const isParallel = partition.length > 1
 
           if (isParallel) {
@@ -662,11 +671,15 @@ export function createVigilonAgentRuntime(
                   transcript,
                   input,
                   harnessCommand: options.harnessCommand,
+                  onEvent,
                 }),
               ),
             )
 
             for (const genResult of results) {
+              while (liveEvents.length > 0) {
+                yield liveEvents.shift()!
+              }
               for (const event of genResult.events) {
                 yield event
               }
@@ -685,8 +698,12 @@ export function createVigilonAgentRuntime(
               transcript,
               input,
               harnessCommand: options.harnessCommand,
+              onEvent,
             })
 
+            while (liveEvents.length > 0) {
+              yield liveEvents.shift()!
+            }
             for (const event of genResult.events) {
               yield event
             }
@@ -1001,6 +1018,8 @@ type ToolExecutionContext = {
   transcript: TranscriptStore
   input: AgentRuntimeTurnInput
   harnessCommand?: string
+  /** Yield events in real-time (subagent lifecycle, etc.) instead of buffering. */
+  onEvent?: (event: AgentRuntimeEvent) => void
 }
 
 /**
@@ -1134,11 +1153,15 @@ async function executeToolCall(
     while (!toolSettled) {
       const lifecycleEvent = await lifecycleQueue.next()
       if (lifecycleEvent) {
-        events.push({ type: 'subagent-lifecycle', event: lifecycleEvent })
+        const ev = { type: 'subagent-lifecycle' as const, event: lifecycleEvent }
+        if (ctx.onEvent) ctx.onEvent(ev)
+        else events.push(ev)
       }
     }
     for (const lifecycleEvent of lifecycleQueue.drain()) {
-      events.push({ type: 'subagent-lifecycle', event: lifecycleEvent })
+      const ev = { type: 'subagent-lifecycle' as const, event: lifecycleEvent }
+      if (ctx.onEvent) ctx.onEvent(ev)
+      else events.push(ev)
     }
     result = await toolPromise
   } else {
@@ -1152,8 +1175,7 @@ async function executeToolCall(
     // Harness: run post-mutation validation command
     if (ctx.harnessCommand && MUTATING_TOOLS.has(call.name)) {
       try {
-        const { execFile } = await import('node:child_process')
-        const { stderr, stdout } = await new Promise<{ stdout: string; stderr: string }>(
+        const { stdout, stderr } = await new Promise<{ stdout: string; stderr: string }>(
           (resolve, reject) => {
             execFile('sh', ['-c', ctx.harnessCommand!], {
               cwd: input.cwd,

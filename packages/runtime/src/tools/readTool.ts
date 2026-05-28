@@ -155,22 +155,25 @@ export const ReadTool: Tool = {
     }
 
     const buffer = await readFile(filePath)
+
+    // Multi-modal: detect images and PDFs before binary check.
+    // PDFs start with %PDF- (ASCII) and won't be caught by isProbablyBinary.
+    if (isImageFile(filePath) || isPdfFile(filePath)) {
+      const mime = isImageFile(filePath)
+        ? `image/${filePath.split('.').pop()?.replace('jpg', 'jpeg') ?? 'png'}`
+        : 'application/pdf'
+      return ok(
+        `[${mime} file: ${filePath.split('/').pop()!}] - base64 encoded for vision models`,
+        {
+          filePath,
+          type: 'image',
+          mimeType: mime,
+          base64: buffer.toString('base64'),
+        },
+      )
+    }
+
     if (isProbablyBinary(buffer)) {
-      // Multi-modal: return images and PDFs as base64 for vision-capable models
-      if (isImageFile(filePath) || isPdfFile(filePath)) {
-        const mime = isImageFile(filePath)
-          ? `image/${filePath.split('.').pop()?.replace('jpg', 'jpeg') ?? 'png'}`
-          : 'application/pdf'
-        return ok(
-          `[${mime} file: ${filePath.split('/').pop()!}] - base64 encoded for vision models`,
-          {
-            filePath,
-            type: 'image',
-            mimeType: mime,
-            base64: buffer.toString('base64'),
-          },
-        )
-      }
       return failed('This tool cannot read binary files.')
     }
 

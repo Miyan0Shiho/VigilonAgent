@@ -102,7 +102,11 @@ function validateJsonSchema(
 ): string[] {
   const errors: string[] = []
 
-  if (schema.type === 'object' && typeof instance === 'object' && instance !== null) {
+  if (schema.type === 'object') {
+    if (typeof instance !== 'object' || instance === null) {
+      errors.push(`${path}: expected object, got ${instance === null ? 'null' : typeof instance}`)
+      return errors
+    }
     const required = (schema.required as string[] | undefined) ?? []
     const props = (schema.properties as Record<string, Record<string, unknown>> | undefined) ?? {}
 
@@ -117,7 +121,11 @@ function validateJsonSchema(
         errors.push(...validateJsonSchema(value, propSchema, `${path}.${key}`))
       }
     }
-  } else if (schema.type === 'array' && Array.isArray(instance)) {
+  } else if (schema.type === 'array') {
+    if (!Array.isArray(instance)) {
+      errors.push(`${path}: expected array, got ${typeof instance}`)
+      return errors
+    }
     const itemSchema = (schema.items as Record<string, unknown> | undefined) ?? {}
     for (let i = 0; i < instance.length; i++) {
       errors.push(...validateJsonSchema(instance[i], itemSchema, `${path}[${i}]`))
