@@ -5,6 +5,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createInterface } from 'node:readline/promises'
 import { createDeepSeekModelClient } from './model/deepseek.js'
+import { createFallbackModelClient } from './model/finRouter.js'
 import { createVigilonAgentRuntime } from './runtime/agentLoop.js'
 import { createPhase1RuntimeBaseline } from './runtime/baseline.js'
 import type {
@@ -269,13 +270,13 @@ Usage:
   vigilon memory <status|view|write|edit|delete|refresh|validate> <session-id> [--content <markdown>] [--background] [--refresh] [--cwd <path>] [--sessions-dir <path>]
   vigilon memory refresh <session-id> [--background] [--cwd <path>] [--sessions-dir <path>]
   vigilon memory validate <session-id> [--refresh] [--model <name>] [--deepseek-base-url <url>] [--cwd <path>] [--sessions-dir <path>]
-  vigilon memory promote <session-id> --type <user|feedback|project|reference> --topic <name> --content <markdown> [--cwd <path>] [--sessions-dir <path>]
+  vigilon memory promote <session-id> --type <user|project|organization|agent|tool|feedback|reference> --topic <name> --content <markdown> [--cwd <path>] [--sessions-dir <path>]
   vigilon compact <session-id> [--summary <markdown>] [--validate-memory] [--reactive-events <n>] [--context-window <n>|--token-budget <n>] [--output-reserve <n>] [--system-reserve <n>] [--tool-schema-reserve <n>] [--safety-margin <n>] [--pressure-threshold <ratio>] [--cwd <path>] [--sessions-dir <path>]
   vigilon run <prompt...> [--cwd <path>] [--sessions-dir <path>] [--permission-mode <mode>] [--model <name>] [--deepseek-base-url <url>] [--max-turns <n>]
   vigilon resume <session-id> <prompt...> [--approve-plan] [--cwd <path>] [--sessions-dir <path>] [--permission-mode <mode>] [--model <name>] [--deepseek-base-url <url>] [--max-turns <n>]
 
 Permission modes: read-only, ask, accept-edits, bypass-local
-Interactive workbench: plain text starts a new task; /resume, /approve, /open, /doctor, /refresh, /quit manage sessions.
+Interactive workbench: plain text starts a new task; /resume, /approve, /open, /doctor, /refresh (reload skills), /quit manage sessions.
 Plan approval: resume <session-id> --approve-plan "continue..." promotes a pending plan from transcript state before running the next turn.
 Settings files: ~/.vigilon/settings.json, <cwd>/.vigilon/settings.json, <cwd>/.vigilon/settings.local.json
 Project instructions: AGENTS.md, VIGILON.md, <cwd>/.vigilon/instructions.md
@@ -328,6 +329,17 @@ async function initProject(
       ],
       defaultCommands,
     },
+    // Computer Use (macOS desktop automation via mac-cua)
+    ...(parsed.withComputerUse
+      ? {
+          mcpServers: {
+            'mac-cua': {
+              command: 'uvx',
+              args: ['mac-cua'],
+            },
+          },
+        }
+      : {}),
   }
   const settingsWrite = await writeTextFileIfAllowed(
     settingsPath,
@@ -434,12 +446,27 @@ async function printSessions(
     parseOptions(args, { requirePrompt: false }),
     env,
   )
-  writeJson(output, {
-    sessions: await listSessions({
+  const sessions = await listSessions({
       cwd: parsed.cwd,
       sessionsDir: parsed.sessionsDir,
-    }),
-  })
+    })
+
+  if (sessions.length === 0) {
+    output.write('No sessions found.\n')
+    return
+  }
+
+  output.write(`${sessions.length} session(s):\n\n`)
+  for (const s of sessions) {
+    const id = s.sessionId.slice(0, 12)
+    const title = s.title ?? s.firstUserMessage?.slice(0, 80) ?? '(no title)'
+    const date = s.updatedAt?.slice(0, 16)?.replace('T', ' ') ?? 'unknown'
+    const marker = s.status === 'completed' ? '✓' : '○'
+    output.write(
+      `  ${marker} ${id}  ${date}  ${title.length > 60 ? title.slice(0, 57) + '...' : title}\n`,
+    )
+  }
+  output.write('\nUse /resume <id> to continue a session.\n')
 }
 
 async function printAgents(
@@ -1868,7 +1895,7 @@ async function runWorkbench(
     throw new Error('tui requires an interactive stdin surface')
   }
 
-  const parsed = await resolveOptions(
+  let parsed = await resolveOptions(
     parseOptions(args, { requirePrompt: false }),
     io.env,
   )
@@ -1890,7 +1917,18 @@ async function runWorkbench(
       }
       if (!raw) continue
       if (raw === '/quit' || raw === 'quit' || raw === 'exit') return
-      if (raw === '/refresh') continue
+      if (raw === '/refresh' || raw === '/reload') {
+        try {
+          parsed = await resolveOptions(
+            parseOptions(args, { requirePrompt: false }),
+            io.env,
+          )
+          io.stdout.write(`Skills reloaded (${parsed.skills.skills.length} skills)\n`)
+        } catch (err) {
+          io.stdout.write(`Reload failed: ${err instanceof Error ? err.message : String(err)}\n`)
+        }
+        continue
+      }
       if (raw === '/doctor') {
         renderDoctor(io.stdout, parsed, io.env)
         continue
@@ -1996,7 +2034,7 @@ function renderWorkbench(
     '  /resume <index|session-id> ...    continue an existing session',
     '  /approve <index|session-id> ...   approve pending plan and continue',
     '  /open <index|session-id>          inspect transcript preview',
-    '  /doctor | /refresh | /quit',
+    '  /doctor | /refresh (reload skills) | /quit',
   ]
   output.write(
     `\n${renderPanel('Vigilon Operator Workbench', body, 'ready')}\n`,
@@ -2510,8 +2548,22 @@ async function runRuntimeTurn(
       baseUrl: parsed.deepseekBaseUrl ?? env.DEEPSEEK_BASE_URL,
       model: parsed.model ?? env.DEEPSEEK_MODEL,
     })
+
+  // Wire fallback model for resilience against provider outages
+  const fallbackModel = env.DEEPSEEK_FALLBACK_MODEL
+  const effectiveModelClient = fallbackModel
+    ? createFallbackModelClient(
+        modelClient,
+        createDeepSeekModelClient({
+          apiKey: env.DEEPSEEK_API_KEY,
+          baseUrl: parsed.deepseekBaseUrl ?? env.DEEPSEEK_BASE_URL,
+          model: fallbackModel,
+        }),
+      )
+    : modelClient
+
   const runtime = createVigilonAgentRuntime({
-    modelClient,
+    modelClient: effectiveModelClient,
     tools: createCoreToolRegistry({
       skills: parsed.skills.skills,
       mcpTools: parsed.mcp.tools,
@@ -2532,6 +2584,7 @@ async function runRuntimeTurn(
         stderr: io.stderr,
       }),
     maxTurns: parsed.maxTurns,
+    effort: parsed.effort,
     resume,
     operatorGuidance: buildCliOperatorGuidance(parsed),
     stopAfterResultReport: true,

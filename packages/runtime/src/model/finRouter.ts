@@ -100,3 +100,48 @@ export function createFinModelClient(
     },
   } satisfies ModelClient
 }
+
+/**
+ * Wraps a ModelClient with a fallback. When the primary client's createMessage
+ * throws, the wrapper retries once with the fallback client.
+ *
+ * Mirrors Claude Code's --fallback-model for resilience against provider
+ * outages, rate limits, and transient network errors.
+ */
+export function createFallbackModelClient(
+  primary: ModelClient,
+  fallback: ModelClient,
+): ModelClient {
+  return {
+    get id() {
+      return primary.id
+    },
+    countInputTokens: primary.countInputTokens,
+    async createMessage(request: ModelRequest): Promise<ModelResponse> {
+      try {
+        return await primary.createMessage(request)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        // Only fall back on transport/availability errors.
+        // Node.js fetch throws TypeError for network failures; provider
+        // errors may include HTTP status codes in the response body text.
+        const code = (err as any)?.cause?.code as string | undefined
+        const isTransport =
+          msg.includes('fetch failed') ||
+          msg.includes('network') ||
+          msg.includes('timeout') ||
+          msg.includes('ECONNREFUSED') ||
+          msg.includes('ETIMEDOUT') ||
+          msg.includes('ENOTFOUND') ||
+          msg.includes('EAI_AGAIN') ||
+          msg.includes('UND_ERR_') ||
+          code === 'ECONNREFUSED' ||
+          code === 'ETIMEDOUT' ||
+          code === 'ENOTFOUND' ||
+          code === 'UND_ERR_CONNECT_TIMEOUT'
+        if (!isTransport) throw err
+        return fallback.createMessage(request)
+      }
+    },
+  } satisfies ModelClient
+}

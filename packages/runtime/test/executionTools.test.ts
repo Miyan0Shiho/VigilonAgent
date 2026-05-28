@@ -53,6 +53,11 @@ describe('execution tools', () => {
       'RunTests',
       'Note',
       'Snapshot',
+      'StructuredOutput',
+      'create_goal',
+      'get_goal',
+      'update_goal',
+      'self_verify',
     ])
   })
 

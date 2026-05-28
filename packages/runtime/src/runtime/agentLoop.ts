@@ -194,6 +194,10 @@ export type VigilonAgentRuntimeOptions = {
   autoCompactTokenBudget?: number
   autoCompactPressureThreshold?: number
   forkRequestCacheSnapshot?: RequestCacheSnapshot
+  /** Shell command to run after mutating tools. */
+  harnessCommand?: string
+  /** Override reasoning depth. 'high' forces thinking=high on every model request. */
+  effort?: 'low' | 'medium' | 'high'
 }
 
 export function createVigilonAgentRuntime(
@@ -203,6 +207,11 @@ export function createVigilonAgentRuntime(
   const transcript = options.transcript ?? new InMemoryTranscriptStore()
   const lspServerManager = options.lspServerManager ?? createLSPServerManager()
   const taskManager = options.taskManager ?? createTaskManager()
+
+  // Mutable skills container for /reload-skills support
+  const skillsRef: { current: readonly RuntimeSkill[] } = {
+    current: options.skills ?? [],
+  }
   
   // Initialize LSP manager if it hasn't been initialized
   if (lspServerManager.getAllServers().size === 0) {
@@ -243,13 +252,16 @@ export function createVigilonAgentRuntime(
     bashLimits: options.bashLimits,
     projectConfig: options.projectConfig,
     operator: options.operator,
-    skills: options.skills,
+    skills: skillsRef.current,
     toolResultReplacementLimit: options.toolResultReplacementLimit,
     taskManager,
     sessionState,
   })
 
   return {
+    reloadSkills(skills: readonly RuntimeSkill[]) {
+      skillsRef.current = skills
+    },
     async *runTurn(
       input: AgentRuntimeTurnInput,
     ): AsyncIterable<AgentRuntimeEvent> {
@@ -282,7 +294,7 @@ export function createVigilonAgentRuntime(
           cwd: input.cwd,
           permissionMode: options.permissionMode,
           projectConfig: turnProjectConfig,
-          skills: options.skills,
+          skills: skillsRef.current,
           projectInstructions: options.operatorGuidance,
         })
 
@@ -358,7 +370,7 @@ export function createVigilonAgentRuntime(
               maxTurns,
               turns,
             ),
-            options.skills ?? [],
+            skillsRef.current,
           )
           const preflightVisibleEvents = filterModelVisibleEvents(
             buildForkedRequestEvents({
@@ -458,7 +470,7 @@ export function createVigilonAgentRuntime(
             maxTurns,
             turns,
           ),
-          options.skills ?? [],
+          skillsRef.current,
         )
         const visibleEvents = filterModelVisibleEvents(
           buildForkedRequestEvents({
@@ -495,7 +507,7 @@ export function createVigilonAgentRuntime(
             memoryFreshness: sessionState.memoryFreshness,
           },
           projectConfig: turnProjectConfig,
-          skills: options.skills,
+          skills: skillsRef.current,
           cachePrefixSource: options.forkRequestCacheSnapshot
             ? 'fork-shared-prefix'
             : 'request',
@@ -525,6 +537,7 @@ export function createVigilonAgentRuntime(
           cachePrefix: requestAuditEvent.cachePrefix ?? undefined,
           abortSignal: input.abortSignal,
           systemPrompt,
+          ...(options.effort === 'high' ? { thinking: 'high' as const } : {}),
         })
         const responseAuditEvent = buildLlmResponseEvent({
           request: requestAuditEvent,
@@ -550,6 +563,7 @@ export function createVigilonAgentRuntime(
         })
         if (requestStabilityEvent) {
           await transcript.append(requestStabilityEvent)
+          yield { type: 'cache-stability-change', event: requestStabilityEvent }
         }
 
         stopReason = response.stopReason
@@ -570,7 +584,32 @@ export function createVigilonAgentRuntime(
         }
         yield { type: 'model-response-received', response }
 
+        // Track goal token usage
+        if (sessionState.goal?.status === 'active' && response.usage) {
+          sessionState.goal.tokensUsed +=
+            (response.usage.inputTokens ?? 0) + (response.usage.outputTokens ?? 0)
+          sessionState.goal.updatedAt = createTimestamp()
+          if (
+            sessionState.goal.tokenBudget != null &&
+            sessionState.goal.tokensUsed >= sessionState.goal.tokenBudget
+          ) {
+            sessionState.goal.status = 'budget_limited'
+          }
+        }
+
         if (response.toolCalls.length === 0) {
+          // Goal continuation: if goal is active and model stopped naturally,
+          // inject a minimal continuation prompt to keep it going.
+          const goal = sessionState.goal
+          if (goal?.status === 'active') {
+            await transcript.append({
+              type: 'user',
+              content:
+                'Continue working toward the goal. If complete, call update_goal with status complete.',
+              timestamp: createTimestamp(),
+            })
+            continue
+          }
           break
         }
 
@@ -600,183 +639,76 @@ export function createVigilonAgentRuntime(
           tools,
         }
 
-        for (const call of response.toolCalls) {
-          await transcript.append({
-            type: 'tool-call',
-            call,
-            timestamp: createTimestamp(),
-          })
-          yield { type: 'tool-started', call }
+        // Partition tool calls: read-only tools can run in parallel within a
+        // partition; write/destructive tools each get their own serial partition.
+        // Mirrors Claude Code StreamingToolExecutor partition model.
+        const partitions = partitionToolCalls(response.toolCalls, tools)
 
-          const tool = tools.find(call.name)
-          if (!visibleToolNames.has(call.name)) {
-            if (tool?.deferred) {
-              const result = createFailedToolResult(
-                call.id,
-                [
-                  `Deferred tool schema was not sent for ${tool.name}.`,
-                  'Call ToolSearch first to materialize this tool schema, then retry the tool call.',
-                ].join('\n'),
-              )
-              await transcript.append({
-                type: 'tool-result',
-                result,
-                timestamp: createTimestamp(),
-              })
-              yield { type: 'tool-finished', result }
-              continue
-            }
-            const result = createFailedToolResult(
-              call.id,
-              [
-                `Tool ${call.name} is not available in the current model request.`,
-                `Available tools: ${[...visibleToolNames].join(', ') || '(none)'}`,
-              ].join('\n'),
-            )
-            await transcript.append({
-              type: 'tool-result',
-              result,
-              timestamp: createTimestamp(),
-            })
-            yield { type: 'tool-finished', result }
-            continue
+        // Shared event queue for real-time subagent lifecycle streaming.
+        // executeToolCall pushes events here; the main loop drains and yields them.
+        const liveEvents: AgentRuntimeEvent[] = []
+        const onEvent = (event: AgentRuntimeEvent) => { liveEvents.push(event) }
+
+        for (const partition of partitions) {
+          // Drain any live events before executing the partition
+          while (liveEvents.length > 0) {
+            yield liveEvents.shift()!
           }
-          if (
-            tool &&
-            sessionState.activeSkill &&
-            !sessionState.activeSkill.allowedTools.includes(tool.name)
-          ) {
-            const result = createFailedToolResult(
-              call.id,
-              [
-                `Tool ${tool.name} is blocked by active skill ${sessionState.activeSkill.name}.`,
-                `Allowed tools: ${sessionState.activeSkill.allowedTools.join(', ') || '(none)'}`,
-              ].join('\n'),
-            )
-            await transcript.append({
-              type: 'tool-result',
-              result,
-              timestamp: createTimestamp(),
-            })
-            yield { type: 'tool-finished', result }
-            continue
-          }
-          if (tool?.deferred && !sessionState.discoveredToolNames.includes(tool.name)) {
-            const result = createFailedToolResult(
-              call.id,
-              [
-                `Deferred tool schema was not sent for ${tool.name}.`,
-                'Call ToolSearch first to materialize this tool schema, then retry the tool call.',
-              ].join('\n'),
-            )
-            await transcript.append({
-              type: 'tool-result',
-              result,
-              timestamp: createTimestamp(),
-            })
-            yield { type: 'tool-finished', result }
-            continue
-          }
-          const hookDecision =
-            tool && options.preToolUseHooks?.length
-              ? await runPreToolUseHooks({
-                  hooks: options.preToolUseHooks,
-                  toolCall: call,
-                  cwd: input.cwd,
+          const isParallel = partition.length > 1
+
+          if (isParallel) {
+            // Parallel execution for read-only tools within the same partition.
+            // Each tool's transcript writes and yields are independent.
+            const results = await Promise.all(
+              partition.map(call =>
+                executeToolCall(call, {
+                  tools,
+                  visibleToolNames,
+                  sessionState,
+                  context,
+                  options,
+                  searchCount,
                   transcript,
-                })
-              : { outcome: 'allow' as const, reason: 'No PreToolUse hook configured' }
-          let result: ToolResult
-          if (hookDecision.outcome === 'block') {
-            result = createFailedToolResult(
-              call.id,
-              `PreToolUse hook blocked ${call.name}: ${hookDecision.reason}`,
+                  input,
+                  harnessCommand: options.harnessCommand,
+                  onEvent,
+                }),
+              ),
             )
-          } else if (tool) {
-            const lifecycleQueue = new AsyncEventQueue<SubagentLifecycleEvent>()
-            const toolContext: ToolUseContext = {
-              ...context,
-              subagentLifecycle: {
-                emit(event) {
-                  lifecycleQueue.push(event)
-                },
-              },
-            }
-            const toolPromise = invokeTool(tool.invoke(call.input, toolContext), call.id)
 
-            // Auto-save git snapshot before mutating tools
-            if (MUTATING_TOOLS.has(call.name)) {
-              saveAutoSnapshot(input.cwd).catch(() => {})
-            }
-            let toolSettled = false
-            void toolPromise.then(
-              () => {
-                toolSettled = true
-                lifecycleQueue.close()
-              },
-              () => {
-                toolSettled = true
-                lifecycleQueue.close()
-              },
-            )
-            while (!toolSettled) {
-              const lifecycleEvent = await lifecycleQueue.next()
-              if (lifecycleEvent) {
-                yield { type: 'subagent-lifecycle', event: lifecycleEvent }
+            for (const genResult of results) {
+              while (liveEvents.length > 0) {
+                yield liveEvents.shift()!
               }
+              for (const event of genResult.events) {
+                yield event
+              }
+              // Apply post-execution side effects in order (discoveredTools etc.)
+              applyToolSideEffects(genResult, sessionState, tools)
             }
-            for (const lifecycleEvent of lifecycleQueue.drain()) {
-              yield { type: 'subagent-lifecycle', event: lifecycleEvent }
-            }
-            result = await toolPromise
           } else {
-            result = createFailedToolResult(call.id, `Unknown tool: ${call.name}`)
-          }
+            const call = partition[0]
+            const genResult = await executeToolCall(call, {
+              tools,
+              visibleToolNames,
+              sessionState,
+              context,
+              options,
+              searchCount,
+              transcript,
+              input,
+              harnessCommand: options.harnessCommand,
+              onEvent,
+            })
 
-          if (result.ok) {
-            if (call.name === 'Grep') searchCount.grep += 1
-            if (call.name === 'Glob') searchCount.glob += 1
-          }
-
-          await transcript.append({
-            type: 'tool-result',
-            result,
-            timestamp: createTimestamp(),
-          })
-
-          if (result.metadata?.discoveredTools && Array.isArray(result.metadata.discoveredTools)) {
-            for (const name of result.metadata.discoveredTools) {
-              if (typeof name === 'string' && !sessionState.discoveredToolNames.includes(name)) {
-                sessionState.discoveredToolNames.push(name)
-                const discoveredTool = tools.find(name)
-                if (discoveredTool) {
-                  sessionState.toolReferenceDeltas.push({
-                    name,
-                    reason: `ToolSearch materialized ${name}`,
-                    schemaHash: hashToolSchema(discoveredTool),
-                    discoveredAt: createTimestamp(),
-                  })
-                }
-              }
+            while (liveEvents.length > 0) {
+              yield liveEvents.shift()!
             }
-          }
-          if (result.metadata?.toolReferenceDeltas && Array.isArray(result.metadata.toolReferenceDeltas)) {
-            for (const delta of result.metadata.toolReferenceDeltas) {
-              if (isToolReferenceDelta(delta)) {
-                const alreadyTracked = sessionState.toolReferenceDeltas.some(
-                  existing =>
-                    existing.name === delta.name &&
-                    existing.schemaHash === delta.schemaHash,
-                )
-                if (!alreadyTracked) sessionState.toolReferenceDeltas.push(delta)
-              }
+            for (const event of genResult.events) {
+              yield event
             }
+            applyToolSideEffects(genResult, sessionState, tools)
           }
-          if (result.metadata?.activeSkill && isActiveSkillRuntimeState(result.metadata.activeSkill)) {
-            sessionState.activeSkill = result.metadata.activeSkill
-          }
-
-          yield { type: 'tool-finished', result }
         }
 
         if (
@@ -1056,4 +988,260 @@ export function syncPermissionModeFromSession(
 
 function isFileChangeType(value: unknown): value is 'create' | 'update' {
   return value === 'create' || value === 'update'
+}
+
+// ---------------------------------------------------------------------------
+// Tool composition: partition-based parallel execution
+// ---------------------------------------------------------------------------
+
+type ToolCall = {
+  name: string
+  id: string
+  input: unknown
+}
+
+type ToolExecutionResult = {
+  call: ToolCall
+  result: ToolResult
+  events: AgentRuntimeEvent[]
+}
+
+type ToolExecutionContext = {
+  tools: ToolRegistry
+  visibleToolNames: Set<string>
+  sessionState: RuntimeSessionState
+  context: ToolUseContext
+  options: {
+    preToolUseHooks?: readonly PreToolUseHook[]
+  }
+  searchCount: { grep: number; glob: number }
+  transcript: TranscriptStore
+  input: AgentRuntimeTurnInput
+  harnessCommand?: string
+  /** Yield events in real-time (subagent lifecycle, etc.) instead of buffering. */
+  onEvent?: (event: AgentRuntimeEvent) => void
+}
+
+/**
+ * Partition tool calls following Claude Code's StreamingToolExecutor model:
+ * - Read-only tools form a single parallel partition
+ * - Each write/destructive tool gets its own serial partition
+ * - Partitions execute in order; within a partition, tools run concurrently
+ */
+function partitionToolCalls(
+  calls: readonly ToolCall[],
+  tools: ToolRegistry,
+): ToolCall[][] {
+  const partitions: ToolCall[][] = []
+  let current: ToolCall[] = []
+
+  for (const call of calls) {
+    const tool = tools.find(call.name)
+    const isReadOnly = tool?.readOnly === true
+
+    if (isReadOnly) {
+      current.push(call)
+    } else {
+      if (current.length > 0) {
+        partitions.push(current)
+        current = []
+      }
+      partitions.push([call])
+    }
+  }
+
+  if (current.length > 0) partitions.push(current)
+  return partitions
+}
+
+async function executeToolCall(
+  call: ToolCall,
+  ctx: ToolExecutionContext,
+): Promise<ToolExecutionResult> {
+  const events: AgentRuntimeEvent[] = []
+  const { tools, visibleToolNames, sessionState, context, options, searchCount, transcript, input } = ctx
+
+  await transcript.append({
+    type: 'tool-call',
+    call,
+    timestamp: createTimestamp(),
+  })
+  events.push({ type: 'tool-started', call })
+
+  const tool = tools.find(call.name)
+
+  // -- Gate: tool not visible (deferred or unknown) --
+  if (!visibleToolNames.has(call.name)) {
+    const reason = tool?.deferred
+      ? [
+          `Deferred tool schema was not sent for ${tool.name}.`,
+          'Call ToolSearch first to materialize this tool schema, then retry the tool call.',
+        ].join('\n')
+      : [
+          `Tool ${call.name} is not available in the current model request.`,
+          `Available tools: ${[...visibleToolNames].join(', ') || '(none)'}`,
+        ].join('\n')
+    const result = createFailedToolResult(call.id, reason)
+    await transcript.append({ type: 'tool-result', result, timestamp: createTimestamp() })
+    events.push({ type: 'tool-finished', result })
+    return { call, result, events }
+  }
+
+  // -- Gate: blocked by active skill --
+  if (tool && sessionState.activeSkill && !sessionState.activeSkill.allowedTools.includes(tool.name)) {
+    const result = createFailedToolResult(
+      call.id,
+      [
+        `Tool ${tool.name} is blocked by active skill ${sessionState.activeSkill.name}.`,
+        `Allowed tools: ${sessionState.activeSkill.allowedTools.join(', ') || '(none)'}`,
+      ].join('\n'),
+    )
+    await transcript.append({ type: 'tool-result', result, timestamp: createTimestamp() })
+    events.push({ type: 'tool-finished', result })
+    return { call, result, events }
+  }
+
+  // -- Gate: deferred tool not yet discovered --
+  if (tool?.deferred && !sessionState.discoveredToolNames.includes(tool.name)) {
+    const result = createFailedToolResult(
+      call.id,
+      [
+        `Deferred tool schema was not sent for ${tool.name}.`,
+        'Call ToolSearch first to materialize this tool schema, then retry the tool call.',
+      ].join('\n'),
+    )
+    await transcript.append({ type: 'tool-result', result, timestamp: createTimestamp() })
+    events.push({ type: 'tool-finished', result })
+    return { call, result, events }
+  }
+
+  // -- PreToolUse hook --
+  const hookDecision =
+    tool && options.preToolUseHooks?.length
+      ? await runPreToolUseHooks({
+          hooks: options.preToolUseHooks,
+          toolCall: call,
+          cwd: input.cwd,
+          transcript,
+        })
+      : { outcome: 'allow' as const, reason: 'No PreToolUse hook configured' }
+
+  let result: ToolResult
+  if (hookDecision.outcome === 'block') {
+    result = createFailedToolResult(call.id, `PreToolUse hook blocked ${call.name}: ${hookDecision.reason}`)
+  } else if (tool) {
+    // -- Execute tool --
+    const lifecycleQueue = new AsyncEventQueue<SubagentLifecycleEvent>()
+    const toolContext: ToolUseContext = {
+      ...context,
+      subagentLifecycle: {
+        emit(event) {
+          lifecycleQueue.push(event)
+        },
+      },
+    }
+    const toolPromise = invokeTool(tool.invoke(call.input, toolContext), call.id)
+
+    if (MUTATING_TOOLS.has(call.name)) {
+      saveAutoSnapshot(input.cwd).catch(() => {})
+    }
+    let toolSettled = false
+    void toolPromise.then(
+      () => { toolSettled = true; lifecycleQueue.close() },
+      () => { toolSettled = true; lifecycleQueue.close() },
+    )
+    while (!toolSettled) {
+      const lifecycleEvent = await lifecycleQueue.next()
+      if (lifecycleEvent) {
+        const ev = { type: 'subagent-lifecycle' as const, event: lifecycleEvent }
+        if (ctx.onEvent) ctx.onEvent(ev)
+        else events.push(ev)
+      }
+    }
+    for (const lifecycleEvent of lifecycleQueue.drain()) {
+      const ev = { type: 'subagent-lifecycle' as const, event: lifecycleEvent }
+      if (ctx.onEvent) ctx.onEvent(ev)
+      else events.push(ev)
+    }
+    result = await toolPromise
+  } else {
+    result = createFailedToolResult(call.id, `Unknown tool: ${call.name}`)
+  }
+
+  if (result.ok) {
+    if (call.name === 'Grep') searchCount.grep += 1
+    if (call.name === 'Glob') searchCount.glob += 1
+
+    // Harness: run post-mutation validation command
+    if (ctx.harnessCommand && MUTATING_TOOLS.has(call.name)) {
+      try {
+        const { stdout, stderr } = await new Promise<{ stdout: string; stderr: string }>(
+          (resolve, reject) => {
+            execFile('sh', ['-c', ctx.harnessCommand!], {
+              cwd: input.cwd,
+              timeout: 30_000,
+              env: { ...process.env },
+            }, (err, stdout, stderr) => {
+              if (err && err.killed) reject(new Error('Harness command timed out'))
+              else resolve({ stdout, stderr })
+            })
+          },
+        )
+        if (stderr.trim() || stdout.trim()) {
+          result = {
+            ...result,
+            content: result.content + '\n\n[harness] ' + ctx.harnessCommand + '\n' +
+              (stderr.trim() || stdout.trim()),
+          }
+        }
+      } catch {
+        // Harness failure is non-blocking — it's feedback, not a gate
+      }
+    }
+  }
+
+  await transcript.append({ type: 'tool-result', result, timestamp: createTimestamp() })
+  events.push({ type: 'tool-finished', result })
+
+  return { call, result, events }
+}
+
+function applyToolSideEffects(
+  execResult: ToolExecutionResult,
+  sessionState: RuntimeSessionState,
+  tools: ToolRegistry,
+): void {
+  const { result } = execResult
+
+  if (result.metadata?.discoveredTools && Array.isArray(result.metadata.discoveredTools)) {
+    for (const name of result.metadata.discoveredTools) {
+      if (typeof name === 'string' && !sessionState.discoveredToolNames.includes(name)) {
+        sessionState.discoveredToolNames.push(name)
+        const discoveredTool = tools.find(name)
+        if (discoveredTool) {
+          sessionState.toolReferenceDeltas.push({
+            name,
+            reason: `ToolSearch materialized ${name}`,
+            schemaHash: hashToolSchema(discoveredTool),
+            discoveredAt: createTimestamp(),
+          })
+        }
+      }
+    }
+  }
+  if (result.metadata?.toolReferenceDeltas && Array.isArray(result.metadata.toolReferenceDeltas)) {
+    for (const delta of result.metadata.toolReferenceDeltas) {
+      if (isToolReferenceDelta(delta)) {
+        const alreadyTracked = sessionState.toolReferenceDeltas.some(
+          existing =>
+            existing.name === delta.name &&
+            existing.schemaHash === delta.schemaHash,
+        )
+        if (!alreadyTracked) sessionState.toolReferenceDeltas.push(delta)
+      }
+    }
+  }
+  if (result.metadata?.activeSkill && isActiveSkillRuntimeState(result.metadata.activeSkill)) {
+    sessionState.activeSkill = result.metadata.activeSkill
+  }
 }

@@ -49,6 +49,7 @@ export type ParsedOptions = {
   deepseekBaseUrl?: string
   approvePlan?: boolean
   prompt: string
+  effort?: 'low' | 'medium' | 'high'
 }
 
 export type ResolvedOptions = Omit<ParsedOptions, 'permissionMode'> & {
@@ -81,6 +82,7 @@ export function parseOptions(
   let model: string | undefined
   let deepseekBaseUrl: string | undefined
   let approvePlan = false
+  let effort: 'low' | 'medium' | 'high' | undefined
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]
@@ -106,6 +108,14 @@ export function parseOptions(
     }
     if (arg === '--model') {
       model = requireValue(args, (index += 1), '--model')
+      continue
+    }
+    if (arg === '--effort') {
+      const value = requireValue(args, (index += 1), '--effort')
+      if (!['low', 'medium', 'high'].includes(value)) {
+        throw new Error('--effort must be low, medium, or high')
+      }
+      effort = value as 'low' | 'medium' | 'high'
       continue
     }
     if (arg === '--deepseek-base-url') {
@@ -140,6 +150,7 @@ export function parseOptions(
     deepseekBaseUrl,
     approvePlan,
     prompt,
+    effort,
   }
 }
 
@@ -151,11 +162,13 @@ export function parseInitOptions(
   force: boolean
   model: string
   permissionMode: PermissionMode
+  withComputerUse: boolean
 } {
   let cwd = process.cwd()
   let force = false
   let model = env.DEEPSEEK_MODEL ?? 'deepseek-v4-flash'
   let permissionMode: PermissionMode = 'ask'
+  let withComputerUse = false
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]
     if (arg === '--cwd') {
@@ -164,6 +177,10 @@ export function parseInitOptions(
     }
     if (arg === '--force') {
       force = true
+      continue
+    }
+    if (arg === '--with-computer-use') {
+      withComputerUse = true
       continue
     }
     if (arg === '--model') {
@@ -180,7 +197,7 @@ export function parseInitOptions(
     }
     throw new Error(`Unknown option: ${arg}`)
   }
-  return { cwd, force, model, permissionMode }
+  return { cwd, force, model, permissionMode, withComputerUse }
 }
 
 export function parseMemoryOperationArgs(args: string[]): {
@@ -221,7 +238,7 @@ export function parseMemoryOperationArgs(args: string[]): {
       if (value === undefined) {
         throw new Error('--type requires a value')
       }
-      if (!['user', 'feedback', 'project', 'reference'].includes(value)) {
+      if (!['user', 'feedback', 'project', 'reference', 'organization', 'agent', 'tool'].includes(value)) {
         throw new Error(`Unsupported long-term memory type: ${value}`)
       }
       memoryKind = value as import('../runtime/projectMemory.js').LongTermMemoryKind

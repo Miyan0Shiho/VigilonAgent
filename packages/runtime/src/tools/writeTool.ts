@@ -13,6 +13,8 @@ export const WriteTool: Tool = {
   name: 'Write',
   description:
     'Creates a new local text file or replaces an existing file with complete content.',
+  actionClass: 'needs-confirmation' as const,
+  securityTier: 'confirm' as const,
   inputJsonSchema: {
     type: 'object',
     properties: {

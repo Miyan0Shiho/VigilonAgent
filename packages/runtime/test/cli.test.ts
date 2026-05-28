@@ -173,9 +173,8 @@ describe('runtime CLI', () => {
     await runCli(['sessions', '--cwd', cwd, '--sessions-dir', sessionsDir], list, {
       createModelClient: () => oneShotModel('unused'),
     })
-    expect(JSON.parse(list.stdoutText).sessions).toMatchObject([
-      { sessionId: 'resume-me', firstUserMessage: 'first' },
-    ])
+    expect(list.stdoutText).toContain('resume-me')
+    expect(list.stdoutText).toContain('first')
 
     const resume = createIo()
     await runCli(

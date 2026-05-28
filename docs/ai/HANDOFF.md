@@ -45,6 +45,14 @@
 
 ## Phase 2 入口
 
+- Phase 2 Agent Society 讨论入口: `docs/product/phase2-agent-society/README.md`
+- Phase 2 核心精华: `docs/product/phase2-agent-society/PHASE2_CORE_ESSENCE.md`
+- 产品哲学入口: `docs/product/phase2-agent-society/PHASE2_PRODUCT_DOCTRINE.md`
+- Agent 时代问题地图: `docs/product/phase2-agent-society/PHASE2_AGENT_ERA_PROBLEM_MAP.md`
+- Agent 时代问题细化: `docs/product/phase2-agent-society/PHASE2_AGENT_ERA_PROBLEM_ATLAS.md`，当前已扩展到 40 个问题，新增重点包括 memory governance、Agentic Web / browser counterparties、labor recomposition、operational eval / model drift / tool supply chain / resource runaway、legal delegability、learning burden / super-individual divide、synthetic content provenance / evidence trust，并新增 10 个高层 problem clustering view。
+- Human-like work behaviors deep dive: `docs/product/phase2-agent-society/PHASE2_HUMAN_LIKE_WORK_BEHAVIORS.md`，当前定义 primary behaviors: sleep、wake、argue、cooperate、explore、criticize、steward；embedded behaviors: refuse / de-escalate、remember / forget、evaluate / rehearse、teach / apprentice、prove / attest。
+- Agent Society frontend surface: `docs/product/phase2-agent-society/PHASE2_AGENT_SOCIETY_FRONTEND_SURFACE.md`，当前口径是 chat 只是 radio，主表面是 colony-sim / management-game-like 的数字工作社会沙盘：用户通过小人、空间、对象和事件理解 Agent runtime。
+- Agent 社会产品回答: `docs/product/phase2-agent-society/PHASE2_AGENT_SOCIETY_THESIS.md`
 - 完整能力综述: `docs/ai/PHASE1_CAPABILITY_OVERVIEW.md`
 - 仓库状态审计: `docs/ai/PHASE1_AUDIT.md`
 - Entry checklist: `docs/ai/PHASE2_ENTRY_CHECKLIST.md`

@@ -571,7 +571,7 @@ export type SubagentMemorySnapshot = {
     entryCount: number
     entries: Array<{
       id: string
-      kind: 'user' | 'feedback' | 'project' | 'reference'
+      kind: 'user' | 'project' | 'organization' | 'agent' | 'tool' | 'feedback' | 'reference'
       topic: string
       content: string
       createdAt: string
@@ -813,6 +813,18 @@ export type BackgroundTask = {
   process?: any // For local process handle
 }
 
+export type GoalStatus = 'active' | 'paused' | 'budget_limited' | 'complete'
+
+export type GoalState = {
+  objective: string
+  tokenBudget?: number
+  tokensUsed: number
+  status: GoalStatus
+  createdAt: string
+  updatedAt: string
+  ledgerTaskId?: string
+}
+
 export type RuntimeSessionState = {
   phase: RuntimePhase
   prePlanPermissionMode?: PermissionMode
@@ -832,6 +844,7 @@ export type RuntimeSessionState = {
   systemPrompt?: string
   toolSchema?: string
   modelParams?: Record<string, unknown>
+  goal?: GoalState
 }
 
 export type ToolReferenceDelta = {
@@ -868,11 +881,24 @@ export type FileReadingLimits = {
   maxLines?: number
 }
 
+export type ActionClass =
+  | 'reversible'       // Read-only, no side effects, always safe
+  | 'needs-confirmation' // Writes, network, moderate risk — confirm first
+  | 'needs-human'       // Email, payments, deployments — human must be present
+  | 'forbidden'          // Never allowed (rm -rf /, etc.)
+
+export type SecurityTier =
+  | 'silent'   // Allow automatically (low risk)
+  | 'confirm'  // Ask user to confirm (medium risk)
+  | 'block'    // Refuse execution (high risk)
+
 export type Tool = {
   readonly name: string
   readonly description: string
   readonly inputJsonSchema?: ToolInputJsonSchema
   readonly readOnly?: boolean
+  readonly actionClass?: ActionClass
+  readonly securityTier?: SecurityTier
   readonly deferred?: boolean
   readonly searchTerms?: readonly string[]
   invoke(input: unknown, context: ToolUseContext): Promise<ToolResult>
@@ -1132,7 +1158,12 @@ export type AgentRuntimeEvent =
   | { type: 'tool-finished'; result: ToolResult }
   | { type: 'subagent-lifecycle'; event: SubagentLifecycleEvent }
   | { type: 'turn-finished'; result: AgentRuntimeTurnResult }
+  | {
+      type: 'cache-stability-change'
+      event: Extract<TranscriptEvent, { type: 'request-stability' }>
+    }
 
 export type AgentRuntime = {
   runTurn(input: AgentRuntimeTurnInput): AsyncIterable<AgentRuntimeEvent>
+  reloadSkills?(skills: readonly RuntimeSkill[]): void
 }

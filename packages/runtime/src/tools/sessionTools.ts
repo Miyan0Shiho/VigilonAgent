@@ -10,6 +10,7 @@ import type {
 } from '../runtime/contracts.js'
 import { withToolPermissionOrigin } from '../runtime/permissionOrigins.js'
 import { createTimestamp } from '../runtime/transcript.js'
+import { addTask, updateTask } from '../runtime/taskLedger.js'
 
 type TodoWriteInput = {
   todos?: TodoItem[]
@@ -403,4 +404,209 @@ function ok(content: string, metadata?: Record<string, unknown>): ToolResult {
 
 function failed(content: string, metadata?: Record<string, unknown>): ToolResult {
   return { toolCallId: '', ok: false, content, metadata }
+}
+
+// ---------------------------------------------------------------------------
+// Goal tools — matches Codex /goal + Claude Code /goal model
+// Model can create and mark complete; pause/resume are user-controlled.
+// ---------------------------------------------------------------------------
+
+export const CreateGoalTool: Tool = {
+  name: 'create_goal',
+  description:
+    'Creates a persistent goal that the agent will work toward autonomously ' +
+    'across turns until complete or budget exhausted. Fails if a goal already exists.',
+  readOnly: true,
+  inputJsonSchema: {
+    type: 'object',
+    properties: {
+      objective: { type: 'string', description: 'Clear, measurable goal description' },
+      token_budget: { type: 'number', description: 'Optional max tokens for this goal' },
+    },
+    required: ['objective'],
+    additionalProperties: false,
+  },
+  async invoke(input: unknown, context: ToolUseContext): Promise<ToolResult> {
+    const state = context.sessionState
+    if (!state) return failed('Session state unavailable.')
+
+    const { objective, token_budget } = input as { objective: string; token_budget?: number }
+    if (!objective?.trim()) return failed('create_goal requires a non-empty objective.')
+
+    if (state.goal && state.goal.status === 'active') {
+      return failed(
+        `A goal is already active: "${state.goal.objective}". ` +
+        'Pause or complete it before creating a new one.',
+      )
+    }
+
+    const now = new Date().toISOString()
+    state.goal = {
+      objective: objective.trim(),
+      tokenBudget: token_budget,
+      tokensUsed: 0,
+      status: 'active',
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    // Persist to task ledger for cross-session durability
+    addTask(context.cwd, {
+      goal: objective.trim(),
+      status: 'running',
+      maxTokens: token_budget,
+    }).then(task => {
+      state.goal!.ledgerTaskId = task.id
+    }).catch(() => { /* best-effort, ledger is non-critical */ })
+
+    const budgetMsg = token_budget ? ` (budget: ${token_budget.toLocaleString()} tokens)` : ''
+    return ok(`Goal created: "${objective}"${budgetMsg}. The agent will continue working until complete or budget exhausted.`)
+  },
+}
+
+export const GetGoalTool: Tool = {
+  name: 'get_goal',
+  description: 'Returns the current goal, if any.',
+  readOnly: true,
+  inputJsonSchema: {
+    type: 'object',
+    properties: {},
+    additionalProperties: false,
+  },
+  async invoke(_input: unknown, context: ToolUseContext): Promise<ToolResult> {
+    const state = context.sessionState
+    if (!state) return failed('Session state unavailable.')
+    const goal = state.goal
+    if (!goal) return ok('No active goal.')
+    const pct = goal.tokenBudget ? ((goal.tokensUsed / goal.tokenBudget) * 100).toFixed(1) : null
+    const usage = pct ? ` (${pct}% of budget used)` : ''
+    return ok(
+      [
+        `Goal: "${goal.objective}"`,
+        `Status: ${goal.status}`,
+        `Tokens used: ${goal.tokensUsed.toLocaleString()}${usage}`,
+        `Created: ${goal.createdAt}`,
+      ].join('\n'),
+      { goal },
+    )
+  },
+}
+
+export const UpdateGoalTool: Tool = {
+  name: 'update_goal',
+  description: 'Updates the goal status. The model can only mark a goal complete.',
+  readOnly: true,
+  inputJsonSchema: {
+    type: 'object',
+    properties: {
+      status: { type: 'string', enum: ['complete'], description: 'Only "complete" is allowed' },
+    },
+    required: ['status'],
+    additionalProperties: false,
+  },
+  async invoke(input: unknown, context: ToolUseContext): Promise<ToolResult> {
+    const state = context.sessionState
+    if (!state) return failed('Session state unavailable.')
+    const { status } = input as { status: string }
+    if (status !== 'complete') {
+      return failed('update_goal can only mark a goal complete. Use /goal pause in the CLI to pause.')
+    }
+    const goal = state.goal
+    if (!goal || goal.status !== 'active') {
+      return failed('No active goal to complete.')
+    }
+    goal.status = 'complete'
+    goal.updatedAt = new Date().toISOString()
+
+    // Update task ledger
+    if (goal.ledgerTaskId) {
+      updateTask(context.cwd, goal.ledgerTaskId, { status: 'done' })
+        .catch(() => { /* best-effort */ })
+    }
+
+    return ok(`Goal complete: "${goal.objective}" (${goal.tokensUsed.toLocaleString()} tokens used)`)
+  },
+}
+
+// ---------------------------------------------------------------------------
+// Self-verification tool — Generator ≠ Evaluator pattern
+// Spawns an independent evaluator subagent to review the current work.
+// ---------------------------------------------------------------------------
+
+export const SelfVerifyTool: Tool = {
+  name: 'self_verify',
+  description:
+    'Spawns an independent evaluator subagent to review the current work. ' +
+    'The evaluator checks for bugs, missing edge cases, style issues, and ' +
+    'correctness. Always use this before claiming a task is complete.',
+  readOnly: true,
+  inputJsonSchema: {
+    type: 'object',
+    properties: {
+      context: {
+        type: 'string',
+        description: 'What was done — file paths changed, task completed, tests run.',
+      },
+      focus: {
+        type: 'string',
+        description: 'Specific areas to check (e.g. "error handling", "edge cases", "performance").',
+      },
+    },
+    required: ['context'],
+    additionalProperties: false,
+  },
+  async invoke(input: unknown, context: ToolUseContext): Promise<ToolResult> {
+    const { context: taskContext, focus } = input as { context: string; focus?: string }
+    if (!taskContext?.trim()) return failed('self_verify requires a context description.')
+
+    if (!context.runSubagent) {
+      return ok(
+        'Self-verification unavailable (no subagent runner configured).\n' +
+        'Manual review checklist:\n' +
+        '- Are all changed files syntactically correct?\n' +
+        '- Do edge cases have test coverage?\n' +
+        '- Is error handling explicit (no silent failures)?\n' +
+        '- Are there any leftover debug logs or TODO comments?',
+      )
+    }
+
+    const focusLine = focus ? `\nFocus especially on: ${focus}` : ''
+    const task = [
+      'You are an independent code reviewer. Your ONLY job is to find problems.',
+      'Do NOT suggest improvements that are merely cosmetic.',
+      'Review this work critically:',
+      '',
+      taskContext,
+      focusLine,
+      '',
+      'Report your findings as:',
+      '1. Bugs or potential bugs (severity: critical/high/medium/low)',
+      '2. Missing edge cases',
+      '3. Style or convention issues',
+      'If you find NO issues, say "No issues found." explicitly.',
+    ].join('\n')
+
+    const result = await context.runSubagent({
+      definition: {
+        name: 'evaluator',
+        description: 'Independent code reviewer. Finds problems, not praise.',
+        systemPrompt: 'You are an independent code reviewer. Find problems. Be specific.',
+        allowedTools: ['Read', 'Glob', 'Grep', 'Bash'],
+        maxTurns: 5,
+        source: 'built-in' as const,
+      },
+      task,
+      cwd: context.cwd,
+      parentAgentId: 'main',
+    })
+
+    if (result.status === 'completed') {
+      const msg = result.finalMessage || 'Evaluator completed.'
+      return ok(msg, {
+        evaluatorResult: msg,
+        hasIssues: !msg.includes('No issues found'),
+      })
+    }
+    return failed(`Evaluator failed: ${result.finalMessage || 'unknown error'}`)
+  },
 }

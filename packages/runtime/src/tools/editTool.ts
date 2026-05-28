@@ -16,6 +16,8 @@ export const EditTool: Tool = {
   name: 'Edit',
   description:
     'Edits a local text file by replacing an exact old_string anchor with new_string.',
+  actionClass: 'needs-confirmation' as const,
+  securityTier: 'confirm' as const,
   inputJsonSchema: {
     type: 'object',
     properties: {

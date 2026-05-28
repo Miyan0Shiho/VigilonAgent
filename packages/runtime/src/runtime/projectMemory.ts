@@ -4,7 +4,14 @@ import path from 'node:path'
 
 const PROJECT_MEMORY_MANIFEST_VERSION = 1
 
-export type LongTermMemoryKind = 'user' | 'feedback' | 'project' | 'reference'
+export type LongTermMemoryKind =
+  | 'user'
+  | 'project'
+  | 'organization'
+  | 'agent'
+  | 'tool'
+  | 'feedback'
+  | 'reference'
 
 export type LongTermMemoryPromotionSource = {
   sessionId?: string

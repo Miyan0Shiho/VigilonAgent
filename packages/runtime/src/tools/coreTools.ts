@@ -16,6 +16,10 @@ import {
   ExitPlanModeTool,
   ResultReportTool,
   TodoWriteTool,
+  CreateGoalTool,
+  GetGoalTool,
+  UpdateGoalTool,
+  SelfVerifyTool,
 } from './sessionTools.js'
 import { createSkillTool } from './skillTool.js'
 import { ToolSearchTool } from './toolSearchTool.js'
@@ -28,6 +32,7 @@ import { ApplyPatchTool } from './applyPatchTool.js'
 import { RunTestsTool } from './runTestsTool.js'
 import { NoteTool } from './noteTool.js'
 import { SnapshotTool } from './snapshotTool.js'
+import { StructuredOutputTool } from './structuredOutputTool.js'
 
 export const CORE_TOOLS = [
   ReadTool,
@@ -55,6 +60,11 @@ export const CORE_TOOLS = [
   RunTestsTool,
   NoteTool,
   SnapshotTool,
+  StructuredOutputTool,
+  CreateGoalTool,
+  GetGoalTool,
+  UpdateGoalTool,
+  SelfVerifyTool,
 ] as const
 
 export function createCoreToolRegistry(options: {
